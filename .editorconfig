@@ -121,7 +121,7 @@ dotnet_naming_rule.type_system_identifiers_must_be_pascal_case.style = pascal_ca
 dotnet_naming_rule.type_system_identifiers_must_be_pascal_case.severity = warning
 
 dotnet_naming_symbols.accessible_fields.applicable_kinds = field
-dotnet_naming_symbols.accessible_fields.applicable_accessibilities = internal, private, private_protected
+dotnet_naming_symbols.accessible_fields.applicable_accessibilities = public, internal, protected_internal
 dotnet_naming_rule.accessible_fields_must_be_pascal_case.symbols = accessible_fields
 dotnet_naming_rule.accessible_fields_must_be_pascal_case.style = pascal_case
 dotnet_naming_rule.accessible_fields_must_be_pascal_case.severity = warning
