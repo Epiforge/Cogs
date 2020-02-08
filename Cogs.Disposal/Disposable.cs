@@ -1,6 +1,7 @@
 using Cogs.Components;
 using Nito.AsyncEx;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Cogs.Disposal
@@ -8,6 +9,7 @@ namespace Cogs.Disposal
     /// <summary>
     /// Provides an overridable mechanism for releasing unmanaged resources asynchronously or synchronously
     /// </summary>
+    [SuppressMessage("Design", "CA1063:Implement IDisposable Correctly", Justification = "This class is simplifying implementation of IDisposable for inheritors.")]
     public abstract class Disposable : PropertyChangeNotifier, IAsyncDisposable, IDisposable
     {
         /// <summary>

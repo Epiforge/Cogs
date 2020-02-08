@@ -1,11 +1,13 @@
 using Cogs.Components;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cogs.Disposal
 {
     /// <summary>
     /// Provides an overridable mechanism for releasing unmanaged resources synchronously
     /// </summary>
+    [SuppressMessage("Design", "CA1063:Implement IDisposable Correctly", Justification = "This class is simplifying implementation of IDisposable for inheritors.")]
     public abstract class SyncDisposable : PropertyChangeNotifier, IDisposable
     {
         /// <summary>
