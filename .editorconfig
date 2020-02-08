@@ -29,7 +29,7 @@ csharp_prefer_braces = false:warning
 
 csharp_prefer_simple_default_expression = true:warning
 
-csharp_preferred_modifier_order = public, private, protected, internal, static, extern, new, virtual, abstract, sealed, partial, override, readonly, unsafe, volatile, async:warning
+csharp_preferred_modifier_order = public, private, protected, internal, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, volatile, async:warning
 
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = false
@@ -37,7 +37,7 @@ csharp_preserve_single_line_statements = false
 csharp_space_after_cast = false
 csharp_space_after_colon_in_inheritance_clause = true
 csharp_space_after_keywords_in_control_flow_statements = true
-csharp_space_around_binary_operators = true
+csharp_space_around_binary_operators = before_and_after
 csharp_space_before_colon_in_inheritance_clause = true
 csharp_space_between_method_call_empty_parameter_list_parentheses = false
 csharp_space_between_method_call_name_and_opening_parenthesis = false
@@ -110,36 +110,29 @@ visual_basic_preferred_modifier_order = Default, Private, Protected, Public, Fri
 dotnet_naming_style.camel_case.capitalization = camel_case
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
-dotnet_naming_symbols.non_public_field.applicable_kinds = field
-dotnet_naming_symbols.non_public_field.applicable_accessibilities = private, protected, protected_internal, protected_friend
+dotnet_naming_symbols.logical_identifiers.applicable_kinds = parameter, local, local_function
+dotnet_naming_rule.logical_identifiers_must_be_camel_case.symbols = logical_identifiers
+dotnet_naming_rule.logical_identifiers_must_be_camel_case.style = camel_case
+dotnet_naming_rule.logical_identifiers_must_be_camel_case.severity = warning
 
-dotnet_naming_symbols.non_public_non_field_member.applicable_kinds = property, method, event
-dotnet_naming_symbols.non_public_non_field_member.applicable_accessibilities = private, protected, protected_internal, protected_friend
+dotnet_naming_symbols.type_system_identifiers.applicable_kinds = namespace, class, struct, interface, enum, delegate, type_parameter
+dotnet_naming_rule.type_system_identifiers_must_be_pascal_case.symbols = type_system_identifiers
+dotnet_naming_rule.type_system_identifiers_must_be_pascal_case.style = pascal_case
+dotnet_naming_rule.type_system_identifiers_must_be_pascal_case.severity = warning
 
-dotnet_naming_symbols.non_public_type.applicable_kinds = class, struct, interface, enum, delegate
-dotnet_naming_symbols.non_public_type.applicable_accessibilities = private, protected, protected_internal, protected_friend
+dotnet_naming_symbols.accessible_fields.applicable_kinds = field
+dotnet_naming_symbols.accessible_fields.applicable_accessibilities = internal, private, private_protected
+dotnet_naming_rule.accessible_fields_must_be_pascal_case.symbols = accessible_fields
+dotnet_naming_rule.accessible_fields_must_be_pascal_case.style = pascal_case
+dotnet_naming_rule.accessible_fields_must_be_pascal_case.severity = warning
 
-dotnet_naming_symbols.parameter.applicable_kinds = parameter
+dotnet_naming_symbols.inaccessible_fields.applicable_kinds = field
+dotnet_naming_symbols.inaccessible_fields.applicable_accessibilities = internal, private, private_protected
+dotnet_naming_rule.inaccessible_fields_must_be_camel_case.symbols = inaccessible_fields
+dotnet_naming_rule.inaccessible_fields_must_be_camel_case.style = camel_case
+dotnet_naming_rule.inaccessible_fields_must_be_camel_case.severity = warning
 
-dotnet_naming_symbols.public.applicable_kinds = *
-dotnet_naming_symbols.public.applicable_accessibilities = public, internal, friend
-
-dotnet_naming_rule.non_public_field_must_be_camel_case.symbols = non_public_field
-dotnet_naming_rule.non_public_field_must_be_camel_case.style = camel_case
-dotnet_naming_rule.non_public_field_must_be_camel_case.severity = warning
-
-dotnet_naming_rule.non_public_non_field_member_must_be_pascal_case.symbols = non_public_non_field_member
-dotnet_naming_rule.non_public_non_field_member_must_be_pascal_case.style = pascal_case
-dotnet_naming_rule.non_public_non_field_member_must_be_pascal_case.severity = warning
-
-dotnet_naming_rule.non_public_type_must_be_pascal_case.symbols = non_public_type
-dotnet_naming_rule.non_public_type_must_be_pascal_case.style = pascal_case
-dotnet_naming_rule.non_public_type_must_be_pascal_case.severity = warning
-
-dotnet_naming_rule.parameter_must_be_camel_case.symbols = parameter
-dotnet_naming_rule.parameter_must_be_camel_case.style = camel_case
-dotnet_naming_rule.parameter_must_be_camel_case.severity = warning
-
-dotnet_naming_rule.public_must_be_pascal_case.symbols = public
-dotnet_naming_rule.public_must_be_pascal_case.style = pascal_case
-dotnet_naming_rule.public_must_be_pascal_case.severity = warning
+dotnet_naming_symbols.non_field_members.applicable_kinds = property, method, event
+dotnet_naming_rule.non_field_members_must_be_pascal_case.symbols = non_field_members
+dotnet_naming_rule.non_field_members_must_be_pascal_case.style = pascal_case
+dotnet_naming_rule.non_field_members_must_be_pascal_case.severity = warning
