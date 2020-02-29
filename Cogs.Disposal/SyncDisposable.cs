@@ -8,16 +8,18 @@ namespace Cogs.Disposal
     /// Provides an overridable mechanism for releasing unmanaged resources synchronously
     /// </summary>
     [SuppressMessage("Design", "CA1063:Implement IDisposable Correctly", Justification = "This class is simplifying implementation of IDisposable for inheritors.")]
-    public abstract class SyncDisposable : PropertyChangeNotifier, IDisposable
+    public abstract class SyncDisposable : PropertyChangeNotifier, IDisposable, INotifyDisposalOverridden, IDisposalStatus, INotifyDisposed, INotifyDisposing
     {
         /// <summary>
         /// Finalizes this object
         /// </summary>
         ~SyncDisposable()
         {
+            var e = new DisposalNotificationEventArgs(true);
+            OnDisposing(e);
             Dispose(false);
             IsDisposed = true;
-            OnDisposed(new EventArgs());
+            OnDisposed(e);
         }
 
         readonly object disposalAccess = new object();
@@ -33,9 +35,19 @@ namespace Cogs.Disposal
         }
 
         /// <summary>
-        /// Occurs when the object is disposed by a <see cref="Dispose()"/> call or the finalizer
+        /// Occurs when this object's disposal has been overridden
         /// </summary>
-        public event EventHandler? Disposed;
+        public event EventHandler<DisposalNotificationEventArgs>? DisposalOverridden;
+
+        /// <summary>
+        /// Occurs when this object has been disposed
+        /// </summary>
+        public event EventHandler<DisposalNotificationEventArgs>? Disposed;
+
+        /// <summary>
+        /// Occurs when this object is being disposed
+        /// </summary>
+        public event EventHandler<DisposalNotificationEventArgs>? Disposing;
 
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources
@@ -43,10 +55,20 @@ namespace Cogs.Disposal
         public void Dispose()
         {
             lock (disposalAccess)
-                if (!IsDisposed && (IsDisposed = Dispose(true)))
+                if (!IsDisposed)
                 {
-                    GC.SuppressFinalize(this);
-                    OnDisposed(new EventArgs());
+                    var e = new DisposalNotificationEventArgs(false);
+                    OnDisposing(e);
+                    if (IsDisposed = Dispose(true))
+                    {
+                        OnDisposed(e);
+                        Disposing = null;
+                        DisposalOverridden = null;
+                        Disposed = null;
+                        GC.SuppressFinalize(this);
+                    }
+                    else
+                        OnDisposalOverridden(e);
                 }
         }
 
@@ -58,10 +80,22 @@ namespace Cogs.Disposal
         protected abstract bool Dispose(bool disposing);
 
         /// <summary>
+        /// Raises the <see cref="DisposalOverridden"/> event with the specified arguments
+        /// </summary>
+        /// <param name="e">The event arguments</param>
+        protected virtual void OnDisposalOverridden(DisposalNotificationEventArgs e) => DisposalOverridden?.Invoke(this, e);
+
+        /// <summary>
         /// Raises the <see cref="Disposed"/> event
         /// </summary>
 		/// <param name="e">The arguments of the event</param>
-        protected virtual void OnDisposed(EventArgs e) => Disposed?.Invoke(this, e);
+        protected virtual void OnDisposed(DisposalNotificationEventArgs e) => Disposed?.Invoke(this, e);
+
+        /// <summary>
+        /// Raises the <see cref="Disposing"/> event
+        /// </summary>
+		/// <param name="e">The arguments of the event</param>
+        protected virtual void OnDisposing(DisposalNotificationEventArgs e) => Disposing?.Invoke(this, e);
 
         /// <summary>
         /// Ensure the object has not been disposed

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Authors>Epiforge</Authors>
     <Company>Epiforge</Company>
-    <Description>Cogs for handling disposal. Includes AsyncDisposable, Disposable, SyncDisposable.</Description>
+    <Description>Cogs for handling disposal. Includes AsyncDisposable, Disposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, SyncDisposable.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Nullable>enable</Nullable>
@@ -14,10 +14,11 @@
     <RepositoryType>GitHub</RepositoryType>
     <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Cogs.Components" Version="1.0.0" />
+    <PackageReference Include="Cogs.Components" Version="1.0.1" />
     <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.0.0" />
   </ItemGroup>
 
