@@ -27,7 +27,7 @@ namespace Cogs.Components
         /// <exception cref="ArgumentNullException"><paramref name="e"/> is null</exception>
         protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            if (e == null)
+            if (e is null)
                 throw new ArgumentNullException(nameof(e));
             PropertyChanged?.Invoke(this, e);
         }
@@ -39,7 +39,7 @@ namespace Cogs.Components
 		/// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is null</exception>
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
-            if (propertyName == null)
+            if (propertyName is null)
                 throw new ArgumentNullException(nameof(propertyName));
             OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
         }
@@ -51,7 +51,7 @@ namespace Cogs.Components
         /// <exception cref="ArgumentNullException"><paramref name="e"/> is null</exception>
         protected virtual void OnPropertyChanging(PropertyChangingEventArgs e)
         {
-            if (e == null)
+            if (e is null)
                 throw new ArgumentNullException(nameof(e));
             PropertyChanging?.Invoke(this, e);
         }
@@ -63,7 +63,7 @@ namespace Cogs.Components
         /// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is null</exception>
         protected void OnPropertyChanging([CallerMemberName] string? propertyName = null)
         {
-            if (propertyName == null)
+            if (propertyName is null)
                 throw new ArgumentNullException(nameof(propertyName));
             OnPropertyChanging(new PropertyChangingEventArgs(propertyName));
         }
