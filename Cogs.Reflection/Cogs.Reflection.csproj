@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Authors>Epiforge</Authors>
+    <Company>Epiforge</Company>
+    <Description>Cogs for reflection. Includes FastComparer, FastDefault, FastEqualityComparer, FastMethodInfo.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Nullable>enable</Nullable>
+    <PackageIcon>NuGet.jpg</PackageIcon>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
+    <Product>Reflection Cog</Product>
+    <RepositoryType>GitHub</RepositoryType>
+    <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\NuGet.jpg">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
