@@ -24,6 +24,15 @@ namespace Cogs.Disposal
         bool isDisposed;
 
         /// <summary>
+        /// Gets whether this object has been disposed
+        /// </summary>
+        public bool IsDisposed
+        {
+            get => isDisposed;
+            private set => SetBackedProperty(ref isDisposed, in value);
+        }
+
+        /// <summary>
         /// Occurs when the object is disposed by a <see cref="DisposeAsync()"/> call or the finalizer
         /// </summary>
         public event EventHandler? Disposed;
@@ -62,15 +71,6 @@ namespace Cogs.Disposal
         {
             if (isDisposed)
                 throw new ObjectDisposedException(GetType().Name);
-        }
-
-        /// <summary>
-        /// Gets whether this object has been disposed
-        /// </summary>
-        public bool IsDisposed
-        {
-            get => isDisposed;
-            private set => SetBackedProperty(ref isDisposed, in value);
         }
     }
 }
