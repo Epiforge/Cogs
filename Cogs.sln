@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Threading", "Cogs.Thre
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Collections", "Cogs.Collections\Cogs.Collections.csproj", "{DB441965-54DB-46EC-AF03-6C496B0FFBE9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Collections.Synchronized", "Cogs.Collections.Synchronized\Cogs.Collections.Synchronized.csproj", "{4DAFDA58-B852-4F0D-AF42-29725735E046}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{DB441965-54DB-46EC-AF03-6C496B0FFBE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB441965-54DB-46EC-AF03-6C496B0FFBE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB441965-54DB-46EC-AF03-6C496B0FFBE9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DAFDA58-B852-4F0D-AF42-29725735E046}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DAFDA58-B852-4F0D-AF42-29725735E046}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DAFDA58-B852-4F0D-AF42-29725735E046}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DAFDA58-B852-4F0D-AF42-29725735E046}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
