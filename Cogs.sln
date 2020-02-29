@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Disposal", "Cogs.Dispo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Reflection", "Cogs.Reflection\Cogs.Reflection.csproj", "{3C84BDB0-5999-493E-B1C6-87A8246AD71F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Threading", "Cogs.Threading\Cogs.Threading.csproj", "{5360F8F5-195A-419B-81A8-9757EA95B73E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{3C84BDB0-5999-493E-B1C6-87A8246AD71F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C84BDB0-5999-493E-B1C6-87A8246AD71F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C84BDB0-5999-493E-B1C6-87A8246AD71F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5360F8F5-195A-419B-81A8-9757EA95B73E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5360F8F5-195A-419B-81A8-9757EA95B73E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5360F8F5-195A-419B-81A8-9757EA95B73E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5360F8F5-195A-419B-81A8-9757EA95B73E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
