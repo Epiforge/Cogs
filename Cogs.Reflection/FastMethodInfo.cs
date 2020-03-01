@@ -11,9 +11,6 @@ namespace Cogs.Reflection
     /// </summary>
     public class FastMethodInfo
     {
-        private delegate object? ReturnValueDelegate(object? instance, object?[] arguments);
-        private delegate void VoidDelegate(object? instance, object?[] arguments);
-
         /// <summary>
         /// Initializes a new instance of the <see cref="FastMethodInfo"/> class based on the specified <see cref="System.Reflection.MethodInfo"/>
         /// </summary>
@@ -77,5 +74,8 @@ namespace Cogs.Reflection
                 throw new ArgumentNullException(nameof(methodInfo));
             return fastMethodInfos.GetOrAdd(methodInfo, Create);
         }
+
+        delegate object? ReturnValueDelegate(object? instance, object?[] arguments);
+        delegate void VoidDelegate(object? instance, object?[] arguments);
     }
 }
