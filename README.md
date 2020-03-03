@@ -124,7 +124,7 @@ For now, all this library offers is the `PropertyChangeNotifier` class, which yo
 
 [![Cogs.Disposal Nuget](https://img.shields.io/nuget/v/Cogs.Disposal.svg)](https://www.nuget.org/packages/Cogs.Disposal)
 
-Much like the Components library, this library features base classes that handle things we've written a thousand times over, this time involving disposal. If you want to go with an implementation of the tried and true `IDisposable`, just inherit from `SyncDisposable`. Want a taste of the new `IAsyncDisposable`? Then, inherit from `AsyncDisposable`. Or, if you want to support both, there's `Disposable`. Each of these features abstract methods to actually do your disposal. But all of the base classes feature
+Much like the Components library, this library features base classes that handle things we've written a thousand times over, this time involving disposal. If you want to go with an implementation of the tried and true `IDisposable`, just inherit from `SyncDisposable`. Want a taste of the new `IAsyncDisposable`? Then, inherit from `AsyncDisposable`. Or, if you want to support both, there's `Disposable`. Each of these features abstract methods to actually do your disposal. But all of the base classes feature:
 
 * proper implementation of the finalizer and use of `GC.SuppressFinalize`
 * monitored access to disposal to ensure it can't happen twice
