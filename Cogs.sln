@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Collections", "Cogs.Co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Collections.Synchronized", "Cogs.Collections.Synchronized\Cogs.Collections.Synchronized.csproj", "{4DAFDA58-B852-4F0D-AF42-29725735E046}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.ActiveExpressions", "Cogs.ActiveExpressions\Cogs.ActiveExpressions.csproj", "{F306C0B6-31AC-4D03-B4FC-3C664C9786EC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{4DAFDA58-B852-4F0D-AF42-29725735E046}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DAFDA58-B852-4F0D-AF42-29725735E046}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DAFDA58-B852-4F0D-AF42-29725735E046}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F306C0B6-31AC-4D03-B4FC-3C664C9786EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F306C0B6-31AC-4D03-B4FC-3C664C9786EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F306C0B6-31AC-4D03-B4FC-3C664C9786EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F306C0B6-31AC-4D03-B4FC-3C664C9786EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
