@@ -21,7 +21,9 @@ namespace Cogs.Collections
             if (elements is null)
                 throw new ArgumentNullException(nameof(elements));
             this.elements = elements.ToImmutableArray();
-            hashCode = HashCode.Combine(this.elements);
+            hashCode = HashCode.Combine(typeof(EquatableList<T>), this.elements.FirstOrDefault());
+            foreach (var element in this.elements.Skip(1))
+                hashCode = HashCode.Combine(hashCode, element);
         }
 
         readonly IReadOnlyList<T> elements;
