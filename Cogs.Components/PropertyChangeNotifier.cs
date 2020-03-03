@@ -8,7 +8,7 @@ namespace Cogs.Components
     /// <summary>
     /// Provides a mechanism for notifying about property changes
     /// </summary>
-    public class PropertyChangeNotifier : INotifyPropertyChanged, INotifyPropertyChanging
+    public abstract class PropertyChangeNotifier : INotifyPropertyChanged, INotifyPropertyChanging
     {
         /// <summary>
         /// Occurs when a property value changes
