@@ -118,13 +118,20 @@ This library provides a number of utilities surrounding collections:
 
 [![Cogs.Components Nuget](https://img.shields.io/nuget/v/Cogs.Components.svg)](https://www.nuget.org/packages/Cogs.Components)
 
-For now, all this library offers is the `PropertyChangeNotifier` class, which you may inherit from to quickly get all the property utilities we're all tired of copying and pasting everywhere. Just call the protected `OnPropertyChanged` and `OnPropertyChanging` methods at the appropriate times from setters and compiler services will figure out what property you're in. Or, if all you need to do is set the value of a field, `SetBackedProperty` couldn't make it any easier or convenient to handle that as efficiently as possible.
+For now, all this library offers is the `PropertyChangeNotifier` class, which you may inherit from to quickly get all the property utilities we're all tired of copying and pasting everywhere.
+Just call the protected `OnPropertyChanged` and `OnPropertyChanging` methods at the appropriate times from setters and compiler services will figure out what property you're in.
+Or, if all you need to do is set the value of a field, `SetBackedProperty` couldn't make it any easier or convenient to handle that as efficiently as possible.
 
 ## Disposal
 
 [![Cogs.Disposal Nuget](https://img.shields.io/nuget/v/Cogs.Disposal.svg)](https://www.nuget.org/packages/Cogs.Disposal)
 
-Much like the Components library, this library features base classes that handle things we've written a thousand times over, this time involving disposal. If you want to go with an implementation of the tried and true `IDisposable`, just inherit from `SyncDisposable`. Want a taste of the new `IAsyncDisposable`? Then, inherit from `AsyncDisposable`. Or, if you want to support both, there's `Disposable`. Each of these features abstract methods to actually do your disposal. But all of the base classes feature:
+Much like the Components library, this library features base classes that handle things we've written a thousand times over, this time involving disposal.
+If you want to go with an implementation of the tried and true `IDisposable`, just inherit from `SyncDisposable`. Want a taste of the new `IAsyncDisposable`?
+Then, inherit from `AsyncDisposable`.
+Or, if you want to support both, there's `Disposable`.
+Each of these features abstract methods to actually do your disposal.
+But all of the base classes feature:
 
 * proper implementation of the finalizer and use of `GC.SuppressFinalize`
 * monitored access to disposal to ensure it can't happen twice
@@ -134,20 +141,60 @@ Much like the Components library, this library features base classes that handle
 
 This library provides the `IDisposalStatus` interface, which defines the `IsDisposed` property and all the base classes implement it.
 
-Lastly, it provides the `INotifyDisposing`, `INotifyDisposed`, and `INotifyDisposalOverridden` interfaces, which add events that notify of these occurrences. If you're using the base classes in this library, you don't need to worry about unregistering handlers. The base classes drop all the references in the events' invocation lists on their own. We're not trying to *create* leaks here!
+Lastly, it provides the `INotifyDisposing`, `INotifyDisposed`, and `INotifyDisposalOverridden` interfaces, which add events that notify of these occurrences.
+If you're using the base classes in this library, you don't need to worry about unregistering handlers.
+The base classes drop all the references in the events' invocation lists on their own.
+We're not trying to *create* leaks here!
 
 ## Reflection
 
 [![Cogs.Reflection Nuget](https://img.shields.io/nuget/v/Cogs.Reflection.svg)](https://www.nuget.org/packages/Cogs.Reflection)
 
+This library has useful tools for when you can't be certain of certain things at compile time, such as types, methods, etc.
+While .NET reflection is immensely powerful, it's not very quick.
+To address this, this library offers the following classes:
+
+* `FastComparer` - provides a method for comparing instances of a type that is not known at compile time
+* `FastDefault` - provides a method for getting the default value of a type that is not known at compile time
+* `FastEqualityComparer` - provides methods for testing equality of and getting hash codes for instances of a type that is not known at compile time
+* `FastMethodInfo` - provides a method for invoking a method that is not known at compile time
+
+All of the above classes use reflection to initialize utilities for types at runtime, however they create delegates to perform at much better speeds and cache instances of themselves to avoid having to perform the same reflection twice.
+And yes, the caching is thread-safe.
+
 ## Synchronized Collections
 
 [![Cogs.Collections.Synchronized Nuget](https://img.shields.io/nuget/v/Cogs.Collections.Synchronized.svg)](https://www.nuget.org/packages/Cogs.Collections.Synchronized)
+
+Good idea: binding UI elements to observable collections.
+Bad idea: manipulating observable collections bound to UI elements from background threads.
+Why?
+Because the collection change notification event handlers will be executed on non-UI threads, which cannot safely manipulate the UI.
+So, I guess we need to carefully marshal calls over to the UI thread whenever we manipulate those observable collections, right?
+
+Not anymore.
+
+Introducing the `SynchronizedObservableCollection<T>`, `SynchronizedObservableDictionary<TKey, TValue>`, and `SynchronizedObservableSortedDictionary<TKey, TValue>` classes.
+Create them on UI threads.
+Or, pass the UI thread's synchronization context to their constructors.
+Then, any time they are manipulated, the call is marshalled to the context of the appropriate thread.
+They even include async alternatives to every method and indexer just in case you would like to be well-behaved and not block worker threads just because the UI thread is busy.
+
+I mean, no judgment.
+We just don't like sending threads to thread jail.
+
+Last, but not least, each of them also has an array of range methods to handle performing multiple operations at once when you know you'll need to in advanced and would like to avoid O(2n) context switching.
 
 ## Threading
 
 [![Cogs.Threading Nuget](https://img.shields.io/nuget/v/Cogs.Threading.svg)](https://www.nuget.org/packages/Cogs.Threading)
 
+This is where we keep all our utilities for multi-threaded stuff.
+
+* `AsyncExtensions` - provides extensions for dealing with async utilities like `TaskCompletionSource<TResult>`
+* `AsyncSynchronizationContext` - provides a synchronization context for the Task Parallel Library
+* `ISynchronized` - represents an object the operations of which occur on a specific synchronization context (used extensively by the Synchronized Collections library, above)
+* `SynchronizedExtensions` - provides extensions for executing operations with instances of `System.Threading.SynchronizationContext` and `ISynchronized`
 
 # License
 
