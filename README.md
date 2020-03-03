@@ -150,7 +150,7 @@ We're not trying to *create* leaks here!
 
 [![Cogs.Reflection Nuget](https://img.shields.io/nuget/v/Cogs.Reflection.svg)](https://www.nuget.org/packages/Cogs.Reflection)
 
-This library has useful tools for when you can't be certain of certain things at compile time, such as types, methods, etc.
+This library has useful tools for when you can't be certain of some things at compile time, such as types, methods, etc.
 While .NET reflection is immensely powerful, it's not very quick.
 To address this, this library offers the following classes:
 
