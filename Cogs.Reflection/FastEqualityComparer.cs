@@ -50,7 +50,7 @@ namespace Cogs.Reflection
         /// </summary>
         /// <param name="type">The type</param>
         /// <returns>A <see cref="FastEqualityComparer"/></returns>
-        public static FastEqualityComparer Create(Type type)
+        public static FastEqualityComparer Get(Type type)
         {
             if (type is null)
                 throw new ArgumentNullException(nameof(type));

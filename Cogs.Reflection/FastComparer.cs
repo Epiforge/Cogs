@@ -61,7 +61,7 @@ namespace Cogs.Reflection
         /// </summary>
         /// <param name="type">The type</param>
         /// <returns>A <see cref="FastComparer"/></returns>
-        public static FastComparer Create(Type type)
+        public static FastComparer Get(Type type)
         {
             if (type is null)
                 throw new ArgumentNullException(nameof(type));
