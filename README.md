@@ -110,7 +110,7 @@ var expr = ActiveExpression.Create<bool>(lambda, false, false);
 
 This library provides a number of utilities surrounding collections:
 
-* `EquatableList<T>` is an immutable list of items which be compared with other instances of the same type and produces a hash code based on the permutation of its contents.
+* `EquatableList<T>` is an immutable list of items which may be compared with other instances of the same type and produces a hash code based on the permutation of its contents.
 * `INotifyGenericCollectionChanged<T>` is similar to the BCL's `INotifyCollectionChanged` except that it is a generic and therefore provides event arguments aware of the type of the collection.
 * `ObservableDictionary<TKey, TValue>` and `ObservableSortedDictionary<TKey, TValue>` are counterparts to the BCL's `Dictionary<TKey, TValue>` and `SortedDictionary<TKey, TValue>`, respectively, that implement the also included `IRangeDictionary<TKey, TValue>` and `INotifyDictionaryChanged<TKey, TValue>`. Ever want to add multiple items to a dictionary at once... or keep an eye on what's being done to it? Now you can.
 
