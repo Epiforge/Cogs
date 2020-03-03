@@ -164,7 +164,7 @@ namespace Cogs.ActiveExpressions
         {
             try
             {
-                if (!FastEqualityComparer.Create(node.Type).Equals(PeekBasis<ConstantExpression>().Value, node.Value))
+                if (!FastEqualityComparer.Get(node.Type).Equals(PeekBasis<ConstantExpression>().Value, node.Value))
                     return NotEqual(node);
                 return base.VisitConstant(node);
             }

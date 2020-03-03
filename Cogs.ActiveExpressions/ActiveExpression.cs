@@ -30,7 +30,7 @@ namespace Cogs.ActiveExpressions
             Type = type;
             defaultValue = FastDefault.Get(type);
             val = defaultValue;
-            valueEqualityComparer = FastEqualityComparer.Create(type);
+            valueEqualityComparer = FastEqualityComparer.Get(type);
             NodeType = nodeType;
             this.options = options;
             deferringEvaluation = deferEvaluation;

@@ -30,7 +30,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveConstantExpression other && Equals(other);
 
-        public bool Equals(ActiveConstantExpression other) => Type.Equals(other.Type) && FastEqualityComparer.Create(Type).Equals(Value, other.Value) && Equals(options, other.options);
+        public bool Equals(ActiveConstantExpression other) => Type.Equals(other.Type) && FastEqualityComparer.Get(Type).Equals(Value, other.Value) && Equals(options, other.options);
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveConstantExpression), Value);
 
