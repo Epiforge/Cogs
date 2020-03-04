@@ -29,7 +29,8 @@ This library accepts a `LambdaExpression` and arguments to pass to it, dissects 
 
 ```csharp
 var elizabeth = Employee.GetByName("Elizabeth"); // Employee implements INotifyPropertyChanged
-var expr = ActiveExpression.Create(e => e.Name.Length, elizabeth); // expr subscribed to elizabeth's PropertyChanged
+var expr =
+    ActiveExpression.Create(e => e.Name.Length, elizabeth); // expr subscribed to elizabeth's PropertyChanged
 ```
 
 Then, as changes involving any elements of the expression occur, a chain of automatic re-evaluation will get kicked off, possibly causing the active expression's `Value` property to change.
