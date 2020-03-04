@@ -2,7 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     /// <summary>
     /// Represents a group of elements that is itself an element in the results of a group by active query

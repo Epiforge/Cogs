@@ -3,7 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     /// <summary>
     /// Represents the scalar result of an active query

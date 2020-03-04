@@ -1,4 +1,4 @@
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     /// <summary>
     /// Describes the indexing strategies for active queries

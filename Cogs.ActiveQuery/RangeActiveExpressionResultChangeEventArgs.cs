@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     class RangeActiveExpressionResultChangeEventArgs<TElement, TResult> : EventArgs
     {

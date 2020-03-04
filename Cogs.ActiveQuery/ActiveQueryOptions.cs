@@ -1,7 +1,7 @@
 using System;
 using System.Linq.Expressions;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     /// <summary>
     /// Represents certain options governing the behavior of active query extensions

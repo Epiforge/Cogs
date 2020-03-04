@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     /// <summary>
     /// Represents a read-only collection of elements that is the result of an active query

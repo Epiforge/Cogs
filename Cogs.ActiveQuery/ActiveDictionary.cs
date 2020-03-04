@@ -9,7 +9,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     /// <summary>
     /// Represents a generic read-only collection of key-value pairs that is the result of an active query

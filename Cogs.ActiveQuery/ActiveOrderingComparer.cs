@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 using System.Collections.Specialized;
 using System.Linq;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     class ActiveOrderingComparer<TElement> : SyncDisposable, IComparer<TElement>
     {

@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     class CachedRangeActiveExpressionKeyEqualityComparer<TResult> : IEqualityComparer<(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options)>
     {

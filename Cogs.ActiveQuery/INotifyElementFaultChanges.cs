@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     /// <summary>
     /// Notifies listeners when the fault of an element in a sequence changes

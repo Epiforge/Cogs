@@ -1,6 +1,6 @@
 using System;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     /// <summary>
     /// Provides data for the <see cref="INotifyElementFaultChanges.ElementFaultChanged"/> and <see cref="INotifyElementFaultChanges.ElementFaultChanging"/> events

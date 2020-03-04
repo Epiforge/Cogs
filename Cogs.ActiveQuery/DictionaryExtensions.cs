@@ -3,7 +3,7 @@ using Cogs.Collections.Synchronized;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     static class DictionaryExtensions
     {

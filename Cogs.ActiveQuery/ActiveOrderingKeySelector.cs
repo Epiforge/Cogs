@@ -2,7 +2,7 @@ using Cogs.ActiveExpressions;
 using System;
 using System.Linq.Expressions;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     /// <summary>
     /// Represents a selector used by active ordering

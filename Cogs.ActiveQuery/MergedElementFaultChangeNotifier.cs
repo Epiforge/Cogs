@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     class MergedElementFaultChangeNotifier : SyncDisposable, INotifyElementFaultChanges
     {

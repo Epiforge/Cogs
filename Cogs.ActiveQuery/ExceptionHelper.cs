@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     internal static class ExceptionHelper
     {

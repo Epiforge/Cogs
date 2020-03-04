@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace Gear.ActiveQuery
+namespace Cogs.ActiveQuery
 {
     static class RangeActiveExpression
     {
