@@ -19,13 +19,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cogs.ActiveExpressions" Version="1.0.1" />
-        <PackageReference Include="Cogs.Collections" Version="1.1.0" />
-        <PackageReference Include="Cogs.Collections.Synchronized" Version="1.0.1" />
+        <PackageReference Include="Cogs.ActiveExpressions" Version="1.0.2" />
+        <PackageReference Include="Cogs.Collections" Version="1.1.1" />
+        <PackageReference Include="Cogs.Collections.Synchronized" Version="1.0.2" />
         <PackageReference Include="Cogs.Components" Version="1.0.2" />
         <PackageReference Include="Cogs.Disposal" Version="1.1.1" />
         <PackageReference Include="Cogs.Reflection" Version="1.2.0" />
-        <PackageReference Include="Cogs.Threading" Version="1.0.2" />
+        <PackageReference Include="Cogs.Threading" Version="1.0.3" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
