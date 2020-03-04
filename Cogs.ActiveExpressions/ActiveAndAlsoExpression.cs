@@ -17,14 +17,14 @@ namespace Cogs.ActiveExpressions
         protected override void Evaluate()
         {
             var leftFault = left.Fault;
-            if (leftFault != null)
+            if (leftFault is { })
                 Fault = leftFault;
             else if (!(left.Value is bool leftBool ? leftBool : false))
                 Value = false;
             else
             {
                 var rightFault = right.Fault;
-                if (rightFault != null)
+                if (rightFault is { })
                     Fault = rightFault;
                 else
                     Value = right.Value is bool rightBool ? rightBool : false;

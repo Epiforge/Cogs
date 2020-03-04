@@ -51,7 +51,7 @@ namespace Cogs.Threading
                 {
                     csse.exception = ex;
                 }
-                if (signal != null)
+                if (signal is { })
                     signal.Set();
                 SetSynchronizationContext(currentContext);
             }
@@ -99,7 +99,7 @@ namespace Cogs.Threading
             var csse = (callback: d ?? throw new ArgumentNullException(nameof(d)), state, signal, exception: (Exception?)null);
             queuedCallbacks.Post(csse);
             signal.Wait();
-            if (csse.exception != null)
+            if (csse.exception is { })
                 ExceptionDispatchInfo.Capture(csse.exception).Throw();
         }
     }

@@ -27,7 +27,7 @@ namespace Gear.ActiveQuery
         {
             synchronized = readOnlyList as ISynchronized ?? throw new ArgumentException($"{nameof(readOnlyList)} must implement {nameof(ISynchronized)}", nameof(readOnlyList));
             this.faultNotifier = faultNotifier ?? (readOnlyList as INotifyElementFaultChanges);
-            if (this.faultNotifier != null)
+            if (this.faultNotifier is { })
             {
                 this.faultNotifier.ElementFaultChanged += FaultNotifierElementFaultChanged;
                 this.faultNotifier.ElementFaultChanging += FaultNotifierElementFaultChanging;
@@ -108,7 +108,7 @@ namespace Gear.ActiveQuery
             if (disposing)
             {
                 onDispose?.Invoke();
-                if (faultNotifier != null)
+                if (faultNotifier is { })
                 {
                     faultNotifier.ElementFaultChanged -= FaultNotifierElementFaultChanged;
                     faultNotifier.ElementFaultChanging -= FaultNotifierElementFaultChanging;

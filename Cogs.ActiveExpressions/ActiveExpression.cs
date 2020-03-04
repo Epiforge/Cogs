@@ -399,11 +399,11 @@ namespace Cogs.ActiveExpressions
         /// <returns>The string representation of the node's value</returns>
         protected static string GetValueString(Exception? fault, bool deferred, object? value)
         {
-            if (fault != null)
+            if (fault is { })
                 return $"[{fault.GetType().Name}: {fault.Message}]";
             if (deferred)
                 return "?";
-            if (value == null)
+            if (value is null)
                 return "null";
             if (value is string str)
             {
@@ -474,10 +474,10 @@ namespace Cogs.ActiveExpressions
                 case MemberExpression memberExpression:
                     return Expression.MakeMemberAccess(ReplaceParameters(parameterTranslation, memberExpression.Expression), memberExpression.Member);
                 case MethodCallExpression methodCallExpression:
-                    return methodCallExpression.Object == null ? Expression.Call(methodCallExpression.Method, methodCallExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument))) : Expression.Call(ReplaceParameters(parameterTranslation, methodCallExpression.Object), methodCallExpression.Method, methodCallExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument)));
+                    return methodCallExpression.Object is null ? Expression.Call(methodCallExpression.Method, methodCallExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument))) : Expression.Call(ReplaceParameters(parameterTranslation, methodCallExpression.Object), methodCallExpression.Method, methodCallExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument)));
                 case NewExpression newExpression:
                     var newArguments = newExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument));
-                    return newExpression.Members == null ? Expression.New(newExpression.Constructor, newArguments) : Expression.New(newExpression.Constructor, newArguments, newExpression.Members);
+                    return newExpression.Members is null ? Expression.New(newExpression.Constructor, newArguments) : Expression.New(newExpression.Constructor, newArguments, newExpression.Members);
                 case ParameterExpression parameterExpression:
                     return parameterTranslation[parameterExpression];
                 case UnaryExpression unaryExpression:

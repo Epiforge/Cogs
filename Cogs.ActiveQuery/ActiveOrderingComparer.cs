@@ -88,9 +88,9 @@ namespace Gear.ActiveQuery
                 var isDescending = selectors[i].isDescending;
                 var xComparable = xList[i];
                 var yComparable = yList[i];
-                if (xComparable == null)
-                    return yComparable == null ? 0 : isDescending ? 1 : -1;
-                else if (yComparable == null)
+                if (xComparable is null)
+                    return yComparable is null ? 0 : isDescending ? 1 : -1;
+                else if (yComparable is null)
                     return isDescending ? -1 : 1;
                 var comparison = xComparable.CompareTo(yComparable);
                 if (comparison != 0)

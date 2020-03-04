@@ -19,7 +19,7 @@ namespace Cogs.ActiveExpressions
             {
                 var operandParameter = Expression.Parameter(typeof(object));
                 var operandConversion = Expression.Convert(operandParameter, this.operand.Type);
-                @delegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(this.method == null ? Expression.MakeUnary(NodeType, operandConversion, Type) : Expression.MakeUnary(NodeType, operandConversion, Type, this.method), typeof(object)), operandParameter).Compile();
+                @delegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(this.method is null ? Expression.MakeUnary(NodeType, operandConversion, Type) : Expression.MakeUnary(NodeType, operandConversion, Type, this.method), typeof(object)), operandParameter).Compile();
                 implementations.Add(implementationKey, @delegate);
             }
             this.@delegate = @delegate;
@@ -51,7 +51,7 @@ namespace Cogs.ActiveExpressions
 
         void DisposeValueIfNecessary()
         {
-            if (method != null && ApplicableOptions.IsMethodReturnValueDisposed(method) && TryGetUndeferredValue(out var value))
+            if (method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method) && TryGetUndeferredValue(out var value))
             {
                 if (value is IDisposable disposable)
                     disposable.Dispose();
@@ -71,7 +71,7 @@ namespace Cogs.ActiveExpressions
             {
                 DisposeValueIfNecessary();
                 var operandFault = operand.Fault;
-                if (operandFault != null)
+                if (operandFault is { })
                     Fault = operandFault;
                 else
                     Value = @delegate.Invoke(operand.Value);

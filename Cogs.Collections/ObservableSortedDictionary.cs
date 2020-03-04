@@ -113,7 +113,7 @@ namespace Cogs.Collections
         /// <param name="value">The value of the element to add</param>
         public virtual void Add(TKey key, TValue value)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             if (!gsd.ContainsKey(key))
                 NotifyCountChanging();
@@ -133,7 +133,7 @@ namespace Cogs.Collections
         /// <param name="value">The object to use as the value of the element to add</param>
         protected virtual void Add(object key, object value)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             if (key is TKey typedKey && !gsd.ContainsKey(typedKey))
                 NotifyCountChanging();
@@ -148,7 +148,7 @@ namespace Cogs.Collections
         /// <param name="item">The object to add to the <see cref="ICollection{T}"/></param>
         protected virtual void Add(KeyValuePair<TKey, TValue> item)
         {
-            if (item.Key == null)
+            if (item.Key is null)
                 throw new ArgumentNullException("key");
             if (!gsd.ContainsKey(item.Key))
                 NotifyCountChanging();
@@ -170,7 +170,7 @@ namespace Cogs.Collections
         /// <param name="keyValuePairs">The key-value pairs to add</param>
         public virtual void AddRange(IReadOnlyList<KeyValuePair<TKey, TValue>> keyValuePairs)
         {
-            if (keyValuePairs.Any(kvp => kvp.Key == null || gsd.ContainsKey(kvp.Key)))
+            if (keyValuePairs.Any(kvp => kvp.Key is null || gsd.ContainsKey(kvp.Key)))
                 throw new ArgumentException("One of the keys was null or already found in the dictionary", nameof(keyValuePairs));
             NotifyCountChanging();
             foreach (var keyValuePair in keyValuePairs)
@@ -515,7 +515,7 @@ namespace Cogs.Collections
         public virtual IReadOnlyList<TKey> ReplaceRange(IEnumerable<TKey> removeKeys, IEnumerable<KeyValuePair<TKey, TValue>> newKeyValuePairs)
         {
             var removingKeys = removeKeys.ToImmutableHashSet();
-            if (newKeyValuePairs.Where(kvp => !removingKeys.Contains(kvp.Key)).Any(kvp => kvp.Key == null || gsd.ContainsKey(kvp.Key)))
+            if (newKeyValuePairs.Where(kvp => !removingKeys.Contains(kvp.Key)).Any(kvp => kvp.Key is null || gsd.ContainsKey(kvp.Key)))
                 throw new ArgumentException("One of the new keys was null or already found in the dictionary", nameof(newKeyValuePairs));
             var removingKeyValuePairs = new List<KeyValuePair<TKey, TValue>>();
             foreach (var key in removingKeys)

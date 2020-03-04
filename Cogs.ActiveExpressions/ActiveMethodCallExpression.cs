@@ -93,10 +93,10 @@ namespace Cogs.ActiveExpressions
             {
                 DisposeValueIfNecessary();
                 var objectFault = @object?.Fault;
-                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault != null).FirstOrDefault();
-                if (objectFault != null)
+                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
+                if (objectFault is { })
                     Fault = objectFault;
-                else if (argumentFault != null)
+                else if (argumentFault is { })
                     Fault = argumentFault;
                 else
                     Value = fastMethod.Invoke(@object?.Value, arguments.Select(argument => argument.Value).ToArray());
@@ -119,7 +119,7 @@ namespace Cogs.ActiveExpressions
 
         public static ActiveMethodCallExpression Create(MethodCallExpression methodCallExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            if (methodCallExpression.Object == null)
+            if (methodCallExpression.Object is null)
             {
                 var method = methodCallExpression.Method;
                 var arguments = new EquatableList<ActiveExpression>(methodCallExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToList());

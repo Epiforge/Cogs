@@ -153,7 +153,7 @@ namespace Cogs.Collections
         /// <param name="value">The value of the element to add</param>
         public virtual void Add(TKey key, TValue value)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             if (!gd.ContainsKey(key))
                 NotifyCountChanging();
@@ -173,7 +173,7 @@ namespace Cogs.Collections
         /// <param name="value">The object to use as the value of the element to add</param>
         protected virtual void Add(object key, object value)
         {
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
             if (key is TKey typedKey && !gd.ContainsKey(typedKey))
                 NotifyCountChanging();
@@ -188,7 +188,7 @@ namespace Cogs.Collections
         /// <param name="item">The object to add to the <see cref="ICollection{T}"/></param>
         protected virtual void Add(KeyValuePair<TKey, TValue> item)
         {
-            if (item.Key == null)
+            if (item.Key is null)
                 throw new ArgumentNullException("key");
             if (!gd.ContainsKey(item.Key))
                 NotifyCountChanging();
@@ -210,7 +210,7 @@ namespace Cogs.Collections
         /// <param name="keyValuePairs">The key-value pairs to add</param>
         public virtual void AddRange(IReadOnlyList<KeyValuePair<TKey, TValue>> keyValuePairs)
         {
-            if (keyValuePairs.Any(kvp => kvp.Key == null || gd.ContainsKey(kvp.Key)))
+            if (keyValuePairs.Any(kvp => kvp.Key is null || gd.ContainsKey(kvp.Key)))
                 throw new ArgumentException("One of the keys was null or already found in the dictionary", nameof(keyValuePairs));
             NotifyCountChanging();
             foreach (var keyValuePair in keyValuePairs)
@@ -355,7 +355,7 @@ namespace Cogs.Collections
         /// <param name="e">The event arguments for <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/></param>
         protected virtual void OnChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e)
         {
-            if (CollectionChanged != null)
+            if (CollectionChanged is { })
                 switch (e.Action)
                 {
                     case NotifyDictionaryChangedAction.Add:
@@ -373,7 +373,7 @@ namespace Cogs.Collections
                     default:
                         throw new NotSupportedException();
                 }
-            if (GenericCollectionChanged != null)
+            if (GenericCollectionChanged is { })
                 switch (e.Action)
                 {
                     case NotifyDictionaryChangedAction.Add:
@@ -391,7 +391,7 @@ namespace Cogs.Collections
                     default:
                         throw new NotSupportedException();
                 }
-            if (DictionaryChangedBoxed != null)
+            if (DictionaryChangedBoxed is { })
                 switch (e.Action)
                 {
                     case NotifyDictionaryChangedAction.Add:
@@ -557,7 +557,7 @@ namespace Cogs.Collections
         public virtual IReadOnlyList<TKey> ReplaceRange(IEnumerable<TKey> removeKeys, IEnumerable<KeyValuePair<TKey, TValue>> newKeyValuePairs)
         {
             var removingKeys = removeKeys.ToImmutableHashSet();
-            if (newKeyValuePairs.Where(kvp => !removingKeys.Contains(kvp.Key)).Any(kvp => kvp.Key == null || gd.ContainsKey(kvp.Key)))
+            if (newKeyValuePairs.Where(kvp => !removingKeys.Contains(kvp.Key)).Any(kvp => kvp.Key is null || gd.ContainsKey(kvp.Key)))
                 throw new ArgumentException("One of the new keys was null or already found in the dictionary", nameof(newKeyValuePairs));
             var removingKeyValuePairs = new List<KeyValuePair<TKey, TValue>>();
             foreach (var key in removingKeys)
@@ -585,7 +585,7 @@ namespace Cogs.Collections
         /// </summary>
         public virtual void Reset()
         {
-            if (comparer == null)
+            if (comparer is null)
                 gd = new Dictionary<TKey, TValue>();
             else
                 gd = new Dictionary<TKey, TValue>(comparer);
@@ -598,7 +598,7 @@ namespace Cogs.Collections
         /// <param name="dictionary">The dictionary from which to retrieve the initial elements</param>
         public virtual void Reset(IDictionary<TKey, TValue> dictionary)
         {
-            if (comparer == null)
+            if (comparer is null)
                 gd = new Dictionary<TKey, TValue>(dictionary);
             else
                 gd = new Dictionary<TKey, TValue>(dictionary, comparer);

@@ -33,7 +33,7 @@ namespace Cogs.Collections
             switch (action)
             {
                 case NotifyCollectionChangedAction.Reset:
-                    if (changedItem != null)
+                    if (changedItem is { })
                         throw new ArgumentException(nameof(changedItem));
                     InitializeAdd(action, null, -1);
                     break;
@@ -57,7 +57,7 @@ namespace Cogs.Collections
             switch (action)
             {
                 case NotifyCollectionChangedAction.Reset:
-                    if (changedItem != null)
+                    if (changedItem is { })
                         throw new ArgumentException(nameof(changedItem));
                     if (index != -1)
                         throw new ArgumentOutOfRangeException(nameof(index));
@@ -82,13 +82,13 @@ namespace Cogs.Collections
             switch (action)
             {
                 case NotifyCollectionChangedAction.Reset:
-                    if (changedItems != null)
+                    if (changedItems is { })
                         throw new ArgumentException(nameof(changedItems));
                     InitializeAdd(action, null, -1);
                     break;
                 case NotifyCollectionChangedAction.Add:
                 case NotifyCollectionChangedAction.Remove:
-                    if (changedItems == null)
+                    if (changedItems is null)
                         throw new ArgumentNullException(nameof(changedItems));
                     InitializeAddOrRemove(action, changedItems, -1);
                     break;
@@ -108,7 +108,7 @@ namespace Cogs.Collections
             switch (action)
             {
                 case NotifyCollectionChangedAction.Reset:
-                    if (changedItems != null)
+                    if (changedItems is { })
                         throw new ArgumentException(nameof(changedItems));
                     if (startingIndex != -1)
                         throw new ArgumentOutOfRangeException(nameof(startingIndex));
@@ -116,7 +116,7 @@ namespace Cogs.Collections
                     break;
                 case NotifyCollectionChangedAction.Add:
                 case NotifyCollectionChangedAction.Remove:
-                    if (changedItems == null)
+                    if (changedItems is null)
                         throw new ArgumentNullException(nameof(changedItems));
                     if (startingIndex < -1)
                         throw new ArgumentOutOfRangeException(nameof(startingIndex));
@@ -164,9 +164,9 @@ namespace Cogs.Collections
         {
             if (action != NotifyCollectionChangedAction.Replace)
                 throw new ArgumentOutOfRangeException(nameof(action));
-            if (newItems == null)
+            if (newItems is null)
                 throw new ArgumentNullException(nameof(newItems));
-            if (oldItems == null)
+            if (oldItems is null)
                 throw new ArgumentNullException(nameof(oldItems));
             InitializeMoveOrReplace(action, newItems, oldItems, -1, -1);
         }
@@ -182,9 +182,9 @@ namespace Cogs.Collections
         {
             if (action != NotifyCollectionChangedAction.Replace)
                 throw new ArgumentOutOfRangeException(nameof(action));
-            if (newItems == null)
+            if (newItems is null)
                 throw new ArgumentNullException(nameof(newItems));
-            if (oldItems == null)
+            if (oldItems is null)
                 throw new ArgumentNullException(nameof(oldItems));
             InitializeMoveOrReplace(action, newItems, oldItems, startingIndex, startingIndex);
         }

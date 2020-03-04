@@ -103,7 +103,7 @@ namespace Cogs.ActiveExpressions
             {
                 DisposeValueIfNecessary();
                 var expressionFault = expression?.Fault;
-                if (expressionFault != null)
+                if (expressionFault is { })
                     Fault = expressionFault;
                 else
                 {
@@ -159,7 +159,7 @@ namespace Cogs.ActiveExpressions
 
         public static ActiveMemberExpression Create(MemberExpression memberExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            if (memberExpression.Expression == null)
+            if (memberExpression.Expression is null)
             {
                 var member = memberExpression.Member;
                 var key = (member, options);

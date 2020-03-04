@@ -19,7 +19,7 @@ namespace Cogs.ActiveExpressions
         public ExpressionEqualityComparisonVisitor(Expression basis, Expression? visit = null) : base()
         {
             this.basis = basis;
-            if (visit != null)
+            if (visit is { })
                 Visit(visit);
         }
 
@@ -59,7 +59,7 @@ namespace Cogs.ActiveExpressions
             var resultSet = false;
             try
             {
-                if (nodeRoot == null)
+                if (nodeRoot is null)
                 {
                     nodeRoot = node;
                     basisStack.Push(this.basis);
@@ -74,9 +74,9 @@ namespace Cogs.ActiveExpressions
                 if (!resultSet)
                 {
                     basis = PeekBasis<Expression>();
-                    if (node != null)
+                    if (node is { })
                     {
-                        if (basis == null)
+                        if (basis is null)
                         {
                             result = NotEqual(node);
                             resultSet = true;
@@ -87,7 +87,7 @@ namespace Cogs.ActiveExpressions
                             resultSet = true;
                         }
                     }
-                    else if (basis != null)
+                    else if (basis is { })
                     {
                         result = NotEqual(node);
                         resultSet = true;
@@ -98,7 +98,7 @@ namespace Cogs.ActiveExpressions
             }
             finally
             {
-                if (node == nodeRoot && basis != null)
+                if (node == nodeRoot && basis is { })
                 {
                     var bodyStackRemaining = basisStack.Any();
                     nodeRoot = null;
@@ -125,7 +125,7 @@ namespace Cogs.ActiveExpressions
                 if (body.IsLifted != node.IsLifted || body.IsLiftedToNull != node.IsLiftedToNull || body.Method != node.Method)
                     return NotEqual(node);
                 PushBasis(body.Right);
-                if (body.Conversion != null)
+                if (body.Conversion is { })
                     PushBasis(body.Conversion);
                 PushBasis(body.Left);
                 return base.VisitBinary(node);

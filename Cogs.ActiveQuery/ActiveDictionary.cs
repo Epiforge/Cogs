@@ -50,7 +50,7 @@ namespace Gear.ActiveQuery
         public ActiveDictionary(IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, INotifyElementFaultChanges? faultNotifier, Action? onDispose = null) : this(readOnlyDictionary, onDispose)
         {
             this.faultNotifier = faultNotifier ?? (readOnlyDictionary as INotifyElementFaultChanges);
-            if (this.faultNotifier != null)
+            if (this.faultNotifier is { })
             {
                 this.faultNotifier.ElementFaultChanged += FaultNotifierElementFaultChanged;
                 this.faultNotifier.ElementFaultChanging += FaultNotifierElementFaultChanging;

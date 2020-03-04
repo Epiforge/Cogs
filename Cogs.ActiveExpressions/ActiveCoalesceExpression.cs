@@ -9,7 +9,7 @@ namespace Cogs.ActiveExpressions
     {
         public ActiveCoalesceExpression(Type type, ActiveExpression left, ActiveExpression right, LambdaExpression conversion, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.Coalesce, left, right, false, null, options, deferEvaluation, false, false)
         {
-            if (conversion != null)
+            if (conversion is { })
             {
                 var key = (convertFrom: conversion.Parameters[0].Type, convertTo: conversion.Body.Type);
                 lock (conversionDelegateManagementLock)
@@ -38,17 +38,17 @@ namespace Cogs.ActiveExpressions
             try
             {
                 var leftFault = left.Fault;
-                if (leftFault != null)
+                if (leftFault is { })
                     Fault = leftFault;
                 else
                 {
                     var leftValue = left.Value;
-                    if (leftValue != null)
-                        Value = conversionDelegate == null ? leftValue : conversionDelegate(leftValue);
+                    if (leftValue is { })
+                        Value = conversionDelegate is null ? leftValue : conversionDelegate(leftValue);
                     else
                     {
                         var rightFault = right.Fault;
-                        if (rightFault != null)
+                        if (rightFault is { })
                             Fault = rightFault;
                         else
                             Value = right.Value;

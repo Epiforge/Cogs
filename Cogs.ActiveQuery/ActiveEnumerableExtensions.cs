@@ -54,13 +54,13 @@ namespace Gear.ActiveQuery
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 where.CollectionChanged += collectionChanged;
-                if (changeNotifyingSource != null)
+                if (changeNotifyingSource is { })
                     changeNotifyingSource.CollectionChanged += collectionChanged;
 
                 return new ActiveValue<bool>(where.Count == (readOnlySource?.Count ?? source.Count()), out setValue, elementFaultChangeNotifier: where, onDispose: () =>
                 {
                     where.CollectionChanged -= collectionChanged;
-                    if (changeNotifyingSource != null)
+                    if (changeNotifyingSource is { })
                         changeNotifyingSource.CollectionChanged -= collectionChanged;
                     where.Dispose();
                 });
@@ -281,7 +281,7 @@ namespace Gear.ActiveQuery
             var synchronizedFirst = first as ISynchronized;
             var synchronizedSecond = second as ISynchronized;
 
-            if (synchronizedFirst != null && synchronizedSecond != null && synchronizedFirst.SynchronizationContext != synchronizedSecond.SynchronizationContext)
+            if (synchronizedFirst is { } && synchronizedSecond is { } && synchronizedFirst.SynchronizationContext != synchronizedSecond.SynchronizationContext)
                 throw new InvalidOperationException($"{nameof(first)} and {nameof(second)} are both synchronizable but using different synchronization contexts; select a different overload of {nameof(ActiveConcat)} to specify the synchronization context to use");
 
             var synchronizationContext = synchronizedFirst?.SynchronizationContext ?? synchronizedSecond?.SynchronizationContext ?? Synchronization.DefaultSynchronizationContext;
@@ -297,7 +297,7 @@ namespace Gear.ActiveQuery
                         rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerable.Count, first);
                     else
                     {
-                        if (e.OldItems != null && e.NewItems != null && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
+                        if (e.OldItems is { } && e.NewItems is { } && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
                         {
                             if (e.OldItems.Count == 1 && e.NewItems.Count == 1)
                                 rangeObservableCollection!.Replace(e.OldStartingIndex, (TSource)e.NewItems[0]);
@@ -306,9 +306,9 @@ namespace Gear.ActiveQuery
                         }
                         else
                         {
-                            if (e.OldItems != null && e.OldStartingIndex >= 0)
+                            if (e.OldItems is { } && e.OldStartingIndex >= 0)
                                 rangeObservableCollection!.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
-                            if (e.NewItems != null && e.NewStartingIndex >= 0)
+                            if (e.NewItems is { } && e.NewStartingIndex >= 0)
                                 rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Cast<TSource>());
                         }
                     }
@@ -321,7 +321,7 @@ namespace Gear.ActiveQuery
                         rangeObservableCollection!.ReplaceRange(firstEnumerable.Count, rangeObservableCollection.Count - firstEnumerable.Count, second);
                     else
                     {
-                        if (e.OldItems != null && e.NewItems != null && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
+                        if (e.OldItems is { } && e.NewItems is { } && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
                         {
                             if (e.OldItems.Count == 1 && e.NewItems.Count == 1)
                                 rangeObservableCollection!.Replace(firstEnumerable.Count + e.OldStartingIndex, (TSource)e.NewItems[0]);
@@ -330,9 +330,9 @@ namespace Gear.ActiveQuery
                         }
                         else
                         {
-                            if (e.OldItems != null && e.OldStartingIndex >= 0)
+                            if (e.OldItems is { } && e.OldStartingIndex >= 0)
                                 rangeObservableCollection!.RemoveRange(firstEnumerable.Count + e.OldStartingIndex, e.OldItems.Count);
-                            if (e.NewItems != null && e.NewStartingIndex >= 0)
+                            if (e.NewItems is { } && e.NewStartingIndex >= 0)
                                 rangeObservableCollection!.InsertRange(firstEnumerable.Count + e.NewStartingIndex, e.NewItems.Cast<TSource>());
                         }
                     }
@@ -368,7 +368,7 @@ namespace Gear.ActiveQuery
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that contains the concatenated elements of the two input sequences</returns>
         public static IActiveEnumerable<TSource> ActiveConcat<TSource>(this IEnumerable<TSource> first, IEnumerable<TSource> second, SynchronizationContext synchronizationContext)
         {
-            if (synchronizationContext == null)
+            if (synchronizationContext is null)
                 throw new ArgumentNullException(nameof(synchronizationContext));
 
             SynchronizedRangeObservableCollection<TSource>? rangeObservableCollection = null;
@@ -382,7 +382,7 @@ namespace Gear.ActiveQuery
                         rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerable.Count, first);
                     else
                     {
-                        if (e.OldItems != null && e.NewItems != null && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
+                        if (e.OldItems is { } && e.NewItems is { } && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
                         {
                             if (e.OldItems.Count == 1 && e.NewItems.Count == 1)
                                 rangeObservableCollection!.Replace(e.OldStartingIndex, (TSource)e.NewItems[0]);
@@ -391,9 +391,9 @@ namespace Gear.ActiveQuery
                         }
                         else
                         {
-                            if (e.OldItems != null && e.OldStartingIndex >= 0)
+                            if (e.OldItems is { } && e.OldStartingIndex >= 0)
                                 rangeObservableCollection!.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
-                            if (e.NewItems != null && e.NewStartingIndex >= 0)
+                            if (e.NewItems is { } && e.NewStartingIndex >= 0)
                                 rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Cast<TSource>());
                         }
                     }
@@ -406,7 +406,7 @@ namespace Gear.ActiveQuery
                         rangeObservableCollection!.ReplaceRange(firstEnumerable.Count, rangeObservableCollection.Count - firstEnumerable.Count, second);
                     else
                     {
-                        if (e.OldItems != null && e.NewItems != null && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
+                        if (e.OldItems is { } && e.NewItems is { } && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
                         {
                             if (e.OldItems.Count == 1 && e.NewItems.Count == 1)
                                 rangeObservableCollection!.Replace(firstEnumerable.Count + e.OldStartingIndex, (TSource)e.NewItems[0]);
@@ -415,9 +415,9 @@ namespace Gear.ActiveQuery
                         }
                         else
                         {
-                            if (e.OldItems != null && e.OldStartingIndex >= 0)
+                            if (e.OldItems is { } && e.OldStartingIndex >= 0)
                                 rangeObservableCollection!.RemoveRange(firstEnumerable.Count + e.OldStartingIndex, e.OldItems.Count);
-                            if (e.NewItems != null && e.NewStartingIndex >= 0)
+                            if (e.NewItems is { } && e.NewStartingIndex >= 0)
                                 rangeObservableCollection!.InsertRange(firstEnumerable.Count + e.NewStartingIndex, e.NewItems.Cast<TSource>());
                         }
                     }
@@ -542,13 +542,13 @@ namespace Gear.ActiveQuery
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 where.CollectionChanged += collectionChanged;
-                if (changeNotifyingSource != null)
+                if (changeNotifyingSource is { })
                     changeNotifyingSource.CollectionChanged += collectionChanged;
 
                 return new ActiveValue<int>(where.Count, out setValue, elementFaultChangeNotifier: where, onDispose: () =>
                 {
                     where.CollectionChanged -= collectionChanged;
-                    if (changeNotifyingSource != null)
+                    if (changeNotifyingSource is { })
                         changeNotifyingSource.CollectionChanged -= collectionChanged;
                     where.Dispose();
                 });
@@ -603,7 +603,7 @@ namespace Gear.ActiveQuery
                     }
                     else if (e.Action != NotifyCollectionChangedAction.Move)
                     {
-                        if (e.OldItems != null && e.OldStartingIndex >= 0)
+                        if (e.OldItems is { } && e.OldStartingIndex >= 0)
                         {
                             var removingResults = new List<TSource>();
                             foreach (TSource oldItem in e.OldItems)
@@ -617,7 +617,7 @@ namespace Gear.ActiveQuery
                             if (removingResults.Count > 0)
                                 rangeObservableCollection.RemoveRange(removingResults);
                         }
-                        if (e.NewItems != null && e.NewStartingIndex >= 0)
+                        if (e.NewItems is { } && e.NewStartingIndex >= 0)
                         {
                             var addingResults = new List<TSource>();
                             foreach (TSource newItem in e.NewItems)
@@ -640,7 +640,7 @@ namespace Gear.ActiveQuery
             {
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>();
 
-                if (changingSource != null)
+                if (changingSource is { })
                     changingSource.CollectionChanged += collectionChanged;
 
                 distinctCounts = new Dictionary<TSource, int>(comparer);
@@ -657,7 +657,7 @@ namespace Gear.ActiveQuery
 
                 return new ActiveEnumerable<TSource>(rangeObservableCollection, () =>
                 {
-                    if (changingSource != null)
+                    if (changingSource is { })
                         changingSource.CollectionChanged -= collectionChanged;
                 });
             })!;
@@ -1115,8 +1115,8 @@ namespace Gear.ActiveQuery
 
             var collectionAndGroupingDictionary = (IDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>)(indexingStrategy switch
             {
-                IndexingStrategy.HashTable => equalityComparer == null ? new Dictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new Dictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(equalityComparer),
-                IndexingStrategy.SelfBalancingBinarySearchTree => comparer == null ? new SortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new SortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(comparer),
+                IndexingStrategy.HashTable => equalityComparer is null ? new Dictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new Dictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(equalityComparer),
+                IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new SortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new SortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(comparer),
                 _ => throw new ArgumentOutOfRangeException(nameof(indexingStrategy), $"{nameof(indexingStrategy)} must be {IndexingStrategy.HashTable} or {IndexingStrategy.SelfBalancingBinarySearchTree}"),
             });
 
@@ -1146,8 +1146,8 @@ namespace Gear.ActiveQuery
                     {
                         collectionAndGroupingDictionary = indexingStrategy switch
                         {
-                            IndexingStrategy.HashTable => equalityComparer == null ? new Dictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new Dictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(equalityComparer),
-                            IndexingStrategy.SelfBalancingBinarySearchTree => comparer == null ? new SortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new SortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(comparer),
+                            IndexingStrategy.HashTable => equalityComparer is null ? new Dictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new Dictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(equalityComparer),
+                            IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new SortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new SortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(comparer),
                             _ => throw new ArgumentOutOfRangeException(nameof(indexingStrategy), $"{nameof(indexingStrategy)} must be {IndexingStrategy.HashTable} or {IndexingStrategy.SelfBalancingBinarySearchTree}"),
                         };
                         rangeObservableCollection!.Clear();
@@ -1478,7 +1478,7 @@ namespace Gear.ActiveQuery
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
                             var addedMax = e.NewItems.Max(er => er.result);
-                            if (activeValue!.OperationFault != null || comparer.Compare(activeValue.Value, addedMax) < 0)
+                            if (activeValue!.OperationFault is { } || comparer.Compare(activeValue.Value, addedMax) < 0)
                             {
                                 setOperationFault!(null);
                                 setValue!(addedMax);
@@ -1604,7 +1604,7 @@ namespace Gear.ActiveQuery
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
                             var addedMin = e.NewItems.Min(er => er.result);
-                            if (activeValue!.OperationFault != null || comparer.Compare(activeValue.Value, addedMin) > 0)
+                            if (activeValue!.OperationFault is { } || comparer.Compare(activeValue.Value, addedMin) > 0)
                             {
                                 setOperationFault!(null);
                                 setValue!(addedMin);
@@ -1653,9 +1653,9 @@ namespace Gear.ActiveQuery
                         rangeObservableCollection.Reset(source.OfType<TResult>());
                     else if (e.Action != NotifyCollectionChangedAction.Move)
                     {
-                        if (e.OldItems != null)
+                        if (e.OldItems is { })
                             rangeObservableCollection.RemoveRange(e.OldItems.OfType<TResult>());
-                        if (e.NewItems != null)
+                        if (e.NewItems is { })
                             rangeObservableCollection.AddRange(e.NewItems.OfType<TResult>());
                     }
                 });
@@ -1664,12 +1664,12 @@ namespace Gear.ActiveQuery
             {
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult>(source.OfType<TResult>());
 
-                if (notifyingSource != null)
+                if (notifyingSource is { })
                     notifyingSource.CollectionChanged += collectionChanged;
 
                 return new ActiveEnumerable<TResult>(rangeObservableCollection, source as INotifyElementFaultChanges, () =>
                 {
-                    if (notifyingSource != null)
+                    if (notifyingSource is { })
                         notifyingSource.CollectionChanged -= collectionChanged;
                 });
             })!;
@@ -2523,11 +2523,11 @@ namespace Gear.ActiveQuery
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
                 synchronizableSource.SequentialExecute(() =>
                 {
-                    var oldItems = e.OldItems != null ? e.OldItems.Cast<TResult>() : Enumerable.Empty<TResult>();
-                    var oldItemsCount = e.OldItems != null ? e.OldItems.Count : 0;
+                    var oldItems = e.OldItems is { } ? e.OldItems.Cast<TResult>() : Enumerable.Empty<TResult>();
+                    var oldItemsCount = e.OldItems is { } ? e.OldItems.Count : 0;
                     var oldStartingIndex = e.OldStartingIndex;
-                    var newItems = e.NewItems != null ? e.NewItems.Cast<TResult>() : Enumerable.Empty<TResult>();
-                    var newItemsCount = e.NewItems != null ? e.NewItems.Count : 0;
+                    var newItems = e.NewItems is { } ? e.NewItems.Cast<TResult>() : Enumerable.Empty<TResult>();
+                    var newItemsCount = e.NewItems is { } ? e.NewItems.Count : 0;
                     var newStartingIndex = e.NewStartingIndex;
                     var element = changingResultToSource[(INotifyCollectionChanged)sender];
                     var previousCount = sourceToCount[element];
@@ -2967,7 +2967,7 @@ namespace Gear.ActiveQuery
                     operationFault = ExceptionHelper.SequenceContainsNoElements;
                 else if (moreThanOne = where.Count > 1)
                     operationFault = ExceptionHelper.SequenceContainsMoreThanOneElement;
-                return new ActiveValue<TSource>(operationFault == null ? where[0] : default, out setValue, operationFault, out setOperationFault, where, () =>
+                return new ActiveValue<TSource>(operationFault is null ? where[0] : default, out setValue, operationFault, out setOperationFault, where, () =>
                 {
                     where.CollectionChanged -= collectionChanged;
                     where.Dispose();
@@ -3248,13 +3248,13 @@ namespace Gear.ActiveQuery
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 var notifier = source as INotifyCollectionChanged;
-                if (notifier != null)
+                if (notifier is { })
                     notifier.CollectionChanged += collectionChanged;
 
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<object>(synchronizationContext, source.Cast<object>());
                 return new ActiveEnumerable<object>(rangeObservableCollection, source as INotifyElementFaultChanges, () =>
                 {
-                    if (notifier != null)
+                    if (notifier is { })
                         notifier.CollectionChanged -= collectionChanged;
                 });
             })!;
@@ -3340,17 +3340,17 @@ namespace Gear.ActiveQuery
             {
                 var notifier = source as INotifyCollectionChanged;
                 var genericNotifier = source as INotifyGenericCollectionChanged<TSource>;
-                if (genericNotifier != null)
+                if (genericNotifier is { })
                     genericNotifier.GenericCollectionChanged += genericCollectionChanged;
-                else if (notifier != null)
+                else if (notifier is { })
                     notifier.CollectionChanged += collectionChanged;
 
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizationContext, source);
                 return new ActiveEnumerable<TSource>(rangeObservableCollection, source as INotifyElementFaultChanges, () =>
                 {
-                    if (genericNotifier != null)
+                    if (genericNotifier is { })
                         genericNotifier.GenericCollectionChanged -= genericCollectionChanged;
-                    else if (notifier != null)
+                    else if (notifier is { })
                         notifier.CollectionChanged -= collectionChanged;
                 });
             })!;
@@ -3378,10 +3378,10 @@ namespace Gear.ActiveQuery
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
                 synchronizedSource.SequentialExecute(() =>
                 {
-                    var oldItems = e.OldItems != null ? e.OldItems.Cast<TSource>() : Enumerable.Empty<TSource>();
-                    var oldItemsCount = e.OldItems != null ? e.OldItems.Count : 0;
-                    var newItems = e.NewItems != null ? e.NewItems.Cast<TSource>() : Enumerable.Empty<TSource>();
-                    var newItemsCount = e.NewItems != null ? e.NewItems.Count : 0;
+                    var oldItems = e.OldItems is { } ? e.OldItems.Cast<TSource>() : Enumerable.Empty<TSource>();
+                    var oldItemsCount = e.OldItems is { } ? e.OldItems.Count : 0;
+                    var newItems = e.NewItems is { } ? e.NewItems.Cast<TSource>() : Enumerable.Empty<TSource>();
+                    var newItemsCount = e.NewItems is { } ? e.NewItems.Count : 0;
                     switch (e.Action)
                     {
                         case NotifyCollectionChangedAction.Reset:
@@ -3401,13 +3401,13 @@ namespace Gear.ActiveQuery
 
             return synchronizedSource.SequentialExecute(() =>
             {
-                if (changingSource != null)
+                if (changingSource is { })
                     changingSource.CollectionChanged += collectionChanged;
 
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(source);
                 return new ActiveEnumerable<TSource>(rangeObservableCollection, source as INotifyElementFaultChanges, () =>
                 {
-                    if (changingSource != null)
+                    if (changingSource is { })
                         changingSource.CollectionChanged -= collectionChanged;
                 });
             })!;
@@ -3570,7 +3570,7 @@ namespace Gear.ActiveQuery
                     var result = e.Result;
                     var key = result.Key;
                     var count = e.Count;
-                    if (key == null)
+                    if (key is null)
                         nullKeys += count;
                     else if (rangeObservableDictionary.ContainsKey(key))
                     {
@@ -3593,7 +3593,7 @@ namespace Gear.ActiveQuery
                 {
                     var key = e.Result.Key;
                     var count = e.Count;
-                    if (key == null)
+                    if (key is null)
                         nullKeys -= count;
                     else if (duplicateKeys.TryGetValue(key, out var duplicates))
                     {
@@ -3615,17 +3615,17 @@ namespace Gear.ActiveQuery
                         IDictionary<TKey, TValue> replacementDictionary;
                         if (indexingStategy == IndexingStrategy.SelfBalancingBinarySearchTree)
                         {
-                            duplicateKeys = keyComparer == null ? new SortedDictionary<TKey, int>() : new SortedDictionary<TKey, int>(keyComparer);
-                            replacementDictionary = keyComparer == null ? new SortedDictionary<TKey, TValue>() : new SortedDictionary<TKey, TValue>(keyComparer);
+                            duplicateKeys = keyComparer is null ? new SortedDictionary<TKey, int>() : new SortedDictionary<TKey, int>(keyComparer);
+                            replacementDictionary = keyComparer is null ? new SortedDictionary<TKey, TValue>() : new SortedDictionary<TKey, TValue>(keyComparer);
                         }
                         else
                         {
-                            duplicateKeys = keyEqualityComparer == null ? new Dictionary<TKey, int>() : new Dictionary<TKey, int>(keyEqualityComparer);
-                            replacementDictionary = keyEqualityComparer == null ? new Dictionary<TKey, TValue>() : new Dictionary<TKey, TValue>(keyEqualityComparer);
+                            duplicateKeys = keyEqualityComparer is null ? new Dictionary<TKey, int>() : new Dictionary<TKey, int>(keyEqualityComparer);
+                            replacementDictionary = keyEqualityComparer is null ? new Dictionary<TKey, TValue>() : new Dictionary<TKey, TValue>(keyEqualityComparer);
                         }
                         var resultsFaultsAndCounts = rangeActiveExpression.GetResultsFaultsAndCounts();
-                        nullKeys = resultsFaultsAndCounts.Count(rfc => rfc.result.Key == null);
-                        var distinctResultsFaultsAndCounts = resultsFaultsAndCounts.Where(rfc => rfc.result.Key != null).GroupBy(rfc => rfc.result.Key).ToList();
+                        nullKeys = resultsFaultsAndCounts.Count(rfc => rfc.result.Key is null);
+                        var distinctResultsFaultsAndCounts = resultsFaultsAndCounts.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
                         foreach (var keyValuePair in distinctResultsFaultsAndCounts.Select(g => g.First().result))
                             replacementDictionary.Add(keyValuePair);
                         rangeObservableDictionary.Reset(replacementDictionary);
@@ -3640,7 +3640,7 @@ namespace Gear.ActiveQuery
                             foreach (var (element, result) in e.OldItems)
                             {
                                 var key = result.Key;
-                                if (key == null)
+                                if (key is null)
                                     --nullKeys;
                                 else if (duplicateKeys.TryGetValue(key, out var duplicates))
                                 {
@@ -3659,7 +3659,7 @@ namespace Gear.ActiveQuery
                             foreach (var (element, result) in e.NewItems)
                             {
                                 var key = result.Key;
-                                if (key == null)
+                                if (key is null)
                                     ++nullKeys;
                                 else if (rangeObservableDictionary.ContainsKey(key))
                                 {
@@ -3681,12 +3681,12 @@ namespace Gear.ActiveQuery
                 switch (indexingStategy)
                 {
                     case IndexingStrategy.SelfBalancingBinarySearchTree:
-                        duplicateKeys = keyComparer == null ? new SortedDictionary<TKey, int>() : new SortedDictionary<TKey, int>(keyComparer);
-                        rangeObservableDictionary = keyComparer == null ? new SynchronizedObservableSortedDictionary<TKey, TValue>() : new SynchronizedObservableSortedDictionary<TKey, TValue>(keyComparer);
+                        duplicateKeys = keyComparer is null ? new SortedDictionary<TKey, int>() : new SortedDictionary<TKey, int>(keyComparer);
+                        rangeObservableDictionary = keyComparer is null ? new SynchronizedObservableSortedDictionary<TKey, TValue>() : new SynchronizedObservableSortedDictionary<TKey, TValue>(keyComparer);
                         break;
                     default:
-                        duplicateKeys = keyEqualityComparer == null ? new Dictionary<TKey, int>() : new Dictionary<TKey, int>(keyEqualityComparer);
-                        rangeObservableDictionary = keyEqualityComparer == null ? new SynchronizedObservableDictionary<TKey, TValue>() : new SynchronizedObservableDictionary<TKey, TValue>(keyEqualityComparer);
+                        duplicateKeys = keyEqualityComparer is null ? new Dictionary<TKey, int>() : new Dictionary<TKey, int>(keyEqualityComparer);
+                        rangeObservableDictionary = keyEqualityComparer is null ? new SynchronizedObservableDictionary<TKey, TValue>() : new SynchronizedObservableDictionary<TKey, TValue>(keyEqualityComparer);
                         break;
                 }
 
@@ -3696,8 +3696,8 @@ namespace Gear.ActiveQuery
                 rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
 
                 var resultsFaultsAndCounts = rangeActiveExpression.GetResultsFaultsAndCounts();
-                nullKeys = resultsFaultsAndCounts.Count(rfc => rfc.result.Key == null);
-                var distinctResultsFaultsAndCounts = resultsFaultsAndCounts.Where(rfc => rfc.result.Key != null).GroupBy(rfc => rfc.result.Key).ToList();
+                nullKeys = resultsFaultsAndCounts.Count(rfc => rfc.result.Key is null);
+                var distinctResultsFaultsAndCounts = resultsFaultsAndCounts.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
                 rangeObservableDictionary.AddRange(distinctResultsFaultsAndCounts.Select(g => g.First().result));
                 foreach (var (key, duplicateCount) in distinctResultsFaultsAndCounts.Select(g => (key: g.Key, duplicateCount: g.Sum(rfc => rfc.count) - 1)).Where(kc => kc.duplicateCount > 0))
                     duplicateKeys.Add(key, duplicateCount);

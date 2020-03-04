@@ -51,12 +51,12 @@ namespace Cogs.ActiveExpressions
         protected override void Evaluate()
         {
             var testFault = test.Fault;
-            if (testFault != null)
+            if (testFault is { })
                 Fault = testFault;
             else if (test.Value is bool testBool ? testBool : false)
             {
                 var ifTrueFault = ifTrue.Fault;
-                if (ifTrueFault != null)
+                if (ifTrueFault is { })
                     Fault = ifTrueFault;
                 else
                     Value = ifTrue.Value;
@@ -64,7 +64,7 @@ namespace Cogs.ActiveExpressions
             else
             {
                 var ifFalseFault = ifFalse.Fault;
-                if (ifFalseFault != null)
+                if (ifFalseFault is { })
                     Fault = ifFalseFault;
                 else
                     Value = ifFalse.Value;
@@ -75,22 +75,22 @@ namespace Cogs.ActiveExpressions
 
         void IfFalsePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (test.Fault == null && !(test.Value is bool testBool ? testBool : false))
+            if (test.Fault is null && !(test.Value is bool testBool ? testBool : false))
             {
                 if (e.PropertyName == nameof(Fault))
                     Fault = ifFalse.Fault;
-                else if (e.PropertyName == nameof(Value) && ifFalse.Fault == null)
+                else if (e.PropertyName == nameof(Value) && ifFalse.Fault is null)
                     Value = ifFalse.Value;
             }
         }
 
         void IfTruePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (test.Fault == null && (test.Value is bool testBool ? testBool : false))
+            if (test.Fault is null && (test.Value is bool testBool ? testBool : false))
             {
                 if (e.PropertyName == nameof(Fault))
                     Fault = ifTrue.Fault;
-                else if (e.PropertyName == nameof(Value) && ifTrue.Fault == null)
+                else if (e.PropertyName == nameof(Value) && ifTrue.Fault is null)
                     Value = ifTrue.Value;
             }
         }
@@ -99,12 +99,12 @@ namespace Cogs.ActiveExpressions
         {
             if (e.PropertyName == nameof(Fault))
                 Fault = test.Fault;
-            else if (e.PropertyName == nameof(Value) && test.Fault == null)
+            else if (e.PropertyName == nameof(Value) && test.Fault is null)
             {
                 if (test.Value is bool testBool ? testBool : false)
                 {
                     var ifTrueFault = ifTrue.Fault;
-                    if (ifTrueFault != null)
+                    if (ifTrueFault is { })
                         Fault = ifTrueFault;
                     else
                         Value = ifTrue.Value;
@@ -112,7 +112,7 @@ namespace Cogs.ActiveExpressions
                 else
                 {
                     var ifFalseFault = ifFalse.Fault;
-                    if (ifFalseFault != null)
+                    if (ifFalseFault is { })
                         Fault = ifFalseFault;
                     else
                         Value = ifFalse.Value;

@@ -26,7 +26,7 @@ namespace Cogs.ActiveExpressions
                     var rightParameter = Expression.Parameter(typeof(object));
                     var leftConversion = Expression.Convert(leftParameter, this.left.Type);
                     var rightConversion = Expression.Convert(rightParameter, this.right.Type);
-                    @delegate = Expression.Lambda<BinaryOperationDelegate>(Expression.Convert(this.method == null ? Expression.MakeBinary(NodeType, leftConversion, rightConversion) : Expression.MakeBinary(NodeType, leftConversion, rightConversion, this.isLiftedToNull, this.method), typeof(object)), leftParameter, rightParameter).Compile();
+                    @delegate = Expression.Lambda<BinaryOperationDelegate>(Expression.Convert(this.method is null ? Expression.MakeBinary(NodeType, leftConversion, rightConversion) : Expression.MakeBinary(NodeType, leftConversion, rightConversion, this.isLiftedToNull, this.method), typeof(object)), leftParameter, rightParameter).Compile();
                     implementations.Add(implementationKey, @delegate);
                 }
                 this.@delegate = @delegate;
@@ -64,7 +64,7 @@ namespace Cogs.ActiveExpressions
 
         void DisposeValueIfNecessary()
         {
-            if (method != null && ApplicableOptions.IsMethodReturnValueDisposed(method) && TryGetUndeferredValue(out var value))
+            if (method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method) && TryGetUndeferredValue(out var value))
             {
                 if (value is IDisposable disposable)
                     disposable.Dispose();
@@ -87,9 +87,9 @@ namespace Cogs.ActiveExpressions
             try
             {
                 DisposeValueIfNecessary();
-                if (leftFault != null)
+                if (leftFault is { })
                     Fault = leftFault;
-                else if (rightFault != null)
+                else if (rightFault is { })
                     Fault = rightFault;
                 else
                     Value = @delegate?.Invoke(leftValue, rightValue);

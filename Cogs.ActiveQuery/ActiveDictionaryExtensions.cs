@@ -52,14 +52,14 @@ namespace Gear.ActiveQuery
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 where.DictionaryChanged += dictionaryChanged;
-                if (changeNotifyingSource != null)
+                if (changeNotifyingSource is { })
                     changeNotifyingSource.DictionaryChanged += dictionaryChanged;
 
                 return new ActiveValue<bool>(where.Count == source.Count, out setValue, elementFaultChangeNotifier: where, onDispose: () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
-                    if (changeNotifyingSource != null)
+                    if (changeNotifyingSource is { })
                         changeNotifyingSource.DictionaryChanged -= dictionaryChanged;
                 });
             })!;
@@ -295,14 +295,14 @@ namespace Gear.ActiveQuery
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 where.DictionaryChanged += dictionaryChanged;
-                if (changeNotifyingSource != null)
+                if (changeNotifyingSource is { })
                     changeNotifyingSource.DictionaryChanged += dictionaryChanged;
 
                 return new ActiveValue<int>(where.Count, out setValue, elementFaultChangeNotifier: where, onDispose: () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
-                    if (changeNotifyingSource != null)
+                    if (changeNotifyingSource is { })
                         changeNotifyingSource.DictionaryChanged -= dictionaryChanged;
                 });
             })!;
@@ -712,7 +712,7 @@ namespace Gear.ActiveQuery
                             if ((e.NewItems?.Count ?? 0) > 0)
                             {
                                 var lastKv = e.NewItems.OrderByDescending(kv => kv.Key, keyComparer).First();
-                                if (activeValue!.OperationFault != null || keyComparer.Compare(lastKv.Key, activeValue.Value.Key) > 0)
+                                if (activeValue!.OperationFault is { } || keyComparer.Compare(lastKv.Key, activeValue.Value.Key) > 0)
                                 {
                                     setOperationFault!(null);
                                     setValue!(lastKv);
@@ -1076,7 +1076,7 @@ namespace Gear.ActiveQuery
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
                             var addedMax = e.NewItems.Max(kv => kv.Value);
-                            if (activeValue!.OperationFault != null || comparer.Compare(activeValue.Value, addedMax) < 0)
+                            if (activeValue!.OperationFault is { } || comparer.Compare(activeValue.Value, addedMax) < 0)
                             {
                                 setOperationFault!(null);
                                 setValue!(addedMax);
@@ -1205,7 +1205,7 @@ namespace Gear.ActiveQuery
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
                             var addedMin = e.NewItems.Select(kv => kv.Value).Min();
-                            if (activeValue!.OperationFault != null || comparer.Compare(activeValue.Value, addedMin) > 0)
+                            if (activeValue!.OperationFault is { } || comparer.Compare(activeValue.Value, addedMin) > 0)
                             {
                                 setOperationFault!(null);
                                 setValue!(addedMin);
@@ -1289,12 +1289,12 @@ namespace Gear.ActiveQuery
                 rangeObservableDictionary = source.GetIndexingStrategy() == IndexingStrategy.SelfBalancingBinarySearchTree ? (ISynchronizedObservableRangeDictionary<TKey, TResult>)(source.GetKeyComparer() is IComparer<TKey> comparer ? new SynchronizedObservableSortedDictionary<TKey, TResult>(comparer) : new SynchronizedObservableSortedDictionary<TKey, TResult>()) : (source.GetKeyEqualityComparer() is IEqualityComparer<TKey> equalityComparer ? new SynchronizedObservableDictionary<TKey, TResult>(equalityComparer) : new SynchronizedObservableDictionary<TKey, TResult>());
                 rangeObservableDictionary.AddRange(OfType<TKey, TValue, TResult>(source));
 
-                if (notifyingSource != null)
+                if (notifyingSource is { })
                     notifyingSource.DictionaryChanged += dictionaryChanged;
 
                 return new ActiveDictionary<TKey, TResult>(rangeObservableDictionary, source as INotifyElementFaultChanges, () =>
                 {
-                    if (notifyingSource != null)
+                    if (notifyingSource is { })
                         notifyingSource.DictionaryChanged -= dictionaryChanged;
                 });
             })!;
@@ -1564,7 +1564,7 @@ namespace Gear.ActiveQuery
                     operationFault = ExceptionHelper.SequenceContainsNoElements;
                 else if (moreThanOne = where.Count > 1)
                     operationFault = ExceptionHelper.SequenceContainsMoreThanOneElement;
-                return new ActiveValue<KeyValuePair<TKey, TValue>>(operationFault == null ? where.First() : default, out setValue, operationFault, out setOperationFault, where, () =>
+                return new ActiveValue<KeyValuePair<TKey, TValue>>(operationFault is null ? where.First() : default, out setValue, operationFault, out setOperationFault, where, () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
@@ -1610,7 +1610,7 @@ namespace Gear.ActiveQuery
                                 setValue!(source.First());
                                 break;
                             default:
-                                if (activeValue!.OperationFault == null)
+                                if (activeValue!.OperationFault is null)
                                     setOperationFault!(ExceptionHelper.SequenceContainsMoreThanOneElement);
                                 setValue!(default);
                                 break;
@@ -1829,11 +1829,11 @@ namespace Gear.ActiveQuery
                     {
                         case IndexingStrategy.SelfBalancingBinarySearchTree:
                             var keyComparer = source.GetKeyComparer();
-                            resetDictionary = keyComparer != null ? new SortedDictionary<TKey, TValue>(keyComparer) : new SortedDictionary<TKey, TValue>();
+                            resetDictionary = keyComparer is { } ? new SortedDictionary<TKey, TValue>(keyComparer) : new SortedDictionary<TKey, TValue>();
                             break;
                         default:
                             var keyEqualityComparer = source.GetKeyEqualityComparer();
-                            resetDictionary = keyEqualityComparer != null ? new Dictionary<TKey, TValue>(keyEqualityComparer) : new Dictionary<TKey, TValue>();
+                            resetDictionary = keyEqualityComparer is { } ? new Dictionary<TKey, TValue>(keyEqualityComparer) : new Dictionary<TKey, TValue>();
                             break;
                     }
                     foreach (var kv in source)
@@ -1862,7 +1862,7 @@ namespace Gear.ActiveQuery
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 var notifier = source as INotifyDictionaryChanged<TKey, TValue>;
-                if (notifier != null)
+                if (notifier is { })
                     notifier.DictionaryChanged += dictionaryChanged;
 
                 IDictionary<TKey, TValue>? startingDictionary = null;
@@ -1870,22 +1870,22 @@ namespace Gear.ActiveQuery
                 {
                     case IndexingStrategy.SelfBalancingBinarySearchTree:
                         var keyComparer = source.GetKeyComparer();
-                        startingDictionary = keyComparer != null ? new SortedDictionary<TKey, TValue>(keyComparer) : new SortedDictionary<TKey, TValue>();
+                        startingDictionary = keyComparer is { } ? new SortedDictionary<TKey, TValue>(keyComparer) : new SortedDictionary<TKey, TValue>();
                         foreach (var kv in source)
                             startingDictionary.Add(kv);
-                        rangeObservableDictionary = keyComparer != null ? new SynchronizedObservableSortedDictionary<TKey, TValue>(synchronizationContext, startingDictionary, keyComparer) : new SynchronizedObservableSortedDictionary<TKey, TValue>(synchronizationContext, startingDictionary);
+                        rangeObservableDictionary = keyComparer is { } ? new SynchronizedObservableSortedDictionary<TKey, TValue>(synchronizationContext, startingDictionary, keyComparer) : new SynchronizedObservableSortedDictionary<TKey, TValue>(synchronizationContext, startingDictionary);
                         break;
                     default:
                         var keyEqualityComparer = source.GetKeyEqualityComparer();
-                        startingDictionary = keyEqualityComparer != null ? new Dictionary<TKey, TValue>(keyEqualityComparer) : new Dictionary<TKey, TValue>();
+                        startingDictionary = keyEqualityComparer is { } ? new Dictionary<TKey, TValue>(keyEqualityComparer) : new Dictionary<TKey, TValue>();
                         foreach (var kv in source)
                             startingDictionary.Add(kv);
-                        rangeObservableDictionary = keyEqualityComparer != null ? new SynchronizedObservableDictionary<TKey, TValue>(synchronizationContext, startingDictionary, keyEqualityComparer) : new SynchronizedObservableDictionary<TKey, TValue>(synchronizationContext, startingDictionary);
+                        rangeObservableDictionary = keyEqualityComparer is { } ? new SynchronizedObservableDictionary<TKey, TValue>(synchronizationContext, startingDictionary, keyEqualityComparer) : new SynchronizedObservableDictionary<TKey, TValue>(synchronizationContext, startingDictionary);
                         break;
                 }
                 return new ActiveDictionary<TKey, TValue>(rangeObservableDictionary, source as INotifyElementFaultChanges, () =>
                 {
-                    if (notifier != null)
+                    if (notifier is { })
                         notifier.DictionaryChanged -= dictionaryChanged;
                 });
             })!;
@@ -2093,17 +2093,17 @@ namespace Gear.ActiveQuery
                         switch (indexingStrategy)
                         {
                             case IndexingStrategy.SelfBalancingBinarySearchTree:
-                                duplicateKeys = keyComparer == null ? new SortedDictionary<TResultKey, int>() : new SortedDictionary<TResultKey, int>(keyComparer);
-                                replacementDictionary = keyComparer == null ? new SortedDictionary<TResultKey, TResultValue>() : new SortedDictionary<TResultKey, TResultValue>(keyComparer);
+                                duplicateKeys = keyComparer is null ? new SortedDictionary<TResultKey, int>() : new SortedDictionary<TResultKey, int>(keyComparer);
+                                replacementDictionary = keyComparer is null ? new SortedDictionary<TResultKey, TResultValue>() : new SortedDictionary<TResultKey, TResultValue>(keyComparer);
                                 break;
                             default:
-                                duplicateKeys = keyEqualityComparer == null ? new Dictionary<TResultKey, int>() : new Dictionary<TResultKey, int>(keyEqualityComparer);
-                                replacementDictionary = keyEqualityComparer == null ? new Dictionary<TResultKey, TResultValue>() : new Dictionary<TResultKey, TResultValue>(keyEqualityComparer);
+                                duplicateKeys = keyEqualityComparer is null ? new Dictionary<TResultKey, int>() : new Dictionary<TResultKey, int>(keyEqualityComparer);
+                                replacementDictionary = keyEqualityComparer is null ? new Dictionary<TResultKey, TResultValue>() : new Dictionary<TResultKey, TResultValue>(keyEqualityComparer);
                                 break;
                         }
                         var resultsAndFaults = rangeActiveExpression.GetResultsAndFaults();
-                        nullKeys = resultsAndFaults.Count(rfc => rfc.result.Key == null);
-                        var distinctResultsAndFaults = resultsAndFaults.Where(rfc => rfc.result.Key != null).GroupBy(rfc => rfc.result.Key).ToList();
+                        nullKeys = resultsAndFaults.Count(rfc => rfc.result.Key is null);
+                        var distinctResultsAndFaults = resultsAndFaults.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
                         foreach (var keyValuePair in distinctResultsAndFaults.Select(g => g.First().result))
                             replacementDictionary.Add(keyValuePair);
                         rangeObservableDictionary.Reset(replacementDictionary);
@@ -2118,7 +2118,7 @@ namespace Gear.ActiveQuery
                             foreach (var kv in e.OldItems)
                             {
                                 var key = kv.Value.Key;
-                                if (key == null)
+                                if (key is null)
                                     --nullKeys;
                                 else if (duplicateKeys.TryGetValue(key, out var duplicates))
                                 {
@@ -2138,7 +2138,7 @@ namespace Gear.ActiveQuery
                             {
                                 var resultKv = kv.Value;
                                 var key = resultKv.Key;
-                                if (key == null)
+                                if (key is null)
                                     ++nullKeys;
                                 else if (rangeObservableDictionary.ContainsKey(key))
                                 {
@@ -2160,7 +2160,7 @@ namespace Gear.ActiveQuery
                 {
                     var resultKv = e.Result;
                     var key = resultKv.Key;
-                    if (key == null)
+                    if (key is null)
                         ++nullKeys;
                     else if (rangeObservableDictionary.ContainsKey(key))
                     {
@@ -2178,7 +2178,7 @@ namespace Gear.ActiveQuery
                 synchronizedSource.SequentialExecute(() =>
                 {
                     var key = e.Result.Key;
-                    if (key == null)
+                    if (key is null)
                         --nullKeys;
                     else if (duplicateKeys.TryGetValue(key, out var duplicates))
                     {
@@ -2197,12 +2197,12 @@ namespace Gear.ActiveQuery
                 switch (indexingStrategy)
                 {
                     case IndexingStrategy.SelfBalancingBinarySearchTree:
-                        duplicateKeys = keyComparer == null ? new SortedDictionary<TResultKey, int>() : new SortedDictionary<TResultKey, int>(keyComparer);
-                        rangeObservableDictionary = keyComparer == null ? new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>() : new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>(keyComparer);
+                        duplicateKeys = keyComparer is null ? new SortedDictionary<TResultKey, int>() : new SortedDictionary<TResultKey, int>(keyComparer);
+                        rangeObservableDictionary = keyComparer is null ? new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>() : new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>(keyComparer);
                         break;
                     default:
-                        duplicateKeys = keyEqualityComparer == null ? new Dictionary<TResultKey, int>() : new Dictionary<TResultKey, int>(keyEqualityComparer);
-                        rangeObservableDictionary = keyEqualityComparer == null ? new SynchronizedObservableDictionary<TResultKey, TResultValue>() : new SynchronizedObservableDictionary<TResultKey, TResultValue>(keyEqualityComparer);
+                        duplicateKeys = keyEqualityComparer is null ? new Dictionary<TResultKey, int>() : new Dictionary<TResultKey, int>(keyEqualityComparer);
+                        rangeObservableDictionary = keyEqualityComparer is null ? new SynchronizedObservableDictionary<TResultKey, TResultValue>() : new SynchronizedObservableDictionary<TResultKey, TResultValue>(keyEqualityComparer);
                         break;
                 }
 
@@ -2212,8 +2212,8 @@ namespace Gear.ActiveQuery
                 rangeActiveExpression.ValueResultChanging += valueResultChanging;
 
                 var resultsAndFaults = rangeActiveExpression.GetResultsAndFaults();
-                nullKeys = resultsAndFaults.Count(rfc => rfc.result.Key == null);
-                var distinctResultsAndFaults = resultsAndFaults.Where(rfc => rfc.result.Key != null).GroupBy(rfc => rfc.result.Key).ToList();
+                nullKeys = resultsAndFaults.Count(rfc => rfc.result.Key is null);
+                var distinctResultsAndFaults = resultsAndFaults.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
                 rangeObservableDictionary.AddRange(distinctResultsAndFaults.Select(g => g.First().result));
                 foreach (var (key, duplicateCount) in distinctResultsAndFaults.Select(g => (key: g.Key, duplicateCount: g.Count() - 1)).Where(kc => kc.duplicateCount > 0))
                     duplicateKeys.Add(key, duplicateCount);
@@ -2268,7 +2268,7 @@ namespace Gear.ActiveQuery
 
                 Func<TKey, bool> equalsKey;
                 var keyComparer = source.GetKeyComparer();
-                if (keyComparer != null)
+                if (keyComparer is { })
                     equalsKey = otherKey => keyComparer.Compare(otherKey, key) == 0;
                 else 
                 {
@@ -2357,7 +2357,7 @@ namespace Gear.ActiveQuery
 
                 Func<TKey, bool> equalsKey;
                 var keyComparer = source.GetKeyComparer();
-                if (keyComparer != null)
+                if (keyComparer is { })
                     equalsKey = otherKey => keyComparer.Compare(otherKey, key) == 0;
                 else
                 {

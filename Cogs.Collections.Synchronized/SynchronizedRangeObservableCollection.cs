@@ -330,7 +330,7 @@ namespace Cogs.Collections.Synchronized
             }
             var list = new List<T>();
             index -= 1;
-            if (collection != null)
+            if (collection is { })
                 foreach (var element in collection)
                 {
                     Items.Insert(++index, element);

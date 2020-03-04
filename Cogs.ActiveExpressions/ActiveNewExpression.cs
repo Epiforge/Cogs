@@ -67,8 +67,8 @@ namespace Cogs.ActiveExpressions
             try
             {
                 DisposeValueIfNecessary();
-                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault != null).FirstOrDefault();
-                if (argumentFault != null)
+                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
+                if (argumentFault is { })
                     Fault = argumentFault;
                 else
                     Value = Activator.CreateInstance(Type, arguments.Select(argument => argument.Value).ToArray());

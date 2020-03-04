@@ -82,10 +82,10 @@ namespace Cogs.ActiveExpressions
             {
                 DisposeValueIfNecessary();
                 var objectFault = @object.Fault;
-                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault != null).FirstOrDefault();
-                if (objectFault != null)
+                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
+                if (objectFault is { })
                     Fault = objectFault;
-                else if (argumentFault != null)
+                else if (argumentFault is { })
                     Fault = argumentFault;
                 else
                 {
@@ -157,11 +157,11 @@ namespace Cogs.ActiveExpressions
             {
                 var removed = false;
                 var key = arguments[0].Value;
-                if (key != null)
+                if (key is { })
                 {
                     removed = e.OldItems?.Any(kv => key.Equals(kv.Key)) ?? false;
                     var keyValuePair = e.NewItems?.FirstOrDefault(kv => key.Equals(kv.Key)) ?? default;
-                    if (keyValuePair.Key != null)
+                    if (keyValuePair.Key is { })
                     {
                         removed = false;
                         Value = keyValuePair.Value;

@@ -17,7 +17,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="visit">The <see cref="Expression"/> for which to immediately generate a hash code</param>
         public ExpressionHashCodeVisitor(Expression? visit = null) : base()
         {
-            if (visit != null)
+            if (visit is { })
                 Visit(visit);
         }
 
@@ -33,7 +33,7 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         public override Expression Visit(Expression node)
         {
-            var atRoot = hashElements == null;
+            var atRoot = hashElements is null;
             if (atRoot)
                 hashElements = new List<object?>();
             AddHashElements(node?.NodeType, node?.Type);

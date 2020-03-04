@@ -11,7 +11,7 @@ namespace Gear.ActiveQuery
         public MergedElementFaultChangeNotifier(IEnumerable<INotifyElementFaultChanges> elementFaultChangeNotifiers)
         {
             this.elementFaultChangeNotifiers = elementFaultChangeNotifiers;
-            foreach (var elementFaultChangeNotifier in this.elementFaultChangeNotifiers.Where(elementFaultChangeNotifier => elementFaultChangeNotifier != null))
+            foreach (var elementFaultChangeNotifier in this.elementFaultChangeNotifiers.Where(elementFaultChangeNotifier => elementFaultChangeNotifier is { }))
             {
                 elementFaultChangeNotifier.ElementFaultChanged += ElementFaultChangeNotifierElementFaultChanged;
                 elementFaultChangeNotifier.ElementFaultChanging += ElementFaultChangeNotifierElementFaultChanging;
@@ -29,7 +29,7 @@ namespace Gear.ActiveQuery
 
         protected override bool Dispose(bool disposing)
         {
-            foreach (var elementFaultChangeNotifier in elementFaultChangeNotifiers.Where(elementFaultChangeNotifier => elementFaultChangeNotifier != null))
+            foreach (var elementFaultChangeNotifier in elementFaultChangeNotifiers.Where(elementFaultChangeNotifier => elementFaultChangeNotifier is { }))
             {
                 elementFaultChangeNotifier.ElementFaultChanged -= ElementFaultChangeNotifierElementFaultChanged;
                 elementFaultChangeNotifier.ElementFaultChanging -= ElementFaultChangeNotifierElementFaultChanging;
