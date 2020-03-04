@@ -15,15 +15,8 @@
     <Product>Collections Cog</Product>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\NuGet.jpg">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Cogs.Components" Version="1.0.2" />
@@ -32,6 +25,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\NuGet.jpg">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
