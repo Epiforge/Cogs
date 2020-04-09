@@ -260,6 +260,7 @@ While .NET reflection is immensely powerful, it's not very quick.
 To address this, this library offers the following classes:
 
 * `FastComparer` - provides a method for comparing instances of a type that is not known at compile time
+* `FastConstructorInfo` - provides a method for invoking a constructor that is not known at compile time
 * `FastDefault` - provides a method for getting the default value of a type that is not known at compile time
 * `FastEqualityComparer` - provides methods for testing equality of and getting hash codes for instances of a type that is not known at compile time
 * `FastMethodInfo` - provides a method for invoking a method that is not known at compile time
