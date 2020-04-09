@@ -66,7 +66,7 @@ namespace Cogs.Reflection
         /// <summary>
         /// Get a <see cref="FastMethodInfo"/> for the specified <see cref="System.Reflection.MethodInfo" />
         /// </summary>
-        /// <param name="methodInfo">The <see cref="MethodInfo"/></param>
+        /// <param name="methodInfo">The <see cref="System.Reflection.MethodInfo"/></param>
         /// <returns>A <see cref="FastMethodInfo"/></returns>
         public static FastMethodInfo Get(MethodInfo methodInfo)
         {
