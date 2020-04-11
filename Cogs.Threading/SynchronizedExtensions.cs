@@ -16,7 +16,7 @@ namespace Cogs.Threading
         /// </summary>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
         /// <param name="action">The <see cref="Action"/></param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static void Execute(this SynchronizationContext? synchronizationContext, Action action)
         {
             if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
@@ -53,13 +53,13 @@ namespace Cogs.Threading
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
         /// <param name="func">The <see cref="Func{TResult}"/></param>
         /// <returns>The result of <paramref name="func"/></returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         [return: MaybeNull]
         public static TResult Execute<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func)
         {
             if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
                 return func();
-            TResult result = default!;
+            TResult result = default;
             ExceptionDispatchInfo? edi = default;
             synchronizationContext.Send(state =>
             {
@@ -98,7 +98,7 @@ namespace Cogs.Threading
                 action();
                 return Task.CompletedTask;
             }
-            var completion = new TaskCompletionSource<object?>();
+            var completion = new TaskCompletionSource<object>();
             synchronizationContext.Post(state => completion.AttemptSetResult(action), null);
             return completion.Task;
         }
@@ -147,7 +147,7 @@ namespace Cogs.Threading
                 await asyncAction().ConfigureAwait(false);
                 return;
             }
-            var completion = new TaskCompletionSource<object?>();
+            var completion = new TaskCompletionSource<object>();
             synchronizationContext.Post(async state => await completion.AttemptSetResultAsync(asyncAction).ConfigureAwait(false), null);
             await completion.Task.ConfigureAwait(false);
         }
