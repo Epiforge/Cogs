@@ -34,7 +34,7 @@ namespace Cogs.Threading
         readonly BufferBlock<(SendOrPostCallback callback, object? state, ManualResetEventSlim? signal, Exception? exception)> queuedCallbacks;
         readonly CancellationTokenSource queuedCallbacksCancellationTokenSource;
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         async Task ProcessCallbacks()
         {
             while (true)
