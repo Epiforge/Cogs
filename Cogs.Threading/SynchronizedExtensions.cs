@@ -54,7 +54,6 @@ namespace Cogs.Threading
         /// <param name="func">The <see cref="Func{TResult}"/></param>
         /// <returns>The result of <paramref name="func"/></returns>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
-        [return: MaybeNull]
         public static TResult Execute<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func)
         {
             if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
@@ -73,7 +72,7 @@ namespace Cogs.Threading
                 }
             }, null);
             edi?.Throw();
-            return result;
+            return result!; // result cannot be unexpectedly null here because it only is if func threw, and if func threw, then edi did also
         }
 
         /// <summary>
@@ -83,7 +82,6 @@ namespace Cogs.Threading
         /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
         /// <param name="func">The <see cref="Func{TResult}"/></param>
         /// <returns>The result of <paramref name="func"/></returns>
-        [return: MaybeNull]
         public static TResult Execute<TResult>(this ISynchronized? synchronizable, Func<TResult> func) => Execute(synchronizable?.SynchronizationContext, func);
 
         /// <summary>
@@ -198,7 +196,6 @@ namespace Cogs.Threading
         /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
         /// <param name="func">The <see cref="Func{TResult}"/></param>
         /// <returns>The result of <paramref name="func"/></returns>
-        [return: MaybeNull]
         public static TResult SequentialExecute<TResult>(this ISynchronized? synchronizable, Func<TResult> func) => Execute(synchronizable?.SynchronizationContext ?? Synchronization.DefaultSynchronizationContext, func);
 
         /// <summary>
