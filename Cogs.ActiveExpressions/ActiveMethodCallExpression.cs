@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
 
 namespace Cogs.ActiveExpressions
 {
@@ -73,20 +74,15 @@ namespace Cogs.ActiveExpressions
 
         void DisposeValueIfNecessary()
         {
-            if (ApplicableOptions.IsMethodReturnValueDisposed(method) && TryGetUndeferredValue(out var value))
-            {
-                if (value is IDisposable disposable)
-                    disposable.Dispose();
-                else if (value is IAsyncDisposable asyncDisposable)
-                    asyncDisposable.DisposeAsync().AsTask().Wait();
-            }
+            if (ApplicableOptions.IsMethodReturnValueDisposed(method))
+                DisposeValueIfPossible();
         }
 
         public override bool Equals(object obj) => obj is ActiveMethodCallExpression other && Equals(other);
 
         public bool Equals(ActiveMethodCallExpression other) => arguments.Equals(other.arguments) && method.Equals(other.method) && Equals(@object, other.@object) && Equals(options, other.options);
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override void Evaluate()
         {
             try

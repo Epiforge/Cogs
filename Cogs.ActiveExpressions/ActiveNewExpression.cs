@@ -1,10 +1,13 @@
 using Cogs.Collections;
+using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Threading;
 
 namespace Cogs.ActiveExpressions
 {
@@ -19,9 +22,22 @@ namespace Cogs.ActiveExpressions
             EvaluateIfNotDeferred();
         }
 
+        ActiveNewExpression(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.New, options, deferEvaluation)
+        {
+            this.constructor = constructor;
+            fastConstructor = FastConstructorInfo.Get(this.constructor);
+            this.arguments = arguments;
+            constructorParameterTypes = new EquatableList<Type>(this.arguments.Select(argument => argument.Type).ToList());
+            foreach (var argument in this.arguments)
+                argument.PropertyChanged += ArgumentPropertyChanged;
+            EvaluateIfNotDeferred();
+        }
+
         readonly EquatableList<ActiveExpression> arguments;
+        readonly ConstructorInfo? constructor;
         readonly EquatableList<Type> constructorParameterTypes;
         int disposalCount;
+        readonly FastConstructorInfo? fastConstructor;
 
         void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
@@ -31,7 +47,10 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((Type, arguments, options));
+                    if (constructor is null)
+                        typeInstances.Remove((Type, arguments, options));
+                    else
+                        constructorInstances.Remove((Type, constructor, arguments, options));
                     result = true;
                 }
             if (result)
@@ -48,20 +67,15 @@ namespace Cogs.ActiveExpressions
 
         void DisposeValueIfNecessary()
         {
-            if (ApplicableOptions.IsConstructedTypeDisposed(Type, constructorParameterTypes) && TryGetUndeferredValue(out var value))
-            {
-                if (value is IDisposable disposable)
-                    disposable.Dispose();
-                else if (value is IAsyncDisposable asyncDisposable)
-                    asyncDisposable.DisposeAsync().AsTask().Wait();
-            }
+            if (ApplicableOptions.IsConstructedTypeDisposed(Type, constructorParameterTypes))
+                DisposeValueIfPossible();
         }
 
         public override bool Equals(object obj) => obj is ActiveNewExpression other && Equals(other);
 
         public bool Equals(ActiveNewExpression other) => Type.Equals(other.Type) && arguments.Equals(other.arguments) && Equals(options, other.options);
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override void Evaluate()
         {
             try
@@ -70,6 +84,8 @@ namespace Cogs.ActiveExpressions
                 var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
                 if (argumentFault is { })
                     Fault = argumentFault;
+                else if (fastConstructor is { })
+                    Value = fastConstructor.Invoke(arguments.Select(argument => argument.Value).ToArray());
                 else
                     Value = Activator.CreateInstance(Type, arguments.Select(argument => argument.Value).ToArray());
             }
@@ -83,8 +99,9 @@ namespace Cogs.ActiveExpressions
 
         public override string ToString() => $"new {Type.FullName}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
+        static readonly Dictionary<(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression> constructorInstances = new Dictionary<(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(Type type, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression> instances = new Dictionary<(Type type, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression>();
+        static readonly Dictionary<(Type type, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression> typeInstances = new Dictionary<(Type type, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression>();
 
         public static bool operator ==(ActiveNewExpression? a, ActiveNewExpression? b) => EqualityComparer<ActiveNewExpression?>.Default.Equals(a, b);
 
@@ -94,16 +111,33 @@ namespace Cogs.ActiveExpressions
         {
             var type = newExpression.Type;
             var arguments = new EquatableList<ActiveExpression>(newExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToList());
-            var key = (type, arguments, options);
-            lock (instanceManagementLock)
+            if (newExpression.Constructor is ConstructorInfo constructor)
             {
-                if (!instances.TryGetValue(key, out var activeNewExpression))
+                var key = (type, constructor, arguments, options);
+                lock (instanceManagementLock)
                 {
-                    activeNewExpression = new ActiveNewExpression(type, arguments, options, deferEvaluation);
-                    instances.Add(key, activeNewExpression);
+                    if (!constructorInstances.TryGetValue(key, out var activeNewExpression))
+                    {
+                        activeNewExpression = new ActiveNewExpression(type, constructor, arguments, options, deferEvaluation);
+                        constructorInstances.Add(key, activeNewExpression);
+                    }
+                    ++activeNewExpression.disposalCount;
+                    return activeNewExpression;
                 }
-                ++activeNewExpression.disposalCount;
-                return activeNewExpression;
+            }
+            else
+            {
+                var key = (type, arguments, options);
+                lock (instanceManagementLock)
+                {
+                    if (!typeInstances.TryGetValue(key, out var activeNewExpression))
+                    {
+                        activeNewExpression = new ActiveNewExpression(type, arguments, options, deferEvaluation);
+                        typeInstances.Add(key, activeNewExpression);
+                    }
+                    ++activeNewExpression.disposalCount;
+                    return activeNewExpression;
+                }
             }
         }
     }

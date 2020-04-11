@@ -32,7 +32,7 @@ namespace Cogs.ActiveExpressions
 
         public bool Equals(ActiveCoalesceExpression other) => left.Equals(other.left) && right.Equals(other.right) && Equals(options, other.options);
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override void Evaluate()
         {
             try

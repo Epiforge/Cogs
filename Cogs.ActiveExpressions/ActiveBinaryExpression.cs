@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
 
 namespace Cogs.ActiveExpressions
 {
@@ -64,20 +65,15 @@ namespace Cogs.ActiveExpressions
 
         void DisposeValueIfNecessary()
         {
-            if (method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method) && TryGetUndeferredValue(out var value))
-            {
-                if (value is IDisposable disposable)
-                    disposable.Dispose();
-                else if (value is IAsyncDisposable asyncDisposable)
-                    asyncDisposable.DisposeAsync().AsTask().Wait();
-            }
+            if (method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method))
+                DisposeValueIfPossible();
         }
 
         public override bool Equals(object obj) => obj is ActiveBinaryExpression other && Equals(other);
 
         public bool Equals(ActiveBinaryExpression other) => left.Equals(other.left) && Equals(method, other.method) && NodeType.Equals(other.NodeType) && right.Equals(other.right) && Equals(options, other.options);
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override void Evaluate()
         {
             var leftFault = left.Fault;

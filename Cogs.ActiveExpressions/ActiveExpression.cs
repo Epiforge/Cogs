@@ -10,6 +10,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 namespace Cogs.ActiveExpressions
 {
@@ -145,6 +146,27 @@ namespace Cogs.ActiveExpressions
             {
                 if (!deferringEvaluation)
                     Evaluate();
+            }
+        }
+
+        /// <summary>
+        /// Disposes of the current value if it has been set and supports a disposal mechanism
+        /// </summary>
+        protected void DisposeValueIfPossible()
+        {
+            if (TryGetUndeferredValue(out var value))
+            {
+                if (!ApplicableOptions.PreferAsyncDisposal && value is IDisposable preferredDisposable)
+                    preferredDisposable.Dispose();
+                else if (value is IAsyncDisposable asyncDisposable)
+                {
+                    if (ApplicableOptions.BlockOnAsyncDisposal)
+                        asyncDisposable.DisposeAsync().AsTask().Wait();
+                    else
+                        ThreadPool.QueueUserWorkItem(async state => await asyncDisposable.DisposeAsync());
+                }
+                else if (value is IDisposable disposable)
+                    disposable.Dispose();
             }
         }
 
@@ -578,9 +600,9 @@ namespace Cogs.ActiveExpressions
         ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, EquatableList<object> arguments)
         {
             this.activeExpression = activeExpression;
-            Options = options!;
+            Options = options;
             this.arguments = arguments;
-            fault = this.activeExpression.Fault!;
+            fault = this.activeExpression.Fault;
             val = this.activeExpression.Value is TResult value ? value : default;
             this.activeExpression.PropertyChanged += ExpressionPropertyChanged;
         }
@@ -589,7 +611,7 @@ namespace Cogs.ActiveExpressions
         readonly EquatableList<object> arguments;
         int disposalCount;
         Exception? fault;
-        [MaybeNull] TResult val;
+        [AllowNull, MaybeNull] TResult val;
 
         /// <summary>
         /// Gets the arguments that were passed to the lambda expression
@@ -613,7 +635,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the result of evaluating the lambda expression
         /// </summary>
-        [MaybeNull]
+        [AllowNull, MaybeNull]
         public TResult Value
         {
             get => val;
@@ -655,7 +677,7 @@ namespace Cogs.ActiveExpressions
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(Fault))
-                Fault = activeExpression.Fault!;
+                Fault = activeExpression.Fault;
             else if (e.PropertyName == nameof(Value))
                 Value = activeExpression.Value is TResult typedValue ? typedValue : default;
         }
@@ -729,7 +751,7 @@ namespace Cogs.ActiveExpressions
         readonly ActiveExpression activeExpression;
         int disposalCount;
         Exception? fault;
-        [MaybeNull] TResult val;
+        [AllowNull, MaybeNull] TResult val;
 
         /// <summary>
         /// Frees, releases, or resets unmanaged resources
@@ -805,6 +827,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the result of evaluating the lambda expression
         /// </summary>
+        [AllowNull, MaybeNull]
         public TResult Value
         {
             get => val;
@@ -869,7 +892,7 @@ namespace Cogs.ActiveExpressions
         readonly ActiveExpression activeExpression;
         int disposalCount;
         Exception? fault;
-        [MaybeNull] TResult val;
+        [AllowNull, MaybeNull] TResult val;
 
         /// <summary>
         /// Gets the first argument that was passed to the lambda expression
@@ -898,7 +921,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the result of evaluating the lambda expression
         /// </summary>
-        [MaybeNull]
+        [AllowNull, MaybeNull]
         public TResult Value
         {
             get => val;
@@ -1017,7 +1040,7 @@ namespace Cogs.ActiveExpressions
         readonly ActiveExpression activeExpression;
         int disposalCount;
         Exception? fault;
-        [MaybeNull] TResult val;
+        [AllowNull, MaybeNull] TResult val;
 
         /// <summary>
         /// Gets the first argument that was passed to the lambda expression
@@ -1051,7 +1074,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the result of evaluating the lambda expression
         /// </summary>
-        [MaybeNull]
+        [AllowNull, MaybeNull]
         public TResult Value
         {
             get => val;

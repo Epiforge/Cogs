@@ -20,13 +20,29 @@ namespace Cogs.ActiveExpressions
         {
             DisposeConstructedObjects = true;
             DisposeStaticMethodReturnValues = true;
+            PreferAsyncDisposal = true;
         }
 
+        bool blockOnAsyncDisposal;
         bool disposeConstructedObjects;
         readonly ConcurrentDictionary<(Type type, EquatableList<Type> constuctorParameterTypes), bool> disposeConstructedTypes = new ConcurrentDictionary<(Type type, EquatableList<Type> constuctorParameterTypes), bool>();
         readonly ConcurrentDictionary<MethodInfo, bool> disposeMethodReturnValues = new ConcurrentDictionary<MethodInfo, bool>();
         bool disposeStaticMethodReturnValues;
         bool isFrozen;
+        bool preferAsyncDisposal;
+
+        /// <summary>
+        /// Gets/sets whether active expression using these options should block execution of the thread evaluating them when they must asynchronously dispose of a previous value; the default is <c>false</c>
+        /// </summary>
+        public bool BlockOnAsyncDisposal
+        {
+            get => blockOnAsyncDisposal;
+            set
+            {
+                RequireUnfrozen();
+                blockOnAsyncDisposal = value;
+            }
+        }
 
         /// <summary>
         /// Gets/sets whether active expressions using these options should dispose of objects they have constructed when the objects are replaced or otherwise discarded; the default is <c>true</c>
@@ -51,6 +67,19 @@ namespace Cogs.ActiveExpressions
             {
                 RequireUnfrozen();
                 disposeStaticMethodReturnValues = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets/sets whether active expression using these options will prefer asynchronous disposal over synchronous disposal when both interfaces are implemented; the default is <c>true</c>
+        /// </summary>
+        public bool PreferAsyncDisposal
+        {
+            get => preferAsyncDisposal;
+            set
+            {
+                RequireUnfrozen();
+                preferAsyncDisposal = value;
             }
         }
 
