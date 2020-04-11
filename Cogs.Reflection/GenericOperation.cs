@@ -19,7 +19,8 @@ namespace Cogs.Reflection
         /// <param name="a">The first value to add</param>
         /// <param name="b">The second value to add</param>
         /// <returns>The sum of <paramref name="a"/> and <paramref name="b"/></returns>
-        public static T Add<T>(T a, T b) => ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Add, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b);
+        [return: MaybeNull]
+        public static T Add<T>([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Add, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
         /// <summary>
         /// Divides a specified <typeparamref name="T"/> value by another specified <typeparamref name="T"/> value
@@ -28,7 +29,8 @@ namespace Cogs.Reflection
         /// <param name="a">The value to be divided</param>
         /// <param name="b">The value to divide by</param>
         /// <returns>The result of the division</returns>
-        public static T Divide<T>(T a, T b) => ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Divide, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b);
+        [return: MaybeNull]
+        public static T Divide<T>([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Divide, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
         /// <summary>
         /// Multiplies two specified <typeparamref name="T"/> values
@@ -37,7 +39,8 @@ namespace Cogs.Reflection
         /// <param name="a">The first value to multiply</param>
         /// <param name="b">The second value to multiply</param>
         /// <returns>The product of <paramref name="a"/> and <paramref name="b"/></returns>
-        public static T Multiply<T>(T a, T b) => ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Multiply, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b);
+        [return: MaybeNull]
+        public static T Multiply<T>([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Multiply, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
         /// <summary>
         /// Subtracts a <typeparamref name="T"/> value from another <typeparamref name="T"/> value
@@ -46,9 +49,10 @@ namespace Cogs.Reflection
         /// <param name="a">The value to subtract from (the minuend)</param>
         /// <param name="b">he value to subtract (the subtrahend)</param>
         /// <returns>The result of subtracting <paramref name="b"/> from <paramref name="a"/></returns>
-        public static T Subtract<T>(T a, T b) => ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Subtract, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b);
+        [return: MaybeNull]
+        public static T Subtract<T>([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Subtract, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         internal static Delegate CompiledBinaryOperationMethodsValueFactory((BinaryOperation operation, Type type) key)
         {
             var (operation, type) = key;
@@ -102,7 +106,8 @@ namespace Cogs.Reflection
         /// <param name="a">The first value to add</param>
         /// <param name="b">The second value to add</param>
         /// <returns>The sum of <paramref name="a"/> and <paramref name="b"/></returns>
-        public T Add(T a, T b) => add(a, b);
+        [return: MaybeNull]
+        public T Add([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? add(a, b) : default;
 
         /// <summary>
         /// Divides a specified <typeparamref name="T"/> value by another specified <typeparamref name="T"/> value
@@ -110,7 +115,8 @@ namespace Cogs.Reflection
         /// <param name="a">The value to be divided</param>
         /// <param name="b">The value to divide by</param>
         /// <returns>The result of the division</returns>
-        public T Divide(T a, T b) => divide(a, b);
+        [return: MaybeNull]
+        public T Divide([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? divide(a, b) : default;
 
         /// <summary>
         /// Multiplies two specified <typeparamref name="T"/> values
@@ -118,7 +124,8 @@ namespace Cogs.Reflection
         /// <param name="a">The first value to multiply</param>
         /// <param name="b">The second value to multiply</param>
         /// <returns>The product of <paramref name="a"/> and <paramref name="b"/></returns>
-        public T Multiply(T a, T b) => multiply(a, b);
+        [return: MaybeNull]
+        public T Multiply([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? multiply(a, b) : default;
 
         /// <summary>
         /// Subtracts a <typeparamref name="T"/> value from another <typeparamref name="T"/> value
@@ -126,6 +133,7 @@ namespace Cogs.Reflection
         /// <param name="a">The value to subtract from (the minuend)</param>
         /// <param name="b">he value to subtract (the subtrahend)</param>
         /// <returns>The result of subtracting <paramref name="b"/> from <paramref name="a"/></returns>
-        public T Subtract(T a, T b) => subtract(a, b);
+        [return: MaybeNull]
+        public T Subtract([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? subtract(a, b) : default;
     }
 }
