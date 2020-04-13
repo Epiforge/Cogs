@@ -4,7 +4,7 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <Authors>Epiforge</Authors>
     <Company>Epiforge</Company>
-    <Description>Cogs for collections. Includes EquatableList, INotifyDictionaryChanged, INotifyGenericCollectionChanged, IObservableRangeDictionary, IRangeDictionary, ObservableDictionary, ObservableSortedDictionary.</Description>
+    <Description>Cogs for collections. Includes EquatableList, INotifyDictionaryChanged, INotifyGenericCollectionChanged, IObservableRangeDictionary, IRangeDictionary, NullableKeyDictionary, NullableKeySortedDictionary, ObservableDictionary, ObservableSortedDictionary, ReadOnlyDictionary, ReadOnlyObservableDictionary, ReadOnlyObservableRangeDictionary.</Description>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -15,7 +15,7 @@
     <Product>Collections Cog</Product>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>1.2.1</Version>
+    <Version>1.3.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
