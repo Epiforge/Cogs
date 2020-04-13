@@ -225,6 +225,20 @@ namespace Cogs.Collections.Synchronized
         protected override void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.Execute(() => base.CopyTo(array, arrayIndex));
 
         /// <summary>
+        /// Ensures that the dictionary can hold up to a specified number of entries without any further expansion of its backing storage
+        /// </summary>
+        /// <param name="capacity">The number of entries</param>
+        /// <returns>The current capacity of the <see cref="SynchronizedObservableDictionary{TKey, TValue}"/></returns>
+        public override int EnsureCapacity(int capacity) => this.Execute(() => base.EnsureCapacity(capacity));
+
+        /// <summary>
+        /// Ensures that the dictionary can hold up to a specified number of entries without any further expansion of its backing storage
+        /// </summary>
+        /// <param name="capacity">The number of entries</param>
+        /// <returns>The current capacity of the <see cref="SynchronizedObservableDictionary{TKey, TValue}"/></returns>
+        public virtual Task<int> EnsureCapacityAsync(int capacity) => this.ExecuteAsync(() => base.EnsureCapacity(capacity));
+
+        /// <summary>
         /// Copies all keys in the <see cref="SynchronizedObservableDictionary{TKey, TValue}"/> into a <see cref="IReadOnlyList{T}"/>
         /// </summary>
         public IReadOnlyList<TKey> GetAllKeys() => this.Execute(() => Keys.ToImmutableArray());
@@ -407,6 +421,44 @@ namespace Cogs.Collections.Synchronized
         public virtual Task SetValueAsync(TKey key, TValue value) => this.ExecuteAsync(() => base[key] = value);
 
         /// <summary>
+        /// Sets the capacity of this dictionary to what it would be if it had been originally initialized with all its entries
+        /// </summary>
+        public override void TrimExcess() => this.Execute(() => base.TrimExcess());
+
+        /// <summary>
+        /// Sets the capacity of this dictionary to hold up a specified number of entries without any further expansion of its backing storage
+        /// </summary>
+        /// <param name="capacity">The new capacity</param>
+        public override void TrimExcess(int capacity) => this.Execute(() => base.TrimExcess(capacity));
+
+        /// <summary>
+        /// Sets the capacity of this dictionary to what it would be if it had been originally initialized with all its entries
+        /// </summary>
+        public virtual Task TrimExcessAsync() => this.ExecuteAsync(() => base.TrimExcess());
+
+        /// <summary>
+        /// Sets the capacity of this dictionary to hold up a specified number of entries without any further expansion of its backing storage
+        /// </summary>
+        /// <param name="capacity">The new capacity</param>
+        public virtual Task TrimExcessAsync(int capacity) => this.ExecuteAsync(() => base.TrimExcess(capacity));
+
+        /// <summary>
+        /// Attempts to add the specified key and value to the dictionary
+        /// </summary>
+        /// <param name="key">The key of the element to add</param>
+        /// <param name="value">The value of the element to add</param>
+        /// <returns><c>true</c> if the key/value pair was added to the dictionary successfully; otherwise, <c>false</c></returns>
+        public override bool TryAdd(TKey key, TValue value) => this.Execute(() => base.TryAdd(key, value));
+
+        /// <summary>
+        /// Attempts to add the specified key and value to the dictionary
+        /// </summary>
+        /// <param name="key">The key of the element to add</param>
+        /// <param name="value">The value of the element to add</param>
+        /// <returns><c>true</c> if the key/value pair was added to the dictionary successfully; otherwise, <c>false</c></returns>
+        public virtual Task<bool> TryAddAsync(TKey key, TValue value) => this.ExecuteAsync(() => base.TryAdd(key, value));
+
+        /// <summary>
         /// Gets the value associated with the specified key
         /// </summary>
         /// <param name="key">The key the value of which to get</param>
@@ -419,6 +471,20 @@ namespace Cogs.Collections.Synchronized
         /// <param name="key">The key the value of which to get</param>
         /// <returns><c>true</c> if the object that implements <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/> contains an element with the specified key and the value that was retrieved; otherwise, <c>false</c> and the default <typeparamref name="TValue"/></returns>
         public virtual Task<(bool valueRetrieved, TValue value)> TryGetValueAsync(TKey key) => this.ExecuteAsync(() => base.TryGetValue(key));
+
+        /// <summary>
+        /// Removes the value associated with the specified key
+        /// </summary>
+        /// <param name="key">The key the value of which to get</param>
+        /// <returns><c>true</c> if the object that implements <see cref="IDictionary{TKey, TValue}"/> contained an element with the specified key and the value that was removed; otherwise, <c>false</c> and the default value of <typeparamref name="TValue"/></returns>
+        protected override (bool valueRemoved, TValue value) TryRemove(TKey key) => this.Execute(() => base.TryRemove(key));
+
+        /// <summary>
+        /// Removes the value associated with the specified key
+        /// </summary>
+        /// <param name="key">The key the value of which to get</param>
+        /// <returns><c>true</c> if the object that implements <see cref="IDictionary{TKey, TValue}"/> contained an element with the specified key and the value that was removed; otherwise, <c>false</c> and the default value of <typeparamref name="TValue"/></returns>
+        public virtual Task<(bool valueRemoved, TValue value)> TryRemoveAsync(TKey key) => this.ExecuteAsync(() => base.TryRemove(key));
 
         /// <summary>
         /// Gets or sets the value associated with the specified key
