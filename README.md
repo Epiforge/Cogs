@@ -28,25 +28,30 @@ Supports `netstandard2.1`.
 This library accepts a `LambdaExpression` and arguments to pass to it, dissects the `LambdaExpression`'s body, and hooks into change notification events for properties (`INotifyPropertyChanged`), collections (`INotifyCollectionChanged`), and dictionaries (`Cogs.Collections.INotifyDictionaryChanged`).
 
 ```csharp
-var elizabeth = Employee.GetByName("Elizabeth"); // Employee implements INotifyPropertyChanged
-var expr =
-    ActiveExpression.Create(e => e.Name.Length, elizabeth); // expr subscribed to elizabeth's PropertyChanged
+// Employee implements INotifyPropertyChanged
+var elizabeth = Employee.GetByName("Elizabeth");
+var expr = ActiveExpression.Create(e => e.Name.Length, elizabeth);
+// expr subscribed to elizabeth's PropertyChanged
 ```
 
 Then, as changes involving any elements of the expression occur, a chain of automatic re-evaluation will get kicked off, possibly causing the active expression's `Value` property to change.
 
 ```csharp
 var elizabeth = Employee.GetByName("Elizabeth");
-var expr = ActiveExpression.Create(e => e.Name.Length, elizabeth); // expr.Value == 9
-elizabeth.Name = "Lizzy"; // expr.Value == 5
+var expr = ActiveExpression.Create(e => e.Name.Length, elizabeth);
+// expr.Value == 9
+elizabeth.Name = "Lizzy";
+// expr.Value == 5
 ```
 
 Also, since exceptions may be encountered after an active expression was created due to subsequent element changes, active expressions also have a `Fault` property, which will be set to the exception that was encountered during evaluation.
 
 ```csharp
 var elizabeth = Employee.GetByName("Elizabeth");
-var expr = ActiveExpression.Create(e => e.Name.Length, elizabeth); // expr.Fault is null
-elizabeth.Name = null; // expr.Fault is NullReferenceException
+var expr = ActiveExpression.Create(e => e.Name.Length, elizabeth);
+// expr.Fault is null
+elizabeth.Name = null;
+// expr.Fault is NullReferenceException
 ```
 
 Active expressions raise property change events of their own, so listen for those (kinda the whole point)!
