@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Cogs.Collections
@@ -296,6 +297,13 @@ namespace Cogs.Collections
         protected virtual void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => gci.CopyTo(array, arrayIndex);
 
         /// <summary>
+        /// Ensures that the dictionary can hold up to a specified number of entries without any further expansion of its backing storage
+        /// </summary>
+        /// <param name="capacity">The number of entries</param>
+        /// <returns>The current capacity of the <see cref="ObservableDictionary{TKey, TValue}"/></returns>
+        public virtual int EnsureCapacity(int capacity) => gd.EnsureCapacity(capacity);
+
+        /// <summary>
         /// Returns an <see cref="IDictionaryEnumerator"/> object for the <see cref="IDictionary"/> object
         /// </summary>
         /// <returns>An <see cref="IDictionaryEnumerator"/> object for the <see cref="IDictionary"/> object</returns>
@@ -433,6 +441,19 @@ namespace Cogs.Collections
         /// </summary>
         /// <param name="e"></param>
         protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) => GenericCollectionChanged?.Invoke(this, e);
+
+        /// <summary>
+        /// Removes the element with the specified key from the <see cref="IDictionary{TKey, TValue}"/>
+        /// </summary>
+        /// <param name="key">The key of the element to remove</param>
+        /// <param name="value">The value that was removed</param>
+        /// <returns><c>true</c> if the element is successfully removed; otherwise, <c>false</c> (this method also returns <c>false</c> if key was not found in the original <see cref="IDictionary{TKey, TValue}"/>)</returns>
+        public bool Remove(TKey key, [MaybeNullWhen(false)] out TValue value)
+        {
+            bool valueRemoved;
+            (valueRemoved, value) = TryRemove(key);
+            return valueRemoved;
+        }
 
         /// <summary>
         /// Removes the element with the specified key from the <see cref="IDictionary{TKey, TValue}"/>
@@ -618,6 +639,38 @@ namespace Cogs.Collections
         }
 
         /// <summary>
+        /// Sets the capacity of this dictionary to what it would be if it had been originally initialized with all its entries
+        /// </summary>
+        public virtual void TrimExcess() => gd.TrimExcess();
+
+        /// <summary>
+        /// Sets the capacity of this dictionary to hold up a specified number of entries without any further expansion of its backing storage
+        /// </summary>
+        /// <param name="capacity">The new capacity</param>
+        public virtual void TrimExcess(int capacity) => gd.TrimExcess(capacity);
+
+        /// <summary>
+        /// Attempts to add the specified key and value to the dictionary
+        /// </summary>
+        /// <param name="key">The key of the element to add</param>
+        /// <param name="value">The value of the element to add</param>
+        /// <returns><c>true</c> if the key/value pair was added to the dictionary successfully; otherwise, <c>false</c></returns>
+        public virtual bool TryAdd(TKey key, TValue value)
+        {
+            if (key is null)
+                throw new ArgumentNullException(nameof(key));
+            if (!gd.ContainsKey(key))
+            {
+                NotifyCountChanging();
+                gd.Add(key, value);
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Add, key, value));
+                NotifyCountChanged();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Gets the value associated with the specified key
         /// </summary>
         /// <param name="key">The key the value of which to get</param>
@@ -639,6 +692,24 @@ namespace Cogs.Collections
         {
             var valueRetrieved = gd.TryGetValue(key, out var value);
             return (valueRetrieved, value);
+        }
+
+        /// <summary>
+        /// Removes the value associated with the specified key
+        /// </summary>
+        /// <param name="key">The key the value of which to get</param>
+        /// <returns><c>true</c> if the object that implements <see cref="IDictionary{TKey, TValue}"/> contained an element with the specified key and the value that was removed; otherwise, <c>false</c> and the default value of <typeparamref name="TValue"/></returns>
+        protected virtual (bool valueRemoved, TValue value) TryRemove(TKey key)
+        {
+            if (gd.TryGetValue(key, out var value))
+            {
+                NotifyCountChanging();
+                gd.Remove(key);
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Remove, key, value));
+                NotifyCountChanged();
+                return (true, value);
+            }
+            return (false, default!);
         }
 
         event EventHandler<NotifyDictionaryChangedEventArgs<object?, object?>>? INotifyDictionaryChanged.DictionaryChanged

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Cogs.Collections
@@ -53,6 +54,11 @@ namespace Cogs.Collections
         readonly Dictionary<TKey, TValue> dict;
         bool hasNullKeyedValue = false;
         TValue nullKeyedValue = default!;
+
+        /// <summary>
+        /// Gets the <see cref="IEqualityComparer{TKey}"/> that is used to determine equality of keys for the dictionary
+        /// </summary>
+        public IEqualityComparer<TKey> Comparer => dict.Comparer;
 
         /// <summary>
         /// Gets the number of elements in the collection
@@ -160,6 +166,13 @@ namespace Cogs.Collections
             return dict.ContainsKey(key);
         }
 
+        /// <summary>
+        /// Determines whether the <see cref="IDictionary{TKey, TValue}"/> contains a specific value
+        /// </summary>
+        /// <param name="value">The value to locate in the <see cref="IDictionary{TKey, TValue}"/></param>
+        /// <returns><c>true</c> if the <see cref="IDictionary{TKey, TValue}"/> contains an element with the value; otherwise, <c>false</c></returns>
+        public bool ContainsValue(TValue value) => dict.ContainsValue(value) || (hasNullKeyedValue && EqualityComparer<TValue>.Default.Equals(nullKeyedValue, value));
+
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             if (hasNullKeyedValue)
@@ -171,6 +184,36 @@ namespace Cogs.Collections
             (hasNullKeyedValue ? new KeyValuePair<TKey, TValue>[] { new KeyValuePair<TKey, TValue>(default!, nullKeyedValue) } : Enumerable.Empty<KeyValuePair<TKey, TValue>>()).Concat(dict).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
+
+        /// <summary>
+        /// Ensures that the dictionary can hold up to a specified number of entries without any further expansion of its backing storage
+        /// </summary>
+        /// <param name="capacity">The number of entries</param>
+        /// <returns>The current capacity of the <see cref="IDictionary{TKey, TValue}"/></returns>
+        public int EnsureCapacity(int capacity) => dict.EnsureCapacity(capacity);
+
+        /// <summary>
+        /// Removes the element with the specified key from the <see cref="IDictionary{TKey, TValue}"/>
+        /// </summary>
+        /// <param name="key">The key of the element to remove</param>
+        /// <param name="value">The value that was removed</param>
+        /// <returns><c>true</c> if the element is successfully removed; otherwise, <c>false</c> (this method also returns <c>false</c> if key was not found in the original <see cref="IDictionary{TKey, TValue}"/>)</returns>
+        public bool Remove(TKey key, [MaybeNullWhen(false)] out TValue value)
+        {
+            if (key is null)
+            {
+                if (hasNullKeyedValue)
+                {
+                    value = nullKeyedValue;
+                    nullKeyedValue = default!;
+                    hasNullKeyedValue = false;
+                    return true;
+                }
+                value = default!;
+                return false;
+            }
+            return dict.Remove(key, out value);
+        }
 
         /// <summary>
         /// Removes the element with the specified key from the <see cref="IDictionary{TKey, TValue}"/>
@@ -205,6 +248,38 @@ namespace Cogs.Collections
                 return false;
             }
             return ((IDictionary<TKey, TValue>)dict).Remove(item);
+        }
+
+        /// <summary>
+        /// Sets the capacity of this dictionary to what it would be if it had been originally initialized with all its entries
+        /// </summary>
+        public void TrimExcess() => dict.TrimExcess();
+
+        /// <summary>
+        /// Sets the capacity of this dictionary to hold up a specified number of entries without any further expansion of its backing storage
+        /// </summary>
+        /// <param name="capacity">The new capacity</param>
+        public void TrimExcess(int capacity) => dict.TrimExcess(capacity);
+
+        /// <summary>
+        /// Attempts to add the specified key and value to the dictionary
+        /// </summary>
+        /// <param name="key">The key of the element to add</param>
+        /// <param name="value">The value of the element to add</param>
+        /// <returns><c>true</c> if the key/value pair was added to the dictionary successfully; otherwise, <c>false</c></returns>
+        public bool TryAdd(TKey key, TValue value)
+        {
+            if (key is null)
+            {
+                if (!hasNullKeyedValue)
+                {
+                    hasNullKeyedValue = true;
+                    nullKeyedValue = value;
+                    return true;
+                }
+                return false;
+            }
+            return dict.TryAdd(key, value);
         }
 
         /// <summary>

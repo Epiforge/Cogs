@@ -42,6 +42,11 @@ namespace Cogs.Collections
         TValue nullKeyedValue = default!;
 
         /// <summary>
+        /// Gets the <see cref="IComparer{TKey}"/> used to order the elements of the <see cref="IDictionary{TKey, TValue}"/>
+        /// </summary>
+        public IComparer<TKey> Comparer => dict.Comparer;
+
+        /// <summary>
         /// Gets the number of elements in the collection
         /// </summary>
         public int Count => dict.Count;
@@ -147,6 +152,13 @@ namespace Cogs.Collections
                 return hasNullKeyedValue;
             return dict.ContainsKey(key);
         }
+
+        /// <summary>
+        /// Determines whether the <see cref="IDictionary{TKey, TValue}"/> contains a specific value
+        /// </summary>
+        /// <param name="value">The value to locate in the <see cref="IDictionary{TKey, TValue}"/></param>
+        /// <returns><c>true</c> if the <see cref="IDictionary{TKey, TValue}"/> contains an element with the value; otherwise, <c>false</c></returns>
+        public bool ContainsValue(TValue value) => dict.ContainsValue(value) || (hasNullKeyedValue && EqualityComparer<TValue>.Default.Equals(nullKeyedValue, value));
 
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
