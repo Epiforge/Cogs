@@ -208,7 +208,6 @@ However, please note that Active Query also has its own version of this property
 If you are not using Active Expressions directly, we recommend using Active Query's property instead because the optimizer will be called only once per extension method call in that case, no matter how many elements or key/value pairs are processed by it.
 Optimize your optimization, yo.
 
-
 ## Collections
 
 [![Cogs.Collections Nuget](https://img.shields.io/nuget/v/Cogs.Collections.svg)](https://www.nuget.org/packages/Cogs.Collections)
@@ -217,6 +216,7 @@ This library provides a number of utilities surrounding collections:
 
 * `EquatableList<T>` is an immutable list of items which may be compared with other instances of the same type and produces a hash code based on the permutation of its contents.
 * `INotifyGenericCollectionChanged<T>` is similar to the BCL's `INotifyCollectionChanged` except that it is a generic and therefore provides event arguments aware of the type of the collection.
+* `NullableKeyDictionary<TKey, TValue>` and `NullableKeySortedDictionary<TKey, TValue>` are very slim implementations of `IDictionary<TKey, TValue>` that allow a single null key (useful for some edge cases in which a null key is simply going to happen and you need to be able to deal with it; otherwise, use other dictionary classes)
 * `ObservableDictionary<TKey, TValue>` and `ObservableSortedDictionary<TKey, TValue>` are counterparts to the BCL's `Dictionary<TKey, TValue>` and `SortedDictionary<TKey, TValue>`, respectively, that implement the also included `IRangeDictionary<TKey, TValue>` and `INotifyDictionaryChanged<TKey, TValue>`. Ever want to add multiple items to a dictionary at once... or keep an eye on what's being done to it? Now you can.
 
 ## Components
