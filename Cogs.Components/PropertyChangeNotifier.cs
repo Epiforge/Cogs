@@ -77,9 +77,9 @@ namespace Cogs.Components
         /// <param name="value">The new value</param>
         /// <param name="propertyName">The name of the property</param>
         /// <returns>true if <paramref name="backingField"/> was unequal to <paramref name="value"/>; otherwise, false</returns>
-        protected bool SetBackedProperty<TValue>([AllowNull, MaybeNull] ref TValue backingField, [AllowNull] TValue value, [CallerMemberName] string? propertyName = null)
+        protected bool SetBackedProperty<TValue>(ref TValue backingField, TValue value, [CallerMemberName] string? propertyName = null)
         {
-            if ((backingField is { } && value is { } && !EqualityComparer<TValue>.Default.Equals(backingField, value)) || (backingField is null != value is null))
+            if (!EqualityComparer<TValue>.Default.Equals(backingField, value))
             {
                 OnPropertyChanging(propertyName);
                 backingField = value;
@@ -97,9 +97,9 @@ namespace Cogs.Components
         /// <param name="value">The new value</param>
         /// <param name="propertyName">The name of the property</param>
         /// <returns>true if <paramref name="backingField"/> was unequal to <paramref name="value"/>; otherwise, false</returns>
-        protected bool SetBackedProperty<TValue>([AllowNull, MaybeNull] ref TValue backingField, [AllowNull] in TValue value, [CallerMemberName] string? propertyName = null)
+        protected bool SetBackedProperty<TValue>(ref TValue backingField, in TValue value, [CallerMemberName] string? propertyName = null)
         {
-            if ((backingField is { } && value is { } && !EqualityComparer<TValue>.Default.Equals(backingField, value)) || (backingField is null != value is null))
+            if (!EqualityComparer<TValue>.Default.Equals(backingField, value))
             {
                 OnPropertyChanging(propertyName);
                 backingField = value;
