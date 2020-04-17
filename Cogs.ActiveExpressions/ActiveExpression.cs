@@ -639,7 +639,7 @@ namespace Cogs.ActiveExpressions
         public TResult Value
         {
             get => val;
-            private set => SetBackedProperty(ref val, in value);
+            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
         }
 
         /// <summary>
@@ -831,7 +831,7 @@ namespace Cogs.ActiveExpressions
         public TResult Value
         {
             get => val;
-            private set => SetBackedProperty(ref val, in value);
+            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
         }
 
         static readonly object instanceManagementLock = new object();
@@ -925,7 +925,7 @@ namespace Cogs.ActiveExpressions
         public TResult Value
         {
             get => val;
-            private set => SetBackedProperty(ref val, in value);
+            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
         }
 
         /// <summary>
@@ -1078,7 +1078,7 @@ namespace Cogs.ActiveExpressions
         public TResult Value
         {
             get => val;
-            private set => SetBackedProperty(ref val, in value);
+            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
         }
 
         /// <summary>
