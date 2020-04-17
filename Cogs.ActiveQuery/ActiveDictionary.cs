@@ -16,7 +16,7 @@ namespace Cogs.ActiveQuery
     /// </summary>
     /// <typeparam name="TKey">The type of keys</typeparam>
     /// <typeparam name="TValue">The type of values</typeparam>
-    public class ActiveDictionary<TKey, TValue> : SyncDisposable, INotifyDictionaryChanged, INotifyDictionaryChanged<TKey, TValue>, INotifyElementFaultChanges, IReadOnlyDictionary<TKey, TValue>, ISynchronized
+    public class ActiveDictionary<TKey, TValue> : SyncDisposable, IActiveDictionary<TKey, TValue>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ActiveDictionary{TKey, TValue}"/> class
@@ -56,16 +56,6 @@ namespace Cogs.ActiveQuery
                 this.faultNotifier.ElementFaultChanging += FaultNotifierElementFaultChanging;
             }
         }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ActiveDictionary{TKey, TValue}"/> class
-        /// </summary>
-        /// <param name="readOnlyDictionary">The read-only dictionary upon which the <see cref="ActiveDictionary{TKey, TValue}"/> is based</param>
-        /// <param name="setOperationFault">An action that will set the <see cref="OperationFault"/> property of the <see cref="ActiveDictionary{TKey, TValue}"/></param>
-        /// <param name="faultNotifier">The <see cref="INotifyElementFaultChanges"/> for the underlying data of the <see cref="ActiveDictionary{TKey, TValue}"/></param>
-        /// <param name="onDispose">The action to take when the <see cref="ActiveDictionary{TKey, TValue}"/> is disposed</param>
-        public ActiveDictionary(IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, out Action<Exception?> setOperationFault, INotifyElementFaultChanges? faultNotifier = null, Action? onDispose = null) : this(readOnlyDictionary, faultNotifier, onDispose) =>
-            setOperationFault = SetOperationFault;
 
         readonly INotifyElementFaultChanges? faultNotifier;
         readonly Action? onDispose;
@@ -156,8 +146,6 @@ namespace Cogs.ActiveQuery
                 OnPropertyChanging(e);
         }
 
-        void SetOperationFault(Exception? operationFault) => OperationFault = operationFault;
-
         /// <summary>
         /// Gets the value that is associated with the specified key
         /// </summary>
@@ -204,7 +192,7 @@ namespace Cogs.ActiveQuery
         public Exception? OperationFault
         {
             get => operationFault;
-            private set => SetBackedProperty(ref operationFault, in value);
+            protected internal set => SetBackedProperty(ref operationFault, in value);
         }
 
         /// <summary>

@@ -18,12 +18,12 @@ namespace Cogs.ActiveQuery
             switch (this.indexingStrategy)
             {
                 case IndexingStrategy.HashTable:
-                    comparables = new Dictionary<TElement, List<IComparable>>();
-                    counts = new Dictionary<TElement, int>();
+                    comparables = new NullableKeyDictionary<TElement, List<IComparable>>();
+                    counts = new NullableKeyDictionary<TElement, int>();
                     break;
                 case IndexingStrategy.SelfBalancingBinarySearchTree:
-                    comparables = new SortedDictionary<TElement, List<IComparable>>();
-                    counts = new SortedDictionary<TElement, int>();
+                    comparables = new NullableKeySortedDictionary<TElement, List<IComparable>>();
+                    counts = new NullableKeySortedDictionary<TElement, int>();
                     break;
             }
 
@@ -116,8 +116,8 @@ namespace Cogs.ActiveQuery
         void RangeActiveExpressionElementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TElement, IComparable> e)
         {
             lock (comparablesAccess)
-                if (comparables!.ContainsKey(e.Element))
-                    comparables[e.Element][rangeActiveExpressionIndicies![(EnumerableRangeActiveExpression<TElement, IComparable>)sender]] = e.Result!;
+                if (comparables!.ContainsKey(e.Element! /* this could be null, but it won't matter if it is */))
+                    comparables[e.Element! /* this could be null, but it won't matter if it is */][rangeActiveExpressionIndicies![(EnumerableRangeActiveExpression<TElement, IComparable>)sender]] = e.Result!;
         }
 
         void RangeActiveExpressionGenericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TElement element, IComparable comparable)> e)
@@ -129,12 +129,12 @@ namespace Cogs.ActiveQuery
                     switch (indexingStrategy)
                     {
                         case IndexingStrategy.HashTable:
-                            comparables = new Dictionary<TElement, List<IComparable>>();
-                            counts = new Dictionary<TElement, int>();
+                            comparables = new NullableKeyDictionary<TElement, List<IComparable>>();
+                            counts = new NullableKeyDictionary<TElement, int>();
                             break;
                         case IndexingStrategy.SelfBalancingBinarySearchTree:
-                            comparables = new SortedDictionary<TElement, List<IComparable>>();
-                            counts = new SortedDictionary<TElement, int>();
+                            comparables = new NullableKeySortedDictionary<TElement, List<IComparable>>();
+                            counts = new NullableKeySortedDictionary<TElement, int>();
                             break;
                     }
                     rangeActiveExpressionIndicies = new Dictionary<EnumerableRangeActiveExpression<TElement, IComparable>, int>();

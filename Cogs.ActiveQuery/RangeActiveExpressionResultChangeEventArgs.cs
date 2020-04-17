@@ -5,18 +5,20 @@ namespace Cogs.ActiveQuery
 {
     class RangeActiveExpressionResultChangeEventArgs<TElement, TResult> : EventArgs
     {
-        public RangeActiveExpressionResultChangeEventArgs([MaybeNull] TElement element, [MaybeNull] TResult result)
+        public RangeActiveExpressionResultChangeEventArgs([AllowNull] TElement element, [AllowNull] TResult result)
         {
             Element = element;
             Result = result;
         }
 
-        public RangeActiveExpressionResultChangeEventArgs([MaybeNull] TElement element, [MaybeNull] TResult result, int count) : this(element, result) => Count = count;
+        public RangeActiveExpressionResultChangeEventArgs([AllowNull] TElement element, [AllowNull] TResult result, int count) : this(element, result) => Count = count;
 
         public int Count { get; }
-        [MaybeNull]
+
+        [AllowNull, MaybeNull]
         public TElement Element { get; }
-        [MaybeNull]
+
+        [AllowNull, MaybeNull]
         public TResult Result { get; }
     }
 }

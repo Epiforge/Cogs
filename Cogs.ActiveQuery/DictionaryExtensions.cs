@@ -14,6 +14,13 @@ namespace Cogs.ActiveQuery
                 _ => keyEqualityComparer is { } ? new Dictionary<TKey, TResultValue>(keyEqualityComparer) : new Dictionary<TKey, TResultValue>(),
             };
 
+        static IDictionary<TKey, TResultValue> CreateNullableKeyDictionary<TKey, TSourceValue, TResultValue>(IndexingStrategy? indexingStrategy = null, IEqualityComparer<TKey>? keyEqualityComparer = null, IComparer<TKey>? keyComparer = null) =>
+            indexingStrategy switch
+            {
+                IndexingStrategy.SelfBalancingBinarySearchTree => keyComparer is { } ? new NullableKeySortedDictionary<TKey, TResultValue>(keyComparer) : new NullableKeySortedDictionary<TKey, TResultValue>(),
+                _ => keyEqualityComparer is { } ? new NullableKeyDictionary<TKey, TResultValue>(keyEqualityComparer) : new NullableKeyDictionary<TKey, TResultValue>(),
+            };
+
         public static IDictionary<TKey, TValue> CreateSimilarDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary) => CreateSimilarDictionary<TKey, TValue, TValue>(readOnlyDictionary);
 
         public static IDictionary<TKey, TResultValue> CreateSimilarDictionary<TKey, TSourceValue, TResultValue>(this IReadOnlyDictionary<TKey, TSourceValue> readOnlyDictionary)
@@ -23,6 +30,16 @@ namespace Cogs.ActiveQuery
             {
                 IndexingStrategy.SelfBalancingBinarySearchTree => CreateDictionary<TKey, TSourceValue, TResultValue>(indexingStrategy, keyComparer: GetKeyComparer(readOnlyDictionary)),
                 _ => CreateDictionary<TKey, TSourceValue, TResultValue>(indexingStrategy, keyEqualityComparer: GetKeyEqualityComparer(readOnlyDictionary)),
+            };
+        }
+
+        public static IDictionary<TKey, TResultValue> CreateSimilarNullableKeyDictionary<TKey, TSourceValue, TResultValue>(this IReadOnlyDictionary<TKey, TSourceValue> readOnlyDictionary)
+        {
+            var indexingStrategy = GetIndexingStrategy(readOnlyDictionary);
+            return indexingStrategy switch
+            {
+                IndexingStrategy.SelfBalancingBinarySearchTree => CreateNullableKeyDictionary<TKey, TSourceValue, TResultValue>(indexingStrategy, keyComparer: GetKeyComparer(readOnlyDictionary)),
+                _ => CreateNullableKeyDictionary<TKey, TSourceValue, TResultValue>(indexingStrategy, keyEqualityComparer: GetKeyEqualityComparer(readOnlyDictionary)),
             };
         }
 
