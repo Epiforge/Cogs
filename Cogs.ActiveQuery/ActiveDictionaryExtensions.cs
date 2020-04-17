@@ -43,26 +43,26 @@ namespace Cogs.ActiveQuery
         public static IActiveValue<bool> ActiveAll<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions)
         {
             var changeNotifyingSource = source as INotifyDictionaryChanged<TKey, TValue>;
-            ActiveDictionary<TKey, TValue> where;
-            Action<bool>? setValue = null;
+            IActiveDictionary<TKey, TValue> where;
+            ActiveValue<bool>? activeValue = null;
 
-            void dictionaryChanged(object sender, EventArgs e) => setValue!(where.Count == source.Count);
+            void dictionaryChanged(object sender, EventArgs e) => activeValue!.Value = where.Count == source.Count;
 
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
-                where.DictionaryChanged += dictionaryChanged;
-                if (changeNotifyingSource is { })
-                    changeNotifyingSource.DictionaryChanged += dictionaryChanged;
-
-                return new ActiveValue<bool>(where.Count == source.Count, out setValue, elementFaultChangeNotifier: where, onDispose: () =>
+                activeValue = new ActiveValue<bool>(where.Count == source.Count, elementFaultChangeNotifier: where, onDispose: () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
                     if (changeNotifyingSource is { })
                         changeNotifyingSource.DictionaryChanged -= dictionaryChanged;
                 });
-            })!;
+                where.DictionaryChanged += dictionaryChanged;
+                if (changeNotifyingSource is { })
+                    changeNotifyingSource.DictionaryChanged += dictionaryChanged;
+                return activeValue;
+            });
         }
 
         #endregion All
@@ -76,22 +76,23 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to check for emptiness</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is <c>true</c> if the source dictionary contains any key/value pairs; otherwise, <c>false</c></returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<bool> ActiveAny<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
             if (source is INotifyDictionaryChanged<TKey, TValue> changeNotifyingSource)
             {
                 var synchronizedSource = source as ISynchronized;
-                Action<bool>? setValue = null;
+                ActiveValue<bool>? activeValue = null;
 
-                void sourceChanged(object sender, EventArgs e) => synchronizedSource.SequentialExecute(() => setValue!(source.Count > 0));
+                void sourceChanged(object sender, EventArgs e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.Count > 0);
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
+                    activeValue = new ActiveValue<bool>(source.Any(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changeNotifyingSource.DictionaryChanged -= sourceChanged);
                     changeNotifyingSource.DictionaryChanged += sourceChanged;
-                    return new ActiveValue<bool>(source.Any(), out setValue, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changeNotifyingSource.DictionaryChanged -= sourceChanged);
-                })!;
+                    return activeValue;
+                });
             }
             try
             {
@@ -126,22 +127,22 @@ namespace Cogs.ActiveQuery
         public static IActiveValue<bool> ActiveAny<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions)
         {
             var changeNotifyingSource = source as INotifyDictionaryChanged<TKey, TValue>;
-            ActiveDictionary<TKey, TValue> where;
-            Action<bool>? setValue = null;
+            IActiveDictionary<TKey, TValue> where;
+            ActiveValue<bool>? activeValue = null;
 
-            void dictionaryChanged(object sender, EventArgs e) => setValue!(where.Count > 0);
+            void dictionaryChanged(object sender, EventArgs e) => activeValue!.Value = where.Count > 0;
 
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
-                where.DictionaryChanged += dictionaryChanged;
-
-                return new ActiveValue<bool>(where.Count > 0, out setValue, elementFaultChangeNotifier: where, onDispose: () =>
+                activeValue = new ActiveValue<bool>(where.Count > 0, elementFaultChangeNotifier: where, onDispose: () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
                 });
-            })!;
+                where.DictionaryChanged += dictionaryChanged;
+                return activeValue;
+            });
         }
 
         #endregion Any
@@ -188,8 +189,7 @@ namespace Cogs.ActiveQuery
             var operations = new GenericOperations<TResult>();
             var synchronizedSource = source as ISynchronized;
             IActiveValue<TResult> sum;
-            Action<TResult>? setValue = null;
-            Action<Exception?>? setOperationFault = null;
+            ActiveValue<TResult>? activeValue = null;
 
             void propertyChanged(object sender, PropertyChangedEventArgs e) =>
                 synchronizedSource.SequentialExecute(() =>
@@ -199,13 +199,13 @@ namespace Cogs.ActiveQuery
                         var currentCount = source.Count;
                         if (currentCount == 0)
                         {
-                            setValue!(default!);
-                            setOperationFault!(ExceptionHelper.SequenceContainsNoElements);
+                            activeValue!.Value = default;
+                            activeValue!.OperationFault = ExceptionHelper.SequenceContainsNoElements;
                         }
                         else
                         {
-                            setOperationFault!(null);
-                            setValue!(operations.Divide(sum.Value, (TResult)convertCount(currentCount)));
+                            activeValue!.OperationFault = null;
+                            activeValue!.Value = operations.Divide(sum.Value, (TResult)convertCount(currentCount));
                         }
                     }
                 });
@@ -213,15 +213,15 @@ namespace Cogs.ActiveQuery
             return synchronizedSource.SequentialExecute(() =>
             {
                 sum = ActiveSum(source, selector, selectorOptions);
-                sum.PropertyChanged += propertyChanged;
-
                 var currentCount = source.Count;
-                return new ActiveValue<TResult>(currentCount > 0 ? operations.Divide(sum.Value, (TResult)convertCount(currentCount)) : default, out setValue, currentCount == 0 ? ExceptionHelper.SequenceContainsNoElements : null, out setOperationFault, sum, () =>
+                activeValue = new ActiveValue<TResult>(currentCount > 0 ? operations.Divide(sum.Value, (TResult)convertCount(currentCount)) : default, currentCount == 0 ? ExceptionHelper.SequenceContainsNoElements : null, sum, () =>
                 {
                     sum.PropertyChanged -= propertyChanged;
                     sum.Dispose();
                 });
-            })!;
+                sum.PropertyChanged += propertyChanged;
+                return activeValue;
+            });
         }
 
         #endregion Average
@@ -235,22 +235,23 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">A <see cref="IReadOnlyDictionary{TKey, TValue}"/></param>
         /// <returns>An active value the value of which is <c>true</c> if the source sequence contains any elements; otherwise, <c>false</c></returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<int> ActiveCount<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
             if (source is INotifyDictionaryChanged<TKey, TValue> changeNotifyingSource)
             {
                 var synchronizedSource = source as ISynchronized;
-                Action<int>? setValue = null;
+                ActiveValue<int>? activeValue = null;
 
-                void sourceDictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => synchronizedSource.SequentialExecute(() => setValue!(source.Count));
+                void sourceDictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.Count);
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
+                    activeValue = new ActiveValue<int>(source.Count, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changeNotifyingSource.DictionaryChanged -= sourceDictionaryChanged);
                     changeNotifyingSource.DictionaryChanged += sourceDictionaryChanged;
-                    return new ActiveValue<int>(source.Count, out setValue, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changeNotifyingSource.DictionaryChanged -= sourceDictionaryChanged);
-                })!;
+                    return activeValue;
+                });
             }
             try
             {
@@ -286,26 +287,26 @@ namespace Cogs.ActiveQuery
         public static IActiveValue<int> ActiveCount<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions)
         {
             var changeNotifyingSource = source as INotifyDictionaryChanged<TKey, TValue>;
-            ActiveDictionary<TKey, TValue> where;
-            Action<int>? setValue = null;
+            IActiveDictionary<TKey, TValue> where;
+            ActiveValue<int>? activeValue = null;
 
-            void dictionaryChanged(object sender, EventArgs e) => setValue!(where.Count);
+            void dictionaryChanged(object sender, EventArgs e) => activeValue!.Value = where.Count;
 
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
-                where.DictionaryChanged += dictionaryChanged;
-                if (changeNotifyingSource is { })
-                    changeNotifyingSource.DictionaryChanged += dictionaryChanged;
-
-                return new ActiveValue<int>(where.Count, out setValue, elementFaultChangeNotifier: where, onDispose: () =>
+                activeValue = new ActiveValue<int>(where.Count, elementFaultChangeNotifier: where, onDispose: () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
                     if (changeNotifyingSource is { })
                         changeNotifyingSource.DictionaryChanged -= dictionaryChanged;
                 });
-            })!;
+                where.DictionaryChanged += dictionaryChanged;
+                if (changeNotifyingSource is { })
+                    changeNotifyingSource.DictionaryChanged += dictionaryChanged;
+                return activeValue;
+            });
         }
 
         #endregion Count
@@ -330,7 +331,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the first key/value pair from</param>
         /// <param name="keyComparer">A comparer to compare keys in <paramref name="source"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the first key/value pair in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveFirst<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, IComparer<TKey> keyComparer)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -338,8 +339,6 @@ namespace Cogs.ActiveQuery
             {
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
-                Action<KeyValuePair<TKey, TValue>>? setValue = null;
-                Action<Exception?>? setOperationFault = null;
 
                 void dispose() => changingSource.DictionaryChanged -= sourceChanged;
 
@@ -350,13 +349,13 @@ namespace Cogs.ActiveQuery
                         {
                             try
                             {
-                                setOperationFault!(null);
-                                setValue!(source.OrderBy(kv => kv.Key, keyComparer).First());
+                                activeValue!.OperationFault = null;
+                                activeValue!.Value = source.OrderBy(kv => kv.Key, keyComparer).First();
                             }
                             catch (Exception ex)
                             {
-                                setOperationFault!(ex);
-                                setValue!(default);
+                                activeValue!.OperationFault = ex;
+                                activeValue!.Value = default;
                             }
                         }
                         else
@@ -365,12 +364,12 @@ namespace Cogs.ActiveQuery
                             {
                                 try
                                 {
-                                    setValue!(source.OrderBy(kv => kv.Key, keyComparer).First());
+                                    activeValue!.Value = source.OrderBy(kv => kv.Key, keyComparer).First();
                                 }
                                 catch (Exception ex)
                                 {
-                                    setOperationFault!(ex);
-                                    setValue!(default);
+                                    activeValue!.OperationFault = ex;
+                                    activeValue!.Value = default;
                                 }
                             }
                             if ((e.NewItems?.Count ?? 0) > 0)
@@ -378,8 +377,8 @@ namespace Cogs.ActiveQuery
                                 var firstKv = e.NewItems.OrderBy(kv => kv.Key, keyComparer).First();
                                 if (activeValue!.OperationFault is { } || keyComparer.Compare(firstKv.Key, activeValue.Value.Key) < 0)
                                 {
-                                    setOperationFault!(null);
-                                    setValue!(firstKv);
+                                    activeValue!.OperationFault = null;
+                                    activeValue!.Value = firstKv;
                                 }
                             }
                         }
@@ -387,16 +386,19 @@ namespace Cogs.ActiveQuery
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
-                    changingSource.DictionaryChanged += sourceChanged;
                     try
                     {
-                        return activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderBy(kv => kv.Key, keyComparer).First(), out setValue, out setOperationFault, elementFaultChangeNotifier, dispose);
+                        activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderBy(kv => kv.Key, keyComparer).First(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
                     catch (Exception ex)
                     {
-                        return new ActiveValue<KeyValuePair<TKey, TValue>>(default, out setValue, ex, out setOperationFault, elementFaultChangeNotifier, dispose);
+                        activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, ex, elementFaultChangeNotifier, dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
-                })!;
+                });
             }
             try
             {
@@ -455,38 +457,37 @@ namespace Cogs.ActiveQuery
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the first key/value pair in the dictionary that passes the test in the predicate function</returns>
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveFirst<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions, IComparer<TKey> keyComparer)
         {
-            ActiveDictionary<TKey, TValue> where;
-            Action<KeyValuePair<TKey, TValue>>? setValue = null;
-            Action<Exception?>? setOperationFault = null;
+            IActiveDictionary<TKey, TValue> where;
+            ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
             var none = false;
 
             void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e)
             {
                 if (none && where.Count > 0)
                 {
-                    setOperationFault!(null);
+                    activeValue!.OperationFault = null;
                     none = false;
                 }
                 else if (!none && where.Count == 0)
                 {
-                    setOperationFault!(ExceptionHelper.SequenceContainsNoElements);
+                    activeValue!.OperationFault = ExceptionHelper.SequenceContainsNoElements;
                     none = true;
                 }
-                setValue!(where.Count > 0 ? where.OrderBy(kv => kv.Key, keyComparer).First() : default);
+                activeValue!.Value = where.OrderBy(kv => kv.Key, keyComparer).FirstOrDefault();
             }
 
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
-                where.DictionaryChanged += dictionaryChanged;
-
                 none = where.Count == 0;
-                return new ActiveValue<KeyValuePair<TKey, TValue>>(!none ? where.OrderBy(kv => kv.Key, keyComparer).First() : default, out setValue, none ? ExceptionHelper.SequenceContainsNoElements : null, out setOperationFault, where, () =>
+                activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(!none ? where.OrderBy(kv => kv.Key, keyComparer).First() : default, none ? ExceptionHelper.SequenceContainsNoElements : null, where, () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
                 });
-            })!;
+                where.DictionaryChanged += dictionaryChanged;
+                return activeValue;
+            });
         }
 
         #endregion First
@@ -511,7 +512,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the first key/value pair from</param>
         /// <param name="keyComparer">A comparer to compare keys in <paramref name="source"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the first key/value pair in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveFirstOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, IComparer<TKey> keyComparer)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -519,7 +520,6 @@ namespace Cogs.ActiveQuery
             {
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
-                Action<KeyValuePair<TKey, TValue>>? setValue = null;
                 var defaulted = false;
 
                 void dispose() => changingSource.DictionaryChanged += sourceChanged;
@@ -532,12 +532,12 @@ namespace Cogs.ActiveQuery
                             try
                             {
                                 defaulted = false;
-                                setValue!(source.OrderBy(kv => kv.Key, keyComparer).First());
+                                activeValue!.Value = source.OrderBy(kv => kv.Key, keyComparer).First();
                             }
                             catch
                             {
                                 defaulted = true;
-                                setValue!(default);
+                                activeValue!.Value = default;
                             }
                         }
                         else
@@ -546,36 +546,39 @@ namespace Cogs.ActiveQuery
                             {
                                 try
                                 {
-                                    setValue!(source.OrderBy(kv => kv.Key, keyComparer).First());
+                                    activeValue!.Value = source.OrderBy(kv => kv.Key, keyComparer).First();
                                 }
                                 catch
                                 {
                                     defaulted = true;
-                                    setValue!(default);
+                                    activeValue!.Value = default;
                                 }
                             }
                             if ((e.NewItems?.Count ?? 0) > 0)
                             {
                                 var firstKv = e.NewItems.OrderBy(kv => kv.Key, keyComparer).First();
                                 if (defaulted || keyComparer.Compare(firstKv.Key, activeValue!.Value.Key) < 0)
-                                    setValue!(firstKv);
+                                    activeValue!.Value = firstKv;
                             }
                         }
                     });
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
-                    changingSource.DictionaryChanged += sourceChanged;
                     try
                     {
-                        return activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderBy(kv => kv.Key, keyComparer).First(), out setValue, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderBy(kv => kv.Key, keyComparer).First(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
                     catch
                     {
                         defaulted = true;
-                        return new ActiveValue<KeyValuePair<TKey, TValue>>(default, out setValue, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
-                })!;
+                });
             }
             return new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderBy(kv => kv.Key, keyComparer).FirstOrDefault(), elementFaultChangeNotifier: elementFaultChangeNotifier);
         }
@@ -627,22 +630,22 @@ namespace Cogs.ActiveQuery
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the first key/value pair in the dictionary that passes the test in the predicate function</returns>
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveFirstOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions, IComparer<TKey> keyComparer)
         {
-            ActiveDictionary<TKey, TValue> where;
-            Action<KeyValuePair<TKey, TValue>>? setValue = null;
+            IActiveDictionary<TKey, TValue> where;
+            ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
 
-            void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => setValue!(where.Count > 0 ? where.OrderBy(kv => kv.Key, keyComparer).First() : default);
+            void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => activeValue!.Value = where.OrderBy(kv => kv.Key, keyComparer).FirstOrDefault();
 
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
-                where.DictionaryChanged += dictionaryChanged;
-
-                return new ActiveValue<KeyValuePair<TKey, TValue>>(where.Count > 0 ? where.OrderBy(kv => kv.Key, keyComparer).First() : default, out setValue, elementFaultChangeNotifier: where, onDispose: () =>
+                activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(where.OrderBy(kv => kv.Key, keyComparer).FirstOrDefault(), elementFaultChangeNotifier: where, onDispose: () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
                 });
-            })!;
+                where.DictionaryChanged += dictionaryChanged;
+                return activeValue;
+            });
         }
 
         #endregion FirstOrDefault
@@ -667,7 +670,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the last key/value pair from</param>
         /// <param name="keyComparer">A comparer to compare keys in <paramref name="source"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the last key/value pair in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveLast<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, IComparer<TKey> keyComparer)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -675,8 +678,6 @@ namespace Cogs.ActiveQuery
             {
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
-                Action<KeyValuePair<TKey, TValue>>? setValue = null;
-                Action<Exception?>? setOperationFault = null;
 
                 void dispose() => changingSource.DictionaryChanged += sourceChanged;
 
@@ -687,13 +688,13 @@ namespace Cogs.ActiveQuery
                         {
                             try
                             {
-                                setOperationFault!(null);
-                                setValue!(source.OrderByDescending(kv => kv.Key, keyComparer).First());
+                                activeValue!.OperationFault = null;
+                                activeValue!.Value = source.OrderByDescending(kv => kv.Key, keyComparer).First();
                             }
                             catch (Exception ex)
                             {
-                                setOperationFault!(ex);
-                                setValue!(default);
+                                activeValue!.OperationFault = ex;
+                                activeValue!.Value = default;
                             }
                         }
                         else
@@ -702,11 +703,11 @@ namespace Cogs.ActiveQuery
                             {
                                 try
                                 {
-                                    setValue!(source.OrderByDescending(kv => kv.Key, keyComparer).First());
+                                    activeValue!.Value = source.OrderByDescending(kv => kv.Key, keyComparer).First();
                                 }
                                 catch (Exception ex)
                                 {
-                                    setOperationFault!(ex);
+                                    activeValue!.OperationFault = ex;
                                 }
                             }
                             if ((e.NewItems?.Count ?? 0) > 0)
@@ -714,8 +715,8 @@ namespace Cogs.ActiveQuery
                                 var lastKv = e.NewItems.OrderByDescending(kv => kv.Key, keyComparer).First();
                                 if (activeValue!.OperationFault is { } || keyComparer.Compare(lastKv.Key, activeValue.Value.Key) > 0)
                                 {
-                                    setOperationFault!(null);
-                                    setValue!(lastKv);
+                                    activeValue!.OperationFault = null;
+                                    activeValue!.Value = lastKv;
                                 }
                             }
                         }
@@ -723,16 +724,19 @@ namespace Cogs.ActiveQuery
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
-                    changingSource.DictionaryChanged += sourceChanged;
                     try
                     {
-                        return activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderByDescending(kv => kv.Key, keyComparer).First(), out setValue, out setOperationFault, elementFaultChangeNotifier, dispose);
+                        activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderByDescending(kv => kv.Key, keyComparer).First(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
                     catch (Exception ex)
                     {
-                        return new ActiveValue<KeyValuePair<TKey, TValue>>(default, out setValue, ex, out setOperationFault, elementFaultChangeNotifier, dispose);
+                        activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, ex, elementFaultChangeNotifier, dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
-                })!;
+                });
             }
             try
             {
@@ -791,37 +795,37 @@ namespace Cogs.ActiveQuery
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the last key/value pair in the dictionary that passes the test in the predicate function</returns>
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveLast<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions, IComparer<TKey> keyComparer)
         {
-            ActiveDictionary<TKey, TValue> where;
-            Action<KeyValuePair<TKey, TValue>>? setValue = null;
-            Action<Exception?>? setOperationFault = null;
+            IActiveDictionary<TKey, TValue> where;
+            ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
             var none = false;
 
             void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e)
             {
                 if (none && where.Count > 0)
                 {
-                    setOperationFault!(null);
+                    activeValue!.OperationFault = null;
                     none = false;
                 }
                 else if (!none && where.Count == 0)
                 {
-                    setOperationFault!(ExceptionHelper.SequenceContainsNoElements);
+                    activeValue!.OperationFault = ExceptionHelper.SequenceContainsNoElements;
                     none = true;
                 }
-                setValue!(where.Count > 0 ? where.OrderByDescending(kv => kv.Key, keyComparer).First() : default);
+                activeValue!.Value = where.OrderByDescending(kv => kv.Key, keyComparer).FirstOrDefault();
             }
 
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
-                where.DictionaryChanged += dictionaryChanged;
-
-                return new ActiveValue<KeyValuePair<TKey, TValue>>(!none ? source.OrderByDescending(kv => kv.Key, keyComparer).First() : default, out setValue, none ? ExceptionHelper.SequenceContainsNoElements : null, out setOperationFault, where, () =>
+                none = where.Count == 0;
+                activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(!none ? source.OrderByDescending(kv => kv.Key, keyComparer).First() : default, none ? ExceptionHelper.SequenceContainsNoElements : null, where, () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
                 });
-            })!;
+                where.DictionaryChanged += dictionaryChanged;
+                return activeValue;
+            });
         }
 
         #endregion Last
@@ -846,7 +850,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the last key/value pair from</param>
         /// <param name="keyComparer">A comparer to compare keys in <paramref name="source"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the last key/value pair in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveLastOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, IComparer<TKey> keyComparer)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -854,7 +858,6 @@ namespace Cogs.ActiveQuery
             {
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
-                Action<KeyValuePair<TKey, TValue>>? setValue = null;
                 var defaulted = false;
 
                 void dispose() => changingSource.DictionaryChanged += sourceChanged;
@@ -867,12 +870,12 @@ namespace Cogs.ActiveQuery
                             try
                             {
                                 defaulted = false;
-                                setValue!(source.OrderByDescending(kv => kv.Key, keyComparer).First());
+                                activeValue!.Value = source.OrderByDescending(kv => kv.Key, keyComparer).First();
                             }
                             catch
                             {
                                 defaulted = true;
-                                setValue!(default);
+                                activeValue!.Value = default;
                             }
                         }
                         else
@@ -881,12 +884,12 @@ namespace Cogs.ActiveQuery
                             {
                                 try
                                 {
-                                    setValue!(source.OrderByDescending(kv => kv.Key, keyComparer).First());
+                                    activeValue!.Value = source.OrderByDescending(kv => kv.Key, keyComparer).First();
                                 }
                                 catch
                                 {
                                     defaulted = true;
-                                    setValue!(default);
+                                    activeValue!.Value = default;
                                 }
                             }
                             if ((e.NewItems?.Count ?? 0) > 0)
@@ -895,7 +898,7 @@ namespace Cogs.ActiveQuery
                                 if (defaulted || keyComparer.Compare(firstKv.Key, activeValue!.Value.Key) > 0)
                                 {
                                     defaulted = false;
-                                    setValue!(firstKv);
+                                    activeValue!.Value = firstKv;
                                 }
                             }
                         }
@@ -903,17 +906,20 @@ namespace Cogs.ActiveQuery
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
-                    changingSource.DictionaryChanged += sourceChanged;
                     try
                     {
-                        return activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderByDescending(kv => kv.Key, keyComparer).First(), out setValue, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderByDescending(kv => kv.Key, keyComparer).First(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
                     catch
                     {
                         defaulted = true;
-                        return new ActiveValue<KeyValuePair<TKey, TValue>>(default, out setValue, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
-                })!;
+                });
             }
             return new ActiveValue<KeyValuePair<TKey, TValue>>(source.OrderByDescending(kv => kv.Key, keyComparer).FirstOrDefault(), elementFaultChangeNotifier: elementFaultChangeNotifier);
         }
@@ -965,22 +971,22 @@ namespace Cogs.ActiveQuery
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the last key/value pair in the dictionary that passes the test in the predicate function</returns>
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveLastOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions, IComparer<TKey> keyComparer)
         {
-            ActiveDictionary<TKey, TValue> where;
-            Action<KeyValuePair<TKey, TValue>>? setValue = null;
+            IActiveDictionary<TKey, TValue> where;
+            ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
 
-            void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => setValue!(where.Count > 0 ? where.OrderByDescending(kv => kv.Key, keyComparer).First() : default);
+            void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => activeValue!.Value = where.OrderByDescending(kv => kv.Key, keyComparer).FirstOrDefault();
 
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
-                where.DictionaryChanged += dictionaryChanged;
-
-                return new ActiveValue<KeyValuePair<TKey, TValue>>(where.Count > 0 ? source.OrderByDescending(kv => kv.Key, keyComparer).First() : default, out setValue, elementFaultChangeNotifier: where, onDispose: () =>
+                activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(where.Count > 0 ? source.OrderByDescending(kv => kv.Key, keyComparer).First() : default, elementFaultChangeNotifier: where, onDispose: () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
                 });
-            })!;
+                where.DictionaryChanged += dictionaryChanged;
+                return activeValue;
+            });
         }
 
         #endregion LastOrDefault
@@ -1019,7 +1025,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the maximum value in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TResult> ActiveMax<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
@@ -1028,8 +1034,6 @@ namespace Cogs.ActiveQuery
             var synchronizedSource = source as ISynchronized;
             ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
             ActiveValue<TResult>? activeValue = null;
-            Action<TResult>? setValue = null;
-            Action<Exception?>? setOperationFault = null;
 
             void dispose()
             {
@@ -1045,41 +1049,43 @@ namespace Cogs.ActiveQuery
                     {
                         try
                         {
-                            setOperationFault!(null);
-                            setValue!(rangeActiveExpression.GetResults().Max(kr => kr.result));
+                            activeValue!.OperationFault = null;
+                            activeValue!.Value = rangeActiveExpression.GetResults().Max(kr => kr.result);
                         }
                         catch (Exception ex)
                         {
-                            setOperationFault!(ex);
-                            setValue!(default!);
+                            activeValue!.OperationFault = ex;
+                            activeValue!.Value = default;
                         }
                     }
                     else
                     {
+                        var activeValueValue = activeValue!.Value;
                         if ((e.OldItems?.Count ?? 0) > 0)
                         {
                             var removedMax = e.OldItems.Max(kv => kv.Value);
-                            if (comparer.Compare(activeValue!.Value, removedMax) == 0)
+                            if ((activeValueValue is null ? -1 : comparer.Compare(activeValueValue, removedMax)) == 0)
                             {
                                 try
                                 {
                                     var value = rangeActiveExpression.GetResultsUnderLock().Max(er => er.result);
-                                    setOperationFault!(null);
-                                    setValue!(value);
+                                    activeValue!.OperationFault = null;
+                                    activeValue!.Value = value;
                                 }
                                 catch (Exception ex)
                                 {
-                                    setOperationFault!(ex);
+                                    activeValue!.OperationFault = ex;
                                 }
                             }
                         }
+                        activeValueValue = activeValue!.Value;
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
                             var addedMax = e.NewItems.Max(kv => kv.Value);
-                            if (activeValue!.OperationFault is { } || comparer.Compare(activeValue.Value, addedMax) < 0)
+                            if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer.Compare(activeValueValue, addedMax)) < 0)
                             {
-                                setOperationFault!(null);
-                                setValue!(addedMax);
+                                activeValue!.OperationFault = null;
+                                activeValue!.Value = addedMax;
                             }
                         }
                     }
@@ -1088,28 +1094,38 @@ namespace Cogs.ActiveQuery
             void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
                 synchronizedSource.SequentialExecute(() =>
                 {
-                    var comparison = comparer.Compare(activeValue!.Value, e.Result);
+                    var activeValueValue = activeValue!.Value;
+                    var comparison = 0;
+                    if (activeValueValue is { } && e.Result is { })
+                        comparison = comparer.Compare(activeValueValue, e.Result);
+                    else if (activeValueValue is null)
+                        comparison = -1;
+                    else if (e.Result is null)
+                        comparison = 1;
                     if (comparison < 0)
-                        setValue!(e.Result);
+                        activeValue!.Value = e.Result;
                     else if (comparison > 0)
-                        setValue!(rangeActiveExpression.GetResultsUnderLock().Max(er => er.result));
+                        activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Max(er => er.result);
                 });
 
             return synchronizedSource.SequentialExecute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-
                 try
                 {
-                    return activeValue = new ActiveValue<TResult>(rangeActiveExpression.GetResults().Max(kr => kr.result), out setValue, null, out setOperationFault, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult>(rangeActiveExpression.GetResults().Max(kr => kr.result), null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    return activeValue;
                 }
                 catch (Exception ex)
                 {
-                    return activeValue = new ActiveValue<TResult>(default!, out setValue, ex, out setOperationFault, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult>(default, ex, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    return activeValue;
                 }
-            })!;
+            });
         }
 
         #endregion Max
@@ -1148,7 +1164,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the minimum value in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TResult> ActiveMin<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
@@ -1157,8 +1173,6 @@ namespace Cogs.ActiveQuery
             var synchronizedSource = source as ISynchronized;
             ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
             ActiveValue<TResult>? activeValue = null;
-            Action<TResult>? setValue = null;
-            Action<Exception?>? setOperationFault = null;
 
             void dispose()
             {
@@ -1174,41 +1188,43 @@ namespace Cogs.ActiveQuery
                     {
                         try
                         {
-                            setOperationFault!(null);
-                            setValue!(rangeActiveExpression.GetResults().Select(kr => kr.result).Min());
+                            activeValue!.OperationFault = null;
+                            activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Min();
                         }
                         catch (Exception ex)
                         {
-                            setOperationFault!(ex);
-                            setValue!(default!);
+                            activeValue!.OperationFault = ex;
+                            activeValue!.Value = default;
                         }
                     }
                     else
                     {
+                        var activeValueValue = activeValue!.Value;
                         if ((e.OldItems?.Count ?? 0) > 0)
                         {
                             var removedMin = e.OldItems.Select(kv => kv.Value).Min();
-                            if (comparer.Compare(activeValue!.Value, removedMin) == 0)
+                            if ((activeValueValue is null ? -1 : comparer.Compare(activeValueValue, removedMin)) == 0)
                             {
                                 try
                                 {
                                     var value = rangeActiveExpression.GetResultsUnderLock().Select(er => er.result).Min();
-                                    setOperationFault!(null);
-                                    setValue!(value);
+                                    activeValue!.OperationFault = null;
+                                    activeValue!.Value = value;
                                 }
                                 catch (Exception ex)
                                 {
-                                    setOperationFault!(ex);
+                                    activeValue!.OperationFault = ex;
                                 }
                             }
                         }
+                        activeValueValue = activeValue!.Value;
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
                             var addedMin = e.NewItems.Select(kv => kv.Value).Min();
-                            if (activeValue!.OperationFault is { } || comparer.Compare(activeValue.Value, addedMin) > 0)
+                            if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer.Compare(activeValueValue, addedMin)) > 0)
                             {
-                                setOperationFault!(null);
-                                setValue!(addedMin);
+                                activeValue!.OperationFault = null;
+                                activeValue!.Value = addedMin;
                             }
                         }
                     }
@@ -1217,28 +1233,38 @@ namespace Cogs.ActiveQuery
             void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
                 synchronizedSource.SequentialExecute(() =>
                 {
-                    var comparison = comparer.Compare(activeValue!.Value, e.Result);
+                    var activeValueValue = activeValue!.Value;
+                    var comparison = 0;
+                    if (activeValueValue is { } && e.Result is { })
+                        comparison = comparer.Compare(activeValueValue, e.Result);
+                    else if (activeValueValue is null)
+                        comparison = -1;
+                    else if (e.Result is null)
+                        comparison = 1;
                     if (comparison > 0)
-                        setValue!(e.Result);
+                        activeValue!.Value = e.Result;
                     else if (comparison < 0)
-                        setValue!(rangeActiveExpression.GetResultsUnderLock().Select(er => er.result).Min());
+                        activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Select(er => er.result).Min();
                 });
 
             return synchronizedSource.SequentialExecute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-
                 try
                 {
-                    return activeValue = new ActiveValue<TResult>(rangeActiveExpression.GetResults().Select(kr => kr.result).Min(), out setValue, null, out setOperationFault, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult>(rangeActiveExpression.GetResults().Select(kr => kr.result).Min(), null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    return activeValue;
                 }
                 catch (Exception ex)
                 {
-                    return activeValue = new ActiveValue<TResult>(default!, out setValue, ex, out setOperationFault, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult>(default, ex, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    return activeValue;
                 }
-            })!;
+            });
         }
 
         #endregion Min
@@ -1256,7 +1282,7 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TResult">The type to filter the values of the dictionary on</typeparam>
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> the values of which to filter</param>
         /// <returns>An <see cref="IReadOnlyDictionary{TKey, TValue}"/> that contains values from the input dictionary of type <typeparamref name="TResult"/></returns>
-        public static ActiveDictionary<TKey, TResult> ActiveOfType<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source)
+        public static IActiveDictionary<TKey, TResult> ActiveOfType<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var synchronizedSource = source as ISynchronized;
             var notifyingSource = source as INotifyDictionaryChanged<TKey, TValue>;
@@ -1297,7 +1323,7 @@ namespace Cogs.ActiveQuery
                     if (notifyingSource is { })
                         notifyingSource.DictionaryChanged -= dictionaryChanged;
                 });
-            })!;
+            });
         }
 
         #endregion OfType
@@ -1332,7 +1358,7 @@ namespace Cogs.ActiveQuery
 
             var synchronizedSource = source as ISynchronized;
             ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
-            var keyToIndex = source.CreateSimilarDictionary<TKey, TValue, int>();
+            var keyToIndex = source.CreateSimilarNullableKeyDictionary<TKey, TValue, int>();
             SynchronizedRangeObservableCollection<TResult>? rangeObservableCollection = null;
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
@@ -1399,26 +1425,25 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => rangeObservableCollection!.Replace(keyToIndex[e.Element], e.Result));
+            void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => rangeObservableCollection!.Replace(keyToIndex[e.Element! /* this could be null, but it won't matter if it is */], e.Result! /* this could be null, but it won't matter if it is */));
 
             return synchronizedSource.SequentialExecute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult>(rangeActiveExpression.GetResults().Select(((TKey key, TResult result) er, int index) =>
                 {
                     keyToIndex.Add(er.key, index);
                     return er.result;
                 }));
+                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                rangeActiveExpression.ValueResultChanged += valueResultChanged;
                 return new ActiveEnumerable<TResult>(rangeObservableCollection, rangeActiveExpression, () =>
                 {
                     rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged -= valueResultChanged;
                     rangeActiveExpression.Dispose();
                 });
-            })!;
+            });
         }
 
         #endregion Select
@@ -1432,15 +1457,14 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the single key/value pair of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the single key/value pair of the input dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveSingle<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
             if (source is INotifyDictionaryChanged<TKey, TValue> changingSource)
             {
                 var synchronizedSource = source as ISynchronized;
-                Action<KeyValuePair<TKey, TValue>>? setValue = null;
-                Action<Exception?>? setOperationFault = null;
+                ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
                 bool none = false, moreThanOne = false;
 
                 void dispose() => changingSource.DictionaryChanged -= sourceChanged;
@@ -1452,8 +1476,8 @@ namespace Cogs.ActiveQuery
                         {
                             none = false;
                             moreThanOne = false;
-                            setOperationFault!(null);
-                            setValue!(source.First());
+                            activeValue!.OperationFault = null;
+                            activeValue!.Value = source.First();
                         }
                         else
                         {
@@ -1461,33 +1485,37 @@ namespace Cogs.ActiveQuery
                             {
                                 none = true;
                                 moreThanOne = false;
-                                setOperationFault!(ExceptionHelper.SequenceContainsNoElements);
+                                activeValue!.OperationFault = ExceptionHelper.SequenceContainsNoElements;
                             }
                             else if (!moreThanOne)
                             {
                                 none = false;
                                 moreThanOne = true;
-                                setOperationFault!(ExceptionHelper.SequenceContainsMoreThanOneElement);
+                                activeValue!.OperationFault = ExceptionHelper.SequenceContainsMoreThanOneElement;
                             }
-                            setValue!(default);
+                            activeValue!.Value = default;
                         }
                     });
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
-                    changingSource.DictionaryChanged += sourceChanged;
                     switch (source.Count)
                     {
                         case 0:
                             none = true;
-                            return new ActiveValue<KeyValuePair<TKey, TValue>>(default, out setValue, ExceptionHelper.SequenceContainsNoElements, out setOperationFault, elementFaultChangeNotifier, dispose);
+                            activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, ExceptionHelper.SequenceContainsNoElements, elementFaultChangeNotifier, dispose);
+                            break;
                         case 1:
-                            return new ActiveValue<KeyValuePair<TKey, TValue>>(source.First(), out setValue, out setOperationFault, elementFaultChangeNotifier, dispose);
+                            activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.First(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                            break;
                         default:
                             moreThanOne = true;
-                            return new ActiveValue<KeyValuePair<TKey, TValue>>(default, out setValue, ExceptionHelper.SequenceContainsMoreThanOneElement, out setOperationFault, elementFaultChangeNotifier, dispose);
+                            activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, ExceptionHelper.SequenceContainsMoreThanOneElement, elementFaultChangeNotifier, dispose);
+                            break;
                     }
-                })!;
+                    changingSource.DictionaryChanged += sourceChanged;
+                    return activeValue;
+                });
             }
             try
             {
@@ -1521,9 +1549,8 @@ namespace Cogs.ActiveQuery
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the single key/value pair of the input dictionary that satisfies a condition</returns>
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveSingle<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions)
         {
-            ActiveDictionary<TKey, TValue> where;
-            Action<KeyValuePair<TKey, TValue>>? setValue = null;
-            Action<Exception?>? setOperationFault = null;
+            IActiveDictionary<TKey, TValue> where;
+            ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
             var none = false;
             var moreThanOne = false;
 
@@ -1531,45 +1558,45 @@ namespace Cogs.ActiveQuery
             {
                 if (none && where.Count > 0)
                 {
-                    setOperationFault!(null);
+                    activeValue!.OperationFault = null;
                     none = false;
                 }
                 else if (!none && where.Count == 0)
                 {
-                    setOperationFault!(ExceptionHelper.SequenceContainsNoElements);
+                    activeValue!.OperationFault = ExceptionHelper.SequenceContainsNoElements;
                     none = true;
                     moreThanOne = false;
                 }
                 if (moreThanOne && where.Count <= 1)
                 {
-                    setOperationFault!(null);
+                    activeValue!.OperationFault = null;
                     moreThanOne = false;
                 }
                 else if (!moreThanOne && where.Count > 1)
                 {
-                    setOperationFault!(ExceptionHelper.SequenceContainsMoreThanOneElement);
+                    activeValue!.OperationFault = ExceptionHelper.SequenceContainsMoreThanOneElement;
                     none = false;
                     moreThanOne = true;
                 }
-                setValue!(where.Count == 1 ? where.First() : default);
+                activeValue!.Value = where.Count == 1 ? where.First() : default;
             }
 
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
-                where.DictionaryChanged += dictionaryChanged;
-
                 Exception? operationFault = null;
                 if (none = where.Count == 0)
                     operationFault = ExceptionHelper.SequenceContainsNoElements;
                 else if (moreThanOne = where.Count > 1)
                     operationFault = ExceptionHelper.SequenceContainsMoreThanOneElement;
-                return new ActiveValue<KeyValuePair<TKey, TValue>>(operationFault is null ? where.First() : default, out setValue, operationFault, out setOperationFault, where, () =>
+                activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(operationFault is null ? where.First() : default, operationFault, where, () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
                 });
-            })!;
+                where.DictionaryChanged += dictionaryChanged;
+                return activeValue;
+            });
         }
 
         #endregion Single
@@ -1583,7 +1610,7 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the single key/value pair of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the single key/value pair of the input dictionary, or <c>default</c>(<c>KeyValuePair&lt;</c><typeparamref name="TKey"/>, <typeparamref name="TValue"/><c>%gt;</c>) if the dictionary contains no key/value pairs</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveSingleOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -1591,8 +1618,6 @@ namespace Cogs.ActiveQuery
             {
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
-                Action<KeyValuePair<TKey, TValue>>? setValue = null;
-                Action<Exception?>? setOperationFault = null;
 
                 void dispose() => changingSource.DictionaryChanged += sourceChanged;
 
@@ -1602,31 +1627,32 @@ namespace Cogs.ActiveQuery
                         switch (source.Count)
                         {
                             case 0:
-                                setOperationFault!(null);
-                                setValue!(default);
+                                activeValue!.OperationFault = null;
+                                activeValue!.Value = default;
                                 break;
                             case 1:
-                                setOperationFault!(null);
-                                setValue!(source.First());
+                                activeValue!.OperationFault = null;
+                                activeValue!.Value = source.First();
                                 break;
                             default:
                                 if (activeValue!.OperationFault is null)
-                                    setOperationFault!(ExceptionHelper.SequenceContainsMoreThanOneElement);
-                                setValue!(default);
+                                    activeValue!.OperationFault = ExceptionHelper.SequenceContainsMoreThanOneElement;
+                                activeValue!.Value = default;
                                 break;
                         }
                     });
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
-                    changingSource.DictionaryChanged += sourceChanged;
-                    return source.Count switch
+                    activeValue = source.Count switch
                     {
-                        0 => activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, out setValue, out setOperationFault, elementFaultChangeNotifier, dispose),
-                        1 => activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.First(), out setValue, out setOperationFault, elementFaultChangeNotifier, dispose),
-                        _ => activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, out setValue, ExceptionHelper.SequenceContainsMoreThanOneElement, out setOperationFault, elementFaultChangeNotifier, dispose),
+                        0 => activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose),
+                        1 => activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(source.First(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose),
+                        _ => activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(default, ExceptionHelper.SequenceContainsMoreThanOneElement, elementFaultChangeNotifier, dispose),
                     };
-                })!;
+                    changingSource.DictionaryChanged += sourceChanged;
+                    return activeValue;
+                });
             }
             try
             {
@@ -1660,38 +1686,37 @@ namespace Cogs.ActiveQuery
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the single key/value pair of the input dictionary that satisfies a condition, or <c>default</c>(<c>KeyValuePair&lt;</c><typeparamref name="TKey"/>, <typeparamref name="TValue"/><c>%gt;</c>) if no such key/value pair is found</returns>
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveSingleOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions)
         {
-            ActiveDictionary<TKey, TValue> where;
-            Action<KeyValuePair<TKey, TValue>>? setValue = null;
-            Action<Exception?>? setOperationFault = null;
+            IActiveDictionary<TKey, TValue> where;
+            ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
             var moreThanOne = false;
 
             void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e)
             {
                 if (moreThanOne && where.Count <= 1)
                 {
-                    setOperationFault!(null);
+                    activeValue!.OperationFault = null;
                     moreThanOne = false;
                 }
                 else if (!moreThanOne && where.Count > 1)
                 {
-                    setOperationFault!(ExceptionHelper.SequenceContainsMoreThanOneElement);
+                    activeValue!.OperationFault = ExceptionHelper.SequenceContainsMoreThanOneElement;
                     moreThanOne = true;
                 }
-                setValue!(where.Count == 1 ? where.First() : default);
+                activeValue!.Value = where.Count == 1 ? where.First() : default;
             }
 
             return (source as ISynchronized).SequentialExecute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
-                where.DictionaryChanged += dictionaryChanged;
-
                 var operationFault = (moreThanOne = where.Count > 1) ? ExceptionHelper.SequenceContainsMoreThanOneElement : null;
-                return new ActiveValue<KeyValuePair<TKey, TValue>>(!moreThanOne && where.Count == 1 ? where.First() : default, out setValue, operationFault, out setOperationFault, where, () =>
+                activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(!moreThanOne && where.Count == 1 ? where.First() : default, operationFault, where, () =>
                 {
                     where.DictionaryChanged -= dictionaryChanged;
                     where.Dispose();
                 });
-            })!;
+                where.DictionaryChanged += dictionaryChanged;
+                return activeValue;
+            });
         }
 
         #endregion SingleOrDefault
@@ -1730,7 +1755,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the sum of the projected values</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TResult> ActiveSum<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
@@ -1739,22 +1764,21 @@ namespace Cogs.ActiveQuery
             var synchronizedSource = source as ISynchronized;
             ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
             ActiveValue<TResult>? activeValue = null;
-            Action<TResult>? setValue = null;
-            var valuesChanging = new Dictionary<TKey, TResult>();
+            var valuesChanging = new NullableKeyDictionary<TKey, TResult>();
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
                 synchronizedSource.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
-                        setValue!(rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate((a, b) => operations.Add(a, b)));
+                        activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations.Add);
                     else
                     {
                         var sum = activeValue!.Value;
                         if ((e.OldItems?.Count ?? 0) > 0)
-                            sum = new TResult[] { sum }.Concat(e.OldItems.Select(kv => kv.Value)).Aggregate(operations.Subtract);
+                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.OldItems.Select(kv => kv.Value)).Aggregate(operations.Subtract);
                         if ((e.NewItems?.Count ?? 0) > 0)
-                            sum = new TResult[] { sum }.Concat(e.NewItems.Select(kv => kv.Value)).Aggregate(operations.Add);
-                        setValue!(sum);
+                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.NewItems.Select(kv => kv.Value)).Aggregate(operations.Add);
+                        activeValue!.Value = sum;
                     }
                 });
 
@@ -1762,18 +1786,15 @@ namespace Cogs.ActiveQuery
                 synchronizedSource.SequentialExecute(() =>
                 {
                     var key = e.Element;
-                    setValue!(operations.Add(activeValue!.Value, operations.Subtract(e.Result, valuesChanging[key])));
-                    valuesChanging.Remove(key);
+                    activeValue!.Value = operations.Add(activeValue!.Value, operations.Subtract(e.Result, valuesChanging[key! /* this could be null, but it won't matter if it is */]));
+                    valuesChanging.Remove(key! /* this could be null, but it won't matter if it is */);
                 });
 
-            void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => valuesChanging.Add(e.Element, e.Result));
+            void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => valuesChanging.Add(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */));
 
             return synchronizedSource.SequentialExecute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-                rangeActiveExpression.ValueResultChanging += valueResultChanging;
 
                 void dispose()
                 {
@@ -1785,13 +1806,21 @@ namespace Cogs.ActiveQuery
 
                 try
                 {
-                    return activeValue = new ActiveValue<TResult>(rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate((a, b) => operations.Add(a, b)), out setValue, null, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult>(rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations.Add), null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    rangeActiveExpression.ValueResultChanging += valueResultChanging;
+                    return activeValue;
                 }
                 catch (InvalidOperationException)
                 {
-                    return activeValue = new ActiveValue<TResult>(default!, out setValue, null, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult>(default, null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    rangeActiveExpression.ValueResultChanging += valueResultChanging;
+                    return activeValue;
                 }
-            })!;
+            });
         }
 
         #endregion Sum
@@ -1805,7 +1834,7 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">A <see cref="IReadOnlyDictionary{TKey, TValue}"/></param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> that is kept consistent with <paramref name="source"/> the current thread's <see cref="SynchronizationContext"/></returns>
-        public static ActiveDictionary<TKey, TValue> SwitchContext<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
+        public static IActiveDictionary<TKey, TValue> SwitchContext<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
             SwitchContext(source, SynchronizationContext.Current);
 
         /// <summary>
@@ -1816,7 +1845,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">A <see cref="IReadOnlyDictionary{TKey, TValue}"/></param>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> that is kept consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
-        public static ActiveDictionary<TKey, TValue> SwitchContext<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, SynchronizationContext synchronizationContext)
+        public static IActiveDictionary<TKey, TValue> SwitchContext<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, SynchronizationContext synchronizationContext)
         {
             ISynchronizedObservableRangeDictionary<TKey, TValue>? rangeObservableDictionary = null;
 
@@ -1829,11 +1858,11 @@ namespace Cogs.ActiveQuery
                     {
                         case IndexingStrategy.SelfBalancingBinarySearchTree:
                             var keyComparer = source.GetKeyComparer();
-                            resetDictionary = keyComparer is { } ? new SortedDictionary<TKey, TValue>(keyComparer) : new SortedDictionary<TKey, TValue>();
+                            resetDictionary = keyComparer is { } ? new NullableKeySortedDictionary<TKey, TValue>(keyComparer) : new NullableKeySortedDictionary<TKey, TValue>();
                             break;
                         default:
                             var keyEqualityComparer = source.GetKeyEqualityComparer();
-                            resetDictionary = keyEqualityComparer is { } ? new Dictionary<TKey, TValue>(keyEqualityComparer) : new Dictionary<TKey, TValue>();
+                            resetDictionary = keyEqualityComparer is { } ? new NullableKeyDictionary<TKey, TValue>(keyEqualityComparer) : new NullableKeyDictionary<TKey, TValue>();
                             break;
                     }
                     foreach (var kv in source)
@@ -1870,14 +1899,14 @@ namespace Cogs.ActiveQuery
                 {
                     case IndexingStrategy.SelfBalancingBinarySearchTree:
                         var keyComparer = source.GetKeyComparer();
-                        startingDictionary = keyComparer is { } ? new SortedDictionary<TKey, TValue>(keyComparer) : new SortedDictionary<TKey, TValue>();
+                        startingDictionary = keyComparer is { } ? new NullableKeySortedDictionary<TKey, TValue>(keyComparer) : new NullableKeySortedDictionary<TKey, TValue>();
                         foreach (var kv in source)
                             startingDictionary.Add(kv);
                         rangeObservableDictionary = keyComparer is { } ? new SynchronizedObservableSortedDictionary<TKey, TValue>(synchronizationContext, startingDictionary, keyComparer) : new SynchronizedObservableSortedDictionary<TKey, TValue>(synchronizationContext, startingDictionary);
                         break;
                     default:
                         var keyEqualityComparer = source.GetKeyEqualityComparer();
-                        startingDictionary = keyEqualityComparer is { } ? new Dictionary<TKey, TValue>(keyEqualityComparer) : new Dictionary<TKey, TValue>();
+                        startingDictionary = keyEqualityComparer is { } ? new NullableKeyDictionary<TKey, TValue>(keyEqualityComparer) : new NullableKeyDictionary<TKey, TValue>();
                         foreach (var kv in source)
                             startingDictionary.Add(kv);
                         rangeObservableDictionary = keyEqualityComparer is { } ? new SynchronizedObservableDictionary<TKey, TValue>(synchronizationContext, startingDictionary, keyEqualityComparer) : new SynchronizedObservableDictionary<TKey, TValue>(synchronizationContext, startingDictionary);
@@ -1888,7 +1917,7 @@ namespace Cogs.ActiveQuery
                     if (notifier is { })
                         notifier.DictionaryChanged -= dictionaryChanged;
                 });
-            })!;
+            });
         }
 
         #endregion SwitchContext
@@ -1905,7 +1934,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">A dictionary to transform into key/value pairs</param>
         /// <param name="selector">A transform function to apply to each key/value pair in <paramref name="source"/></param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector) =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector) =>
             ToActiveDictionary(source, selector, null, source.GetIndexingStrategy() ?? IndexingStrategy.NoneOrInherit, null, null);
 
         /// <summary>
@@ -1919,7 +1948,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair in <paramref name="source"/></param>
         /// <param name="indexingStrategy">The indexing strategy to use for the resulting <see cref="ActiveDictionary{TKey, TValue}"/></param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> using the specified <see cref="IndexingStrategy"/> the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, IndexingStrategy indexingStrategy) =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, IndexingStrategy indexingStrategy) =>
             ToActiveDictionary(source, selector, null, indexingStrategy, null, null);
 
         /// <summary>
@@ -1933,7 +1962,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair in <paramref name="source"/></param>
         /// <param name="keyEqualityComparer">An <see cref="IEqualityComparer{T}"/> to compare resulting keys</param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> using a hash table the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, IEqualityComparer<TResultKey>? keyEqualityComparer) =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, IEqualityComparer<TResultKey>? keyEqualityComparer) =>
             ToActiveDictionary(source, selector, null, IndexingStrategy.HashTable, keyEqualityComparer, null);
 
         /// <summary>
@@ -1947,7 +1976,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair in <paramref name="source"/></param>
         /// <param name="keyComparer">An <see cref="IComparer{T}"/> to compare resulting keys</param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> using a binary search tree the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, IComparer<TResultKey>? keyComparer) =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, IComparer<TResultKey>? keyComparer) =>
             ToActiveDictionary(source, selector, null, IndexingStrategy.SelfBalancingBinarySearchTree, null, keyComparer);
 
         /// <summary>
@@ -1963,7 +1992,7 @@ namespace Cogs.ActiveQuery
         /// <param name="keyComparer">An <see cref="IComparer{T}"/> to compare resulting keys</param>
         /// <param name="indexingStrategy">The <see cref="IndexingStrategy"/> to be used by the <see cref="ActiveDictionary{TKey, TValue}"/></param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> using a specified <see cref="IndexingStrategy"/> the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue, TResultKeyComparer>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, TResultKeyComparer keyComparer, IndexingStrategy indexingStrategy) where TResultKeyComparer : IComparer<TResultKey>, IEqualityComparer<TResultKey> =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue, TResultKeyComparer>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, TResultKeyComparer keyComparer, IndexingStrategy indexingStrategy) where TResultKeyComparer : IComparer<TResultKey>, IEqualityComparer<TResultKey> =>
             ToActiveDictionary(source, selector, null, indexingStrategy, indexingStrategy != IndexingStrategy.SelfBalancingBinarySearchTree ? keyComparer : (IEqualityComparer<TResultKey>?)null, indexingStrategy == IndexingStrategy.SelfBalancingBinarySearchTree ? keyComparer : (IComparer<TResultKey>?)null);
 
         /// <summary>
@@ -1977,7 +2006,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair in <paramref name="source"/></param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions) =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions) =>
             ToActiveDictionary(source, selector, selectorOptions, source.GetIndexingStrategy() ?? IndexingStrategy.NoneOrInherit, null, null);
 
         /// <summary>
@@ -1992,7 +2021,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <param name="indexingStrategy">The indexing strategy to use for the resulting <see cref="ActiveDictionary{TKey, TValue}"/></param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> using the specified <see cref="IndexingStrategy"/> the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions, IndexingStrategy indexingStrategy) =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions, IndexingStrategy indexingStrategy) =>
             ToActiveDictionary(source, selector, selectorOptions, indexingStrategy, null, null);
 
         /// <summary>
@@ -2007,7 +2036,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <param name="keyEqualityComparer">An <see cref="IEqualityComparer{T}"/> to compare resulting keys</param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> using a hash table the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions, IEqualityComparer<TResultKey> keyEqualityComparer) =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions, IEqualityComparer<TResultKey> keyEqualityComparer) =>
             ToActiveDictionary(source, selector, selectorOptions, IndexingStrategy.HashTable, keyEqualityComparer, null);
 
         /// <summary>
@@ -2022,7 +2051,7 @@ namespace Cogs.ActiveQuery
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <param name="keyComparer">An <see cref="IComparer{T}"/> to compare resulting keys</param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> using a binary search tree the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions, IComparer<TResultKey> keyComparer) =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions, IComparer<TResultKey> keyComparer) =>
             ToActiveDictionary(source, selector, selectorOptions, IndexingStrategy.SelfBalancingBinarySearchTree, null, keyComparer);
 
         /// <summary>
@@ -2039,10 +2068,10 @@ namespace Cogs.ActiveQuery
         /// <param name="keyComparer">An <see cref="IComparer{T}"/> to compare resulting keys</param>
         /// <param name="indexingStrategy">The <see cref="IndexingStrategy"/> to be used by the <see cref="ActiveDictionary{TKey, TValue}"/></param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> using a specified <see cref="IndexingStrategy"/> the key/value pairs of which are the result of invoking the transform function on each key/value pair in <paramref name="source"/></returns>
-        public static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue, TResultKeyComparer>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions, TResultKeyComparer keyComparer, IndexingStrategy indexingStrategy) where TResultKeyComparer : IComparer<TResultKey>, IEqualityComparer<TResultKey> =>
+        public static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue, TResultKeyComparer>(this IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions selectorOptions, TResultKeyComparer keyComparer, IndexingStrategy indexingStrategy) where TResultKeyComparer : IComparer<TResultKey>, IEqualityComparer<TResultKey> =>
             ToActiveDictionary(source, selector, selectorOptions, indexingStrategy, indexingStrategy != IndexingStrategy.SelfBalancingBinarySearchTree ? keyComparer : (IEqualityComparer<TResultKey>?)null, indexingStrategy == IndexingStrategy.SelfBalancingBinarySearchTree ? keyComparer : (IComparer<TResultKey>?)null);
 
-        static ActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions? selectorOptions, IndexingStrategy indexingStrategy, IEqualityComparer<TResultKey>? keyEqualityComparer, IComparer<TResultKey>? keyComparer)
+        static IActiveDictionary<TResultKey, TResultValue> ToActiveDictionary<TSourceKey, TSourceValue, TResultKey, TResultValue>(IReadOnlyDictionary<TSourceKey, TSourceValue> source, Expression<Func<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>>> selector, ActiveExpressionOptions? selectorOptions, IndexingStrategy indexingStrategy, IEqualityComparer<TResultKey>? keyEqualityComparer, IComparer<TResultKey>? keyComparer)
         {
             ActiveQueryOptions.Optimize(ref selector);
 
@@ -2054,19 +2083,19 @@ namespace Cogs.ActiveQuery
             ReadOnlyDictionaryRangeActiveExpression<TSourceKey, TSourceValue, KeyValuePair<TResultKey, TResultValue>> rangeActiveExpression;
             var sourceKeyToResultKey = source.CreateSimilarDictionary<TSourceKey, TSourceValue, TResultKey>();
             ISynchronizedObservableRangeDictionary<TResultKey, TResultValue> rangeObservableDictionary;
-            Action<Exception?>? setOperationFault = null;
+            ActiveDictionary<TResultKey, TResultValue>? activeDictionary = null;
 
             void checkOperationFault()
             {
                 if (nullKeys > 0 && !isFaultedNullKey)
                 {
                     isFaultedNullKey = true;
-                    setOperationFault!(ExceptionHelper.KeyNull);
+                    activeDictionary!.OperationFault = ExceptionHelper.KeyNull;
                 }
                 else if (nullKeys == 0 && isFaultedNullKey)
                 {
                     isFaultedNullKey = false;
-                    setOperationFault!(null);
+                    activeDictionary!.OperationFault = null;
                 }
 
                 if (!isFaultedNullKey)
@@ -2074,12 +2103,12 @@ namespace Cogs.ActiveQuery
                     if (duplicateKeys.Count > 0 && !isFaultedDuplicateKeys)
                     {
                         isFaultedDuplicateKeys = true;
-                        setOperationFault!(ExceptionHelper.SameKeyAlreadyAdded);
+                        activeDictionary!.OperationFault = ExceptionHelper.SameKeyAlreadyAdded;
                     }
                     else if (duplicateKeys.Count == 0 && isFaultedDuplicateKeys)
                     {
                         isFaultedDuplicateKeys = false;
-                        setOperationFault!(null);
+                        activeDictionary!.OperationFault = null;
                     }
                 }
             }
@@ -2207,27 +2236,25 @@ namespace Cogs.ActiveQuery
                 }
 
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-                rangeActiveExpression.ValueResultChanging += valueResultChanging;
-
                 var resultsAndFaults = rangeActiveExpression.GetResultsAndFaults();
                 nullKeys = resultsAndFaults.Count(rfc => rfc.result.Key is null);
                 var distinctResultsAndFaults = resultsAndFaults.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
                 rangeObservableDictionary.AddRange(distinctResultsAndFaults.Select(g => g.First().result));
                 foreach (var (key, duplicateCount) in distinctResultsAndFaults.Select(g => (key: g.Key, duplicateCount: g.Count() - 1)).Where(kc => kc.duplicateCount > 0))
                     duplicateKeys.Add(key, duplicateCount);
-                var activeDictionary = new ActiveDictionary<TResultKey, TResultValue>(rangeObservableDictionary, out setOperationFault, rangeActiveExpression, () =>
+                activeDictionary = new ActiveDictionary<TResultKey, TResultValue>(rangeObservableDictionary, rangeActiveExpression, () =>
                 {
                     rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged -= valueResultChanged;
                     rangeActiveExpression.ValueResultChanging -= valueResultChanging;
                     rangeActiveExpression.Dispose();
                 });
+                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                rangeActiveExpression.ValueResultChanging += valueResultChanging;
                 checkOperationFault();
-
                 return activeDictionary;
-            })!;
+            });
         }
 
         #endregion ToActiveDictionary
@@ -2256,15 +2283,14 @@ namespace Cogs.ActiveQuery
         /// <param name="source">>An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return a value from</param>
         /// <param name="key">The key of the value to retrieve</param>
         /// <returns>>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the value for the specified key in the source dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Don't tell me what to catch in a general purpose method, bruh")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TValue> ActiveValueFor<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, TKey key)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
             if (source is INotifyDictionaryChanged<TKey, TValue> changingSource)
             {
                 var synchronizedSource = source as ISynchronized;
-                Action<TValue>? setValue = null;
-                Action<Exception?>? setOperationFault = null;
+                ActiveValue<TValue>? activeValue = null;
 
                 Func<TKey, bool> equalsKey;
                 var keyComparer = source.GetKeyComparer();
@@ -2285,28 +2311,28 @@ namespace Cogs.ActiveQuery
                         {
                             try
                             {
-                                setOperationFault!(null);
-                                setValue!(source[key]);
+                                activeValue!.OperationFault = null;
+                                activeValue!.Value = source[key];
                             }
                             catch (Exception ex)
                             {
-                                setOperationFault!(ex);
+                                activeValue!.OperationFault = ex;
                             }
                         }
                         else
                         {
                             if (e.OldItems?.Any(kv => equalsKey(kv.Key)) ?? false)
                             {
-                                setOperationFault!(ExceptionHelper.KeyNotFound);
-                                setValue!(default!);
+                                activeValue!.OperationFault = ExceptionHelper.KeyNotFound;
+                                activeValue!.Value = default;
                             }
                             if ((e.NewItems?.Count ?? 0) > 0)
                             {
                                 var matchingValues = e.NewItems.Where(kv => equalsKey(kv.Key)).Select(kv => kv.Value).ToList();
                                 if (matchingValues.Count > 0)
                                 {
-                                    setOperationFault!(null);
-                                    setValue!(matchingValues[0]);
+                                    activeValue!.OperationFault = null;
+                                    activeValue!.Value = matchingValues[0];
                                 }
                             }
                         }
@@ -2314,16 +2340,19 @@ namespace Cogs.ActiveQuery
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
-                    changingSource.DictionaryChanged += sourceChanged;
                     try
                     {
-                        return new ActiveValue<TValue>(source[key], out setValue, out setOperationFault, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        activeValue = new ActiveValue<TValue>(source[key], elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
                     catch (Exception ex)
                     {
-                        return new ActiveValue<TValue>(default!, out setValue, ex, out setOperationFault, elementFaultChangeNotifier, dispose);
+                        activeValue = new ActiveValue<TValue>(default!, ex, elementFaultChangeNotifier, dispose);
+                        changingSource.DictionaryChanged += sourceChanged;
+                        return activeValue;
                     }
-                })!;
+                });
             }
             try
             {
@@ -2353,7 +2382,7 @@ namespace Cogs.ActiveQuery
             if (source is INotifyDictionaryChanged<TKey, TValue> changingSource)
             {
                 var synchronizedSource = source as ISynchronized;
-                Action<TValue>? setValue = null;
+                ActiveValue<TValue>? activeValue = null;
 
                 Func<TKey, bool> equalsKey;
                 var keyComparer = source.GetKeyComparer();
@@ -2371,25 +2400,26 @@ namespace Cogs.ActiveQuery
                     synchronizedSource.SequentialExecute(() =>
                     {
                         if (e.Action == NotifyDictionaryChangedAction.Reset)
-                            setValue!(source.TryGetValue(key, out var value) ? value : default);
+                            activeValue!.Value = source.TryGetValue(key, out var value) ? value : default;
                         else
                         {
                             if (e.OldItems?.Any(kv => equalsKey(kv.Key)) ?? false)
-                                setValue!(default!);
+                                activeValue!.Value = default;
                             if ((e.NewItems?.Count ?? 0) > 0)
                             {
                                 var matchingValues = e.NewItems.Where(kv => equalsKey(kv.Key)).Select(kv => kv.Value).ToList();
                                 if (matchingValues.Count > 0)
-                                    setValue!(matchingValues[0]);
+                                    activeValue!.Value = matchingValues[0];
                             }
                         }
                     });
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
+                    activeValue = new ActiveValue<TValue>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
                     changingSource.DictionaryChanged += sourceChanged;
-                    return new ActiveValue<TValue>(source.TryGetValue(key, out var value) ? value : default, out setValue, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
-                })!;
+                    return activeValue;
+                });
             }
             else
                 return new ActiveValue<TValue>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier);
@@ -2407,7 +2437,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to filter</param>
         /// <param name="predicate">A function to test each key/value pair for a condition</param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> that contains elements from the input dictionary that satisfy the condition</returns>
-        public static ActiveDictionary<TKey, TValue> ActiveWhere<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate) =>
+        public static IActiveDictionary<TKey, TValue> ActiveWhere<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate) =>
             ActiveWhere(source, predicate, null);
 
         /// <summary>
@@ -2419,7 +2449,7 @@ namespace Cogs.ActiveQuery
         /// <param name="predicate">A function to test each key/value pair for a condition</param>
         /// <param name="predicateOptions">Options governing the behavior of active expressions created using <paramref name="predicate"/></param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> that contains elements from the input dictionary that satisfy the condition</returns>
-        public static ActiveDictionary<TKey, TValue> ActiveWhere<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions)
+        public static IActiveDictionary<TKey, TValue> ActiveWhere<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, bool>> predicate, ActiveExpressionOptions? predicateOptions)
         {
             ActiveQueryOptions.Optimize(ref predicate);
 
@@ -2453,28 +2483,29 @@ namespace Cogs.ActiveQuery
             void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, bool> e) =>
                 synchronizedSource.SequentialExecute(() =>
                 {
-                    var key = e.Element;
-                    if (e.Result)
-                        rangeObservableDictionary!.Add(key, source[key]);
-                    else
-                        rangeObservableDictionary!.Remove(key);
+                    if (e.Element is TKey key)
+                    {
+                        if (e.Result)
+                            rangeObservableDictionary!.Add(key, source[key]);
+                        else
+                            rangeObservableDictionary!.Remove(key);
+                    }
                 });
 
             return synchronizedSource.SequentialExecute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, predicate, predicateOptions);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-
                 rangeObservableDictionary = source.CreateSimilarSynchronizedObservableDictionary();
                 rangeObservableDictionary.AddRange(rangeActiveExpression.GetResults().Where(r => r.result).Select(r => new KeyValuePair<TKey, TValue>(r.key, source[r.key])));
+                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                rangeActiveExpression.ValueResultChanged += valueResultChanged;
                 return new ActiveDictionary<TKey, TValue>(rangeObservableDictionary, rangeActiveExpression, () =>
                 {
                     rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged -= valueResultChanged;
                     rangeActiveExpression.Dispose();
                 });
-            })!;
+            });
         }
 
         #endregion Where

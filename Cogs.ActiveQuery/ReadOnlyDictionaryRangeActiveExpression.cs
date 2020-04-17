@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -133,7 +134,7 @@ namespace Cogs.ActiveQuery
                 {
                     activeExpressionsAccess.ExitWriteLock();
                 }
-                return addedActiveExpressions.Select(ae => new KeyValuePair<TKey, TResult>(ae.Arg1, ae.Value)).ToImmutableArray();
+                return addedActiveExpressions.Select(ae => new KeyValuePair<TKey, TResult>(ae.Arg1! /* this could be null, but it won't matter if it is */, ae.Value! /* this could be null, but it won't matter if it is */)).ToImmutableArray();
             }
             return Enumerable.Empty<KeyValuePair<TKey, TResult>>().ToImmutableArray();
         }
@@ -234,25 +235,25 @@ namespace Cogs.ActiveQuery
         protected virtual void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
             ElementFaultChanged?.Invoke(this, e);
 
-        protected void OnElementFaultChanged(TKey key, Exception? fault) =>
+        protected void OnElementFaultChanged([AllowNull] TKey key, Exception? fault) =>
             OnElementFaultChanged(new ElementFaultChangeEventArgs(key, fault));
 
         protected virtual void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
             ElementFaultChanging?.Invoke(this, e);
 
-        protected void OnElementFaultChanging(TKey key, Exception? fault) =>
+        protected void OnElementFaultChanging([AllowNull] TKey key, Exception? fault) =>
             OnElementFaultChanging(new ElementFaultChangeEventArgs(key, fault));
 
         protected virtual void OnValueResultChanged(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
             ValueResultChanged?.Invoke(this, e);
 
-        protected void OnValueResultChanged(TKey key, TResult result) =>
+        protected void OnValueResultChanged([AllowNull] TKey key, [AllowNull] TResult result) =>
             OnValueResultChanged(new RangeActiveExpressionResultChangeEventArgs<TKey, TResult>(key, result));
 
         protected virtual void OnValueResultChanging(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
             ValueResultChanging?.Invoke(this, e);
 
-        protected void OnValueResultChanging(TKey key, TResult result) =>
+        protected void OnValueResultChanging([AllowNull] TKey key, [AllowNull] TResult result) =>
             OnValueResultChanging(new RangeActiveExpressionResultChangeEventArgs<TKey, TResult>(key, result));
 
         IReadOnlyList<KeyValuePair<TKey, TResult>> RemoveActiveExpressions(IReadOnlyList<TKey> keys)
@@ -279,7 +280,7 @@ namespace Cogs.ActiveQuery
             foreach (var key in keys)
             {
                 var activeExpression = activeExpressions[key];
-                result.Add(new KeyValuePair<TKey, TResult>(key, activeExpression.Value));
+                result.Add(new KeyValuePair<TKey, TResult>(key, activeExpression.Value! /* this could be null, but it won't matter if it is */));
                 activeExpressions.Remove(key);
                 activeExpression.PropertyChanging -= ActiveExpressionPropertyChanging;
                 activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
@@ -304,7 +305,7 @@ namespace Cogs.ActiveQuery
                     try
                     {
                         removed = RemoveActiveExpressionsUnderLock(e.OldItems.Select(oldItem => oldItem.Key).ToImmutableArray());
-                        added = AddActiveExpressionsUnderLock(e.NewItems).Select(ae => new KeyValuePair<TKey, TResult>(ae.Arg1, ae.Value)).ToImmutableArray();
+                        added = AddActiveExpressionsUnderLock(e.NewItems).Select(ae => new KeyValuePair<TKey, TResult>(ae.Arg1! /* this could be null, but it won't matter if it is */, ae.Value! /* this could be null, but it won't matter if it is */)).ToImmutableArray();
                     }
                     finally
                     {

@@ -1,0 +1,13 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:valueConversion="clr-namespace:Cogs.Wpf.ValueConversion">
+    <valueConversion:EqualToParameterIsCollapsedValueConverter x:Key="EqualToParameterIsCollapsedValueConverter" />
+    <valueConversion:EqualToParameterIsHiddenValueConverter x:Key="EqualToParameterIsHiddenValueConverter" />
+    <valueConversion:FalseIsCollapsedValueConverter x:Key="FalseIsCollapsedValueConverter" />
+    <valueConversion:FalseIsHiddenValueConverter x:Key="FalseIsHiddenValueConverter" />
+    <valueConversion:TrueIsCollapsedValueConverter x:Key="TrueIsCollapsedValueConverter" />
+    <valueConversion:TrueIsHiddenValueConverter x:Key="TrueIsHiddenValueConverter" />
+    <valueConversion:UnequalToParameterIsCollapsedValueConverter x:Key="UnequalToParameterIsCollapsedValueConverter" />
+    <valueConversion:UnequalToParameterIsHiddenValueConverter x:Key="UnequalToParameterIsHiddenValueConverter" />
+    <valueConversion:ValueIsInt32ValueConverter x:Key="ValueIsInt32ValueConverter" />
+</ResourceDictionary>
