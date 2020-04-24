@@ -1,0 +1,63 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Navigation;
+
+namespace Cogs.Wpf.Controls
+{
+    public class UrlAwareTextBlock : TextBlock
+    {
+        public string? ParsedText
+        {
+            get => (string)GetValue(ParsedTextProperty);
+            set => SetValue(ParsedTextProperty, value);
+        }
+
+        static UrlAwareTextBlock() => TextProperty.OverrideMetadata(typeof(UrlAwareTextBlock), new FrameworkPropertyMetadata(TextPropertyChanged));
+
+        public static readonly DependencyProperty ParsedTextProperty = DependencyProperty.Register(nameof(ParsedText), typeof(string), typeof(UrlAwareTextBlock), new PropertyMetadata() { CoerceValueCallback = ParsedTextCoerceValue });
+        static readonly Regex textAndUrlPattern = new Regex(@"((?<text>.*?)(?<url>(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?)|(?<remainder>.*))", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+        static void TextPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e) => sender.SetValue(ParsedTextProperty, e.NewValue);
+
+        static object ParsedTextCoerceValue(DependencyObject sender, object value)
+        {
+            if (sender is UrlAwareTextBlock textBlock && value is string strValue)
+            {
+                var inlines = textAndUrlPattern.Matches(strValue).SelectMany(match =>
+                {
+                    var matchInlines = new List<Inline>();
+                    if (match.Groups["remainder"] is Group remainderGroup && remainderGroup.Success)
+                        matchInlines.Add(new Run(remainderGroup.Value));
+                    else
+                    {
+                        if (match.Groups["text"] is Group textGroup && textGroup.Success)
+                            matchInlines.Add(new Run(textGroup.Value));
+                        if (match.Groups["url"] is Group urlGroup && urlGroup.Success)
+                        {
+                            var hyperlink = new Hyperlink(new Run(urlGroup.Value)) { NavigateUri = new Uri(urlGroup.Value) };
+                            hyperlink.RequestNavigate += HyperlinkRequestNavigateHandler;
+                            matchInlines.Add(hyperlink);
+                        }
+                    }
+                    return matchInlines;
+                }).ToImmutableArray();
+                textBlock.Inlines.Clear();
+                textBlock.Inlines.AddRange(inlines);
+            }
+            return value;
+        }
+
+        static void HyperlinkRequestNavigateHandler(object sender, RequestNavigateEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { Verb = "open", UseShellExecute = true });
+            e.Handled = true;
+        }
+    }
+}

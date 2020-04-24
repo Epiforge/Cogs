@@ -4,6 +4,7 @@
     <Authors>Epiforge</Authors>
     <Description>Cogs for value conversions in WPF.</Description>
     <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
     <PackageIcon>NuGet.jpg</PackageIcon>
     <PackageIconUrl />
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>

@@ -17,7 +17,7 @@ namespace Cogs.Wpf
 
         public static readonly DependencyProperty AutoActivationProperty = DependencyProperty.RegisterAttached("AutoActivation", typeof(AutoActivationMode), typeof(WindowAssist), new PropertyMetadata(AutoActivationMode.Default, AutoActivationChanged));
 
-        static void ActivateWindowContentRenderedHandler(object sender, EventArgs e)
+        static void ActivateWindowContentRenderedHandler(object? sender, EventArgs e)
         {
             if (sender is Window window)
             {
@@ -107,13 +107,13 @@ namespace Cogs.Wpf
             }
         }
 
-        static void EffectBlurBehindOff(object sender, EventArgs e)
+        static void EffectBlurBehindOff(object? sender, EventArgs e)
         {
             if (sender is Window window)
                 EffectBlurBehind(window, false);
         }
 
-        static void EffectBlurBehindOn(object sender, EventArgs e)
+        static void EffectBlurBehindOn(object? sender, EventArgs e)
         {
             if (sender is Window window)
                 EffectBlurBehind(window, true);
