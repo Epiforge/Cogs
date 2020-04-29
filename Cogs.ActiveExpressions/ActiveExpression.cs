@@ -233,6 +233,9 @@ namespace Cogs.ActiveExpressions
                 case NewExpression newExpression:
                     activeExpression = ActiveNewExpression.Create(newExpression, options, deferEvaluation);
                     break;
+                case TypeBinaryExpression typeBinaryExpression:
+                    activeExpression = ActiveTypeBinaryExpression.Create(typeBinaryExpression, options, deferEvaluation);
+                    break;
                 case UnaryExpression unaryExpression when unaryExpression.NodeType == ExpressionType.Quote:
                     activeExpression = ActiveConstantExpression.Create(Expression.Constant(unaryExpression.Operand), options);
                     break;
@@ -315,6 +318,8 @@ namespace Cogs.ActiveExpressions
                     return $"({operands[0]} - {operands[1]})";
                 case ExpressionType.SubtractChecked:
                     return $"checked({operands[0]} - {operands[1]})";
+                case ExpressionType.TypeIs:
+                    return $"({operands[0]} is {operands[1]})";
                 case ExpressionType.UnaryPlus:
                     return $"(+{operands[0]})";
                 default:
@@ -502,6 +507,8 @@ namespace Cogs.ActiveExpressions
                     return newExpression.Members is null ? Expression.New(newExpression.Constructor, newArguments) : Expression.New(newExpression.Constructor, newArguments, newExpression.Members);
                 case ParameterExpression parameterExpression:
                     return parameterTranslation[parameterExpression];
+                case TypeBinaryExpression typeBinaryExpression:
+                    return Expression.TypeIs(ReplaceParameters(parameterTranslation, typeBinaryExpression.Expression), typeBinaryExpression.TypeOperand);
                 case UnaryExpression unaryExpression:
                     return Expression.MakeUnary(unaryExpression.NodeType, ReplaceParameters(parameterTranslation, unaryExpression.Operand), unaryExpression.Type, unaryExpression.Method);
                 case null:
@@ -543,6 +550,8 @@ namespace Cogs.ActiveExpressions
                 return methodCallA == methodCallB;
             if (a is ActiveNewExpression newA && b is ActiveNewExpression newB)
                 return newA == newB;
+            if (a is ActiveTypeBinaryExpression typeBinaryA && b is ActiveTypeBinaryExpression typeBinaryB)
+                return typeBinaryA == typeBinaryB;
             if (a is ActiveUnaryExpression unaryA && b is ActiveUnaryExpression unaryB)
                 return unaryA == unaryB;
             return false;
@@ -580,6 +589,8 @@ namespace Cogs.ActiveExpressions
                 return methodCallA != methodCallB;
             if (a is ActiveNewExpression newA && b is ActiveNewExpression newB)
                 return newA != newB;
+            if (a is ActiveTypeBinaryExpression typeBinaryA && b is ActiveTypeBinaryExpression typeBinaryB)
+                return typeBinaryA != typeBinaryB;
             if (a is ActiveUnaryExpression unaryA && b is ActiveUnaryExpression unaryB)
                 return unaryA != unaryB;
             return true;
