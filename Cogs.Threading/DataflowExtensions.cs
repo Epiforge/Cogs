@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -93,7 +94,7 @@ namespace Cogs.Threading
         /// <returns>The results of the transform on each element in no particular order</returns>
         public static async Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector, ExecutionDataflowBlockOptions options)
         {
-            var results = new List<TResult>();
+            var results = new BlockingCollection<TResult>();
             var transformBlock = new TransformBlock<TSource, TResult>(selector, options);
             var actionBlock = new ActionBlock<TResult>(result => results.Add(result), singleThreadBlock);
             transformBlock.LinkTo(actionBlock, propagateLink);
@@ -115,7 +116,7 @@ namespace Cogs.Threading
         /// <returns>The results of the asynchronous transform on each element in no particular order</returns>
         public static async Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> asyncSelector, ExecutionDataflowBlockOptions options)
         {
-            var results = new List<TResult>();
+            var results = new BlockingCollection<TResult>();
             var transformBlock = new TransformBlock<TSource, TResult>(asyncSelector, options);
             var actionBlock = new ActionBlock<TResult>(result => results.Add(result), singleThreadBlock);
             transformBlock.LinkTo(actionBlock, propagateLink);
