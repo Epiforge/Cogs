@@ -10,6 +10,6 @@ namespace Cogs.Threading
         /// <summary>
         /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
         /// </summary>
-        SynchronizationContext SynchronizationContext { get; }
+        SynchronizationContext? SynchronizationContext { get; }
     }
 }
