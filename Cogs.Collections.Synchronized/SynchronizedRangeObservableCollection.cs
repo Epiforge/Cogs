@@ -33,17 +33,17 @@ namespace Cogs.Collections.Synchronized
         /// <summary>
         /// Initializes a new instance of the <see cref="SynchronizedRangeObservableCollection{T}"/> class using the specified <see cref="System.Threading.SynchronizationContext"/>
         /// </summary>
-        /// <param name="synchronizationContext">The <see cref="System.Threading.SynchronizationContext"/> on which to perform all operations</param>
-        public SynchronizedRangeObservableCollection(SynchronizationContext synchronizationContext) : base(synchronizationContext)
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform all operations</param>
+        public SynchronizedRangeObservableCollection(SynchronizationContext? synchronizationContext) : base(synchronizationContext)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SynchronizedRangeObservableCollection{T}"/> class that contains elements copied from the specified collection and using the specified <see cref="System.Threading.SynchronizationContext"/>
         /// </summary>
-        /// <param name="synchronizationContext">The <see cref="System.Threading.SynchronizationContext"/> on which to perform all operations</param>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform all operations</param>
         /// <param name="collection">The collection from which the elements are copied</param>
-        public SynchronizedRangeObservableCollection(SynchronizationContext synchronizationContext, IEnumerable<T> collection) : base(synchronizationContext, collection)
+        public SynchronizedRangeObservableCollection(SynchronizationContext? synchronizationContext, IEnumerable<T> collection) : base(synchronizationContext, collection)
         {
         }
 

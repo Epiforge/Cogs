@@ -51,21 +51,21 @@ namespace Cogs.Collections.Synchronized
         /// Initializes a new instance of the <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/> class that is empty, uses the default <see cref="IComparer{T}"/> implementation for the key type, and using the specified <see cref="System.Threading.SynchronizationContext"/>
         /// </summary>
         /// <param name="synchronizationContext">The <see cref="System.Threading.SynchronizationContext"/> on which to perform all operations</param>
-        public SynchronizedObservableSortedDictionary(SynchronizationContext synchronizationContext) : base() => SynchronizationContext = synchronizationContext;
+        public SynchronizedObservableSortedDictionary(SynchronizationContext? synchronizationContext) : base() => SynchronizationContext = synchronizationContext;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/> class that is empty, uses the specified <see cref="IComparer{T}"/> implementation to compare keys, and using the specified <see cref="System.Threading.SynchronizationContext"/>
         /// </summary>
         /// <param name="synchronizationContext">The <see cref="System.Threading.SynchronizationContext"/> on which to perform all operations</param>
         /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys, or <c>null</c> to use the default <see cref="Comparer{T}"/> for the type of the key</param>
-        public SynchronizedObservableSortedDictionary(SynchronizationContext synchronizationContext, IComparer<TKey> comparer) : base(comparer) => SynchronizationContext = synchronizationContext;
+        public SynchronizedObservableSortedDictionary(SynchronizationContext? synchronizationContext, IComparer<TKey> comparer) : base(comparer) => SynchronizationContext = synchronizationContext;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/> class that contains elements copied from the specified <see cref="IDictionary{TKey, TValue}"/>, uses the default <see cref="IComparer{T}"/> implementation for the key type, and using the specified <see cref="System.Threading.SynchronizationContext"/>
         /// </summary>
         /// <param name="synchronizationContext">The <see cref="System.Threading.SynchronizationContext"/> on which to perform all operations</param>
         /// <param name="dictionary">The <see cref="IDictionary{TKey, TValue}"/> whose elements are copied to the new <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/></param>
-        public SynchronizedObservableSortedDictionary(SynchronizationContext synchronizationContext, IDictionary<TKey, TValue> dictionary) : base(dictionary) => SynchronizationContext = synchronizationContext;
+        public SynchronizedObservableSortedDictionary(SynchronizationContext? synchronizationContext, IDictionary<TKey, TValue> dictionary) : base(dictionary) => SynchronizationContext = synchronizationContext;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/> class that contains elements copied from the specified <see cref="IDictionary{TKey, TValue}"/>, uses the specified <see cref="IComparer{T}"/> implementation to compare keys, and using the specified <see cref="System.Threading.SynchronizationContext"/>
@@ -73,7 +73,7 @@ namespace Cogs.Collections.Synchronized
         /// <param name="synchronizationContext">The <see cref="System.Threading.SynchronizationContext"/> on which to perform all operations</param>
         /// <param name="dictionary">The <see cref="IDictionary{TKey, TValue}"/> whose elements are copied to the new <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/></param>
         /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys, or <c>null</c> to use the default <see cref="Comparer{T}"/> for the type of the key</param>
-        public SynchronizedObservableSortedDictionary(SynchronizationContext synchronizationContext, IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer) : base(dictionary, comparer) => SynchronizationContext = synchronizationContext;
+        public SynchronizedObservableSortedDictionary(SynchronizationContext? synchronizationContext, IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer) : base(dictionary, comparer) => SynchronizationContext = synchronizationContext;
 
         /// <summary>
         /// Gets or sets the value associated with the specified key
