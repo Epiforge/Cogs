@@ -76,6 +76,107 @@ namespace Cogs.Collections.Synchronized
         public SynchronizedObservableSortedDictionary(SynchronizationContext synchronizationContext, IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer) : base(dictionary, comparer) => SynchronizationContext = synchronizationContext;
 
         /// <summary>
+        /// Gets or sets the value associated with the specified key
+        /// </summary>
+        /// <param name="key">The key of the value to get or set</param>
+        /// <returns>The value associated with the specified key</returns>
+        public override TValue this[TKey key]
+        {
+            get => this.Execute(() => base[key]);
+            set => this.Execute(() => base[key] = value);
+        }
+
+        /// <summary>
+        /// Gets the <see cref="IComparer{T}"/> used to order the elements of the <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/>
+        /// </summary>
+        public override IComparer<TKey> Comparer => this.Execute(() => base.Comparer)!;
+
+        /// <summary>
+        /// Gets the <see cref="IComparer{T}"/> used to order the elements of the <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/>
+        /// </summary>
+        public virtual Task<IComparer<TKey>> ComparerAsync => this.ExecuteAsync(() => base.Comparer);
+
+        /// <summary>
+        /// Gets the number of elements in the collection
+        /// </summary>
+        public override int Count => this.Execute(() => base.Count);
+
+        /// <summary>
+        /// Gets the number of key-value pairs contained in the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/>
+        /// </summary>
+        public virtual Task<int> CountAsync => this.ExecuteAsync(() => base.Count);
+
+        /// <summary>
+        /// Gets a value that indicates whether the <see cref="IDictionary"/> is read-only
+        /// </summary>
+        protected override bool DictionaryIsReadOnly => this.Execute(() => base.DictionaryIsReadOnly);
+
+        /// <summary>
+        /// Gets a value indicating whether the <see cref="ICollection{T}"/> is read-only
+        /// </summary>
+        protected override bool GenericCollectionIsReadOnly => this.Execute(() => base.GenericCollectionIsReadOnly);
+
+        /// <summary>
+        /// Gets a value that indicates whether access to the <see cref="ICollection"/> is synchronized (thread safe)
+        /// </summary>
+        protected override bool IsCollectionSynchronized => this.Execute(() => base.IsCollectionSynchronized);
+
+        /// <summary>
+        /// Gets a value that indicates whether the <see cref="IDictionary"/> has a fixed size
+        /// </summary>
+        protected override bool IsFixedSize => this.Execute(() => base.IsFixedSize);
+
+        /// <summary>
+        /// Gets an <see cref="ICollection{T}"/> containing the keys of the <see cref="IDictionary{TKey, TValue}"/>
+        /// </summary>
+        public override SortedDictionary<TKey, TValue>.KeyCollection Keys => this.Execute(() => base.Keys)!;
+
+        /// <summary>
+        /// Gets an <see cref="ICollection"/> containing the keys of the <see cref="IDictionary"/>
+        /// </summary>
+        protected override ICollection KeysCollection => this.Execute(() => base.KeysCollection)!;
+
+        /// <summary>
+        /// Gets an <see cref="ICollection{T}"/> containing the keys of the <see cref="IDictionary{TKey, TValue}"/>
+        /// </summary>
+        protected override ICollection<TKey> KeysGenericCollection => this.Execute(() => base.KeysGenericCollection)!;
+
+        /// <summary>
+        /// Gets a collection containing the keys of the <see cref="IReadOnlyDictionary{TKey, TValue}"/>
+        /// </summary>
+        protected override IEnumerable<TKey> KeysGenericEnumerable => this.Execute(() => base.KeysGenericEnumerable)!;
+
+        /// <summary>
+        /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
+        /// </summary>
+        public SynchronizationContext? SynchronizationContext { get; }
+
+        /// <summary>
+        /// Gets an object that can be used to synchronize access to the <see cref="ICollection"/>
+        /// </summary>
+        protected override object SyncRoot => this.Execute(() => base.SyncRoot)!;
+
+        /// <summary>
+        /// Gets an <see cref="ICollection{T}"/> containing the values in the <see cref="IDictionary{TKey, TValue}"/>
+        /// </summary>
+        public override SortedDictionary<TKey, TValue>.ValueCollection Values => this.Execute(() => base.Values)!;
+
+        /// <summary>
+        /// Gets an <see cref="ICollection"/> containing the values in the <see cref="IDictionary"/>
+        /// </summary>
+        protected override ICollection ValuesCollection => this.Execute(() => base.ValuesCollection)!;
+
+        /// <summary>
+        /// Gets an <see cref="ICollection{T}"/> containing the values in the <see cref="IDictionary{TKey, TValue}"/>
+        /// </summary>
+        protected override ICollection<TValue> ValuesGenericCollection => this.Execute(() => base.ValuesGenericCollection)!;
+
+        /// <summary>
+        /// Gets a collection containing the values in the <see cref="ObservableDictionary{TKey, TValue}"/>
+        /// </summary>
+        protected override IEnumerable<TValue> ValuesGenericEnumerable => this.Execute(() => base.ValuesGenericEnumerable)!;
+
+        /// <summary>
         /// Adds the specified key and value to the dictionary
         /// </summary>
         /// <param name="key">The key of the element to add</param>
@@ -388,106 +489,5 @@ namespace Cogs.Collections.Synchronized
         /// <param name="key">The key the value of which to get</param>
         /// <returns><c>true</c> if the object that implements <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/> contains an element with the specified key and the value that was retrieved; otherwise, <c>false</c> and the default <typeparamref name="TValue"/></returns>
         public virtual Task<(bool valueRetrieved, TValue value)> TryGetValueAsync(TKey key) => this.ExecuteAsync(() => base.TryGetValue(key));
-
-        /// <summary>
-        /// Gets or sets the value associated with the specified key
-        /// </summary>
-        /// <param name="key">The key of the value to get or set</param>
-        /// <returns>The value associated with the specified key</returns>
-        public override TValue this[TKey key]
-        {
-            get => this.Execute(() => base[key]);
-            set => this.Execute(() => base[key] = value);
-        }
-
-        /// <summary>
-        /// Gets the <see cref="IComparer{T}"/> used to order the elements of the <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/>
-        /// </summary>
-        public override IComparer<TKey> Comparer => this.Execute(() => base.Comparer)!;
-
-        /// <summary>
-        /// Gets the <see cref="IComparer{T}"/> used to order the elements of the <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/>
-        /// </summary>
-        public virtual Task<IComparer<TKey>> ComparerAsync => this.ExecuteAsync(() => base.Comparer);
-
-        /// <summary>
-        /// Gets the number of elements in the collection
-        /// </summary>
-        public override int Count => this.Execute(() => base.Count);
-
-        /// <summary>
-        /// Gets the number of key-value pairs contained in the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/>
-        /// </summary>
-        public virtual Task<int> CountAsync => this.ExecuteAsync(() => base.Count);
-
-        /// <summary>
-        /// Gets a value that indicates whether the <see cref="IDictionary"/> is read-only
-        /// </summary>
-        protected override bool DictionaryIsReadOnly => this.Execute(() => base.DictionaryIsReadOnly);
-
-        /// <summary>
-        /// Gets a value indicating whether the <see cref="ICollection{T}"/> is read-only
-        /// </summary>
-        protected override bool GenericCollectionIsReadOnly => this.Execute(() => base.GenericCollectionIsReadOnly);
-
-        /// <summary>
-        /// Gets a value that indicates whether access to the <see cref="ICollection"/> is synchronized (thread safe)
-        /// </summary>
-        protected override bool IsCollectionSynchronized => this.Execute(() => base.IsCollectionSynchronized);
-
-        /// <summary>
-        /// Gets a value that indicates whether the <see cref="IDictionary"/> has a fixed size
-        /// </summary>
-        protected override bool IsFixedSize => this.Execute(() => base.IsFixedSize);
-
-        /// <summary>
-        /// Gets an <see cref="ICollection{T}"/> containing the keys of the <see cref="IDictionary{TKey, TValue}"/>
-        /// </summary>
-        public override SortedDictionary<TKey, TValue>.KeyCollection Keys => this.Execute(() => base.Keys)!;
-
-        /// <summary>
-        /// Gets an <see cref="ICollection"/> containing the keys of the <see cref="IDictionary"/>
-        /// </summary>
-        protected override ICollection KeysCollection => this.Execute(() => base.KeysCollection)!;
-
-        /// <summary>
-        /// Gets an <see cref="ICollection{T}"/> containing the keys of the <see cref="IDictionary{TKey, TValue}"/>
-        /// </summary>
-        protected override ICollection<TKey> KeysGenericCollection => this.Execute(() => base.KeysGenericCollection)!;
-
-        /// <summary>
-        /// Gets a collection containing the keys of the <see cref="IReadOnlyDictionary{TKey, TValue}"/>
-        /// </summary>
-        protected override IEnumerable<TKey> KeysGenericEnumerable => this.Execute(() => base.KeysGenericEnumerable)!;
-
-        /// <summary>
-        /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
-        /// </summary>
-        public SynchronizationContext SynchronizationContext { get; }
-
-        /// <summary>
-        /// Gets an object that can be used to synchronize access to the <see cref="ICollection"/>
-        /// </summary>
-        protected override object SyncRoot => this.Execute(() => base.SyncRoot)!;
-
-        /// <summary>
-        /// Gets an <see cref="ICollection{T}"/> containing the values in the <see cref="IDictionary{TKey, TValue}"/>
-        /// </summary>
-        public override SortedDictionary<TKey, TValue>.ValueCollection Values => this.Execute(() => base.Values)!;
-
-        /// <summary>
-        /// Gets an <see cref="ICollection"/> containing the values in the <see cref="IDictionary"/>
-        /// </summary>
-        protected override ICollection ValuesCollection => this.Execute(() => base.ValuesCollection)!;
-
-        /// <summary>
-        /// Gets an <see cref="ICollection{T}"/> containing the values in the <see cref="IDictionary{TKey, TValue}"/>
-        /// </summary>
-        protected override ICollection<TValue> ValuesGenericCollection => this.Execute(() => base.ValuesGenericCollection)!;
-
-        /// <summary>
-        /// Gets a collection containing the values in the <see cref="ObservableDictionary{TKey, TValue}"/>
-        /// </summary>
-        protected override IEnumerable<TValue> ValuesGenericEnumerable => this.Execute(() => base.ValuesGenericEnumerable)!;
     }
 }

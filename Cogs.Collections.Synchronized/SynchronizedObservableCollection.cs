@@ -44,6 +44,27 @@ namespace Cogs.Collections.Synchronized
         public SynchronizedObservableCollection(SynchronizationContext synchronizationContext, IEnumerable<T> collection) : base(collection) => SynchronizationContext = synchronizationContext;
 
         /// <summary>
+        /// Gets or sets the element at the specified index
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to get or set</param>
+        /// <returns>The element at the specified index</returns>
+        public new T this[int index]
+        {
+            get => this.Execute(() => base[index]);
+            set => this.Execute(() => base[index] = value);
+        }
+
+        /// <summary>
+        /// Gets the number of elements actually contained in the <see cref="SynchronizedObservableCollection{T}"/>
+        /// </summary>
+        public Task<int> CountAsync => this.ExecuteAsync(() => Count);
+
+        /// <summary>
+        /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
+        /// </summary>
+        public SynchronizationContext? SynchronizationContext { get; }
+
+        /// <summary>
         /// Occurs when the collection changes
         /// </summary>
         public event NotifyGenericCollectionChangedEventHandler<T>? GenericCollectionChanged;
@@ -219,26 +240,5 @@ namespace Cogs.Collections.Synchronized
         /// <param name="index">The zero-based index of the element to replace</param>
         /// <param name="item">The new value for the element at the specified index</param>
         public Task SetItemAsync(int index, T item) => this.ExecuteAsync(() => this[index] = item);
-
-        /// <summary>
-        /// Gets or sets the element at the specified index
-        /// </summary>
-        /// <param name="index">The zero-based index of the element to get or set</param>
-        /// <returns>The element at the specified index</returns>
-        public new T this[int index]
-        {
-            get => this.Execute(() => base[index]);
-            set => this.Execute(() => base[index] = value);
-        }
-
-        /// <summary>
-        /// Gets the number of elements actually contained in the <see cref="SynchronizedObservableCollection{T}"/>
-        /// </summary>
-        public Task<int> CountAsync => this.ExecuteAsync(() => Count);
-
-        /// <summary>
-        /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
-        /// </summary>
-        public SynchronizationContext SynchronizationContext { get; }
     }
 }

@@ -20,6 +20,16 @@ namespace Cogs.Collections.Synchronized
 
         readonly ISynchronizedObservableRangeDictionary<TKey, TValue> synchronizedObservableRangeDictionary;
 
+        /// <summary>
+        /// Gets the number of key-value pairs contained in the read-only synchronized observable range dictionary
+        /// </summary>
+        public Task<int> CountAsync => synchronizedObservableRangeDictionary.CountAsync;
+
+        /// <summary>
+        /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
+        /// </summary>
+        public SynchronizationContext? SynchronizationContext => synchronizedObservableRangeDictionary.SynchronizationContext;
+
         Task ISynchronizedObservableRangeDictionary<TKey, TValue>.AddAsync(TKey key, TValue value) => Task.FromException(new NotSupportedException());
 
         Task ISynchronizedObservableRangeDictionary<TKey, TValue>.AddRangeAsync(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs) => Task.FromException(new NotSupportedException());
@@ -88,15 +98,5 @@ namespace Cogs.Collections.Synchronized
         /// <param name="key">The key the value of which to get</param>
         /// <returns><c>true</c> if the read-only synchronized observable range dictionary contains an element with the specified key and the value that was retrieved; otherwise, <c>false</c> and the default <typeparamref name="TValue"/></returns>
         public Task<(bool valueRetrieved, TValue value)> TryGetValueAsync(TKey key) => synchronizedObservableRangeDictionary.TryGetValueAsync(key);
-
-        /// <summary>
-        /// Gets the number of key-value pairs contained in the read-only synchronized observable range dictionary
-        /// </summary>
-        public Task<int> CountAsync => synchronizedObservableRangeDictionary.CountAsync;
-
-        /// <summary>
-        /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
-        /// </summary>
-        public SynchronizationContext SynchronizationContext => synchronizedObservableRangeDictionary.SynchronizationContext;
     }
 }
