@@ -154,6 +154,6 @@ namespace Cogs.ActiveQuery
         /// <summary>
         /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
         /// </summary>
-        public SynchronizationContext SynchronizationContext => synchronized.SynchronizationContext;
+        public SynchronizationContext? SynchronizationContext => synchronized.SynchronizationContext;
     }
 }
