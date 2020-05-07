@@ -15,15 +15,17 @@ namespace Cogs.Threading
         /// <summary>
         /// Initializes a new instance of the <see cref="AsyncSynchronizationContext"/> class
         /// </summary>
-        public AsyncSynchronizationContext()
+        public AsyncSynchronizationContext() : this(true)
+        {
+        }
+
+        internal AsyncSynchronizationContext(bool allowDisposal)
         {
             queuedCallbacksCancellationTokenSource = new CancellationTokenSource();
             queuedCallbacks = new BufferBlock<(SendOrPostCallback callback, object? state, ManualResetEventSlim? signal, Exception? exception)>(new DataflowBlockOptions { CancellationToken = queuedCallbacksCancellationTokenSource.Token });
+            this.allowDisposal = allowDisposal;
             Task.Run(ProcessCallbacks);
         }
-
-        internal AsyncSynchronizationContext(bool allowDisposal) : this() =>
-            this.allowDisposal = allowDisposal;
 
         /// <summary>
         /// Finalizes this object
@@ -61,7 +63,7 @@ namespace Cogs.Threading
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources
         /// </summary>
-        [SuppressMessage("Design", "CA1063:Implement IDisposable Correctly", Justification = "I know what I'm doin, bruh")]
+        [SuppressMessage("Design", "CA1063:Implement IDisposable Correctly")]
         public void Dispose()
         {
             if (!allowDisposal)
