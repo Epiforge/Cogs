@@ -183,51 +183,51 @@ namespace Cogs.Threading
         public static Task<TResult> ExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) => ExecuteAsync(synchronizable?.SynchronizationContext, asyncFunc);
 
         /// <summary>
-        /// Executes the specified <paramref name="action"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>)
+        /// Executes the specified <paramref name="action"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>)
         /// </summary>
         /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
         /// <param name="action">The <see cref="Action"/></param>
-        public static void SequentialExecute(this ISynchronized? synchronizable, Action action) => Execute(synchronizable?.SynchronizationContext ?? Synchronization.DefaultSynchronizationContext, action);
+        public static void SequentialExecute(this ISynchronized? synchronizable, Action action) => Execute(synchronizable?.SynchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, action);
 
         /// <summary>
-        /// Executes the specified <paramref name="func"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>) and returns the result
+        /// Executes the specified <paramref name="func"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>) and returns the result
         /// </summary>
         /// <typeparam name="TResult">The return type of <paramref name="func"/></typeparam>
         /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
         /// <param name="func">The <see cref="Func{TResult}"/></param>
         /// <returns>The result of <paramref name="func"/></returns>
-        public static TResult SequentialExecute<TResult>(this ISynchronized? synchronizable, Func<TResult> func) => Execute(synchronizable?.SynchronizationContext ?? Synchronization.DefaultSynchronizationContext, func);
+        public static TResult SequentialExecute<TResult>(this ISynchronized? synchronizable, Func<TResult> func) => Execute(synchronizable?.SynchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, func);
 
         /// <summary>
-        /// Executes the specified <paramref name="action"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>)
+        /// Executes the specified <paramref name="action"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>)
         /// </summary>
         /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
         /// <param name="action">The <see cref="Action"/></param>
-        public static Task SequentialExecuteAsync(this ISynchronized? synchronizable, Action action) => ExecuteAsync(synchronizable?.SynchronizationContext ?? Synchronization.DefaultSynchronizationContext, action);
+        public static Task SequentialExecuteAsync(this ISynchronized? synchronizable, Action action) => ExecuteAsync(synchronizable?.SynchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, action);
 
         /// <summary>
-        /// Executes the specified <paramref name="func"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>) and returns the result
+        /// Executes the specified <paramref name="func"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>) and returns the result
         /// </summary>
         /// <typeparam name="TResult">The return type of <paramref name="func"/></typeparam>
         /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
         /// <param name="func">The <see cref="Func{TResult}"/></param>
         /// <returns>The result of <paramref name="func"/></returns>
-        public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<TResult> func) => ExecuteAsync(synchronizable?.SynchronizationContext ?? Synchronization.DefaultSynchronizationContext, func);
+        public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<TResult> func) => ExecuteAsync(synchronizable?.SynchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, func);
 
         /// <summary>
-        /// Executes the specified <paramref name="asyncAction"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>)
+        /// Executes the specified <paramref name="asyncAction"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>)
         /// </summary>
         /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
         /// <param name="asyncAction">The <see cref="Func{Task}"/></param>
-        public static Task SequentialExecuteAsync(this ISynchronized? synchronizable, Func<Task> asyncAction) => ExecuteAsync(synchronizable?.SynchronizationContext ?? Synchronization.DefaultSynchronizationContext, asyncAction);
+        public static Task SequentialExecuteAsync(this ISynchronized? synchronizable, Func<Task> asyncAction) => ExecuteAsync(synchronizable?.SynchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, asyncAction);
 
         /// <summary>
-        /// Executes the specified <paramref name="asyncFunc"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>) and returns the result
+        /// Executes the specified <paramref name="asyncFunc"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>) and returns the result
         /// </summary>
         /// <typeparam name="TResult">The return type of <paramref name="asyncFunc"/></typeparam>
         /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
         /// <param name="asyncFunc">The <see cref="Func{Task}"/> that returns a value</param>
         /// <returns>The result of <paramref name="asyncFunc"/></returns>
-        public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) => ExecuteAsync(synchronizable?.SynchronizationContext ?? Synchronization.DefaultSynchronizationContext, asyncFunc);
+        public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) => ExecuteAsync(synchronizable?.SynchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, asyncFunc);
     }
 }
