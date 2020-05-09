@@ -2,6 +2,7 @@ using Cogs.Collections;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -18,12 +19,16 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         public ActiveExpressionOptions()
         {
+            ConstantExpressionsListenForCollectionChanged = true;
+            ConstantExpressionsListenForDictionaryChanged = true;
             DisposeConstructedObjects = true;
             DisposeStaticMethodReturnValues = true;
             PreferAsyncDisposal = true;
         }
 
         bool blockOnAsyncDisposal;
+        bool constantExpressionsListenForCollectionChanged;
+        bool constantExpressionsListenForDictionaryChanged;
         bool disposeConstructedObjects;
         readonly ConcurrentDictionary<(Type type, EquatableList<Type> constuctorParameterTypes), bool> disposeConstructedTypes = new ConcurrentDictionary<(Type type, EquatableList<Type> constuctorParameterTypes), bool>();
         readonly ConcurrentDictionary<MethodInfo, bool> disposeMethodReturnValues = new ConcurrentDictionary<MethodInfo, bool>();
@@ -41,6 +46,32 @@ namespace Cogs.ActiveExpressions
             {
                 RequireUnfrozen();
                 blockOnAsyncDisposal = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets/sets whether constant active expressions will subscribe to <see cref="INotifyCollectionChanged.CollectionChanged" /> events of their values when present and cause re-evaluations when they occur; the default is <c>true</c>
+        /// </summary>
+        public bool ConstantExpressionsListenForCollectionChanged
+        {
+            get => constantExpressionsListenForCollectionChanged;
+            set
+            {
+                RequireUnfrozen();
+                constantExpressionsListenForCollectionChanged = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets/sets whether constant active expressions will subscribe to <see cref="INotifyDictionaryChanged.DictionaryChanged" /> events of their values when present and cause re-evaluations when they occur; the default is <c>true</c>
+        /// </summary>
+        public bool ConstantExpressionsListenForDictionaryChanged
+        {
+            get => constantExpressionsListenForDictionaryChanged;
+            set
+            {
+                RequireUnfrozen();
+                constantExpressionsListenForDictionaryChanged = value;
             }
         }
 
@@ -175,7 +206,16 @@ namespace Cogs.ActiveExpressions
             if (ReferenceEquals(this, Default))
                 return base.GetHashCode();
             Freeze();
-            var objects = new List<object>() { disposeConstructedObjects, disposeStaticMethodReturnValues };
+            var objects = new List<object>()
+            {
+                typeof(ActiveExpressionOptions),
+                blockOnAsyncDisposal,
+                constantExpressionsListenForCollectionChanged,
+                constantExpressionsListenForDictionaryChanged,
+                disposeConstructedObjects,
+                disposeStaticMethodReturnValues,
+                preferAsyncDisposal
+            };
             objects.AddRange(disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)).Cast<object>());
             objects.AddRange(disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)).Cast<object>());
             return HashCode.Combine(objects.ToArray());
@@ -324,8 +364,12 @@ namespace Cogs.ActiveExpressions
         /// <param name="b">The second options to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator ==(ActiveExpressionOptions a, ActiveExpressionOptions b) =>
+            a?.blockOnAsyncDisposal == b?.blockOnAsyncDisposal &&
+            a?.constantExpressionsListenForCollectionChanged == b?.constantExpressionsListenForCollectionChanged &&
+            a?.constantExpressionsListenForDictionaryChanged == b?.constantExpressionsListenForDictionaryChanged &&
             a?.disposeConstructedObjects == b?.disposeConstructedObjects &&
             a?.disposeStaticMethodReturnValues == b?.disposeStaticMethodReturnValues &&
+            a?.preferAsyncDisposal == b?.preferAsyncDisposal &&
             (a?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()).SequenceEqual(b?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()) &&
             (a?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>()).SequenceEqual(b?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>());
 
@@ -336,8 +380,12 @@ namespace Cogs.ActiveExpressions
         /// <param name="b">The second options to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator !=(ActiveExpressionOptions a, ActiveExpressionOptions b) =>
-            a?.DisposeConstructedObjects != b?.DisposeConstructedObjects ||
-            a?.DisposeStaticMethodReturnValues != b?.DisposeStaticMethodReturnValues ||
+            a?.blockOnAsyncDisposal != b?.blockOnAsyncDisposal ||
+            a?.constantExpressionsListenForCollectionChanged != b?.constantExpressionsListenForCollectionChanged ||
+            a?.constantExpressionsListenForDictionaryChanged != b?.constantExpressionsListenForDictionaryChanged ||
+            a?.disposeConstructedObjects != b?.disposeConstructedObjects ||
+            a?.disposeStaticMethodReturnValues != b?.disposeStaticMethodReturnValues ||
+            a?.preferAsyncDisposal != b?.preferAsyncDisposal ||
             !(a?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()).SequenceEqual(b?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()) ||
             !(a?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>()).SequenceEqual(b?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>());
     }

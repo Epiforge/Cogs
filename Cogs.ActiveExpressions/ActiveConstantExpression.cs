@@ -1,6 +1,8 @@
+using Cogs.Collections;
 using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -10,6 +12,10 @@ namespace Cogs.ActiveExpressions
     {
         ActiveConstantExpression(Type type, object value, ActiveExpressionOptions? options) : base(type, ExpressionType.Constant, options, value)
         {
+            if (ApplicableOptions.ConstantExpressionsListenForDictionaryChanged && value is INotifyDictionaryChanged dictionaryChangedNotifier)
+                dictionaryChangedNotifier.DictionaryChanged += ValueChanged;
+            else if (ApplicableOptions.ConstantExpressionsListenForCollectionChanged && value is INotifyCollectionChanged collectionChangedNotifier)
+                collectionChangedNotifier.CollectionChanged += ValueChanged;
         }
 
         int disposalCount;
@@ -24,6 +30,10 @@ namespace Cogs.ActiveExpressions
                     expressionInstances.Remove(((Expression?)Value, options));
                 else
                     instances.Remove((Type, Value, options));
+                if (ApplicableOptions.ConstantExpressionsListenForDictionaryChanged && Value is INotifyDictionaryChanged dictionaryChangedNotifier)
+                    dictionaryChangedNotifier.DictionaryChanged -= ValueChanged;
+                else if (ApplicableOptions.ConstantExpressionsListenForCollectionChanged && Value is INotifyCollectionChanged collectionChangedNotifier)
+                    collectionChangedNotifier.CollectionChanged -= ValueChanged;
                 return true;
             }
         }
@@ -35,6 +45,8 @@ namespace Cogs.ActiveExpressions
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveConstantExpression), Value);
 
         public override string ToString() => $"{{C}} {ToStringSuffix}";
+
+        void ValueChanged(object sender, EventArgs e) => OnPropertyChanged(nameof(Value));
 
         static readonly object instanceManagementLock = new object();
         static readonly Dictionary<(Expression? expression, ActiveExpressionOptions? options), ActiveConstantExpression> expressionInstances = new Dictionary<(Expression? expression, ActiveExpressionOptions? options), ActiveConstantExpression>(ExpressionInstanceKeyComparer.Default);
