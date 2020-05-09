@@ -1,11 +1,12 @@
+using Cogs.Collections;
 using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading;
 
 namespace Cogs.ActiveExpressions
 {
@@ -72,6 +73,8 @@ namespace Cogs.ActiveExpressions
             {
                 if (fastGetter is { })
                     UnsubscribeFromExpressionValueNotifications();
+                else if (field is { })
+                    UnsubscribeFromValueNotifications();
                 if (expression is { })
                 {
                     expression.PropertyChanged -= ExpressionPropertyChanged;
@@ -115,7 +118,11 @@ namespace Cogs.ActiveExpressions
                         Value = fastGetter.Invoke(expressionValue, emptyArray);
                     }
                     else if (field is { })
+                    {
+                        UnsubscribeFromValueNotifications();
                         Value = field.GetValue(expression?.Value);
+                        SubscribeToValueNotifications();
+                    }
                 }
             }
             catch (Exception ex)
@@ -142,11 +149,32 @@ namespace Cogs.ActiveExpressions
                 propertyChangedNotifier.PropertyChanged += ExpressionValuePropertyChanged;
         }
 
+        void SubscribeToValueNotifications()
+        {
+            if (ApplicableOptions.ConstantExpressionsListenForDictionaryChanged && Value is INotifyDictionaryChanged dictionaryChangedNotifier)
+                dictionaryChangedNotifier.DictionaryChanged += ValueChanged;
+            else if (ApplicableOptions.ConstantExpressionsListenForCollectionChanged && Value is INotifyCollectionChanged collectionChangedNotifier)
+                collectionChangedNotifier.CollectionChanged += ValueChanged;
+        }
+
         void UnsubscribeFromExpressionValueNotifications()
         {
             if (expressionValue is INotifyPropertyChanged propertyChangedNotifier)
                 propertyChangedNotifier.PropertyChanged -= ExpressionValuePropertyChanged;
         }
+
+        void UnsubscribeFromValueNotifications()
+        {
+            if (TryGetUndeferredValue(out var value))
+            {
+                if (ApplicableOptions.ConstantExpressionsListenForDictionaryChanged && value is INotifyDictionaryChanged dictionaryChangedNotifier)
+                    dictionaryChangedNotifier.DictionaryChanged -= ValueChanged;
+                else if (ApplicableOptions.ConstantExpressionsListenForCollectionChanged && value is INotifyCollectionChanged collectionChangedNotifier)
+                    collectionChangedNotifier.CollectionChanged -= ValueChanged;
+            }
+        }
+
+        void ValueChanged(object sender, EventArgs e) => OnPropertyChanged(nameof(Value));
 
         static readonly object[] emptyArray = Array.Empty<object>();
         static readonly object instanceManagementLock = new object();

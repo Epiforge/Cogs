@@ -23,6 +23,8 @@ namespace Cogs.ActiveExpressions
             ConstantExpressionsListenForDictionaryChanged = true;
             DisposeConstructedObjects = true;
             DisposeStaticMethodReturnValues = true;
+            MemberExpressionsListenToFieldValuesForCollectionChanged = true;
+            MemberExpressionsListenToFieldValuesForDictionaryChanged = true;
             PreferAsyncDisposal = true;
         }
 
@@ -34,6 +36,8 @@ namespace Cogs.ActiveExpressions
         readonly ConcurrentDictionary<MethodInfo, bool> disposeMethodReturnValues = new ConcurrentDictionary<MethodInfo, bool>();
         bool disposeStaticMethodReturnValues;
         bool isFrozen;
+        bool memberExpressionsListenToFieldValuesForCollectionChanged;
+        bool memberExpressionsListenToFieldValuesForDictionaryChanged;
         bool preferAsyncDisposal;
 
         /// <summary>
@@ -98,6 +102,32 @@ namespace Cogs.ActiveExpressions
             {
                 RequireUnfrozen();
                 disposeStaticMethodReturnValues = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets/sets whether constant member expressions will subscribe to <see cref="INotifyCollectionChanged.CollectionChanged" /> events of their values when present and retrieved from a field and cause re-evaluations when they occur; the default is <c>true</c>
+        /// </summary>
+        public bool MemberExpressionsListenToFieldValuesForCollectionChanged
+        {
+            get => memberExpressionsListenToFieldValuesForCollectionChanged;
+            set
+            {
+                RequireUnfrozen();
+                memberExpressionsListenToFieldValuesForCollectionChanged = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets/sets whether constant member expressions will subscribe to <see cref="INotifyDictionaryChanged.DictionaryChanged" /> events of their values when present and retrieved from a field and cause re-evaluations when they occur; the default is <c>true</c>
+        /// </summary>
+        public bool MemberExpressionsListenToFieldValuesForDictionaryChanged
+        {
+            get => memberExpressionsListenToFieldValuesForDictionaryChanged;
+            set
+            {
+                RequireUnfrozen();
+                memberExpressionsListenToFieldValuesForDictionaryChanged = value;
             }
         }
 
@@ -214,6 +244,8 @@ namespace Cogs.ActiveExpressions
                 constantExpressionsListenForDictionaryChanged,
                 disposeConstructedObjects,
                 disposeStaticMethodReturnValues,
+                memberExpressionsListenToFieldValuesForCollectionChanged,
+                memberExpressionsListenToFieldValuesForDictionaryChanged,
                 preferAsyncDisposal
             };
             objects.AddRange(disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)).Cast<object>());
@@ -369,6 +401,8 @@ namespace Cogs.ActiveExpressions
             a?.constantExpressionsListenForDictionaryChanged == b?.constantExpressionsListenForDictionaryChanged &&
             a?.disposeConstructedObjects == b?.disposeConstructedObjects &&
             a?.disposeStaticMethodReturnValues == b?.disposeStaticMethodReturnValues &&
+            a?.memberExpressionsListenToFieldValuesForCollectionChanged == b?.memberExpressionsListenToFieldValuesForCollectionChanged &&
+            a?.memberExpressionsListenToFieldValuesForDictionaryChanged == b?.memberExpressionsListenToFieldValuesForDictionaryChanged &&
             a?.preferAsyncDisposal == b?.preferAsyncDisposal &&
             (a?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()).SequenceEqual(b?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()) &&
             (a?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>()).SequenceEqual(b?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>());
@@ -385,6 +419,8 @@ namespace Cogs.ActiveExpressions
             a?.constantExpressionsListenForDictionaryChanged != b?.constantExpressionsListenForDictionaryChanged ||
             a?.disposeConstructedObjects != b?.disposeConstructedObjects ||
             a?.disposeStaticMethodReturnValues != b?.disposeStaticMethodReturnValues ||
+            a?.memberExpressionsListenToFieldValuesForCollectionChanged != b?.memberExpressionsListenToFieldValuesForCollectionChanged ||
+            a?.memberExpressionsListenToFieldValuesForDictionaryChanged != b?.memberExpressionsListenToFieldValuesForDictionaryChanged ||
             a?.preferAsyncDisposal != b?.preferAsyncDisposal ||
             !(a?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()).SequenceEqual(b?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()) ||
             !(a?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>()).SequenceEqual(b?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>());
