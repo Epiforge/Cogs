@@ -23,9 +23,9 @@ namespace Cogs.Collections
             if (elements is null)
                 throw new ArgumentNullException(nameof(elements));
             this.elements = elements.ToImmutableArray();
-            hashCode = HashCode.Combine(typeof(EquatableList<T>), this.elements.FirstOrDefault());
+            hashCode = HashCode.Combine(typeof(EquatableList<T>), EqualityComparer.GetHashCode(this.elements.FirstOrDefault()));
             foreach (var element in this.elements.Skip(1))
-                hashCode = HashCode.Combine(hashCode, element);
+                hashCode = HashCode.Combine(hashCode, EqualityComparer.GetHashCode(element));
         }
 
         readonly IReadOnlyList<T> elements;
@@ -60,7 +60,7 @@ namespace Cogs.Collections
         /// </summary>
         /// <param name="other">The <see cref="EquatableList{T}"/> to compare with the current <see cref="EquatableList{T}"/></param>
         /// <returns><c>true</c> if the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(EquatableList<T> other) => elements.SequenceEqual(other.elements, EqualityComparer);
+        public bool Equals(EquatableList<T> other) => EqualityComparer.Equals(other.EqualityComparer) && elements.SequenceEqual(other.elements, EqualityComparer);
 
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="EquatableList{T}"/>
