@@ -16,10 +16,25 @@ namespace Cogs.Collections
         /// Initializes a new instance of the <see cref="EquatableList{T}"/> class that contains elements copied from the specified collection
         /// </summary>
         /// <param name="elements">The collection whose elements are copied</param>
-        /// <param name="comparer">The equality comparer to use to determine whether elements are equal; if <c>null</c>, <see cref="EqualityComparer{T}.Default"/> will be used</param>
-        public EquatableList(IReadOnlyList<T> elements, IEqualityComparer<T>? comparer = null)
+        public EquatableList(IReadOnlyList<T> elements)
         {
-            EqualityComparer = comparer ?? EqualityComparer<T>.Default;
+            EqualityComparer = null;
+            if (elements is null)
+                throw new ArgumentNullException(nameof(elements));
+            this.elements = elements.ToImmutableArray();
+            hashCode = HashCode.Combine(typeof(EquatableList<T>), this.elements.FirstOrDefault());
+            foreach (var element in this.elements.Skip(1))
+                hashCode = HashCode.Combine(hashCode, element);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EquatableList{T}"/> class that contains elements copied from the specified collection and compares elements using the specified equality comparer
+        /// </summary>
+        /// <param name="elements">The collection whose elements are copied</param>
+        /// <param name="equalityComparer">The equality comparer to use to determine whether elements are equal</param>
+        public EquatableList(IReadOnlyList<T> elements, IEqualityComparer<T> equalityComparer)
+        {
+            EqualityComparer = equalityComparer;
             if (elements is null)
                 throw new ArgumentNullException(nameof(elements));
             this.elements = elements.ToImmutableArray();
@@ -44,9 +59,9 @@ namespace Cogs.Collections
         public int Count => elements.Count;
 
         /// <summary>
-        /// Gets the equality comparer used to determine whether elements are equal
+        /// Gets the equality comparer used to determine whether elements are equal if one was specified when the <see cref="EquatableList{T}"/> was instantiated
         /// </summary>
-        public IEqualityComparer<T> EqualityComparer { get; }
+        public IEqualityComparer<T>? EqualityComparer { get; }
 
         /// <summary>
         /// Determines whether the specified object is equal to the current object
@@ -60,7 +75,7 @@ namespace Cogs.Collections
         /// </summary>
         /// <param name="other">The <see cref="EquatableList{T}"/> to compare with the current <see cref="EquatableList{T}"/></param>
         /// <returns><c>true</c> if the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(EquatableList<T> other) => EqualityComparer.Equals(other.EqualityComparer) && elements.SequenceEqual(other.elements, EqualityComparer);
+        public bool Equals(EquatableList<T> other) => (EqualityComparer is { } && EqualityComparer.Equals(other.EqualityComparer) && elements.SequenceEqual(other.elements, EqualityComparer)) || (other.EqualityComparer is null && elements.Equals(other.elements));
 
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="EquatableList{T}"/>
