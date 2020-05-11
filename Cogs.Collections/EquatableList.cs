@@ -16,8 +16,10 @@ namespace Cogs.Collections
         /// Initializes a new instance of the <see cref="EquatableList{T}"/> class that contains elements copied from the specified collection
         /// </summary>
         /// <param name="elements">The collection whose elements are copied</param>
-        public EquatableList(IReadOnlyList<T> elements)
+        /// <param name="comparer">The equality comparer to use to determine whether elements are equal; if <c>null</c>, <see cref="EqualityComparer{T}.Default"/> will be used</param>
+        public EquatableList(IReadOnlyList<T> elements, IEqualityComparer<T>? comparer = null)
         {
+            EqualityComparer = comparer ?? EqualityComparer<T>.Default;
             if (elements is null)
                 throw new ArgumentNullException(nameof(elements));
             this.elements = elements.ToImmutableArray();
@@ -30,34 +32,6 @@ namespace Cogs.Collections
         readonly int hashCode;
 
         /// <summary>
-        /// Determines whether the specified object is equal to the current object
-        /// </summary>
-        /// <param name="obj">The object to compare with the current object</param>
-        /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-        public override bool Equals(object obj) => obj is EquatableList<T> other ? Equals(other) : false;
-
-        /// <summary>
-        /// Determines whether the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/>
-        /// </summary>
-        /// <param name="other">The <see cref="EquatableList{T}"/> to compare with the current <see cref="EquatableList{T}"/></param>
-        /// <returns><c>true</c> if the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(EquatableList<T> other) => elements.SequenceEqual(other.elements);
-
-        /// <summary>
-        /// Returns an enumerator that iterates through the <see cref="EquatableList{T}"/>
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerator<T> GetEnumerator() => elements.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => elements.GetEnumerator();
-
-        /// <summary>
-        /// Gets a hash code for the <see cref="EquatableList{T}"/>
-        /// </summary>
-        /// <returns>A hash code for the <see cref="EquatableList{T}"/></returns>
-        public override int GetHashCode() => hashCode;
-
-        /// <summary>
         /// Gets the element at the specified index
         /// </summary>
         /// <param name="index">The zero-based index of the element to get</param>
@@ -68,6 +42,37 @@ namespace Cogs.Collections
         /// Gets the number of elements contained in the <see cref="EquatableList{T}"/>
         /// </summary>
         public int Count => elements.Count;
+
+        /// <summary>
+        /// Gets the equality comparer used to determine whether elements are equal
+        /// </summary>
+        public IEqualityComparer<T> EqualityComparer { get; }
+
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object</param>
+        /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
+        public override bool Equals(object obj) => obj is EquatableList<T> other ? Equals(other) : false;
+
+        /// <summary>
+        /// Determines whether the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/> using the current <see cref="IEqualityComparer{T}"/> (see <see cref="EqualityComparer"/>)
+        /// </summary>
+        /// <param name="other">The <see cref="EquatableList{T}"/> to compare with the current <see cref="EquatableList{T}"/></param>
+        /// <returns><c>true</c> if the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/>; otherwise, <c>false</c></returns>
+        public bool Equals(EquatableList<T> other) => elements.SequenceEqual(other.elements, EqualityComparer);
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the <see cref="EquatableList{T}"/>
+        /// </summary>
+        public IEnumerator<T> GetEnumerator() => elements.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => elements.GetEnumerator();
+
+        /// <summary>
+        /// Gets a hash code for the <see cref="EquatableList{T}"/>
+        /// </summary>
+        public override int GetHashCode() => hashCode;
 
         /// <summary>
         /// Determines whether two specified instances of <see cref="EquatableList{T}"/> are equal
