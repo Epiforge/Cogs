@@ -215,6 +215,9 @@ namespace Cogs.ActiveExpressions
                 case ConstantExpression constantExpression:
                     activeExpression = ActiveConstantExpression.Create(constantExpression, options);
                     break;
+                case InvocationExpression invocationExpression:
+                    activeExpression = ActiveInvocationExpression.Create(invocationExpression, options, deferEvaluation);
+                    break;
                 case IndexExpression indexExpression:
                     activeExpression = ActiveIndexExpression.Create(indexExpression, options, deferEvaluation);
                     break;
@@ -494,6 +497,8 @@ namespace Cogs.ActiveExpressions
                     return Expression.Condition(ReplaceParameters(parameterTranslation, conditionalExpression.Test), ReplaceParameters(parameterTranslation, conditionalExpression.IfTrue), ReplaceParameters(parameterTranslation, conditionalExpression.IfFalse), conditionalExpression.Type);
                 case ConstantExpression constantExpression:
                     return constantExpression;
+                case InvocationExpression invocationExpression:
+                    return Expression.Invoke(ReplaceParameters(parameterTranslation, invocationExpression.Expression), invocationExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument)).ToArray());
                 case IndexExpression indexExpression:
                     return Expression.MakeIndex(ReplaceParameters(parameterTranslation, indexExpression.Object), indexExpression.Indexer, indexExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument)));
                 case LambdaExpression lambdaExpression:
@@ -542,6 +547,8 @@ namespace Cogs.ActiveExpressions
                 return conditionalA == conditionalB;
             if (a is ActiveConstantExpression constantA && b is ActiveConstantExpression constantB)
                 return constantA == constantB;
+            if (a is ActiveInvocationExpression invocationA && b is ActiveInvocationExpression invocationB)
+                return invocationA == invocationB;
             if (a is ActiveIndexExpression indexA && b is ActiveIndexExpression indexB)
                 return indexA == indexB;
             if (a is ActiveMemberExpression memberA && b is ActiveMemberExpression memberB)
@@ -581,6 +588,8 @@ namespace Cogs.ActiveExpressions
                 return conditionalA != conditionalB;
             if (a is ActiveConstantExpression constantA && b is ActiveConstantExpression constantB)
                 return constantA != constantB;
+            if (a is ActiveInvocationExpression invocationA && b is ActiveInvocationExpression invocationB)
+                return invocationA != invocationB;
             if (a is ActiveIndexExpression indexA && b is ActiveIndexExpression indexB)
                 return indexA != indexB;
             if (a is ActiveMemberExpression memberA && b is ActiveMemberExpression memberB)
