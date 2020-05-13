@@ -248,9 +248,9 @@ namespace Cogs.ActiveExpressions
                 memberExpressionsListenToFieldValuesForDictionaryChanged,
                 preferAsyncDisposal
             };
-            objects.AddRange(disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)).Cast<object>());
-            objects.AddRange(disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)).Cast<object>());
-            return HashCode.Combine(objects.ToArray());
+            objects.AddRange(disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => kv.Key).Cast<object>());
+            objects.AddRange(disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => kv.Key).Cast<object>());
+            return new EquatableList<object>(objects).GetHashCode();
         }
 
         internal bool IsConstructedTypeDisposed(Type type, EquatableList<Type> constructorParameterTypes) => DisposeConstructedObjects || disposeConstructedTypes.ContainsKey((type, constructorParameterTypes));

@@ -93,7 +93,7 @@ namespace Cogs.ActiveExpressions
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
-        public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), expression, arguments);
+        public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), expression, arguments, options);
 
         public override string ToString() => $"{expression}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 

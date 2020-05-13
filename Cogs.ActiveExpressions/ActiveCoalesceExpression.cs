@@ -61,7 +61,7 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        public override int GetHashCode() => HashCode.Combine(typeof(ActiveCoalesceExpression), left, right);
+        public override int GetHashCode() => HashCode.Combine(typeof(ActiveCoalesceExpression), left, right, options);
 
         public override string ToString() => $"({left} ?? {right}) {ToStringSuffix}";
 
