@@ -1199,6 +1199,7 @@ namespace Cogs.ActiveQuery
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
                     rangeActiveExpression.ElementResultChanging -= elementResultChanging;
                     rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
+                    rangeActiveExpression.Dispose();
                 });
             });
         }
@@ -2866,6 +2867,7 @@ namespace Cogs.ActiveQuery
                         changingResult.CollectionChanged -= collectionChanged;
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
                     rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
+                    rangeActiveExpression.Dispose();
                 });
             });
         }
