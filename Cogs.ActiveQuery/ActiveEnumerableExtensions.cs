@@ -2034,6 +2034,7 @@ namespace Cogs.ActiveQuery
                         rangeActiveExpression.Dispose();
                     }
                     mergedElementFaultChangeNotifier.Dispose();
+                    comparer.Dispose();
                 });
             });
         }
