@@ -1,4 +1,5 @@
 using Cogs.Collections;
+using Cogs.Disposal;
 using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
@@ -38,26 +39,13 @@ namespace Cogs.ActiveExpressions
 
         protected override bool Dispose(bool disposing)
         {
-            var result = false;
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
                     instances.Remove((@object, indexer, arguments, options));
-                    result = true;
+                    return true;
                 }
-            if (result)
-            {
-                UnsubscribeFromObjectValueNotifications();
-                @object.PropertyChanged -= ObjectPropertyChanged;
-                @object.Dispose();
-                foreach (var argument in arguments)
-                {
-                    argument.PropertyChanged -= ArgumentPropertyChanged;
-                    argument.Dispose();
-                }
-                DisposeValueIfNecessary();
-            }
-            return result;
+            return false;
         }
 
         void DisposeValueIfNecessary()
@@ -171,6 +159,20 @@ namespace Cogs.ActiveExpressions
         {
             if (e.PropertyName == indexer.Name)
                 Evaluate();
+        }
+
+        protected override void OnDisposed(DisposalNotificationEventArgs e)
+        {
+            DisposeValueIfNecessary();
+            UnsubscribeFromObjectValueNotifications();
+            @object.PropertyChanged -= ObjectPropertyChanged;
+            @object.Dispose();
+            foreach (var argument in arguments)
+            {
+                argument.PropertyChanged -= ArgumentPropertyChanged;
+                argument.Dispose();
+            }
+            base.OnDisposed(e);
         }
 
         void SubscribeToObjectValueNotifications()

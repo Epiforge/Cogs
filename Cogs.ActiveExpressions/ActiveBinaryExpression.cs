@@ -1,3 +1,4 @@
+using Cogs.Disposal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -44,22 +45,13 @@ namespace Cogs.ActiveExpressions
 
         protected override bool Dispose(bool disposing)
         {
-            var result = false;
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
                     instances.Remove((NodeType, left, right, isLiftedToNull, method, options));
-                    result = true;
+                    return true;
                 }
-            if (result)
-            {
-                left.PropertyChanged -= LeftPropertyChanged;
-                left.Dispose();
-                right.PropertyChanged -= RightPropertyChanged;
-                right.Dispose();
-                DisposeValueIfNecessary();
-            }
-            return result;
+            return false;
         }
 
         void DisposeValueIfNecessary()
@@ -98,6 +90,16 @@ namespace Cogs.ActiveExpressions
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveBinaryExpression), left, method, NodeType, right, options);
 
         void LeftPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+
+        protected override void OnDisposed(DisposalNotificationEventArgs e)
+        {
+            DisposeValueIfNecessary();
+            left.PropertyChanged -= LeftPropertyChanged;
+            left.Dispose();
+            right.PropertyChanged -= RightPropertyChanged;
+            right.Dispose();
+            base.OnDisposed(e);
+        }
 
         void RightPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 

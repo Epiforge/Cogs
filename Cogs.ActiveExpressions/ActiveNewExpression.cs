@@ -1,4 +1,5 @@
 using Cogs.Collections;
+using Cogs.Disposal;
 using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
@@ -42,7 +43,6 @@ namespace Cogs.ActiveExpressions
 
         protected override bool Dispose(bool disposing)
         {
-            var result = false;
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
@@ -50,18 +50,9 @@ namespace Cogs.ActiveExpressions
                         typeInstances.Remove((Type, arguments, options));
                     else
                         constructorInstances.Remove((Type, constructor, arguments, options));
-                    result = true;
+                    return true;
                 }
-            if (result)
-            {
-                foreach (var argument in arguments)
-                {
-                    argument.PropertyChanged -= ArgumentPropertyChanged;
-                    argument.Dispose();
-                }
-                DisposeValueIfNecessary();
-            }
-            return result;
+            return false;
         }
 
         void DisposeValueIfNecessary()
@@ -95,6 +86,17 @@ namespace Cogs.ActiveExpressions
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveNewExpression), Type, arguments, options);
+
+        protected override void OnDisposed(DisposalNotificationEventArgs e)
+        {
+            DisposeValueIfNecessary();
+            foreach (var argument in arguments)
+            {
+                argument.PropertyChanged -= ArgumentPropertyChanged;
+                argument.Dispose();
+            }
+            base.OnDisposed(e);
+        }
 
         public override string ToString() => $"new {Type.FullName}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 

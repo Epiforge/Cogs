@@ -1,3 +1,4 @@
+using Cogs.Disposal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -26,21 +27,14 @@ namespace Cogs.ActiveExpressions
 
         protected override bool Dispose(bool disposing)
         {
-            var result = false;
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
                     instances.Remove((expression, typeOperand, options));
-                    result = true;
+                    return true;
                 }
-            if (result)
-            {
-                expression.PropertyChanged -= ExpressionPropertyChanged;
-                expression.Dispose();
-            }
-            return result;
+            return false;
         }
-
 
         public override bool Equals(object obj) => obj is ActiveTypeBinaryExpression other && Equals(other);
 
@@ -65,6 +59,13 @@ namespace Cogs.ActiveExpressions
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveTypeBinaryExpression), expression, typeOperand, options);
+
+        protected override void OnDisposed(DisposalNotificationEventArgs e)
+        {
+            expression.PropertyChanged -= ExpressionPropertyChanged;
+            expression.Dispose();
+            base.OnDisposed(e);
+        }
 
         public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, expression, typeOperand)} {ToStringSuffix}";
 

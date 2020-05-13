@@ -1,4 +1,5 @@
 using Cogs.Collections;
+using Cogs.Disposal;
 using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
@@ -30,25 +31,13 @@ namespace Cogs.ActiveExpressions
 
         protected override bool Dispose(bool disposing)
         {
-            var result = false;
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
                     instances.Remove((expression, arguments, options));
-                    result = true;
+                    return true;
                 }
-            if (result)
-            {
-                expression.PropertyChanged -= ExpressionPropertyChanged;
-                expression.Dispose();
-                foreach (var argument in arguments)
-                {
-                    argument.PropertyChanged -= ArgumentPropertyChanged;
-                    argument.Dispose();
-                }
-                DisposeValueIfNecessary();
-            }
-            return result;
+            return false;
         }
 
         void DisposeValueIfNecessary()
@@ -94,6 +83,19 @@ namespace Cogs.ActiveExpressions
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), expression, arguments, options);
+
+        protected override void OnDisposed(DisposalNotificationEventArgs e)
+        {
+            DisposeValueIfNecessary();
+            expression.PropertyChanged -= ExpressionPropertyChanged;
+            expression.Dispose();
+            foreach (var argument in arguments)
+            {
+                argument.PropertyChanged -= ArgumentPropertyChanged;
+                argument.Dispose();
+            }
+            base.OnDisposed(e);
+        }
 
         public override string ToString() => $"{expression}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 

@@ -1,3 +1,4 @@
+using Cogs.Disposal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -33,20 +34,13 @@ namespace Cogs.ActiveExpressions
 
         protected override bool Dispose(bool disposing)
         {
-            var result = false;
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
                     instances.Remove((NodeType, operand, Type, method, options));
-                    result = true;
+                    return true;
                 }
-            if (result)
-            {
-                operand.PropertyChanged -= OperandPropertyChanged;
-                operand.Dispose();
-                DisposeValueIfNecessary();
-            }
-            return result;
+            return false;
         }
 
         void DisposeValueIfNecessary()
@@ -78,6 +72,14 @@ namespace Cogs.ActiveExpressions
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveUnaryExpression), method, NodeType, operand, options);
+
+        protected override void OnDisposed(DisposalNotificationEventArgs e)
+        {
+            operand.PropertyChanged -= OperandPropertyChanged;
+            operand.Dispose();
+            DisposeValueIfNecessary();
+            base.OnDisposed(e);
+        }
 
         void OperandPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 

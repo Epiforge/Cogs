@@ -1,4 +1,5 @@
 using Cogs.Collections;
+using Cogs.Disposal;
 using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,6 @@ namespace Cogs.ActiveExpressions
                     this.field = field;
                     break;
                 case PropertyInfo property:
-                    this.property = property;
                     getMethod = property.GetMethod;
                     fastGetter = FastMethodInfo.Get(getMethod);
                     break;
@@ -40,7 +40,6 @@ namespace Cogs.ActiveExpressions
                     this.field = field;
                     break;
                 case PropertyInfo property:
-                    this.property = property;
                     getMethod = property.GetMethod;
                     fastGetter = FastMethodInfo.Get(getMethod);
                     break;
@@ -55,11 +54,9 @@ namespace Cogs.ActiveExpressions
         readonly FieldInfo? field;
         readonly MethodInfo? getMethod;
         readonly MemberInfo member;
-        readonly PropertyInfo? property;
 
         protected override bool Dispose(bool disposing)
         {
-            var result = false;
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
@@ -67,27 +64,14 @@ namespace Cogs.ActiveExpressions
                         instanceInstances.Remove((expression, member, options));
                     else
                         staticInstances.Remove((member, options));
-                    result = true;
+                    return true;
                 }
-            if (result)
-            {
-                if (fastGetter is { })
-                    UnsubscribeFromExpressionValueNotifications();
-                else if (field is { })
-                    UnsubscribeFromValueNotifications();
-                if (expression is { })
-                {
-                    expression.PropertyChanged -= ExpressionPropertyChanged;
-                    expression.Dispose();
-                }
-                DisposeValueIfNecessary();
-            }
-            return result;
+            return false;
         }
 
         void DisposeValueIfNecessary()
         {
-            if (property is { } && getMethod is { } && ApplicableOptions.IsMethodReturnValueDisposed(getMethod))
+            if (getMethod is { } && ApplicableOptions.IsMethodReturnValueDisposed(getMethod))
                 DisposeValueIfPossible();
         }
 
@@ -140,6 +124,21 @@ namespace Cogs.ActiveExpressions
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveMemberExpression), expression, member, options);
+
+        protected override void OnDisposed(DisposalNotificationEventArgs e)
+        {
+            DisposeValueIfNecessary();
+            if (fastGetter is { })
+                UnsubscribeFromExpressionValueNotifications();
+            else if (field is { })
+                UnsubscribeFromValueNotifications();
+            if (expression is { })
+            {
+                expression.PropertyChanged -= ExpressionPropertyChanged;
+                expression.Dispose();
+            }
+            base.OnDisposed(e);
+        }
 
         public override string ToString() => $"{expression?.ToString() ?? member.DeclaringType.FullName}.{member.Name} {ToStringSuffix}";
 
