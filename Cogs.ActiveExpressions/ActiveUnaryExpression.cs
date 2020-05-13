@@ -4,13 +4,12 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading;
 
 namespace Cogs.ActiveExpressions
 {
     class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression>
     {
-        ActiveUnaryExpression(ExpressionType nodeType, ActiveExpression operand, Type type, MethodInfo method, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, nodeType, options, deferEvaluation)
+        ActiveUnaryExpression(ExpressionType nodeType, ActiveExpression operand, Type type, MethodInfo? method, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, nodeType, options, deferEvaluation)
         {
             this.operand = operand;
             this.operand.PropertyChanged += OperandPropertyChanged;
@@ -29,7 +28,7 @@ namespace Cogs.ActiveExpressions
 
         readonly UnaryOperationDelegate @delegate;
         int disposalCount;
-        readonly MethodInfo method;
+        readonly MethodInfo? method;
         readonly ActiveExpression operand;
 
         protected override bool Dispose(bool disposing)
@@ -84,9 +83,9 @@ namespace Cogs.ActiveExpressions
 
         public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, operand)} {ToStringSuffix}";
 
-        static readonly Dictionary<(ExpressionType nodeType, Type operandType, Type returnValueType, MethodInfo method), UnaryOperationDelegate> implementations = new Dictionary<(ExpressionType nodeType, Type operandType, Type returnValueType, MethodInfo method), UnaryOperationDelegate>();
+        static readonly Dictionary<(ExpressionType nodeType, Type operandType, Type returnValueType, MethodInfo? method), UnaryOperationDelegate> implementations = new Dictionary<(ExpressionType nodeType, Type operandType, Type returnValueType, MethodInfo? method), UnaryOperationDelegate>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ExpressionType nodeType, ActiveExpression opperand, Type type, MethodInfo method, ActiveExpressionOptions? options), ActiveUnaryExpression> instances = new Dictionary<(ExpressionType nodeType, ActiveExpression opperand, Type type, MethodInfo method, ActiveExpressionOptions? options), ActiveUnaryExpression>();
+        static readonly Dictionary<(ExpressionType nodeType, ActiveExpression opperand, Type type, MethodInfo? method, ActiveExpressionOptions? options), ActiveUnaryExpression> instances = new Dictionary<(ExpressionType nodeType, ActiveExpression opperand, Type type, MethodInfo? method, ActiveExpressionOptions? options), ActiveUnaryExpression>();
 
         public static ActiveUnaryExpression Create(UnaryExpression unaryExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
