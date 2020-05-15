@@ -1,5 +1,4 @@
 using Cogs.Collections;
-using Cogs.Disposal;
 using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
@@ -57,6 +56,7 @@ namespace Cogs.ActiveExpressions
 
         protected override bool Dispose(bool disposing)
         {
+            var result = false;
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
@@ -64,9 +64,22 @@ namespace Cogs.ActiveExpressions
                         instanceInstances.Remove((expression, member, options));
                     else
                         staticInstances.Remove((member, options));
-                    return true;
+                    result = true;
                 }
-            return false;
+            if (result)
+            {
+                DisposeValueIfNecessary();
+                if (fastGetter is { })
+                    UnsubscribeFromExpressionValueNotifications();
+                else if (field is { })
+                    UnsubscribeFromValueNotifications();
+                if (expression is { })
+                {
+                    expression.PropertyChanged -= ExpressionPropertyChanged;
+                    expression.Dispose();
+                }
+            }
+            return result;
         }
 
         void DisposeValueIfNecessary()
@@ -124,21 +137,6 @@ namespace Cogs.ActiveExpressions
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveMemberExpression), expression, member, options);
-
-        protected override void OnDisposed(DisposalNotificationEventArgs e)
-        {
-            DisposeValueIfNecessary();
-            if (fastGetter is { })
-                UnsubscribeFromExpressionValueNotifications();
-            else if (field is { })
-                UnsubscribeFromValueNotifications();
-            if (expression is { })
-            {
-                expression.PropertyChanged -= ExpressionPropertyChanged;
-                expression.Dispose();
-            }
-            base.OnDisposed(e);
-        }
 
         public override string ToString() => $"{expression?.ToString() ?? member.DeclaringType.FullName}.{member.Name} {ToStringSuffix}";
 

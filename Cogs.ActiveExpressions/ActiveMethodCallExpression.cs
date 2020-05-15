@@ -1,5 +1,4 @@
 using Cogs.Collections;
-using Cogs.Disposal;
 using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
@@ -45,6 +44,7 @@ namespace Cogs.ActiveExpressions
 
         protected override bool Dispose(bool disposing)
         {
+            var result = false;
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
@@ -52,9 +52,23 @@ namespace Cogs.ActiveExpressions
                         staticInstances.Remove((method, arguments, options));
                     else
                         instanceInstances.Remove((@object, method, arguments, options));
-                    return true;
+                    result = true;
                 }
-            return false;
+            if (result)
+            {
+                if (@object is { })
+                {
+                    @object.PropertyChanged -= ObjectPropertyChanged;
+                    @object.Dispose();
+                }
+                foreach (var argument in arguments)
+                {
+                    argument.PropertyChanged -= ArgumentPropertyChanged;
+                    argument.Dispose();
+                }
+                DisposeValueIfNecessary();
+            }
+            return result;
         }
 
         void DisposeValueIfNecessary()
@@ -91,22 +105,6 @@ namespace Cogs.ActiveExpressions
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveMethodCallExpression), arguments, method, @object, options);
 
         void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
-
-        protected override void OnDisposed(DisposalNotificationEventArgs e)
-        {
-            DisposeValueIfNecessary();
-            if (@object is { })
-            {
-                @object.PropertyChanged -= ObjectPropertyChanged;
-                @object.Dispose();
-            }
-            foreach (var argument in arguments)
-            {
-                argument.PropertyChanged -= ArgumentPropertyChanged;
-                argument.Dispose();
-            }
-            base.OnDisposed(e);
-        }
 
         public override string ToString() => $"{@object?.ToString() ?? method.DeclaringType.FullName}.{method.Name}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
