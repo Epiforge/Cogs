@@ -42,17 +42,11 @@ namespace Cogs.ActiveExpressions
                 }
             if (result)
             {
-                DisposeValueIfNecessary();
+                DisposeValueIfNecessaryAndPossible();
                 operand.PropertyChanged -= OperandPropertyChanged;
                 operand.Dispose();
             }
             return result;
-        }
-
-        void DisposeValueIfNecessary()
-        {
-            if (method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method))
-                DisposeValueIfPossible();
         }
 
         public override bool Equals(object obj) => obj is ActiveUnaryExpression other && Equals(other);
@@ -64,7 +58,6 @@ namespace Cogs.ActiveExpressions
         {
             try
             {
-                DisposeValueIfNecessary();
                 var operandFault = operand.Fault;
                 if (operandFault is { })
                     Fault = operandFault;
@@ -78,6 +71,8 @@ namespace Cogs.ActiveExpressions
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveUnaryExpression), method, NodeType, operand, options);
+
+        protected override bool GetShouldValueBeDisposed() => method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method);
 
         void OperandPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 

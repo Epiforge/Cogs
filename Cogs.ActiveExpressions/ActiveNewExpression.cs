@@ -54,7 +54,7 @@ namespace Cogs.ActiveExpressions
                 }
             if (result)
             {
-                DisposeValueIfNecessary();
+                DisposeValueIfNecessaryAndPossible();
                 foreach (var argument in arguments)
                 {
                     argument.PropertyChanged -= ArgumentPropertyChanged;
@@ -62,12 +62,6 @@ namespace Cogs.ActiveExpressions
                 }
             }
             return result;
-        }
-
-        void DisposeValueIfNecessary()
-        {
-            if (ApplicableOptions.IsConstructedTypeDisposed(Type, constructorParameterTypes))
-                DisposeValueIfPossible();
         }
 
         public override bool Equals(object obj) => obj is ActiveNewExpression other && Equals(other);
@@ -79,7 +73,6 @@ namespace Cogs.ActiveExpressions
         {
             try
             {
-                DisposeValueIfNecessary();
                 var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
                 if (argumentFault is { })
                     Fault = argumentFault;
@@ -95,6 +88,8 @@ namespace Cogs.ActiveExpressions
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveNewExpression), Type, arguments, options);
+
+        protected override bool GetShouldValueBeDisposed() => ApplicableOptions.IsConstructedTypeDisposed(Type, constructorParameterTypes);
 
         public override string ToString() => $"new {Type.FullName}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 

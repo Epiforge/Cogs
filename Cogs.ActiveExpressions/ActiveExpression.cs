@@ -100,23 +100,43 @@ namespace Cogs.ActiveExpressions
                 SetBackedProperty(ref fault, null, nameof(Fault));
                 if (!valueEqualityComparer.Equals(value, val))
                 {
+                    var previousValue = val;
                     OnPropertyChanging();
                     val = value;
                     OnPropertyChanged();
+                    DisposeIfNecessaryAndPossible(previousValue);
                 }
             }
         }
 
-        /// <summary>
-        /// Throws a <see cref="NotSupportedException"/> because deriving classes should be overriding this method
-        /// </summary>
-        /// <param name="obj">The object to compare with the current object</param>
-        public override bool Equals(object obj) => throw new NotSupportedException();
+        void DisposeIfNecessaryAndPossible(object? value)
+        {
+            if ((value is IDisposable || value is IAsyncDisposable) && GetShouldValueBeDisposed())
+            {
+                if (!ApplicableOptions.PreferAsyncDisposal && value is IDisposable preferredDisposable)
+                    preferredDisposable.Dispose();
+                else if (value is IAsyncDisposable asyncDisposable)
+                {
+                    if (ApplicableOptions.BlockOnAsyncDisposal)
+                        asyncDisposable.DisposeAsync().AsTask().Wait();
+                    else
+                        ThreadPool.QueueUserWorkItem(async state => await asyncDisposable.DisposeAsync());
+                }
+                else if (value is IDisposable disposable)
+                    disposable.Dispose();
+            }
+        }
 
         /// <summary>
-        /// Throws a <see cref="NotSupportedException"/> because deriving classes should be overriding this method
+        /// Disposes of the expression's value if necessary and possible (intended to be called within <see cref="SyncDisposable.Dispose(bool)"/>)
         /// </summary>
-        public override int GetHashCode() => throw new NotSupportedException();
+        protected void DisposeValueIfNecessaryAndPossible() => DisposeIfNecessaryAndPossible(val);
+
+        /// <summary>
+        /// Throws a <see cref="NotImplementedException"/> because deriving classes should be overriding this method
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object</param>
+        public override bool Equals(object obj) => throw new NotImplementedException();
 
         /// <summary>
         /// Evaluates the current node
@@ -150,25 +170,15 @@ namespace Cogs.ActiveExpressions
         }
 
         /// <summary>
-        /// Disposes of the current value if it has been set and supports a disposal mechanism
+        /// Throws a <see cref="NotImplementedException"/> because deriving classes should be overriding this method
         /// </summary>
-        protected void DisposeValueIfPossible()
-        {
-            if (TryGetUndeferredValue(out var value))
-            {
-                if (!ApplicableOptions.PreferAsyncDisposal && value is IDisposable preferredDisposable)
-                    preferredDisposable.Dispose();
-                else if (value is IAsyncDisposable asyncDisposable)
-                {
-                    if (ApplicableOptions.BlockOnAsyncDisposal)
-                        asyncDisposable.DisposeAsync().AsTask().Wait();
-                    else
-                        ThreadPool.QueueUserWorkItem(async state => await asyncDisposable.DisposeAsync());
-                }
-                else if (value is IDisposable disposable)
-                    disposable.Dispose();
-            }
-        }
+        public override int GetHashCode() => throw new NotImplementedException();
+
+        /// <summary>
+        /// Gets whether a value produced by this expression should be disposed
+        /// </summary>
+        /// <returns><c>true</c> if values from this expression should be disposed; otherwise, <c>false</c></returns>
+        protected virtual bool GetShouldValueBeDisposed() => false;
 
         /// <summary>
         /// Attempts to get this node's value if its evaluation is not deferred

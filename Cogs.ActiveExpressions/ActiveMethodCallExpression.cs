@@ -56,6 +56,7 @@ namespace Cogs.ActiveExpressions
                 }
             if (result)
             {
+                DisposeValueIfNecessaryAndPossible();
                 if (@object is { })
                 {
                     @object.PropertyChanged -= ObjectPropertyChanged;
@@ -66,15 +67,8 @@ namespace Cogs.ActiveExpressions
                     argument.PropertyChanged -= ArgumentPropertyChanged;
                     argument.Dispose();
                 }
-                DisposeValueIfNecessary();
             }
             return result;
-        }
-
-        void DisposeValueIfNecessary()
-        {
-            if (ApplicableOptions.IsMethodReturnValueDisposed(method))
-                DisposeValueIfPossible();
         }
 
         public override bool Equals(object obj) => obj is ActiveMethodCallExpression other && Equals(other);
@@ -86,7 +80,6 @@ namespace Cogs.ActiveExpressions
         {
             try
             {
-                DisposeValueIfNecessary();
                 var objectFault = @object?.Fault;
                 var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
                 if (objectFault is { })
@@ -103,6 +96,8 @@ namespace Cogs.ActiveExpressions
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveMethodCallExpression), arguments, method, @object, options);
+
+        protected override bool GetShouldValueBeDisposed() => ApplicableOptions.IsMethodReturnValueDisposed(method);
 
         void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 

@@ -68,7 +68,7 @@ namespace Cogs.ActiveExpressions
                 }
             if (result)
             {
-                DisposeValueIfNecessary();
+                DisposeValueIfNecessaryAndPossible();
                 if (fastGetter is { })
                     UnsubscribeFromExpressionValueNotifications();
                 else if (field is { })
@@ -82,12 +82,6 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        void DisposeValueIfNecessary()
-        {
-            if (getMethod is { } && ApplicableOptions.IsMethodReturnValueDisposed(getMethod))
-                DisposeValueIfPossible();
-        }
-
         public override bool Equals(object obj) => obj is ActiveMemberExpression other && Equals(other);
 
         public bool Equals(ActiveMemberExpression other) => Equals(expression, other.expression) && Equals(member, other.member) && Equals(options, other.options);
@@ -97,7 +91,6 @@ namespace Cogs.ActiveExpressions
         {
             try
             {
-                DisposeValueIfNecessary();
                 var expressionFault = expression?.Fault;
                 if (expressionFault is { })
                     Fault = expressionFault;
@@ -137,6 +130,8 @@ namespace Cogs.ActiveExpressions
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveMemberExpression), expression, member, options);
+
+        protected override bool GetShouldValueBeDisposed() => getMethod is { } && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
 
         public override string ToString() => $"{expression?.ToString() ?? member.DeclaringType.FullName}.{member.Name} {ToStringSuffix}";
 

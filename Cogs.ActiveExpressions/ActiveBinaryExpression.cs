@@ -53,19 +53,13 @@ namespace Cogs.ActiveExpressions
                 }
             if (result)
             {
-                DisposeValueIfNecessary();
+                DisposeValueIfNecessaryAndPossible();
                 left.PropertyChanged -= LeftPropertyChanged;
                 left.Dispose();
                 right.PropertyChanged -= RightPropertyChanged;
                 right.Dispose();
             }
             return result;
-        }
-
-        void DisposeValueIfNecessary()
-        {
-            if (method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method))
-                DisposeValueIfPossible();
         }
 
         public override bool Equals(object obj) => obj is ActiveBinaryExpression other && Equals(other);
@@ -81,7 +75,6 @@ namespace Cogs.ActiveExpressions
             var rightValue = right.Value;
             try
             {
-                DisposeValueIfNecessary();
                 if (leftFault is { })
                     Fault = leftFault;
                 else if (rightFault is { })
@@ -96,6 +89,8 @@ namespace Cogs.ActiveExpressions
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveBinaryExpression), left, method, NodeType, right, options);
+
+        protected override bool GetShouldValueBeDisposed() => method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method);
 
         void LeftPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 

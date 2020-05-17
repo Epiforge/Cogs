@@ -39,7 +39,7 @@ namespace Cogs.ActiveExpressions
                 }
             if (result)
             {
-                DisposeValueIfNecessary();
+                DisposeValueIfNecessaryAndPossible();
                 expression.PropertyChanged -= ExpressionPropertyChanged;
                 expression.Dispose();
                 foreach (var argument in arguments)
@@ -51,12 +51,6 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        void DisposeValueIfNecessary()
-        {
-            if (fastMethod is { } && ApplicableOptions.IsMethodReturnValueDisposed(fastMethod.MethodInfo))
-                DisposeValueIfPossible();
-        }
-
         public override bool Equals(object obj) => obj is ActiveInvocationExpression other && Equals(other);
 
         public bool Equals(ActiveInvocationExpression other) => expression.Equals(other.expression) && arguments.Equals(arguments);
@@ -66,7 +60,6 @@ namespace Cogs.ActiveExpressions
         {
             try
             {
-                DisposeValueIfNecessary();
                 var expressionFault = expression.Fault;
                 var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
                 if (expressionFault is { })
@@ -94,6 +87,8 @@ namespace Cogs.ActiveExpressions
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), expression, arguments, options);
+
+        protected override bool GetShouldValueBeDisposed() => fastMethod is { } && ApplicableOptions.IsMethodReturnValueDisposed(fastMethod.MethodInfo);
 
         public override string ToString() => $"{expression}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
