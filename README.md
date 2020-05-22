@@ -6,9 +6,9 @@ General utilities to help with stuff in .NET Development, from Epiforge.
 
 Supports `netstandard2.1`.
 
-![Build](https://img.shields.io/azure-devops/build/epiforge/cogs/1.svg?logo=microsoft&logoColor=white)
-![Tests](https://img.shields.io/azure-devops/tests/epiforge/cogs/1.svg?compact_message=&logo=microsoft&logoColor=white)
-![Coverage](https://img.shields.io/azure-devops/coverage/epiforge/cogs/1.svg?logo=microsoft&logoColor=white)
+![Build](https://img.shields.io/azure-devops/build/epiforge/cogs/2.svg?logo=microsoft&logoColor=white)
+![Tests](https://img.shields.io/azure-devops/tests/epiforge/cogs/2.svg?compact_message=&logo=microsoft&logoColor=white)
+![Coverage](https://img.shields.io/azure-devops/coverage/epiforge/cogs/2.svg?logo=microsoft&logoColor=white)
 
 - [Libraries](#libraries)
   - [Active Expressions](#active-expressions)
