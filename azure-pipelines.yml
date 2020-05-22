@@ -1,0 +1,49 @@
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- task: UseDotNet@2
+  displayName: 'Use .NET Core'
+  inputs:
+    version: '3.1'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore referenced NuGet packages'
+  inputs:
+    command: 'restore'
+    arguments: '--configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build'
+  inputs:
+    command: 'build'
+    arguments: '--configuration $(buildConfiguration) --no-restore'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Test'
+  inputs:
+    command: 'test'
+    arguments: '--configuration $(buildConfiguration) --collect "Code coverage"'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Pack NuGets'
+  inputs:
+    command: 'pack'
+    arguments: '--configuration $(buildConfiguration)'
+
+- task: CopyFiles@2
+  displayName: 'Copy artifacts to staging'
+  inputs:
+    sourceFolder: '$(Build.SourcesDirectory)'
+    contents: '**/$(buildConfiguration)/**/?(*.nupkg)'
+    targetFolder: '$(Build.ArtifactStagingDirectory)'
+    flattenFolders: true
+    
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish artifacts'
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: drop
