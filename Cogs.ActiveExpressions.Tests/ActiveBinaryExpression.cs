@@ -129,19 +129,22 @@ namespace Cogs.ActiveExpressions.Tests
                 AsyncDisposableTestPerson.CreateJohn(),
                 AsyncDisposableTestPerson.CreateEmily()
             };
+            var disposedTcs = new TaskCompletionSource<object?>();
             AsyncDisposableTestPerson? newPerson;
             using (var expr = ActiveExpression.Create(p => p[0] + p[1], people))
             {
                 newPerson = expr.Value;
                 Assert.IsFalse(newPerson!.IsDisposed);
-                var disposedTcs = new TaskCompletionSource<object?>();
                 newPerson.Disposed += (sender, e) => disposedTcs.SetResult(null);
                 people[0] = AsyncDisposableTestPerson.CreateJohn();
                 await Task.WhenAny(disposedTcs.Task, Task.Delay(TimeSpan.FromSeconds(1)));
                 Assert.IsTrue(newPerson.IsDisposed);
                 newPerson = expr.Value;
                 Assert.IsFalse(newPerson!.IsDisposed);
+                disposedTcs = new TaskCompletionSource<object?>();
+                newPerson.Disposed += (sender, e) => disposedTcs.SetResult(null);
             }
+            await Task.WhenAny(disposedTcs.Task, Task.Delay(TimeSpan.FromSeconds(1)));
             Assert.IsTrue(newPerson.IsDisposed);
         }
 
