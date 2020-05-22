@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +15,6 @@ namespace Cogs.Threading
         /// </summary>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
         /// <param name="action">The <see cref="Action"/></param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static void Execute(this SynchronizationContext? synchronizationContext, Action action)
         {
             if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
@@ -53,7 +51,6 @@ namespace Cogs.Threading
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
         /// <param name="func">The <see cref="Func{TResult}"/></param>
         /// <returns>The result of <paramref name="func"/></returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static TResult Execute<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func)
         {
             if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)

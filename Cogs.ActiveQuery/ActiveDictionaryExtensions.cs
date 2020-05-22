@@ -6,7 +6,6 @@ using Cogs.Threading;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -76,7 +75,6 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to check for emptiness</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is <c>true</c> if the source dictionary contains any key/value pairs; otherwise, <c>false</c></returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<bool> ActiveAny<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -235,7 +233,6 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">A <see cref="IReadOnlyDictionary{TKey, TValue}"/></param>
         /// <returns>An active value the value of which is <c>true</c> if the source sequence contains any elements; otherwise, <c>false</c></returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<int> ActiveCount<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -331,7 +328,6 @@ namespace Cogs.ActiveQuery
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the first key/value pair from</param>
         /// <param name="keyComparer">A comparer to compare keys in <paramref name="source"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the first key/value pair in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveFirst<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, IComparer<TKey> keyComparer)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -512,7 +508,6 @@ namespace Cogs.ActiveQuery
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the first key/value pair from</param>
         /// <param name="keyComparer">A comparer to compare keys in <paramref name="source"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the first key/value pair in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveFirstOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, IComparer<TKey> keyComparer)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -670,7 +665,6 @@ namespace Cogs.ActiveQuery
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the last key/value pair from</param>
         /// <param name="keyComparer">A comparer to compare keys in <paramref name="source"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the last key/value pair in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveLast<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, IComparer<TKey> keyComparer)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -850,7 +844,6 @@ namespace Cogs.ActiveQuery
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the last key/value pair from</param>
         /// <param name="keyComparer">A comparer to compare keys in <paramref name="source"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the last key/value pair in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveLastOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, IComparer<TKey> keyComparer)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -1025,7 +1018,6 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the maximum value in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TResult> ActiveMax<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
@@ -1164,7 +1156,6 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the minimum value in the dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TResult> ActiveMin<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
@@ -1457,7 +1448,6 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the single key/value pair of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the single key/value pair of the input dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveSingle<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -1610,7 +1600,6 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return the single key/value pair of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the single key/value pair of the input dictionary, or <c>default</c>(<c>KeyValuePair&lt;</c><typeparamref name="TKey"/>, <typeparamref name="TValue"/><c>%gt;</c>) if the dictionary contains no key/value pairs</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<KeyValuePair<TKey, TValue>> ActiveSingleOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -1755,7 +1744,6 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the sum of the projected values</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TResult> ActiveSum<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
@@ -2283,7 +2271,6 @@ namespace Cogs.ActiveQuery
         /// <param name="source">>An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return a value from</param>
         /// <param name="key">The key of the value to retrieve</param>
         /// <returns>>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the value for the specified key in the source dictionary</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TValue> ActiveValueFor<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, TKey key)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;

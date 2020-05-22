@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -76,7 +75,6 @@ namespace Cogs.ActiveQuery
         /// </summary>
         /// <param name="source">The <see cref="IEnumerable"/> to check for emptiness</param>
         /// <returns>>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is <c>true</c> if the source sequence contains any elements; otherwise, <c>false</c></returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<bool> ActiveAny(this IEnumerable source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -452,7 +450,6 @@ namespace Cogs.ActiveQuery
         /// </summary>
         /// <param name="source">The <see cref="IEnumerable"/> from which to count elements</param>
         /// <returns>An active value the value of which is <c>true</c> if the source sequence contains any elements; otherwise, <c>false</c></returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<int> ActiveCount(this IEnumerable source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -485,7 +482,6 @@ namespace Cogs.ActiveQuery
         /// </summary>
         /// <param name="source">The <see cref="IEnumerable"/> from which to count elements</param>
         /// <returns>An active value the value of which is <c>true</c> if the source sequence contains any elements; otherwise, <c>false</c></returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<int> ActiveCount<TSource>(this IEnumerable<TSource> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -676,7 +672,6 @@ namespace Cogs.ActiveQuery
         /// <param name="source">An <see cref="IEnumerable{T}"/> to return an element from</param>
         /// <param name="index">The zero-based index of the element to retrieve</param>
         /// <returns>>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the element at the specified position in the source sequence</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TSource> ActiveElementAt<TSource>(this IEnumerable<TSource> source, int index)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -837,7 +832,6 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TSource">The type of the elements of <paramref name="source"/></typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to return the first element of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the first element in the specified sequence</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TSource> ActiveFirst<TSource>(this IEnumerable<TSource> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -1214,7 +1208,6 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TSource">The type of the elements of <paramref name="source"/></typeparam>
         /// <param name="source">An <see cref="IEnumerable{T}"/> to return the last element of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the value at the last position in the source sequence</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TSource> ActiveLast<TSource>(this IEnumerable<TSource> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -1419,7 +1412,6 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each element</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the maximum value in the sequence</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TResult> ActiveMax<TSource, TResult>(this IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
@@ -1555,7 +1547,6 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each element</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the minimum value in the sequence</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TResult> ActiveMin<TSource, TResult>(this IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
@@ -2883,7 +2874,6 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TSource">The type of the elements of <paramref name="source"/></typeparam>
         /// <param name="source">An <see cref="IEnumerable{T}"/> to return the single element of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the single element of the input sequence</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TSource> ActiveSingle<TSource>(this IEnumerable<TSource> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -3014,7 +3004,6 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TSource">The type of the elements of <paramref name="source"/></typeparam>
         /// <param name="source">An <see cref="IEnumerable{T}"/> to return the single element of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the single element of the input sequence, or <c>default</c>(<typeparamref name="TSource"/>) if the sequence contains no elements</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TSource> ActiveSingleOrDefault<TSource>(this IEnumerable<TSource> source)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
@@ -3151,7 +3140,6 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each element</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the sum of the projected values</returns>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static IActiveValue<TResult> ActiveSum<TSource, TResult>(this IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);

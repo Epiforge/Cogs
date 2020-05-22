@@ -136,3 +136,6 @@ dotnet_naming_symbols.non_field_members.applicable_kinds = property, method, eve
 dotnet_naming_rule.non_field_members_must_be_pascal_case.symbols = non_field_members
 dotnet_naming_rule.non_field_members_must_be_pascal_case.style = pascal_case
 dotnet_naming_rule.non_field_members_must_be_pascal_case.severity = warning
+
+dotnet_diagnostic.CA1031.severity = none # catch more specific exception types
+dotnet_diagnostic.CA1063.severity = none # implement IDisposable correctly

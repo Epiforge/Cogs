@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -86,7 +85,6 @@ namespace Cogs.ActiveExpressions
 
         public bool Equals(ActiveMemberExpression other) => Equals(expression, other.expression) && Equals(member, other.member) && Equals(options, other.options);
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override void Evaluate()
         {
             try

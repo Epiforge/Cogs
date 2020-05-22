@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Cogs.Threading
@@ -30,7 +29,6 @@ namespace Cogs.Threading
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="action">The void method to invoke</param>
         [Obsolete("This method sets the result of the task completion source with a default value, which may be null, despite the fact that produces task may not indicate the possibility of a null value; use the AttemptSetResult<TResult>(TaskCompletionSource<TResult>, Action, TResult) overload instead")]
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static void AttemptSetResult<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Action action)
         {
             try
@@ -51,7 +49,6 @@ namespace Cogs.Threading
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="action">The void method to invoke</param>
         /// <param name="result">The result to set for <paramref name="taskCompletionSource"/></param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static void AttemptSetResult<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Action action, TResult result)
         {
             try
@@ -71,7 +68,6 @@ namespace Cogs.Threading
         /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="func">The method with a return value to invoke</param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static void AttemptSetResult<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<TResult> func)
         {
             try
@@ -98,7 +94,6 @@ namespace Cogs.Threading
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="asyncAction">The void async method to invoke</param>
         [Obsolete("This method sets the result of the task completion source with a default value, which may be null, despite the fact that produces task may not indicate the possibility of a null value; use the AttemptSetResult<TResult>(TaskCompletionSource<TResult>, Action, TResult) overload instead")]
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static async Task AttemptSetResultAsync<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<Task> asyncAction)
         {
             try
@@ -119,7 +114,6 @@ namespace Cogs.Threading
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="asyncAction">The void async method to invoke</param>
         /// <param name="result">The result to set for <paramref name="taskCompletionSource"/></param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static async Task AttemptSetResultAsync<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<Task> asyncAction, TResult result)
         {
             try
@@ -139,7 +133,6 @@ namespace Cogs.Threading
         /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="asyncFunc">The async method with a return value to invoke</param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static async Task AttemptSetResultAsync<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<Task<TResult>> asyncFunc)
         {
             try
@@ -158,7 +151,6 @@ namespace Cogs.Threading
         /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="action">The void method to invoke</param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static bool AttemptTrySetResult<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Action action) where TResult : class
         {
             try
@@ -178,7 +170,6 @@ namespace Cogs.Threading
         /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="func">The method with a return value to invoke</param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static bool AttemptTrySetResult<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<TResult> func)
         {
             try
@@ -197,7 +188,6 @@ namespace Cogs.Threading
         /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="asyncAction">The void async method to invoke</param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static async Task<bool> AttemptTrySetResultAsync<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Func<Task> asyncAction) where TResult : class
         {
             try
@@ -217,7 +207,6 @@ namespace Cogs.Threading
         /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="asyncFunc">The async method with a return value to invoke</param>
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         public static async Task<bool> AttemptTrySetResultAsync<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<Task<TResult>> asyncFunc)
         {
             try

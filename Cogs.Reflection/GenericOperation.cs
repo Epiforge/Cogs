@@ -52,7 +52,6 @@ namespace Cogs.Reflection
         [return: MaybeNull]
         public static T Subtract<T>([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Subtract, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         internal static Delegate CompiledBinaryOperationMethodsValueFactory((BinaryOperation operation, Type type) key)
         {
             var (operation, type) = key;

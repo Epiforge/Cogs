@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -64,7 +63,6 @@ namespace Cogs.ActiveExpressions
 
         public bool Equals(ActiveIndexExpression other) => arguments.Equals(other.arguments) && indexer.Equals(other.indexer) && @object.Equals(other.@object) && Equals(options, other.options);
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override void Evaluate()
         {
             try

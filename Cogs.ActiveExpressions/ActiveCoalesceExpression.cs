@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Cogs.ActiveExpressions
@@ -32,7 +31,6 @@ namespace Cogs.ActiveExpressions
 
         public bool Equals(ActiveCoalesceExpression other) => left.Equals(other.left) && right.Equals(other.right) && Equals(options, other.options);
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override void Evaluate()
         {
             try

@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,7 +35,6 @@ namespace Cogs.Threading
         readonly BufferBlock<(SendOrPostCallback callback, object? state, ManualResetEventSlim? signal, Exception? exception)> queuedCallbacks;
         readonly CancellationTokenSource queuedCallbacksCancellationTokenSource;
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         async Task ProcessCallbacks()
         {
             while (true)
@@ -63,7 +61,6 @@ namespace Cogs.Threading
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources
         /// </summary>
-        [SuppressMessage("Design", "CA1063:Implement IDisposable Correctly")]
         public void Dispose()
         {
             if (!allowDisposal)

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -53,7 +52,6 @@ namespace Cogs.ActiveExpressions
 
         public bool Equals(ActiveUnaryExpression other) => Equals(method, other.method) && NodeType.Equals(other.NodeType) && operand.Equals(other.operand) && Equals(options, other.options);
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override void Evaluate()
         {
             try

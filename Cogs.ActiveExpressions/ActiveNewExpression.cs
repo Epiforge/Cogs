@@ -3,7 +3,6 @@ using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -68,7 +67,6 @@ namespace Cogs.ActiveExpressions
 
         public bool Equals(ActiveNewExpression other) => Type.Equals(other.Type) && arguments.Equals(other.arguments) && Equals(options, other.options);
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override void Evaluate()
         {
             try
