@@ -42,8 +42,8 @@ steps:
     targetFolder: '$(Build.ArtifactStagingDirectory)'
     flattenFolders: true
     
-- task: PublishBuildArtifacts@1
+- task: PublishPipelineArtifact@1
   displayName: 'Publish artifacts'
   inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    targetPath: '$(Build.ArtifactStagingDirectory)'
     artifactName: drop
