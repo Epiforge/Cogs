@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Cogs.Collections" Version="1.5.5" />
+    <PackageReference Include="Cogs.Collections" Version="1.5.6" />
     <PackageReference Include="Cogs.Collections.Synchronized" Version="1.2.3" />
     <PackageReference Include="Cogs.Components" Version="1.0.5" />
     <PackageReference Include="Linq.Expression.Optimizer" Version="1.0.13" />
