@@ -123,7 +123,12 @@ namespace Cogs.ActiveExpressions.Tests
             var values = new BlockingCollection<int>();
             using (var expr = ActiveExpression.Create(p1 => p1[5], perfectNumbers))
             {
-                void propertyChanged(object sender, PropertyChangedEventArgs e) => values.Add(expr.Value);
+                void propertyChanged(object sender, PropertyChangedEventArgs e)
+                {
+                    if (e.PropertyName == nameof(ActiveExpression<object?>.Value))
+                        values.Add(expr.Value);
+                }
+
                 expr.PropertyChanged += propertyChanged;
                 values.Add(expr.Value);
                 perfectNumbers.Add(11, 11 * 11);
@@ -263,7 +268,10 @@ namespace Cogs.ActiveExpressions.Tests
                 await Task.WhenAny(disposedTcs.Task, Task.Delay(TimeSpan.FromSeconds(1)));
                 Assert.AreSame(emily, ae.Value);
                 Assert.IsTrue(john.IsDisposed);
+                disposedTcs = new TaskCompletionSource<object?>();
+                emily.Disposed += (sender, e) => disposedTcs.SetResult(null);
             }
+            await Task.WhenAny(disposedTcs.Task, Task.Delay(TimeSpan.FromSeconds(1)));
             Assert.IsTrue(emily.IsDisposed);
         }
 
