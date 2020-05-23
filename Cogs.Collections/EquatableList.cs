@@ -70,14 +70,14 @@ namespace Cogs.Collections
         /// </summary>
         /// <param name="obj">The object to compare with the current object</param>
         /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-        public override bool Equals(object obj) => obj is EquatableList<T> other ? Equals(other) : false;
+        public override bool Equals(object obj) => obj is EquatableList<T> other && Equals(other);
 
         /// <summary>
         /// Determines whether the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/> using the current <see cref="IEqualityComparer{T}"/> (see <see cref="EqualityComparer"/>)
         /// </summary>
         /// <param name="other">The <see cref="EquatableList{T}"/> to compare with the current <see cref="EquatableList{T}"/></param>
         /// <returns><c>true</c> if the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(EquatableList<T> other) => (EqualityComparer is { } && EqualityComparer.Equals(other.EqualityComparer) && Elements.SequenceEqual(other.Elements, EqualityComparer)) || (other.EqualityComparer is null && Elements.Equals(other.Elements));
+        public bool Equals(EquatableList<T> other) => (EqualityComparer is { } && EqualityComparer.Equals(other.EqualityComparer) && Elements.SequenceEqual(other.Elements, EqualityComparer)) || (other.EqualityComparer is null && Elements.SequenceEqual(other.Elements));
 
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="EquatableList{T}"/>
@@ -105,6 +105,6 @@ namespace Cogs.Collections
         /// <param name="a">The first object to compare</param>
         /// <param name="b">The second object to compare</param>
         /// <returns><c>true</c> if <paramref name="a"/> and <paramref name="b"/> do not represent the list; otherwise, <c>false</c></returns>
-        public static bool operator !=(EquatableList<T> a, EquatableList<T> b) => !a.Equals(b);
+        public static bool operator !=(EquatableList<T> a, EquatableList<T> b) => !(a == b);
     }
 }
