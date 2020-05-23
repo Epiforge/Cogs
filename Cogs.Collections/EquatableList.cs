@@ -56,7 +56,9 @@ namespace Cogs.Collections
         /// <summary>
         /// Gets the number of elements contained in the <see cref="EquatableList{T}"/>
         /// </summary>
-        public int Count => elements.Count;
+        public int Count => Elements.Count;
+
+        IReadOnlyList<T> Elements => elements ?? Enumerable.Empty<T>().ToImmutableArray();
 
         /// <summary>
         /// Gets the equality comparer used to determine whether elements are equal if one was specified when the <see cref="EquatableList{T}"/> was instantiated
@@ -75,14 +77,14 @@ namespace Cogs.Collections
         /// </summary>
         /// <param name="other">The <see cref="EquatableList{T}"/> to compare with the current <see cref="EquatableList{T}"/></param>
         /// <returns><c>true</c> if the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(EquatableList<T> other) => (EqualityComparer is { } && EqualityComparer.Equals(other.EqualityComparer) && elements.SequenceEqual(other.elements, EqualityComparer)) || (other.EqualityComparer is null && elements.Equals(other.elements));
+        public bool Equals(EquatableList<T> other) => (EqualityComparer is { } && EqualityComparer.Equals(other.EqualityComparer) && Elements.SequenceEqual(other.Elements, EqualityComparer)) || (other.EqualityComparer is null && Elements.Equals(other.Elements));
 
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="EquatableList{T}"/>
         /// </summary>
-        public IEnumerator<T> GetEnumerator() => elements.GetEnumerator();
+        public IEnumerator<T> GetEnumerator() => Elements.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator() => elements.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => Elements.GetEnumerator();
 
         /// <summary>
         /// Gets a hash code for the <see cref="EquatableList{T}"/>
