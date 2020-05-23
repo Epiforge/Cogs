@@ -17,9 +17,7 @@ namespace Cogs.ActiveExpressions.Tests
         string? name;
         long nameGets;
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        protected override async ValueTask<bool> DisposeAsync(bool disposing) => true;
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        protected override ValueTask<bool> DisposeAsync(bool disposing) => new ValueTask<bool>(true);
 
         public override string ToString() => $"{{{name}}}";
 

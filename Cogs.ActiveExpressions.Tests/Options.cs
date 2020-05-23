@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Cogs.ActiveExpressions.Tests
 {
@@ -32,6 +33,15 @@ namespace Cogs.ActiveExpressions.Tests
         }
 
         #endregion Helper Classes
+
+        [TestMethod]
+        public void BlockOnAsyncDisposalEnabled()
+        {
+            AsyncDisposableTestPerson? person;
+            using (var expr = ActiveExpression.CreateWithOptions<AsyncDisposableTestPerson>((Expression<Func<AsyncDisposableTestPerson>>)(() => new AsyncDisposableTestPerson()), new ActiveExpressionOptions { BlockOnAsyncDisposal = true }))
+                person = expr.Value;
+            Assert.IsTrue(person!.IsDisposed);
+        }
 
         [TestMethod]
         public void DefaultHashCodeRemainsTheSame()
@@ -176,6 +186,20 @@ namespace Cogs.ActiveExpressions.Tests
             options = new ActiveExpressionOptions();
             Assert.IsTrue(options.AddExpressionValueDisposal(() => new TestObject().GetSyncDisposableMethod()));
             Assert.IsTrue(options != ActiveExpressionOptions.Default);
+        }
+
+        [TestMethod]
+        public async Task PreferAsyncDisposalDisabled()
+        {
+            DisposableTestPerson? person;
+            var disposedTcs = new TaskCompletionSource<object?>();
+            using (var expr = ActiveExpression.CreateWithOptions<DisposableTestPerson>((Expression<Func<DisposableTestPerson>>)(() => new DisposableTestPerson()), new ActiveExpressionOptions { PreferAsyncDisposal = false }))
+            {
+                person = expr.Value;
+                person!.Disposed += (sender, e) => disposedTcs.SetResult(null);
+            }
+            await Task.WhenAny(disposedTcs.Task, Task.Delay(TimeSpan.FromSeconds(1)));
+            Assert.IsTrue(person.IsDisposed);
         }
     }
 }

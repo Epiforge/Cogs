@@ -16,10 +16,6 @@ namespace Cogs.ActiveExpressions.Tests
         string? name;
         long nameGets;
 
-        protected override bool Dispose(bool disposing) => true;
-
-        public override string ToString() => $"{{{name}}}";
-
         public string? Name
         {
             get
@@ -33,6 +29,10 @@ namespace Cogs.ActiveExpressions.Tests
         }
 
         public long NameGets => Interlocked.Read(ref nameGets);
+
+        protected override bool Dispose(bool disposing) => true;
+
+        public override string ToString() => $"{{{name}}}";
 
         public static SyncDisposableTestPerson CreateEmily() => new SyncDisposableTestPerson { name = "Emily" };
 

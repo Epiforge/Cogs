@@ -580,40 +580,8 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first node to compare, or null</param>
         /// <param name="b">The second node to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator !=(ActiveExpression a, ActiveExpression b)
-        {
-            if (a is null && b is null)
-                return false;
-            if (a is null || b is null)
-                return true;
-            if (a is ActiveAndAlsoExpression andAlsoA && b is ActiveAndAlsoExpression andAlsoB)
-                return andAlsoA != andAlsoB;
-            if (a is ActiveCoalesceExpression coalesceA && b is ActiveCoalesceExpression coalesceB)
-                return coalesceA != coalesceB;
-            if (a is ActiveOrElseExpression orElseA && b is ActiveOrElseExpression orElseB)
-                return orElseA != orElseB;
-            if (a is ActiveBinaryExpression binaryA && b is ActiveBinaryExpression binaryB)
-                return binaryA != binaryB;
-            if (a is ActiveConditionalExpression conditionalA && b is ActiveConditionalExpression conditionalB)
-                return conditionalA != conditionalB;
-            if (a is ActiveConstantExpression constantA && b is ActiveConstantExpression constantB)
-                return constantA != constantB;
-            if (a is ActiveInvocationExpression invocationA && b is ActiveInvocationExpression invocationB)
-                return invocationA != invocationB;
-            if (a is ActiveIndexExpression indexA && b is ActiveIndexExpression indexB)
-                return indexA != indexB;
-            if (a is ActiveMemberExpression memberA && b is ActiveMemberExpression memberB)
-                return memberA != memberB;
-            if (a is ActiveMethodCallExpression methodCallA && b is ActiveMethodCallExpression methodCallB)
-                return methodCallA != methodCallB;
-            if (a is ActiveNewExpression newA && b is ActiveNewExpression newB)
-                return newA != newB;
-            if (a is ActiveTypeBinaryExpression typeBinaryA && b is ActiveTypeBinaryExpression typeBinaryB)
-                return typeBinaryA != typeBinaryB;
-            if (a is ActiveUnaryExpression unaryA && b is ActiveUnaryExpression unaryB)
-                return unaryA != unaryB;
-            return true;
-        }
+        [ExcludeFromCodeCoverage]
+        public static bool operator !=(ActiveExpression a, ActiveExpression b) => !(a == b);
 
         /// <summary>
         /// Gets/sets the method that will be invoked during the active expression creation process to optimize expressions (default is null)

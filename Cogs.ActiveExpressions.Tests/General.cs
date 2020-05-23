@@ -232,9 +232,9 @@ namespace Cogs.ActiveExpressions.Tests
             using var expr2 = ActiveExpression.Create((a, b, c) => a + b + c, john, emily, charles);
             using var expr3 = ActiveExpression.Create((a, b, c) => a + c + b, john, emily, charles);
             using var expr4 = ActiveExpression.Create((a, b, c) => a + b + c, charles, emily, john);
-            Assert.IsTrue(expr1.Equals(expr2));
-            Assert.IsFalse(expr1.Equals(expr3));
-            Assert.IsFalse(expr1.Equals(expr4));
+            Assert.IsTrue(expr1.Equals((object)expr2));
+            Assert.IsFalse(expr1.Equals((object)expr3));
+            Assert.IsFalse(expr1.Equals((object)expr4));
         }
 
         [TestMethod]

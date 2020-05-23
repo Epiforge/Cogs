@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Cogs.ActiveExpressions
@@ -68,6 +69,7 @@ namespace Cogs.ActiveExpressions
 
         public static bool operator ==(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => a.Equals(b);
 
+        [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => !(a == b);
     }
 }

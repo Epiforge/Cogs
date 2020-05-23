@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Cogs.ActiveExpressions
@@ -36,6 +37,7 @@ namespace Cogs.ActiveExpressions
 
         public static bool operator ==(ActiveAndAlsoExpression a, ActiveAndAlsoExpression b) => a.Equals(b);
 
+        [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveAndAlsoExpression a, ActiveAndAlsoExpression b) => !(a == b);
     }
 }

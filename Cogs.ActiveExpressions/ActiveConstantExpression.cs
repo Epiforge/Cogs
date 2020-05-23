@@ -3,6 +3,7 @@ using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -88,6 +89,7 @@ namespace Cogs.ActiveExpressions
 
         public static bool operator ==(ActiveConstantExpression a, ActiveConstantExpression b) => a.Equals(b);
 
+        [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveConstantExpression a, ActiveConstantExpression b) => !(a == b);
 
         class ExpressionInstanceKeyComparer : IEqualityComparer<(Expression? expression, ActiveExpressionOptions? options)>
