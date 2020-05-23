@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace Cogs.ActiveExpressions
@@ -12,14 +11,14 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveAndAlsoExpression other && Equals(other);
 
-        public bool Equals(ActiveAndAlsoExpression other) => left.Equals(other.left) && right.Equals(other.right) && Equals(options, other.options);
+        public bool Equals(ActiveAndAlsoExpression other) => left == other.left && right == other.right && Equals(options, other.options);
 
         protected override void Evaluate()
         {
             var leftFault = left.Fault;
             if (leftFault is { })
                 Fault = leftFault;
-            else if (!(left.Value is bool leftBool ? leftBool : false))
+            else if (!(left.Value is bool leftBool && leftBool))
                 Value = false;
             else
             {
@@ -27,7 +26,7 @@ namespace Cogs.ActiveExpressions
                 if (rightFault is { })
                     Fault = rightFault;
                 else
-                    Value = right.Value is bool rightBool ? rightBool : false;
+                    Value = right.Value is bool rightBool && rightBool;
             }
         }
 
@@ -35,8 +34,8 @@ namespace Cogs.ActiveExpressions
 
         public override string ToString() => $"({left} && {right}) {ToStringSuffix}";
 
-        public static bool operator ==(ActiveAndAlsoExpression? a, ActiveAndAlsoExpression? b) => EqualityComparer<ActiveAndAlsoExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveAndAlsoExpression a, ActiveAndAlsoExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveAndAlsoExpression? a, ActiveAndAlsoExpression? b) => !EqualityComparer<ActiveAndAlsoExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveAndAlsoExpression a, ActiveAndAlsoExpression b) => !(a == b);
     }
 }

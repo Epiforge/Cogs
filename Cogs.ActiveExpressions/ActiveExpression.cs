@@ -702,7 +702,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The other <see cref="ActiveExpression{TResult}"/></param>
         /// <returns><c>true</c> if the specified <see cref="ActiveExpression{TResult}"/> is equal to the current <see cref="ActiveExpression{TResult}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpression<TResult> other) => activeExpression.Equals(other.activeExpression);
+        public bool Equals(ActiveExpression<TResult> other) => activeExpression == other.activeExpression;
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -750,7 +750,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpression<TResult>? a, ActiveExpression<TResult>? b) => EqualityComparer<ActiveExpression<TResult>?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveExpression<TResult> a, ActiveExpression<TResult> b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two active expressions are different
@@ -758,7 +758,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator !=(ActiveExpression<TResult>? a, ActiveExpression<TResult>? b) => !EqualityComparer<ActiveExpression<TResult>?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveExpression<TResult> a, ActiveExpression<TResult> b) => !(a == b);
     }
 
     /// <summary>
@@ -813,7 +813,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The <see cref="ActiveExpression{TArg, TResult}"/> to compare with the current <see cref="ActiveExpression{TArg, TResult}"/></param>
         /// <returns><c>true</c> if the specified <see cref="ActiveExpression{TArg, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg, TResult}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpression<TArg, TResult> other) => activeExpression.Equals(other.activeExpression);
+        public bool Equals(ActiveExpression<TArg, TResult> other) => activeExpression == other.activeExpression;
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -889,7 +889,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpression<TArg, TResult>? a, ActiveExpression<TArg, TResult>? b) => EqualityComparer<ActiveExpression<TArg, TResult>?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two active expressions are different
@@ -897,7 +897,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator !=(ActiveExpression<TArg, TResult>? a, ActiveExpression<TArg, TResult>? b) => !EqualityComparer<ActiveExpression<TArg, TResult>?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b) => !(a == b);
     }
 
     /// <summary>
@@ -988,7 +988,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The object to compare with the current object</param>
         /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpression<TArg1, TArg2, TResult> other) => activeExpression.Equals(other.activeExpression);
+        public bool Equals(ActiveExpression<TArg1, TArg2, TResult> other) => activeExpression == other.activeExpression;
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -1035,7 +1035,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpression<TArg1, TArg2, TResult>? a, ActiveExpression<TArg1, TArg2, TResult>? b) => EqualityComparer<ActiveExpression<TArg1, TArg2, TResult>?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two active expressions are different
@@ -1043,7 +1043,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator !=(ActiveExpression<TArg1, TArg2, TResult>? a, ActiveExpression<TArg1, TArg2, TResult>? b) => !EqualityComparer<ActiveExpression<TArg1, TArg2, TResult>?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b) => !(a == b);
     }
 
     /// <summary>
@@ -1141,7 +1141,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/> to compare with the current <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/></param>
         /// <returns><c>true</c> if the specified <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpression<TArg1, TArg2, TArg3, TResult> other) => activeExpression.Equals(other.activeExpression);
+        public bool Equals(ActiveExpression<TArg1, TArg2, TArg3, TResult> other) => activeExpression == other.activeExpression;
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -1188,7 +1188,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpression<TArg1, TArg2, TArg3, TResult>? a, ActiveExpression<TArg1, TArg2, TArg3, TResult>? b) => EqualityComparer<ActiveExpression<TArg1, TArg2, TArg3, TResult>?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two active expressions are different
@@ -1196,6 +1196,6 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator !=(ActiveExpression<TArg1, TArg2, TArg3, TResult>? a, ActiveExpression<TArg1, TArg2, TArg3, TResult>? b) => !EqualityComparer<ActiveExpression<TArg1, TArg2, TArg3, TResult>?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b) => !(a == b);
     }
 }

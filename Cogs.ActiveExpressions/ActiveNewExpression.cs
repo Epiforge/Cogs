@@ -65,7 +65,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveNewExpression other && Equals(other);
 
-        public bool Equals(ActiveNewExpression other) => Type.Equals(other.Type) && arguments.Equals(other.arguments) && Equals(options, other.options);
+        public bool Equals(ActiveNewExpression other) => Type == other.Type && arguments == other.arguments && Equals(options, other.options);
 
         protected override void Evaluate()
         {
@@ -94,10 +94,6 @@ namespace Cogs.ActiveExpressions
         static readonly Dictionary<(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression> constructorInstances = new Dictionary<(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression>();
         static readonly object instanceManagementLock = new object();
         static readonly Dictionary<(Type type, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression> typeInstances = new Dictionary<(Type type, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression>();
-
-        public static bool operator ==(ActiveNewExpression? a, ActiveNewExpression? b) => EqualityComparer<ActiveNewExpression?>.Default.Equals(a, b);
-
-        public static bool operator !=(ActiveNewExpression? a, ActiveNewExpression? b) => !EqualityComparer<ActiveNewExpression?>.Default.Equals(a, b);
 
         public static ActiveNewExpression Create(NewExpression newExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
@@ -132,5 +128,9 @@ namespace Cogs.ActiveExpressions
                 }
             }
         }
+
+        public static bool operator ==(ActiveNewExpression a, ActiveNewExpression b) => a.Equals(b);
+
+        public static bool operator !=(ActiveNewExpression a, ActiveNewExpression b) => !(a == b);
     }
 }

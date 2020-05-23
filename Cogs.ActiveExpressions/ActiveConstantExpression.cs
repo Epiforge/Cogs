@@ -40,7 +40,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveConstantExpression other && Equals(other);
 
-        public bool Equals(ActiveConstantExpression other) => Type.Equals(other.Type) && FastEqualityComparer.Get(Type).Equals(Value, other.Value) && Equals(options, other.options);
+        public bool Equals(ActiveConstantExpression other) => Type == other.Type && FastEqualityComparer.Get(Type).Equals(Value, other.Value) && Equals(options, other.options);
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveConstantExpression), Value);
 
@@ -86,9 +86,9 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        public static bool operator ==(ActiveConstantExpression? a, ActiveConstantExpression? b) => EqualityComparer<ActiveConstantExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveConstantExpression a, ActiveConstantExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveConstantExpression? a, ActiveConstantExpression? b) => !EqualityComparer<ActiveConstantExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveConstantExpression a, ActiveConstantExpression b) => !(a == b);
 
         class ExpressionInstanceKeyComparer : IEqualityComparer<(Expression? expression, ActiveExpressionOptions? options)>
         {

@@ -61,7 +61,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveIndexExpression other && Equals(other);
 
-        public bool Equals(ActiveIndexExpression other) => arguments.Equals(other.arguments) && indexer.Equals(other.indexer) && @object.Equals(other.@object) && Equals(options, other.options);
+        public bool Equals(ActiveIndexExpression other) => arguments == other.arguments && indexer == other.indexer && @object == other.@object && Equals(options, other.options);
 
         protected override void Evaluate()
         {
@@ -209,8 +209,8 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        public static bool operator ==(ActiveIndexExpression? a, ActiveIndexExpression? b) => EqualityComparer<ActiveIndexExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveIndexExpression a, ActiveIndexExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveIndexExpression? a, ActiveIndexExpression? b) => !EqualityComparer<ActiveIndexExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveIndexExpression a, ActiveIndexExpression b) => !(a == b);
     }
 }

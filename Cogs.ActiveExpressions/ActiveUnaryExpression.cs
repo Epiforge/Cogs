@@ -50,7 +50,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveUnaryExpression other && Equals(other);
 
-        public bool Equals(ActiveUnaryExpression other) => Equals(method, other.method) && NodeType.Equals(other.NodeType) && operand.Equals(other.operand) && Equals(options, other.options);
+        public bool Equals(ActiveUnaryExpression other) => method == other.method && NodeType == other.NodeType && operand == other.operand && Equals(options, other.options);
 
         protected override void Evaluate()
         {
@@ -99,8 +99,8 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        public static bool operator ==(ActiveUnaryExpression? a, ActiveUnaryExpression? b) => EqualityComparer<ActiveUnaryExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveUnaryExpression a, ActiveUnaryExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveUnaryExpression? a, ActiveUnaryExpression? b) => !EqualityComparer<ActiveUnaryExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveUnaryExpression a, ActiveUnaryExpression b) => !(a == b);
     }
 }

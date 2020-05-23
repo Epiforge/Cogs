@@ -52,7 +52,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveInvocationExpression other && Equals(other);
 
-        public bool Equals(ActiveInvocationExpression other) => expression.Equals(other.expression) && arguments.Equals(arguments);
+        public bool Equals(ActiveInvocationExpression other) => expression == other.expression && arguments == other.arguments && Equals(options, other.options);
 
         protected override void Evaluate()
         {

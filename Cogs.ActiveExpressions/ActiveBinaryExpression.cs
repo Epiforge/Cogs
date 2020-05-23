@@ -63,7 +63,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveBinaryExpression other && Equals(other);
 
-        public bool Equals(ActiveBinaryExpression other) => left.Equals(other.left) && Equals(method, other.method) && NodeType.Equals(other.NodeType) && right.Equals(other.right) && Equals(options, other.options);
+        public bool Equals(ActiveBinaryExpression other) => left == other.left && method == other.method && NodeType == other.NodeType && right == other.right && Equals(options, other.options);
 
         protected override void Evaluate()
         {
@@ -138,8 +138,8 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        public static bool operator ==(ActiveBinaryExpression? a, ActiveBinaryExpression? b) => EqualityComparer<ActiveBinaryExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveBinaryExpression a, ActiveBinaryExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveBinaryExpression? a, ActiveBinaryExpression? b) => !EqualityComparer<ActiveBinaryExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveBinaryExpression a, ActiveBinaryExpression b) => !(a == b);
     }
 }

@@ -46,14 +46,14 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveConditionalExpression other && Equals(other);
 
-        public bool Equals(ActiveConditionalExpression other) => ifFalse.Equals(other.ifFalse) && ifTrue.Equals(other.ifTrue) && test.Equals(other.test) && Equals(options, other.options);
+        public bool Equals(ActiveConditionalExpression other) => ifFalse == other.ifFalse && ifTrue == other.ifTrue && test == other.test && Equals(options, other.options);
 
         protected override void Evaluate()
         {
             var testFault = test.Fault;
             if (testFault is { })
                 Fault = testFault;
-            else if (test.Value is bool testBool ? testBool : false)
+            else if (test.Value is bool testBool && testBool)
             {
                 var ifTrueFault = ifTrue.Fault;
                 if (ifTrueFault is { })
@@ -75,7 +75,7 @@ namespace Cogs.ActiveExpressions
 
         void IfFalsePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (test.Fault is null && !(test.Value is bool testBool ? testBool : false))
+            if (test.Fault is null && !(test.Value is bool testBool && testBool))
             {
                 if (e.PropertyName == nameof(Fault))
                     Fault = ifFalse.Fault;
@@ -86,7 +86,7 @@ namespace Cogs.ActiveExpressions
 
         void IfTruePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (test.Fault is null && (test.Value is bool testBool ? testBool : false))
+            if (test.Fault is null && (test.Value is bool testBool && testBool))
             {
                 if (e.PropertyName == nameof(Fault))
                     Fault = ifTrue.Fault;
@@ -101,7 +101,7 @@ namespace Cogs.ActiveExpressions
                 Fault = test.Fault;
             else if (e.PropertyName == nameof(Value) && test.Fault is null)
             {
-                if (test.Value is bool testBool ? testBool : false)
+                if (test.Value is bool testBool && testBool)
                 {
                     var ifTrueFault = ifTrue.Fault;
                     if (ifTrueFault is { })
@@ -143,8 +143,8 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        public static bool operator ==(ActiveConditionalExpression? a, ActiveConditionalExpression? b) => EqualityComparer<ActiveConditionalExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveConditionalExpression a, ActiveConditionalExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveConditionalExpression? a, ActiveConditionalExpression? b) => !EqualityComparer<ActiveConditionalExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveConditionalExpression a, ActiveConditionalExpression b) => !(a == b);
     }
 }

@@ -83,7 +83,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveMemberExpression other && Equals(other);
 
-        public bool Equals(ActiveMemberExpression other) => Equals(expression, other.expression) && Equals(member, other.member) && Equals(options, other.options);
+        public bool Equals(ActiveMemberExpression other) => Equals(expression, other.expression) && member == other.member && Equals(options, other.options);
 
         protected override void Evaluate()
         {
@@ -206,8 +206,8 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        public static bool operator ==(ActiveMemberExpression? a, ActiveMemberExpression? b) => EqualityComparer<ActiveMemberExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveMemberExpression a, ActiveMemberExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveMemberExpression? a, ActiveMemberExpression? b) => !EqualityComparer<ActiveMemberExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveMemberExpression a, ActiveMemberExpression b) => !(a == b);
     }
 }

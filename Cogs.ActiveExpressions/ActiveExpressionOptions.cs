@@ -223,7 +223,17 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The other options</param>
         /// <returns><c>true</c> if the specified options are equal to the current options; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpressionOptions other) => this == other;
+        public bool Equals(ActiveExpressionOptions other) =>
+            blockOnAsyncDisposal == other.blockOnAsyncDisposal &&
+            constantExpressionsListenForCollectionChanged == other.constantExpressionsListenForCollectionChanged &&
+            constantExpressionsListenForDictionaryChanged == other.constantExpressionsListenForDictionaryChanged &&
+            disposeConstructedObjects == other.disposeConstructedObjects &&
+            disposeStaticMethodReturnValues == other.disposeStaticMethodReturnValues &&
+            memberExpressionsListenToFieldValuesForCollectionChanged == other.memberExpressionsListenToFieldValuesForCollectionChanged &&
+            memberExpressionsListenToFieldValuesForDictionaryChanged == other.memberExpressionsListenToFieldValuesForDictionaryChanged &&
+            preferAsyncDisposal == other.preferAsyncDisposal &&
+            disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value))) &&
+            disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)));
 
         internal void Freeze() => isFrozen = true;
 
@@ -395,17 +405,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first options to compare, or null</param>
         /// <param name="b">The second options to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpressionOptions a, ActiveExpressionOptions b) =>
-            a?.blockOnAsyncDisposal == b?.blockOnAsyncDisposal &&
-            a?.constantExpressionsListenForCollectionChanged == b?.constantExpressionsListenForCollectionChanged &&
-            a?.constantExpressionsListenForDictionaryChanged == b?.constantExpressionsListenForDictionaryChanged &&
-            a?.disposeConstructedObjects == b?.disposeConstructedObjects &&
-            a?.disposeStaticMethodReturnValues == b?.disposeStaticMethodReturnValues &&
-            a?.memberExpressionsListenToFieldValuesForCollectionChanged == b?.memberExpressionsListenToFieldValuesForCollectionChanged &&
-            a?.memberExpressionsListenToFieldValuesForDictionaryChanged == b?.memberExpressionsListenToFieldValuesForDictionaryChanged &&
-            a?.preferAsyncDisposal == b?.preferAsyncDisposal &&
-            (a?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()).SequenceEqual(b?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()) &&
-            (a?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>()).SequenceEqual(b?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>());
+        public static bool operator ==(ActiveExpressionOptions a, ActiveExpressionOptions b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two active expression options are different
@@ -413,16 +413,6 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first options to compare, or null</param>
         /// <param name="b">The second options to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator !=(ActiveExpressionOptions a, ActiveExpressionOptions b) =>
-            a?.blockOnAsyncDisposal != b?.blockOnAsyncDisposal ||
-            a?.constantExpressionsListenForCollectionChanged != b?.constantExpressionsListenForCollectionChanged ||
-            a?.constantExpressionsListenForDictionaryChanged != b?.constantExpressionsListenForDictionaryChanged ||
-            a?.disposeConstructedObjects != b?.disposeConstructedObjects ||
-            a?.disposeStaticMethodReturnValues != b?.disposeStaticMethodReturnValues ||
-            a?.memberExpressionsListenToFieldValuesForCollectionChanged != b?.memberExpressionsListenToFieldValuesForCollectionChanged ||
-            a?.memberExpressionsListenToFieldValuesForDictionaryChanged != b?.memberExpressionsListenToFieldValuesForDictionaryChanged ||
-            a?.preferAsyncDisposal != b?.preferAsyncDisposal ||
-            !(a?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()).SequenceEqual(b?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<((Type type, EquatableList<Type> constuctorParameterTypes) key, bool value)>()) ||
-            !(a?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>()).SequenceEqual(b?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)) ?? Enumerable.Empty<(MethodInfo key, bool value)>());
+        public static bool operator !=(ActiveExpressionOptions a, ActiveExpressionOptions b) => !(a == b);
     }
 }

@@ -72,7 +72,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveMethodCallExpression other && Equals(other);
 
-        public bool Equals(ActiveMethodCallExpression other) => arguments.Equals(other.arguments) && method.Equals(other.method) && Equals(@object, other.@object) && Equals(options, other.options);
+        public bool Equals(ActiveMethodCallExpression other) => arguments == other.arguments && method == other.method && Equals(@object, other.@object) && Equals(options, other.options);
 
         protected override void Evaluate()
         {
@@ -142,8 +142,8 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        public static bool operator ==(ActiveMethodCallExpression? a, ActiveMethodCallExpression? b) => EqualityComparer<ActiveMethodCallExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveMethodCallExpression a, ActiveMethodCallExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveMethodCallExpression? a, ActiveMethodCallExpression? b) => !EqualityComparer<ActiveMethodCallExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveMethodCallExpression a, ActiveMethodCallExpression b) => !(a == b);
     }
 }

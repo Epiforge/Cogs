@@ -43,7 +43,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveTypeBinaryExpression other && Equals(other);
 
-        public bool Equals(ActiveTypeBinaryExpression other) => expression.Equals(other.expression) && typeOperand.Equals(other.typeOperand) && Equals(options, other.options);
+        public bool Equals(ActiveTypeBinaryExpression other) => expression == other.expression && typeOperand == other.typeOperand && Equals(options, other.options);
 
         protected override void Evaluate()
         {
@@ -93,8 +93,8 @@ namespace Cogs.ActiveExpressions
             return Expression.Lambda<TypeIsDelegate>(Expression.TypeIs(parameter, type), parameter).Compile();
         }
 
-        public static bool operator ==(ActiveTypeBinaryExpression? a, ActiveTypeBinaryExpression? b) => EqualityComparer<ActiveTypeBinaryExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveTypeBinaryExpression a, ActiveTypeBinaryExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveTypeBinaryExpression? a, ActiveTypeBinaryExpression? b) => !EqualityComparer<ActiveTypeBinaryExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveTypeBinaryExpression a, ActiveTypeBinaryExpression b) => !(a == b);
     }
 }

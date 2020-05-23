@@ -29,7 +29,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object obj) => obj is ActiveCoalesceExpression other && Equals(other);
 
-        public bool Equals(ActiveCoalesceExpression other) => left.Equals(other.left) && right.Equals(other.right) && Equals(options, other.options);
+        public bool Equals(ActiveCoalesceExpression other) => left == other.left && right == other.right && Equals(options, other.options);
 
         protected override void Evaluate()
         {
@@ -66,8 +66,8 @@ namespace Cogs.ActiveExpressions
         static readonly object conversionDelegateManagementLock = new object();
         static readonly Dictionary<(Type convertFrom, Type convertTo), UnaryOperationDelegate> conversionDelegates = new Dictionary<(Type convertFrom, Type convertTo), UnaryOperationDelegate>();
 
-        public static bool operator ==(ActiveCoalesceExpression? a, ActiveCoalesceExpression? b) => EqualityComparer<ActiveCoalesceExpression?>.Default.Equals(a, b);
+        public static bool operator ==(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => a.Equals(b);
 
-        public static bool operator !=(ActiveCoalesceExpression? a, ActiveCoalesceExpression? b) => !EqualityComparer<ActiveCoalesceExpression?>.Default.Equals(a, b);
+        public static bool operator !=(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => !(a == b);
     }
 }
