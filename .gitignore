@@ -27,6 +27,7 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 *.vssscc
 .vs
+.vscode
 $tf*/
 *.userprefs
 packages/
