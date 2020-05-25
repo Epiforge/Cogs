@@ -148,7 +148,7 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-            using (var expr = ActiveExpression.Create((p1, p2) => p1.Name.Length > 0 ? p1.Name : p2.Name, john, emily))
+            using (var expr = ActiveExpression.Create((p1, p2) => p1.Name!.Length > 0 ? p1.Name : p2.Name, john, emily))
                 Assert.AreEqual(john.Name, expr.Value);
             Assert.AreEqual(0, emily.NameGets);
         }
