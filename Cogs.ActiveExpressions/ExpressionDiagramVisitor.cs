@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -63,6 +64,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override Expression VisitBlock(BlockExpression node)
         {
             elements.Add(node.Expressions.Count);
@@ -75,6 +77,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override CatchBlock VisitCatchBlock(CatchBlock node)
         {
             elements.Add(node.GetType());
@@ -98,6 +101,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override Expression VisitDebugInfo(DebugInfoExpression node)
         {
             elements.Add(node.Document);
@@ -114,6 +118,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override Expression VisitDynamic(DynamicExpression node)
         {
             elements.Add(node.Binder);
@@ -126,6 +131,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override ElementInit VisitElementInit(ElementInit node)
         {
             elements.Add(node.GetType());
@@ -138,6 +144,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override Expression VisitGoto(GotoExpression node)
         {
             elements.Add(node.Kind);
@@ -160,6 +167,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override LabelTarget VisitLabelTarget(LabelTarget node)
         {
             elements.Add(node.GetType());
@@ -172,6 +180,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override Expression VisitLambda<T>(Expression<T> node)
         {
             elements.Add(node.ReturnType);
@@ -199,6 +208,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override MemberAssignment VisitMemberAssignment(MemberAssignment node)
         {
             elements.Add(node.GetType());
@@ -212,6 +222,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override MemberBinding VisitMemberBinding(MemberBinding node)
         {
             elements.Add(node.GetType());
@@ -225,6 +236,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override MemberListBinding VisitMemberListBinding(MemberListBinding node)
         {
             elements.Add(node.GetType());
@@ -238,6 +250,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override MemberMemberBinding VisitMemberMemberBinding(MemberMemberBinding node)
         {
             elements.Add(node.GetType());
@@ -287,6 +300,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override Expression VisitRuntimeVariables(RuntimeVariablesExpression node)
         {
             elements.Add(node.Variables.Count);
@@ -298,6 +312,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override Expression VisitSwitch(SwitchExpression node)
         {
             elements.Add(node.Cases.Count);
@@ -310,6 +325,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override SwitchCase VisitSwitchCase(SwitchCase node)
         {
             elements.Add(node.GetType());
@@ -322,6 +338,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="node">The expression to visit</param>
         /// <returns><paramref name="node"/></returns>
+        [ExcludeFromCodeCoverage]
         protected override Expression VisitTry(TryExpression node)
         {
             elements.Add(node.Handlers.Count);
