@@ -541,10 +541,6 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator ==(ActiveExpression a, ActiveExpression b)
         {
-            if (a is null && b is null)
-                return true;
-            if (a is null || b is null)
-                return false;
             if (a is ActiveAndAlsoExpression andAlsoA && b is ActiveAndAlsoExpression andAlsoB)
                 return andAlsoA == andAlsoB;
             if (a is ActiveCoalesceExpression coalesceA && b is ActiveCoalesceExpression coalesceB)
@@ -571,7 +567,7 @@ namespace Cogs.ActiveExpressions
                 return typeBinaryA == typeBinaryB;
             if (a is ActiveUnaryExpression unaryA && b is ActiveUnaryExpression unaryB)
                 return unaryA == unaryB;
-            return false;
+            return a is null && b is null;
         }
 
         /// <summary>
