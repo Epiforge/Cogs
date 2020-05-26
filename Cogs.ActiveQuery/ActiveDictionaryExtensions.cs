@@ -203,7 +203,7 @@ namespace Cogs.ActiveQuery
                         else
                         {
                             activeValue!.OperationFault = null;
-                            activeValue!.Value = operations.Divide(sum.Value, (TResult)convertCount(currentCount));
+                            activeValue!.Value = operations!.Divide(sum.Value, (TResult)convertCount!(currentCount));
                         }
                     }
                 });
@@ -1056,7 +1056,7 @@ namespace Cogs.ActiveQuery
                         if ((e.OldItems?.Count ?? 0) > 0)
                         {
                             var removedMax = e.OldItems.Max(kv => kv.Value);
-                            if ((activeValueValue is null ? -1 : comparer.Compare(activeValueValue, removedMax)) == 0)
+                            if ((activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, removedMax)) == 0)
                             {
                                 try
                                 {
@@ -1074,7 +1074,7 @@ namespace Cogs.ActiveQuery
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
                             var addedMax = e.NewItems.Max(kv => kv.Value);
-                            if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer.Compare(activeValueValue, addedMax)) < 0)
+                            if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, addedMax)) < 0)
                             {
                                 activeValue!.OperationFault = null;
                                 activeValue!.Value = addedMax;
@@ -1089,7 +1089,7 @@ namespace Cogs.ActiveQuery
                     var activeValueValue = activeValue!.Value;
                     var comparison = 0;
                     if (activeValueValue is { } && e.Result is { })
-                        comparison = comparer.Compare(activeValueValue, e.Result);
+                        comparison = comparer!.Compare(activeValueValue, e.Result);
                     else if (activeValueValue is null)
                         comparison = -1;
                     else if (e.Result is null)
@@ -1194,7 +1194,7 @@ namespace Cogs.ActiveQuery
                         if ((e.OldItems?.Count ?? 0) > 0)
                         {
                             var removedMin = e.OldItems.Select(kv => kv.Value).Min();
-                            if ((activeValueValue is null ? -1 : comparer.Compare(activeValueValue, removedMin)) == 0)
+                            if ((activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, removedMin)) == 0)
                             {
                                 try
                                 {
@@ -1212,7 +1212,7 @@ namespace Cogs.ActiveQuery
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
                             var addedMin = e.NewItems.Select(kv => kv.Value).Min();
-                            if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer.Compare(activeValueValue, addedMin)) > 0)
+                            if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, addedMin)) > 0)
                             {
                                 activeValue!.OperationFault = null;
                                 activeValue!.Value = addedMin;
@@ -1227,7 +1227,7 @@ namespace Cogs.ActiveQuery
                     var activeValueValue = activeValue!.Value;
                     var comparison = 0;
                     if (activeValueValue is { } && e.Result is { })
-                        comparison = comparer.Compare(activeValueValue, e.Result);
+                        comparison = comparer!.Compare(activeValueValue, e.Result);
                     else if (activeValueValue is null)
                         comparison = -1;
                     else if (e.Result is null)
@@ -1359,7 +1359,7 @@ namespace Cogs.ActiveQuery
                     {
                         rangeObservableCollection!.Reset(rangeActiveExpression.GetResults().Select(((TKey key, TResult result) er, int index) =>
                         {
-                            keyToIndex.Add(er.key, index);
+                            keyToIndex!.Add(er.key, index);
                             return er.result;
                         }));
                     }
@@ -1371,7 +1371,7 @@ namespace Cogs.ActiveQuery
                             foreach (var kv in e.OldItems)
                             {
                                 var key = kv.Key;
-                                removingIndicies.Add(keyToIndex[key]);
+                                removingIndicies.Add(keyToIndex![key]);
                                 keyToIndex.Remove(key);
                             }
                             var rangeStart = -1;
@@ -1406,7 +1406,7 @@ namespace Cogs.ActiveQuery
                         }
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
-                            var currentCount = keyToIndex.Count;
+                            var currentCount = keyToIndex!.Count;
                             rangeObservableCollection!.AddRange(e.NewItems.Select((KeyValuePair<TKey, TResult> kv, int index) =>
                             {
                                 keyToIndex.Add(kv.Key, currentCount + index);
@@ -1416,7 +1416,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => rangeObservableCollection!.Replace(keyToIndex[e.Element! /* this could be null, but it won't matter if it is */], e.Result! /* this could be null, but it won't matter if it is */));
+            void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => rangeObservableCollection!.Replace(keyToIndex![e.Element! /* this could be null, but it won't matter if it is */], e.Result! /* this could be null, but it won't matter if it is */));
 
             return synchronizedSource.SequentialExecute(() =>
             {
@@ -1758,14 +1758,14 @@ namespace Cogs.ActiveQuery
                 synchronizedSource.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
-                        activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations.Add);
+                        activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations!.Add);
                     else
                     {
                         var sum = activeValue!.Value;
                         if ((e.OldItems?.Count ?? 0) > 0)
-                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.OldItems.Select(kv => kv.Value)).Aggregate(operations.Subtract);
+                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.OldItems.Select(kv => kv.Value)).Aggregate(operations!.Subtract);
                         if ((e.NewItems?.Count ?? 0) > 0)
-                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.NewItems.Select(kv => kv.Value)).Aggregate(operations.Add);
+                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.NewItems.Select(kv => kv.Value)).Aggregate(operations!.Add);
                         activeValue!.Value = sum;
                     }
                 });
@@ -1774,11 +1774,11 @@ namespace Cogs.ActiveQuery
                 synchronizedSource.SequentialExecute(() =>
                 {
                     var key = e.Element;
-                    activeValue!.Value = operations.Add(activeValue!.Value, operations.Subtract(e.Result, valuesChanging[key! /* this could be null, but it won't matter if it is */]));
+                    activeValue!.Value = operations!.Add(activeValue!.Value, operations.Subtract(e.Result, valuesChanging![key! /* this could be null, but it won't matter if it is */]));
                     valuesChanging.Remove(key! /* this could be null, but it won't matter if it is */);
                 });
 
-            void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => valuesChanging.Add(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */));
+            void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => valuesChanging!.Add(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */));
 
             return synchronizedSource.SequentialExecute(() =>
             {

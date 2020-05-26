@@ -10,7 +10,7 @@ namespace Cogs.ActiveQuery
     /// </summary>
     /// <typeparam name="TKey">The type of the values by which the source elements are being grouped</typeparam>
     /// <typeparam name="TElement">The type of the source elements</typeparam>
-    public class ActiveGrouping<TKey, TElement> : ActiveEnumerable<TElement>, IGrouping<TKey, TElement>
+    public class ActiveGrouping<TKey, TElement> : ActiveEnumerable<TElement>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ActiveGrouping{TKey, TElement}"/> class
