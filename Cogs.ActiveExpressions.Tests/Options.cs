@@ -189,6 +189,13 @@ namespace Cogs.ActiveExpressions.Tests
         }
 
         [TestMethod]
+        public void ObjectEquals()
+        {
+            Assert.IsTrue(ActiveExpressionOptions.Default.Equals((object)ActiveExpressionOptions.Default));
+            Assert.IsFalse(ActiveExpressionOptions.Default.Equals((object?)null));
+        }
+
+        [TestMethod]
         public async Task PreferAsyncDisposalDisabled()
         {
             DisposableTestPerson? person;
