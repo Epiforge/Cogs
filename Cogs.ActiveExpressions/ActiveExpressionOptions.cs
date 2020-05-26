@@ -23,8 +23,8 @@ namespace Cogs.ActiveExpressions
             ConstantExpressionsListenForDictionaryChanged = true;
             DisposeConstructedObjects = true;
             DisposeStaticMethodReturnValues = true;
-            MemberExpressionsListenToFieldValuesForCollectionChanged = true;
-            MemberExpressionsListenToFieldValuesForDictionaryChanged = true;
+            MemberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged = true;
+            MemberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged = true;
             PreferAsyncDisposal = true;
         }
 
@@ -36,8 +36,8 @@ namespace Cogs.ActiveExpressions
         readonly ConcurrentDictionary<MethodInfo, bool> disposeMethodReturnValues = new ConcurrentDictionary<MethodInfo, bool>();
         bool disposeStaticMethodReturnValues;
         bool isFrozen;
-        bool memberExpressionsListenToFieldValuesForCollectionChanged;
-        bool memberExpressionsListenToFieldValuesForDictionaryChanged;
+        bool memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged;
+        bool memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged;
         bool preferAsyncDisposal;
 
         /// <summary>
@@ -106,28 +106,28 @@ namespace Cogs.ActiveExpressions
         }
 
         /// <summary>
-        /// Gets/sets whether constant member expressions will subscribe to <see cref="INotifyCollectionChanged.CollectionChanged" /> events of their values when present and retrieved from a field and cause re-evaluations when they occur; the default is <c>true</c>
+        /// Gets/sets whether constant member expressions will subscribe to <see cref="INotifyCollectionChanged.CollectionChanged" /> events of their values when present and retrieved from a field of a compiler-generated type and cause re-evaluations when they occur; the default is <c>true</c>
         /// </summary>
-        public bool MemberExpressionsListenToFieldValuesForCollectionChanged
+        public bool MemberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged
         {
-            get => memberExpressionsListenToFieldValuesForCollectionChanged;
+            get => memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged;
             set
             {
                 RequireUnfrozen();
-                memberExpressionsListenToFieldValuesForCollectionChanged = value;
+                memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged = value;
             }
         }
 
         /// <summary>
-        /// Gets/sets whether constant member expressions will subscribe to <see cref="INotifyDictionaryChanged.DictionaryChanged" /> events of their values when present and retrieved from a field and cause re-evaluations when they occur; the default is <c>true</c>
+        /// Gets/sets whether constant member expressions will subscribe to <see cref="INotifyDictionaryChanged.DictionaryChanged" /> events of their values when present and retrieved from a field of a compiler-generated type and cause re-evaluations when they occur; the default is <c>true</c>
         /// </summary>
-        public bool MemberExpressionsListenToFieldValuesForDictionaryChanged
+        public bool MemberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged
         {
-            get => memberExpressionsListenToFieldValuesForDictionaryChanged;
+            get => memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged;
             set
             {
                 RequireUnfrozen();
-                memberExpressionsListenToFieldValuesForDictionaryChanged = value;
+                memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged = value;
             }
         }
 
@@ -229,8 +229,8 @@ namespace Cogs.ActiveExpressions
             constantExpressionsListenForDictionaryChanged == other.constantExpressionsListenForDictionaryChanged &&
             disposeConstructedObjects == other.disposeConstructedObjects &&
             disposeStaticMethodReturnValues == other.disposeStaticMethodReturnValues &&
-            memberExpressionsListenToFieldValuesForCollectionChanged == other.memberExpressionsListenToFieldValuesForCollectionChanged &&
-            memberExpressionsListenToFieldValuesForDictionaryChanged == other.memberExpressionsListenToFieldValuesForDictionaryChanged &&
+            memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged &&
+            memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged &&
             preferAsyncDisposal == other.preferAsyncDisposal &&
             disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value))) &&
             disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)));
@@ -254,8 +254,8 @@ namespace Cogs.ActiveExpressions
                 constantExpressionsListenForDictionaryChanged,
                 disposeConstructedObjects,
                 disposeStaticMethodReturnValues,
-                memberExpressionsListenToFieldValuesForCollectionChanged,
-                memberExpressionsListenToFieldValuesForDictionaryChanged,
+                memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged,
+                memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged,
                 preferAsyncDisposal
             };
             objects.AddRange(disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => kv.Key).Cast<object>());

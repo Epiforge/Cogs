@@ -21,10 +21,12 @@ namespace Cogs.ActiveExpressions
             {
                 case FieldInfo field:
                     this.field = field;
+                    isFieldOfCompilerGeneratedType = this.expression.Type.Name.StartsWith("<");
                     break;
                 case PropertyInfo property:
                     getMethod = property.GetMethod;
                     fastGetter = FastMethodInfo.Get(getMethod);
+                    isFieldOfCompilerGeneratedType = false;
                     break;
             }
             EvaluateIfNotDeferred();
@@ -32,6 +34,7 @@ namespace Cogs.ActiveExpressions
 
         ActiveMemberExpression(Type type, MemberInfo member, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.MemberAccess, options, deferEvaluation)
         {
+            isFieldOfCompilerGeneratedType = false;
             this.member = member;
             switch (this.member)
             {
@@ -52,6 +55,7 @@ namespace Cogs.ActiveExpressions
         readonly FastMethodInfo? fastGetter;
         readonly FieldInfo? field;
         readonly MethodInfo? getMethod;
+        readonly bool isFieldOfCompilerGeneratedType;
         readonly MemberInfo member;
 
         protected override bool Dispose(bool disposing)
@@ -142,11 +146,11 @@ namespace Cogs.ActiveExpressions
 
         void SubscribeToValueNotifications()
         {
-            if (field is { })
+            if (isFieldOfCompilerGeneratedType)
             {
-                if (ApplicableOptions.MemberExpressionsListenToFieldValuesForDictionaryChanged && Value is INotifyDictionaryChanged dictionaryChangedNotifier)
+                if (ApplicableOptions.MemberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged && Value is INotifyDictionaryChanged dictionaryChangedNotifier)
                     dictionaryChangedNotifier.DictionaryChanged += ValueChanged;
-                else if (ApplicableOptions.MemberExpressionsListenToFieldValuesForCollectionChanged && Value is INotifyCollectionChanged collectionChangedNotifier)
+                else if (ApplicableOptions.MemberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged && Value is INotifyCollectionChanged collectionChangedNotifier)
                     collectionChangedNotifier.CollectionChanged += ValueChanged;
             }
         }
@@ -159,11 +163,11 @@ namespace Cogs.ActiveExpressions
 
         void UnsubscribeFromValueNotifications()
         {
-            if (field is { } && TryGetUndeferredValue(out var value))
+            if (isFieldOfCompilerGeneratedType && TryGetUndeferredValue(out var value))
             {
-                if (ApplicableOptions.MemberExpressionsListenToFieldValuesForDictionaryChanged && value is INotifyDictionaryChanged dictionaryChangedNotifier)
+                if (ApplicableOptions.MemberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged && value is INotifyDictionaryChanged dictionaryChangedNotifier)
                     dictionaryChangedNotifier.DictionaryChanged -= ValueChanged;
-                else if (ApplicableOptions.MemberExpressionsListenToFieldValuesForCollectionChanged && value is INotifyCollectionChanged collectionChangedNotifier)
+                else if (ApplicableOptions.MemberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged && value is INotifyCollectionChanged collectionChangedNotifier)
                     collectionChangedNotifier.CollectionChanged -= ValueChanged;
             }
         }
