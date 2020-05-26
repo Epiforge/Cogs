@@ -1,6 +1,7 @@
 using Cogs.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Cogs.ActiveExpressions.Tests
