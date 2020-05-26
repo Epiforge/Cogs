@@ -3,6 +3,7 @@ using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -70,7 +71,7 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        public override bool Equals(object obj) => obj is ActiveMethodCallExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveMethodCallExpression other && Equals(other);
 
         public bool Equals(ActiveMethodCallExpression other) => arguments == other.arguments && method == other.method && Equals(@object, other.@object) && Equals(options, other.options);
 
@@ -144,6 +145,7 @@ namespace Cogs.ActiveExpressions
 
         public static bool operator ==(ActiveMethodCallExpression a, ActiveMethodCallExpression b) => a.Equals(b);
 
+        [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveMethodCallExpression a, ActiveMethodCallExpression b) => !(a == b);
     }
 }

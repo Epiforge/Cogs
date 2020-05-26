@@ -28,7 +28,7 @@ namespace Cogs.ActiveExpressions
 
         readonly UnaryOperationDelegate? conversionDelegate;
 
-        public override bool Equals(object obj) => obj is ActiveCoalesceExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveCoalesceExpression other && Equals(other);
 
         public bool Equals(ActiveCoalesceExpression other) => left == other.left && right == other.right && Equals(options, other.options);
 

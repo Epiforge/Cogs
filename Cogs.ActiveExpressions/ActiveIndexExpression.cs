@@ -59,7 +59,7 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        public override bool Equals(object obj) => obj is ActiveIndexExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveIndexExpression other && Equals(other);
 
         public bool Equals(ActiveIndexExpression other) => arguments == other.arguments && indexer == other.indexer && @object == other.@object && Equals(options, other.options);
 

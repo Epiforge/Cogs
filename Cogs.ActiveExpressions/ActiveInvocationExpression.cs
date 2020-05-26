@@ -50,7 +50,7 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        public override bool Equals(object obj) => obj is ActiveInvocationExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveInvocationExpression other && Equals(other);
 
         public bool Equals(ActiveInvocationExpression other) => expression == other.expression && arguments == other.arguments && Equals(options, other.options);
 

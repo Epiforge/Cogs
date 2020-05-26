@@ -39,7 +39,7 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        public override bool Equals(object obj) => obj is ActiveConstantExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveConstantExpression other && Equals(other);
 
         public bool Equals(ActiveConstantExpression other) => Type == other.Type && FastEqualityComparer.Get(Type).Equals(Value, other.Value) && Equals(options, other.options);
 

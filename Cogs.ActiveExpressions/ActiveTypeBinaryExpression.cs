@@ -41,7 +41,7 @@ namespace Cogs.ActiveExpressions
         }
 
 
-        public override bool Equals(object obj) => obj is ActiveTypeBinaryExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveTypeBinaryExpression other && Equals(other);
 
         public bool Equals(ActiveTypeBinaryExpression other) => expression == other.expression && typeOperand == other.typeOperand && Equals(options, other.options);
 

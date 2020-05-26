@@ -62,7 +62,7 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        public override bool Equals(object obj) => obj is ActiveBinaryExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveBinaryExpression other && Equals(other);
 
         public bool Equals(ActiveBinaryExpression other) => left == other.left && method == other.method && NodeType == other.NodeType && right == other.right && Equals(options, other.options);
 

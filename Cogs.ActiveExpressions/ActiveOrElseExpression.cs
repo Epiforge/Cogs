@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Cogs.ActiveExpressions
@@ -9,7 +10,7 @@ namespace Cogs.ActiveExpressions
         {
         }
 
-        public override bool Equals(object obj) => obj is ActiveOrElseExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveOrElseExpression other && Equals(other);
 
         public bool Equals(ActiveOrElseExpression other) => left == other.left && right == other.right && Equals(options, other.options);
 
@@ -36,6 +37,7 @@ namespace Cogs.ActiveExpressions
 
         public static bool operator ==(ActiveOrElseExpression a, ActiveOrElseExpression b) => a.Equals(b);
 
+        [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveOrElseExpression a, ActiveOrElseExpression b) => !(a == b);
     }
 }

@@ -45,7 +45,7 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        public override bool Equals(object obj) => obj is ActiveConditionalExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveConditionalExpression other && Equals(other);
 
         public bool Equals(ActiveConditionalExpression other) => ifFalse == other.ifFalse && ifTrue == other.ifTrue && test == other.test && Equals(options, other.options);
 

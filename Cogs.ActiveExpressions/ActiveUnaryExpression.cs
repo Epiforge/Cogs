@@ -48,7 +48,7 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        public override bool Equals(object obj) => obj is ActiveUnaryExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveUnaryExpression other && Equals(other);
 
         public bool Equals(ActiveUnaryExpression other) => method == other.method && NodeType == other.NodeType && operand == other.operand && Equals(options, other.options);
 

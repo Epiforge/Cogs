@@ -136,7 +136,7 @@ namespace Cogs.ActiveExpressions
         /// Throws a <see cref="NotImplementedException"/> because deriving classes should be overriding this method
         /// </summary>
         /// <param name="obj">The object to compare with the current object</param>
-        public override bool Equals(object obj) => throw new NotImplementedException();
+        public override bool Equals(object? obj) => throw new NotImplementedException();
 
         /// <summary>
         /// Evaluates the current node
@@ -663,7 +663,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="obj">The object to compare with the current object</param>
         /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-        public override bool Equals(object obj) => obj is ActiveExpression<TResult> other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveExpression<TResult> other && Equals(other);
 
         /// <summary>
         /// Determines whether the specified <see cref="ActiveExpression{TResult}"/> is equal to the current <see cref="ActiveExpression{TResult}"/>
@@ -774,7 +774,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="obj">The object to compare with the current object</param>
         /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-        public override bool Equals(object obj) => obj is ActiveExpression<TArg, TResult> other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveExpression<TArg, TResult> other && Equals(other);
 
         /// <summary>
         /// Determines whether the specified <see cref="ActiveExpression{TArg, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg, TResult}"/>
@@ -949,7 +949,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="obj">The object to compare with the current object</param>
         /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-        public override bool Equals(object obj) => obj is ActiveExpression<TArg1, TArg2, TResult> other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveExpression<TArg1, TArg2, TResult> other && Equals(other);
 
         /// <summary>
         /// Determines whether the specified <see cref="ActiveExpression{TArg1, TArg2, TResult}"/> is equal to the current object
@@ -1102,7 +1102,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="obj">The object to compare with the current object</param>
         /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-        public override bool Equals(object obj) => obj is ActiveExpression<TArg1, TArg2, TArg3, TResult> other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveExpression<TArg1, TArg2, TArg3, TResult> other && Equals(other);
 
         /// <summary>
         /// Determines whether the specified <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/>

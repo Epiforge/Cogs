@@ -129,6 +129,19 @@ namespace Cogs.ActiveExpressions.Tests
         }
 
         [TestMethod]
+        public void OneArgumentObjectEquals()
+        {
+            var john = TestPerson.CreateJohn();
+            var emily = TestPerson.CreateEmily();
+            using var expr1 = ActiveExpression.Create(p => p.Name!.Length, john);
+            using var expr2 = ActiveExpression.Create(p => p.Name!.Length, john);
+            using var expr3 = ActiveExpression.Create(p => p.Name!.Length, emily);
+            Assert.IsTrue(expr1.Equals((object?)expr2));
+            Assert.IsFalse(expr1.Equals((object?)expr3));
+            Assert.IsFalse(expr1.Equals((object?)null));
+        }
+
+        [TestMethod]
         public void OneArgumentOptions()
         {
             using var expr = ActiveExpression.Create(a => a, 1);
@@ -187,6 +200,17 @@ namespace Cogs.ActiveExpressions.Tests
             var b = Expression.Parameter(typeof(bool));
             using var expr = ActiveExpression.Create<bool>(Expression.Lambda<Func<bool, bool, bool>>(Expression.AndAlso(Expression.Not(a), Expression.Not(b)), a, b), false, false);
             Assert.AreEqual("(!({C} /* False */ || {C} /* False */) /* False */) /* True */", expr.ToString());
+        }
+
+        [TestMethod]
+        public void NoArgumentObjectEquals()
+        {
+            using var expr1 = ActiveExpression.Create(() => 1);
+            using var expr2 = ActiveExpression.Create(() => 1);
+            using var expr3 = ActiveExpression.Create(() => 2);
+            Assert.IsTrue(expr1.Equals((object?)expr2));
+            Assert.IsFalse(expr1.Equals((object?)expr3));
+            Assert.IsFalse(expr1.Equals((object?)null));
         }
 
         [TestMethod]
@@ -312,6 +336,19 @@ namespace Cogs.ActiveExpressions.Tests
             using (var expr = ActiveExpression.Create((a, b) => a + b, 1, 2))
                 hashCode2 = expr.GetHashCode();
             Assert.IsTrue(hashCode1 == hashCode2);
+        }
+
+        [TestMethod]
+        public void TwoArgumentObjectEquals()
+        {
+            var john = TestPerson.CreateJohn();
+            var emily = TestPerson.CreateEmily();
+            using var expr1 = ActiveExpression.Create((p1, p2) => p1.Name!.Length + p2.Name!.Length, john, emily);
+            using var expr2 = ActiveExpression.Create((p1, p2) => p1.Name!.Length + p2.Name!.Length, john, emily);
+            using var expr3 = ActiveExpression.Create((p1, p2) => p1.Name!.Length + p2.Name!.Length, emily, john);
+            Assert.IsTrue(expr1.Equals((object?)expr2));
+            Assert.IsFalse(expr1.Equals((object?)expr3));
+            Assert.IsFalse(expr1.Equals((object?)null));
         }
 
         [TestMethod]

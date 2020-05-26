@@ -216,7 +216,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="obj">The object to compare with the current object</param>
         /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-        public override bool Equals(object obj) => obj is ActiveExpressionOptions other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveExpressionOptions other && Equals(other);
 
         /// <summary>
         /// Determines whether the specified options are equal to the current options

@@ -1,8 +1,10 @@
 using Cogs.Collections;
 using Cogs.Reflection;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -11,12 +13,9 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
     {
-        ActiveNewExpression(Type type, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.New, options, deferEvaluation)
+        ActiveNewExpression(Type type, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.New, options, deferEvaluation)
         {
-            this.arguments = arguments;
-            constructorParameterTypes = new EquatableList<Type>(this.arguments.Select(argument => argument.Type).ToList());
-            foreach (var argument in this.arguments)
-                argument.PropertyChanged += ArgumentPropertyChanged;
+            newStatementDelegate = newStatementDelegates.GetOrAdd(type, CreateNewStatementDelegate);
             EvaluateIfNotDeferred();
         }
 
@@ -36,6 +35,7 @@ namespace Cogs.ActiveExpressions
         readonly EquatableList<Type> constructorParameterTypes;
         int disposalCount;
         readonly FastConstructorInfo? fastConstructor;
+        readonly NewStatementDelegate? newStatementDelegate;
 
         void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
@@ -46,7 +46,7 @@ namespace Cogs.ActiveExpressions
                 if (--disposalCount == 0)
                 {
                     if (constructor is null)
-                        typeInstances.Remove((Type, arguments, options));
+                        typeInstances.Remove((Type, options));
                     else
                         constructorInstances.Remove((Type, constructor, arguments, options));
                     result = true;
@@ -63,7 +63,7 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        public override bool Equals(object obj) => obj is ActiveNewExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveNewExpression other && Equals(other);
 
         public bool Equals(ActiveNewExpression other) => Type == other.Type && arguments == other.arguments && Equals(options, other.options);
 
@@ -76,8 +76,10 @@ namespace Cogs.ActiveExpressions
                     Fault = argumentFault;
                 else if (fastConstructor is { })
                     Value = fastConstructor.Invoke(arguments.Select(argument => argument.Value).ToArray());
+                else if (newStatementDelegate is { })
+                    Value = newStatementDelegate();
                 else
-                    Value = Activator.CreateInstance(Type, arguments.Select(argument => argument.Value).ToArray());
+                    throw new Exception("No constructor or new statement delegate is available");
             }
             catch (Exception ex)
             {
@@ -93,14 +95,15 @@ namespace Cogs.ActiveExpressions
 
         static readonly Dictionary<(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression> constructorInstances = new Dictionary<(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(Type type, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression> typeInstances = new Dictionary<(Type type, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression>();
+        static readonly ConcurrentDictionary<Type, NewStatementDelegate> newStatementDelegates = new ConcurrentDictionary<Type, NewStatementDelegate>();
+        static readonly Dictionary<(Type type, ActiveExpressionOptions? options), ActiveNewExpression> typeInstances = new Dictionary<(Type type, ActiveExpressionOptions? options), ActiveNewExpression>();
 
         public static ActiveNewExpression Create(NewExpression newExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
             var type = newExpression.Type;
-            var arguments = new EquatableList<ActiveExpression>(newExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToList());
             if (newExpression.Constructor is ConstructorInfo constructor)
             {
+                var arguments = new EquatableList<ActiveExpression>(newExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToList());
                 var key = (type, constructor, arguments, options);
                 lock (instanceManagementLock)
                 {
@@ -115,12 +118,12 @@ namespace Cogs.ActiveExpressions
             }
             else
             {
-                var key = (type, arguments, options);
+                var key = (type, options);
                 lock (instanceManagementLock)
                 {
                     if (!typeInstances.TryGetValue(key, out var activeNewExpression))
                     {
-                        activeNewExpression = new ActiveNewExpression(type, arguments, options, deferEvaluation);
+                        activeNewExpression = new ActiveNewExpression(type, options, deferEvaluation);
                         typeInstances.Add(key, activeNewExpression);
                     }
                     ++activeNewExpression.disposalCount;
@@ -129,8 +132,12 @@ namespace Cogs.ActiveExpressions
             }
         }
 
+        static NewStatementDelegate CreateNewStatementDelegate(Type key) =>
+            Expression.Lambda<NewStatementDelegate>(Expression.Convert(Expression.New(key), typeof(object))).Compile();
+
         public static bool operator ==(ActiveNewExpression a, ActiveNewExpression b) => a.Equals(b);
 
+        [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveNewExpression a, ActiveNewExpression b) => !(a == b);
     }
 }

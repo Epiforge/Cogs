@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -81,7 +82,7 @@ namespace Cogs.ActiveExpressions
             return result;
         }
 
-        public override bool Equals(object obj) => obj is ActiveMemberExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveMemberExpression other && Equals(other);
 
         public bool Equals(ActiveMemberExpression other) => Equals(expression, other.expression) && member == other.member && Equals(options, other.options);
 
@@ -141,10 +142,13 @@ namespace Cogs.ActiveExpressions
 
         void SubscribeToValueNotifications()
         {
-            if (ApplicableOptions.ConstantExpressionsListenForDictionaryChanged && Value is INotifyDictionaryChanged dictionaryChangedNotifier)
-                dictionaryChangedNotifier.DictionaryChanged += ValueChanged;
-            else if (ApplicableOptions.ConstantExpressionsListenForCollectionChanged && Value is INotifyCollectionChanged collectionChangedNotifier)
-                collectionChangedNotifier.CollectionChanged += ValueChanged;
+            if (field is { })
+            {
+                if (ApplicableOptions.MemberExpressionsListenToFieldValuesForDictionaryChanged && Value is INotifyDictionaryChanged dictionaryChangedNotifier)
+                    dictionaryChangedNotifier.DictionaryChanged += ValueChanged;
+                else if (ApplicableOptions.MemberExpressionsListenToFieldValuesForCollectionChanged && Value is INotifyCollectionChanged collectionChangedNotifier)
+                    collectionChangedNotifier.CollectionChanged += ValueChanged;
+            }
         }
 
         void UnsubscribeFromExpressionValueNotifications()
@@ -155,11 +159,11 @@ namespace Cogs.ActiveExpressions
 
         void UnsubscribeFromValueNotifications()
         {
-            if (TryGetUndeferredValue(out var value))
+            if (field is { } && TryGetUndeferredValue(out var value))
             {
-                if (ApplicableOptions.ConstantExpressionsListenForDictionaryChanged && value is INotifyDictionaryChanged dictionaryChangedNotifier)
+                if (ApplicableOptions.MemberExpressionsListenToFieldValuesForDictionaryChanged && value is INotifyDictionaryChanged dictionaryChangedNotifier)
                     dictionaryChangedNotifier.DictionaryChanged -= ValueChanged;
-                else if (ApplicableOptions.ConstantExpressionsListenForCollectionChanged && value is INotifyCollectionChanged collectionChangedNotifier)
+                else if (ApplicableOptions.MemberExpressionsListenToFieldValuesForCollectionChanged && value is INotifyCollectionChanged collectionChangedNotifier)
                     collectionChangedNotifier.CollectionChanged -= ValueChanged;
             }
         }
@@ -208,6 +212,7 @@ namespace Cogs.ActiveExpressions
 
         public static bool operator ==(ActiveMemberExpression a, ActiveMemberExpression b) => a.Equals(b);
 
+        [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveMemberExpression a, ActiveMemberExpression b) => !(a == b);
     }
 }

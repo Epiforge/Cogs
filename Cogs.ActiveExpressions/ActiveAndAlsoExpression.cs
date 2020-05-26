@@ -10,7 +10,7 @@ namespace Cogs.ActiveExpressions
         {
         }
 
-        public override bool Equals(object obj) => obj is ActiveAndAlsoExpression other && Equals(other);
+        public override bool Equals(object? obj) => obj is ActiveAndAlsoExpression other && Equals(other);
 
         public bool Equals(ActiveAndAlsoExpression other) => left == other.left && right == other.right && Equals(options, other.options);
 
