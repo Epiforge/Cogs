@@ -3097,7 +3097,7 @@ namespace Cogs.ActiveQuery
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 var operationFault = (moreThanOne = where.Count > 1) ? ExceptionHelper.SequenceContainsMoreThanOneElement : null;
-                var activeValue = new ActiveValue<TSource>(!moreThanOne && where.Count == 1 ? where[0] : default, operationFault, where, () =>
+                activeValue = new ActiveValue<TSource>(!moreThanOne && where.Count == 1 ? where[0] : default, operationFault, where, () =>
                 {
                     where.CollectionChanged -= collectionChanged;
                     where.Dispose();
