@@ -3717,7 +3717,7 @@ namespace Cogs.ActiveQuery
                 rangeObservableDictionary.AddRange(distinctResultsFaultsAndCounts.Select(g => g.First().result));
                 foreach (var (key, duplicateCount) in distinctResultsFaultsAndCounts.Select(g => (key: g.Key, duplicateCount: g.Sum(rfc => rfc.count) - 1)).Where(kc => kc.duplicateCount > 0))
                     duplicateKeys.Add(key, duplicateCount);
-                var activeDictionary = new ActiveDictionary<TKey, TValue>(rangeObservableDictionary, rangeActiveExpression, () =>
+                activeDictionary = new ActiveDictionary<TKey, TValue>(rangeObservableDictionary, rangeActiveExpression, () =>
                 {
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
                     rangeActiveExpression.ElementResultChanging -= elementResultChanging;
