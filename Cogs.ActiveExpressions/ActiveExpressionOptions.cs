@@ -19,12 +19,12 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         public ActiveExpressionOptions()
         {
-            ConstantExpressionsListenForCollectionChanged = true;
-            ConstantExpressionsListenForDictionaryChanged = true;
+            ConstantExpressionsListenForCollectionChanged = false;
+            ConstantExpressionsListenForDictionaryChanged = false;
             DisposeConstructedObjects = true;
             DisposeStaticMethodReturnValues = true;
-            MemberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged = true;
-            MemberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged = true;
+            MemberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged = false;
+            MemberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged = false;
             PreferAsyncDisposal = true;
         }
 
