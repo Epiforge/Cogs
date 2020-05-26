@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Cogs.ActiveExpressions
@@ -47,17 +48,10 @@ namespace Cogs.ActiveExpressions
 
         protected override void Evaluate()
         {
-            try
-            {
-                if (expression.Fault is { } expressionFault)
-                    Fault = expressionFault;
-                else
-                    Value = @delegate.Invoke(expression.Value);
-            }
-            catch (Exception ex)
-            {
-                Fault = ex;
-            }
+            if (expression.Fault is { } expressionFault)
+                Fault = expressionFault;
+            else
+                Value = @delegate.Invoke(expression.Value);
         }
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
@@ -95,6 +89,7 @@ namespace Cogs.ActiveExpressions
 
         public static bool operator ==(ActiveTypeBinaryExpression a, ActiveTypeBinaryExpression b) => a.Equals(b);
 
+        [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveTypeBinaryExpression a, ActiveTypeBinaryExpression b) => !(a == b);
     }
 }
