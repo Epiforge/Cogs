@@ -349,7 +349,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="lambdaExpression">The lambda expression</param>
         /// <param name="arguments">The arguments</param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TResult> Create<TResult>(LambdaExpression lambdaExpression, params object[] arguments) =>
+        public static ActiveExpression<TResult> Create<TResult>(LambdaExpression lambdaExpression, params object?[] arguments) =>
             CreateWithOptions<TResult>(lambdaExpression, null, arguments);
 
         /// <summary>
@@ -360,7 +360,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <param name="arguments">The arguments</param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TResult> CreateWithOptions<TResult>(LambdaExpression lambdaExpression, ActiveExpressionOptions? options, params object[] arguments)
+        public static ActiveExpression<TResult> CreateWithOptions<TResult>(LambdaExpression lambdaExpression, ActiveExpressionOptions? options, params object?[] arguments)
         {
             options?.Freeze();
             return ActiveExpression<TResult>.Create(lambdaExpression, options, arguments);
@@ -388,7 +388,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="arg">The argument</param>
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TArg, TResult> Create<TArg, TResult>(Expression<Func<TArg, TResult>> expression, TArg arg, ActiveExpressionOptions? options = null)
+        public static ActiveExpression<TArg, TResult> Create<TArg, TResult>(Expression<Func<TArg, TResult>> expression, [AllowNull] TArg arg, ActiveExpressionOptions? options = null)
         {
             options?.Freeze();
             return ActiveExpression<TArg, TResult>.Create(expression, arg, options);
@@ -405,7 +405,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="arg2">The second argument</param>
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TArg1, TArg2, TResult> Create<TArg1, TArg2, TResult>(Expression<Func<TArg1, TArg2, TResult>> expression, TArg1 arg1, TArg2 arg2, ActiveExpressionOptions? options = null)
+        public static ActiveExpression<TArg1, TArg2, TResult> Create<TArg1, TArg2, TResult>(Expression<Func<TArg1, TArg2, TResult>> expression, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, ActiveExpressionOptions? options = null)
         {
             options?.Freeze();
             return ActiveExpression<TArg1, TArg2, TResult>.Create(expression, arg1, arg2, options);
@@ -424,7 +424,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="arg3">The third argument</param>
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TArg1, TArg2, TArg3, TResult> Create<TArg1, TArg2, TArg3, TResult>(Expression<Func<TArg1, TArg2, TArg3, TResult>> expression, TArg1 arg1, TArg2 arg2, TArg3 arg3, ActiveExpressionOptions? options = null)
+        public static ActiveExpression<TArg1, TArg2, TArg3, TResult> Create<TArg1, TArg2, TArg3, TResult>(Expression<Func<TArg1, TArg2, TArg3, TResult>> expression, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, [AllowNull] TArg3 arg3, ActiveExpressionOptions? options = null)
         {
             options?.Freeze();
             return ActiveExpression<TArg1, TArg2, TArg3, TResult>.Create(expression, arg1, arg2, arg3, options);
@@ -591,7 +591,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the lambda expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TResult> : SyncDisposable, IActiveExpression<TResult>, IEquatable<ActiveExpression<TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, EquatableList<object> arguments)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, EquatableList<object?> arguments)
         {
             this.activeExpression = activeExpression;
             Options = options;
@@ -602,7 +602,7 @@ namespace Cogs.ActiveExpressions
         }
 
         readonly ActiveExpression activeExpression;
-        readonly EquatableList<object> arguments;
+        readonly EquatableList<object?> arguments;
         int disposalCount;
         Exception? fault;
         [AllowNull, MaybeNull] TResult val;
@@ -610,7 +610,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the arguments that were passed to the lambda expression
         /// </summary>
-        public IReadOnlyList<object> Arguments => arguments;
+        public IReadOnlyList<object?> Arguments => arguments;
 
         /// <summary>
         /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
@@ -689,12 +689,12 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => activeExpression.ToString();
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression activeExpression, EquatableList<object> args), ActiveExpression<TResult>> instances = new Dictionary<(ActiveExpression activeExpression, EquatableList<object> args), ActiveExpression<TResult>>();
+        static readonly Dictionary<(ActiveExpression activeExpression, EquatableList<object?> args), ActiveExpression<TResult>> instances = new Dictionary<(ActiveExpression activeExpression, EquatableList<object?> args), ActiveExpression<TResult>>();
 
-        internal static ActiveExpression<TResult> Create(LambdaExpression expression, ActiveExpressionOptions? options, params object[] args)
+        internal static ActiveExpression<TResult> Create(LambdaExpression expression, ActiveExpressionOptions? options, params object?[] args)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, args), options, false);
-            var arguments = new EquatableList<object>(args);
+            var arguments = new EquatableList<object?>(args);
             var key = (activeExpression, arguments);
             lock (instanceManagementLock)
             {
@@ -732,10 +732,11 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression<TArg, TResult>, IEquatable<ActiveExpression<TArg, TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg arg)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, [AllowNull] TArg arg)
         {
             this.activeExpression = activeExpression;
             Options = options;
+            arguments = new EquatableList<object?>(new object?[] { arg });
             Arg = arg;
             fault = this.activeExpression.Fault;
             val = this.activeExpression.Value is TResult value ? value : default;
@@ -743,9 +744,45 @@ namespace Cogs.ActiveExpressions
         }
 
         readonly ActiveExpression activeExpression;
+        readonly EquatableList<object?> arguments;
         int disposalCount;
         Exception? fault;
         [AllowNull, MaybeNull] TResult val;
+
+        /// <summary>
+        /// Gets the argument that was passed to the lambda expression
+        /// </summary>
+        [AllowNull, MaybeNull]
+        public TArg Arg { get; }
+
+        /// <summary>
+        /// Gets the arguments that were passed to the lambda expression
+        /// </summary>
+        public IReadOnlyList<object?> Arguments => arguments;
+
+        /// <summary>
+        /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
+        /// </summary>
+        public Exception? Fault
+        {
+            get => fault;
+            private set => SetBackedProperty(ref fault, in value);
+        }
+
+        /// <summary>
+        /// Gets the options used when creating the active expression
+        /// </summary>
+        public ActiveExpressionOptions? Options { get; }
+
+        /// <summary>
+        /// Gets the result of evaluating the lambda expression
+        /// </summary>
+        [AllowNull, MaybeNull]
+        public TResult Value
+        {
+            get => val;
+            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
+        }
 
         /// <summary>
         /// Frees, releases, or resets unmanaged resources
@@ -799,39 +836,10 @@ namespace Cogs.ActiveExpressions
         /// <returns>A string that represents this active expression</returns>
         public override string ToString() => activeExpression.ToString();
 
-        /// <summary>
-        /// Gets the argument that was passed to the lambda expression
-        /// </summary>
-        public TArg Arg { get; }
-
-        /// <summary>
-        /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
-        /// </summary>
-        public Exception? Fault
-        {
-            get => fault;
-            private set => SetBackedProperty(ref fault, in value);
-        }
-
-        /// <summary>
-        /// Gets the options used when creating the active expression
-        /// </summary>
-        public ActiveExpressionOptions? Options { get; }
-
-        /// <summary>
-        /// Gets the result of evaluating the lambda expression
-        /// </summary>
-        [AllowNull, MaybeNull]
-        public TResult Value
-        {
-            get => val;
-            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
-        }
-
         static readonly object instanceManagementLock = new object();
         static readonly Dictionary<(ActiveExpression activeExpression, TArg arg), ActiveExpression<TArg, TResult>> instances = new Dictionary<(ActiveExpression activeExpression, TArg arg), ActiveExpression<TArg, TResult>>();
 
-        internal static ActiveExpression<TArg, TResult> Create(LambdaExpression expression, TArg arg, ActiveExpressionOptions? options = null)
+        internal static ActiveExpression<TArg, TResult> Create(LambdaExpression expression, [AllowNull] TArg arg, ActiveExpressionOptions? options = null)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, arg), options, false);
             var key = (activeExpression, arg);
@@ -872,10 +880,11 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2)
         {
             this.activeExpression = activeExpression;
             Options = options;
+            arguments = new EquatableList<object?>(new object?[] { arg1, arg2 });
             Arg1 = arg1;
             Arg2 = arg2;
             fault = this.activeExpression.Fault;
@@ -884,18 +893,26 @@ namespace Cogs.ActiveExpressions
         }
 
         readonly ActiveExpression activeExpression;
+        readonly EquatableList<object?> arguments;
         int disposalCount;
         Exception? fault;
         [AllowNull, MaybeNull] TResult val;
 
         /// <summary>
+        /// Gets the arguments that were passed to the lambda expression
+        /// </summary>
+        public IReadOnlyList<object?> Arguments => arguments;
+
+        /// <summary>
         /// Gets the first argument that was passed to the lambda expression
         /// </summary>
+        [AllowNull, MaybeNull]
         public TArg1 Arg1 { get; }
 
         /// <summary>
         /// Gets the second argument that was passed to the lambda expression
         /// </summary>
+        [AllowNull, MaybeNull]
         public TArg2 Arg2 { get; }
 
         /// <summary>
@@ -977,7 +994,7 @@ namespace Cogs.ActiveExpressions
         static readonly object instanceManagementLock = new object();
         static readonly Dictionary<(ActiveExpression activeExpression, TArg1 arg1, TArg2 arg2), ActiveExpression<TArg1, TArg2, TResult>> instances = new Dictionary<(ActiveExpression activeExpression, TArg1 arg1, TArg2 arg2), ActiveExpression<TArg1, TArg2, TResult>>();
 
-        internal static ActiveExpression<TArg1, TArg2, TResult> Create(LambdaExpression expression, TArg1 arg1, TArg2 arg2, ActiveExpressionOptions? options = null)
+        internal static ActiveExpression<TArg1, TArg2, TResult> Create(LambdaExpression expression, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, ActiveExpressionOptions? options = null)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, arg1, arg2), options, false);
             var key = (activeExpression, arg1, arg2);
@@ -1019,10 +1036,11 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TArg3, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TArg3, TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2, TArg3 arg3)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, [AllowNull] TArg3 arg3)
         {
             this.activeExpression = activeExpression;
             Options = options;
+            arguments = new EquatableList<object?>(new object?[] { arg1, arg2, arg3 });
             Arg1 = arg1;
             Arg2 = arg2;
             Arg3 = arg3;
@@ -1032,23 +1050,32 @@ namespace Cogs.ActiveExpressions
         }
 
         readonly ActiveExpression activeExpression;
+        readonly EquatableList<object?> arguments;
         int disposalCount;
         Exception? fault;
         [AllowNull, MaybeNull] TResult val;
 
         /// <summary>
+        /// Gets the arguments that were passed to the lambda expression
+        /// </summary>
+        public IReadOnlyList<object?> Arguments => arguments;
+
+        /// <summary>
         /// Gets the first argument that was passed to the lambda expression
         /// </summary>
+        [AllowNull, MaybeNull]
         public TArg1 Arg1 { get; }
 
         /// <summary>
         /// Gets the second argument that was passed to the lambda expression
         /// </summary>
+        [AllowNull, MaybeNull]
         public TArg2 Arg2 { get; }
 
         /// <summary>
         /// Gets the third argument that was passed to the lambda expression
         /// </summary>
+        [AllowNull, MaybeNull]
         public TArg3 Arg3 { get; }
 
         /// <summary>
@@ -1130,7 +1157,7 @@ namespace Cogs.ActiveExpressions
         static readonly object instanceManagementLock = new object();
         static readonly Dictionary<(ActiveExpression activeExpression, TArg1 arg1, TArg2 arg2, TArg3 arg3), ActiveExpression<TArg1, TArg2, TArg3, TResult>> instances = new Dictionary<(ActiveExpression activeExpression, TArg1 arg1, TArg2 arg2, TArg3 arg3), ActiveExpression<TArg1, TArg2, TArg3, TResult>>();
 
-        internal static ActiveExpression<TArg1, TArg2, TArg3, TResult> Create(LambdaExpression expression, TArg1 arg1, TArg2 arg2, TArg3 arg3, ActiveExpressionOptions? options = null)
+        internal static ActiveExpression<TArg1, TArg2, TArg3, TResult> Create(LambdaExpression expression, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, [AllowNull] TArg3 arg3, ActiveExpressionOptions? options = null)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, arg1, arg2, arg3), options, false);
             var key = (activeExpression, arg1, arg2, arg3);

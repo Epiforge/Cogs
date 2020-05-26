@@ -15,7 +15,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the arguments that were passed to the lambda expression
         /// </summary>
-        IReadOnlyList<object> Arguments { get; }
+        IReadOnlyList<object?> Arguments { get; }
 
         /// <summary>
         /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
@@ -39,28 +39,13 @@ namespace Cogs.ActiveExpressions
     /// </summary>
     /// <typeparam name="TArg">The type of the argument passed to the lambda expression</typeparam>
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
-    public interface IActiveExpression<out TArg, out TResult> : IDisposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, INotifyPropertyChanged, INotifyPropertyChanging
+    public interface IActiveExpression<out TArg, out TResult> : IActiveExpression<TResult>, IDisposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, INotifyPropertyChanged, INotifyPropertyChanging
     {
         /// <summary>
         /// Gets the argument that was passed to the lambda expression
         /// </summary>
-        TArg Arg { get; }
-
-        /// <summary>
-        /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
-        /// </summary>
-        Exception? Fault { get; }
-
-        /// <summary>
-        /// Gets the options used when creating the active expression
-        /// </summary>
-        ActiveExpressionOptions? Options { get; }
-
-        /// <summary>
-        /// Gets the result of evaluating the lambda expression
-        /// </summary>
         [MaybeNull]
-        TResult Value { get; }
+        TArg Arg { get; }
     }
 
     /// <summary>
@@ -69,7 +54,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TArg1">The type of the first argument passed to the lambda expression</typeparam>
     /// <typeparam name="TArg2">The type of the second argument passed to the lambda expression</typeparam>
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
-    public interface IActiveExpression<out TArg1, out TArg2, out TResult> : IDisposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, INotifyPropertyChanged, INotifyPropertyChanging
+    public interface IActiveExpression<out TArg1, out TArg2, out TResult> : IActiveExpression<TResult>, IDisposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, INotifyPropertyChanged, INotifyPropertyChanging
     {
         /// <summary>
         /// Gets the first argument that was passed to the lambda expression
@@ -82,22 +67,6 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         [MaybeNull]
         TArg2 Arg2 { get; }
-
-        /// <summary>
-        /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
-        /// </summary>
-        Exception? Fault { get; }
-
-        /// <summary>
-        /// Gets the options used when creating the active expression
-        /// </summary>
-        ActiveExpressionOptions? Options { get; }
-
-        /// <summary>
-        /// Gets the result of evaluating the lambda expression
-        /// </summary>
-        [MaybeNull]
-        TResult Value { get; }
     }
 
     /// <summary>
