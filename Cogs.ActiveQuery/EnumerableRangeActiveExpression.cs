@@ -278,19 +278,19 @@ namespace Cogs.ActiveQuery
         protected virtual void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
             ElementFaultChanged?.Invoke(this, e);
 
-        protected void OnElementFaultChanged(object element, Exception? fault, int count) =>
+        protected void OnElementFaultChanged(object? element, Exception? fault, int count) =>
             OnElementFaultChanged(new ElementFaultChangeEventArgs(element, fault, count));
 
         protected virtual void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
             ElementFaultChanging?.Invoke(this, e);
 
-        protected void OnElementFaultChanging(object element, Exception? fault, int count) =>
+        protected void OnElementFaultChanging(object? element, Exception? fault, int count) =>
             OnElementFaultChanging(new ElementFaultChangeEventArgs(element, fault, count));
 
         protected virtual void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<object?, TResult> e) =>
             ElementResultChanged?.Invoke(this, e);
 
-        protected void OnElementResultChanged(object element, [AllowNull] TResult result, int count) =>
+        protected void OnElementResultChanged(object? element, [AllowNull] TResult result, int count) =>
             OnElementResultChanged(new RangeActiveExpressionResultChangeEventArgs<object?, TResult>(element, result, count));
 
         protected virtual void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<object?, TResult> e) =>
@@ -628,25 +628,25 @@ namespace Cogs.ActiveQuery
         protected virtual void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
             ElementFaultChanged?.Invoke(this, e);
 
-        protected void OnElementFaultChanged(TElement element, Exception? fault, int count) =>
+        protected void OnElementFaultChanged([AllowNull] TElement element, Exception? fault, int count) =>
             OnElementFaultChanged(new ElementFaultChangeEventArgs(element, fault, count));
 
         protected virtual void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
             ElementFaultChanging?.Invoke(this, e);
 
-        protected void OnElementFaultChanging(TElement element, Exception? fault, int count) =>
+        protected void OnElementFaultChanging([AllowNull] TElement element, Exception? fault, int count) =>
             OnElementFaultChanging(new ElementFaultChangeEventArgs(element, fault, count));
 
         protected virtual void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<TElement, TResult> e) =>
             ElementResultChanged?.Invoke(this, e);
 
-        protected void OnElementResultChanged(TElement element, [AllowNull] TResult result, int count) =>
+        protected void OnElementResultChanged([AllowNull] TElement element, [AllowNull] TResult result, int count) =>
             OnElementResultChanged(new RangeActiveExpressionResultChangeEventArgs<TElement, TResult>(element, result, count));
 
         protected virtual void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<TElement, TResult> e) =>
             ElementResultChanging?.Invoke(this, e);
 
-        protected void OnElementResultChanging(TElement element, [AllowNull] TResult result, int count) =>
+        protected void OnElementResultChanging([AllowNull] TElement element, [AllowNull] TResult result, int count) =>
             OnElementResultChanging(new RangeActiveExpressionResultChangeEventArgs<TElement, TResult>(element, result, count));
 
         protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<(TElement element, TResult result)> e) =>

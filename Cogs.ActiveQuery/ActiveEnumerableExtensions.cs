@@ -20,6 +20,62 @@ namespace Cogs.ActiveQuery
     /// </summary>
     public static class ActiveEnumerableExtensions
     {
+        #region Aggregate
+
+        /// <summary>
+        /// Actively applies an accumulator function over a sequence
+        /// </summary>
+        /// <typeparam name="TElement">The type of the elements of <paramref name="source"/></typeparam>
+        /// <typeparam name="TAccumulate">The type of the accumulator value</typeparam>
+        /// <typeparam name="TResult">The type of the resulting value</typeparam>
+        /// <param name="source">An <see cref="IActiveEnumerable{TElement}"/> to aggregate over</param>
+        /// <param name="seedFactory">A method to produce the initial accumulator value when the sequence changes</param>
+        /// <param name="func">An accumulator method to be invoked on each element</param>
+        /// <param name="resultSelector">A method to transform the final accumulator value into the result value</param>
+        /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the transformed final accumulator value</returns>
+        public static IActiveValue<TResult> ActiveAggregate<TElement, TAccumulate, TResult>(this IActiveEnumerable<TElement> source, Func<TAccumulate> seedFactory, Func<TAccumulate, TElement, TAccumulate> func, Func<TAccumulate, TResult> resultSelector)
+        {
+            var changeNotifyingSource = source as INotifyCollectionChanged;
+            ActiveValue<TResult>? activeValue = null;
+
+            void collectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+            {
+                try
+                {
+                    activeValue!.OperationFault = null;
+                    activeValue!.Value = source.Aggregate(seedFactory(), func, resultSelector);
+                }
+                catch (Exception ex)
+                {
+                    activeValue!.Value = default;
+                    activeValue!.OperationFault = ex;
+                }
+            }
+
+            return (source as ISynchronized).SequentialExecute(() =>
+            {
+                void dispose()
+                {
+                    if (changeNotifyingSource is { })
+                        changeNotifyingSource.CollectionChanged -= collectionChanged;
+                }
+
+                try
+                {
+                    activeValue = new ActiveValue<TResult>(source.Aggregate(seedFactory(), func, resultSelector), elementFaultChangeNotifier: source, onDispose: dispose);
+                }
+                catch (Exception ex)
+                {
+                    activeValue = new ActiveValue<TResult>(default, ex, source, dispose);
+                }
+                if (changeNotifyingSource is { })
+                    changeNotifyingSource.CollectionChanged += collectionChanged;
+                return activeValue;
+            });
+        }
+
+        #endregion
+
         #region All
 
         /// <summary>
