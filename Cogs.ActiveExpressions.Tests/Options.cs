@@ -30,6 +30,10 @@ namespace Cogs.ActiveExpressions.Tests
                 get => syncDisposable;
                 set => SetBackedProperty(ref syncDisposable, in value);
             }
+
+            public SyncDisposableTestPerson GetPersonNamedAfterType(Type type) => new SyncDisposableTestPerson(type.Name);
+
+            public SyncDisposableTestPerson GetPersonNamedAfterType<T>() => GetPersonNamedAfterType(typeof(T));
         }
 
         #endregion Helper Classes
@@ -120,6 +124,36 @@ namespace Cogs.ActiveExpressions.Tests
         }
 
         [TestMethod]
+        public void DisposeGenericMethodReturnValue()
+        {
+            SyncDisposableTestPerson? person;
+            using (var expr = ActiveExpression.Create(() => new TestObject().GetPersonNamedAfterType<string>()))
+            {
+                person = expr.Value!;
+                Assert.AreEqual(typeof(string).Name, person.Name);
+            }
+            Assert.IsFalse(person.IsDisposed);
+            person.Dispose();
+            var options1 = new ActiveExpressionOptions();
+            options1.AddExpressionValueDisposal(() => default(TestObject)!.GetPersonNamedAfterType<int>());
+            using (var expr = ActiveExpression.CreateWithOptions<SyncDisposableTestPerson>((Expression<Func<SyncDisposableTestPerson>>)(() => new TestObject().GetPersonNamedAfterType<string>()), options1))
+            {
+                person = expr.Value!;
+                Assert.AreEqual(typeof(string).Name, person.Name);
+            }
+            Assert.IsFalse(person.IsDisposed);
+            person.Dispose();
+            var options2 = new ActiveExpressionOptions();
+            options2.AddExpressionValueDisposal(() => default(TestObject)!.GetPersonNamedAfterType<int>(), true);
+            using (var expr = ActiveExpression.CreateWithOptions<SyncDisposableTestPerson>((Expression<Func<SyncDisposableTestPerson>>)(() => new TestObject().GetPersonNamedAfterType<string>()), options2))
+            {
+                person = expr.Value!;
+                Assert.AreEqual(typeof(string).Name, person.Name);
+            }
+            Assert.IsTrue(person.IsDisposed);
+        }
+
+        [TestMethod]
         public void DisposeIndexerValue()
         {
             var collectionType = typeof(ObservableCollection<SyncDisposableTestPerson>);
@@ -137,6 +171,14 @@ namespace Cogs.ActiveExpressions.Tests
             Assert.IsTrue(options.AddExpressionValueDisposal(() => new TestObject().GetSyncDisposableMethod()));
             Assert.IsTrue(options.IsExpressionValueDisposed(() => new TestObject().GetSyncDisposableMethod()));
             Assert.IsTrue(options.RemoveExpressionValueDisposal(() => new TestObject().GetSyncDisposableMethod()));
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void DisposeNonGenericMethodReturnValueAsGenericFails()
+        {
+            var options = new ActiveExpressionOptions();
+            options.AddExpressionValueDisposal(() => default(TestObject)!.GetPersonNamedAfterType(default!), true);
         }
 
         [TestMethod]

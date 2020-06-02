@@ -218,7 +218,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!method.IsGenericMethod)
                     throw new ArgumentException("the method specified is not generic", nameof(useGenericDefinition));
-                method = method.GetGenericMethodDefinition();
+                method = genericMethodToGenericMethodDefinition.GetOrAdd(method, GetGenericMethodDefinitionFromGenericMethod);
             }
             return disposeMethodReturnValues.TryAdd(method, true);
         }
