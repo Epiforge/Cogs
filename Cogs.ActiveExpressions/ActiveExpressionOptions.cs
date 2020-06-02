@@ -337,7 +337,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="method">The method yielding the objects</param>
         /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-        public bool IsMethodReturnValueDisposed(MethodInfo method) => (method.IsStatic && DisposeStaticMethodReturnValues) || disposeMethodReturnValues.ContainsKey(method) || (method.IsGenericMethod && disposeMethodReturnValues.ContainsKey(method.GetGenericMethodDefinition()));
+        public bool IsMethodReturnValueDisposed(MethodInfo method) => (method.IsStatic && DisposeStaticMethodReturnValues) || disposeMethodReturnValues.ContainsKey(method) || (method.IsGenericMethod && disposeMethodReturnValues.ContainsKey(genericMethodToGenericMethodDefinition.GetOrAdd(method, GetGenericMethodDefinitionFromGenericMethod)));
 
         /// <summary>
         /// Gets whether active expressions using these options should dispose of objects they have received as a result of getting the value of a specified property when the objects are replaced or otherwise discarded
@@ -421,12 +421,15 @@ namespace Cogs.ActiveExpressions
 
         static ActiveExpressionOptions() => Default = new ActiveExpressionOptions();
 
+        static readonly ConcurrentDictionary<MethodInfo, MethodInfo> genericMethodToGenericMethodDefinition = new ConcurrentDictionary<MethodInfo, MethodInfo>();
         static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyGetMethodToProperty = new ConcurrentDictionary<MethodInfo, PropertyInfo>();
 
         /// <summary>
         /// Gets the default active expression options, which are used in lieu of specified options when an active expression is created
         /// </summary>
         public static ActiveExpressionOptions Default { get; }
+
+        static MethodInfo GetGenericMethodDefinitionFromGenericMethod(MethodInfo methodInfo) => methodInfo.GetGenericMethodDefinition();
 
         static PropertyInfo GetPropertyFromGetMethod(MethodInfo getMethod) => getMethod.DeclaringType.GetRuntimeProperties().FirstOrDefault(property => property.GetMethod == getMethod);
 
