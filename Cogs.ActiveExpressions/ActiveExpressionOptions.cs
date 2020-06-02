@@ -173,18 +173,27 @@ namespace Cogs.ActiveExpressions
         /// <typeparam name="T">The type of the objects</typeparam>
         /// <param name="lambda">An expression indicating the kind of behavior that is yielding the objects</param>
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
-        public bool AddExpressionValueDisposal<T>(Expression<Func<T>> lambda)
+        public bool AddExpressionValueDisposal<T>(Expression<Func<T>> lambda) => AddExpressionValueDisposal(lambda, false);
+
+        /// <summary>
+        /// Specifies that active expressions using these options should dispose of objects they have received as a result of invoking a constructor, operator, or method, or getting the value of a property or indexer when the objects are replaced or otherwise discarded
+        /// </summary>
+        /// <typeparam name="T">The type of the objects</typeparam>
+        /// <param name="lambda">An expression indicating the kind of behavior that is yielding the objects</param>
+        /// <param name="useGenericDefinition">Whether or not objects created by operators, methods, or property or indexer getters should be disposed regardless of generic type arguments used by the source</param>
+        /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
+        public bool AddExpressionValueDisposal<T>(Expression<Func<T>> lambda, bool useGenericDefinition)
         {
             RequireUnfrozen();
             return lambda.Body switch
             {
-                BinaryExpression binary => AddMethodReturnValueDisposal(binary.Method),
-                IndexExpression index => AddPropertyValueDisposal(index.Indexer),
-                NewExpression @new => AddConstructedTypeDisposal(@new.Constructor),
-                MemberExpression member when member.Member is PropertyInfo property => AddPropertyValueDisposal(property),
-                MethodCallExpression methodCallExpressionForPropertyGet when propertyGetMethodToProperty.GetOrAdd(methodCallExpressionForPropertyGet.Method, GetPropertyFromGetMethod) is PropertyInfo property => AddPropertyValueDisposal(property),
-                MethodCallExpression methodCall => AddMethodReturnValueDisposal(methodCall.Method),
-                UnaryExpression unary => AddMethodReturnValueDisposal(unary.Method),
+                BinaryExpression binary => AddMethodReturnValueDisposal(binary.Method, useGenericDefinition),
+                IndexExpression index => AddPropertyValueDisposal(index.Indexer, useGenericDefinition),
+                NewExpression @new => useGenericDefinition ? throw new ArgumentException("using generic constructor definitions is not supported", nameof(useGenericDefinition)) : AddConstructedTypeDisposal(@new.Constructor),
+                MemberExpression member when member.Member is PropertyInfo property => AddPropertyValueDisposal(property, useGenericDefinition),
+                MethodCallExpression methodCallExpressionForPropertyGet when propertyGetMethodToProperty.GetOrAdd(methodCallExpressionForPropertyGet.Method, GetPropertyFromGetMethod) is PropertyInfo property => AddPropertyValueDisposal(property, useGenericDefinition),
+                MethodCallExpression methodCall => AddMethodReturnValueDisposal(methodCall.Method, useGenericDefinition),
+                UnaryExpression unary => AddMethodReturnValueDisposal(unary.Method, useGenericDefinition),
                 _ => throw new NotSupportedException(),
             };
         }
@@ -194,9 +203,23 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="method">The method yielding the objects</param>
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
-        public bool AddMethodReturnValueDisposal(MethodInfo method)
+        public bool AddMethodReturnValueDisposal(MethodInfo method) => AddMethodReturnValueDisposal(method, false);
+
+        /// <summary>
+        /// Specifies that active expressions using these options should dispose of objects they have received as a result of invoking a specified method when the objects are replaced or otherwise discarded
+        /// </summary>
+        /// <param name="method">The method yielding the objects</param>
+        /// <param name="useGenericDefinition">Whether or not objects created by the method should be disposed regardless of generic type arguments used to make the method</param>
+        /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
+        public bool AddMethodReturnValueDisposal(MethodInfo method, bool useGenericDefinition)
         {
             RequireUnfrozen();
+            if (useGenericDefinition)
+            {
+                if (!method.IsGenericMethod)
+                    throw new ArgumentException("the method specified is not generic", nameof(useGenericDefinition));
+                method = method.GetGenericMethodDefinition();
+            }
             return disposeMethodReturnValues.TryAdd(method, true);
         }
 
@@ -205,10 +228,18 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="property">The property yielding the objects</param>
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
-        public bool AddPropertyValueDisposal(PropertyInfo property)
+        public bool AddPropertyValueDisposal(PropertyInfo property) => AddPropertyValueDisposal(property, false);
+
+        /// <summary>
+        /// Specifies that active expressions using these options should dispose of objects they have received as a result of getting the value of a specified property when the objects are replaced or otherwise discarded
+        /// </summary>
+        /// <param name="property">The property yielding the objects</param>
+        /// <param name="useGenericDefinition">Whether or not objects created by the property getter should be disposed regardless of generic type arguments used to make the property getter</param>
+        /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
+        public bool AddPropertyValueDisposal(PropertyInfo property, bool useGenericDefinition)
         {
             RequireUnfrozen();
-            return AddMethodReturnValueDisposal(property.GetMethod);
+            return AddMethodReturnValueDisposal(property.GetMethod, useGenericDefinition);
         }
 
         /// <summary>
@@ -306,7 +337,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="method">The method yielding the objects</param>
         /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-        public bool IsMethodReturnValueDisposed(MethodInfo method) => (method.IsStatic && DisposeStaticMethodReturnValues) || disposeMethodReturnValues.ContainsKey(method);
+        public bool IsMethodReturnValueDisposed(MethodInfo method) => (method.IsStatic && DisposeStaticMethodReturnValues) || disposeMethodReturnValues.ContainsKey(method) || (method.IsGenericMethod && disposeMethodReturnValues.ContainsKey(method.GetGenericMethodDefinition()));
 
         /// <summary>
         /// Gets whether active expressions using these options should dispose of objects they have received as a result of getting the value of a specified property when the objects are replaced or otherwise discarded
