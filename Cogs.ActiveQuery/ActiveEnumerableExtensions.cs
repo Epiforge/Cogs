@@ -406,7 +406,9 @@ namespace Cogs.ActiveQuery
                 return new ActiveEnumerable<TSource>(rangeObservableCollection, mergedElementFaultChangeNotifier, () =>
                 {
                     firstEnumerable.CollectionChanged -= firstCollectionChanged;
+                    firstEnumerable.Dispose();
                     secondEnumerable.CollectionChanged -= secondCollectionChanged;
+                    secondEnumerable.Dispose();
                     mergedElementFaultChangeNotifier.Dispose();
                 });
             });
@@ -491,7 +493,9 @@ namespace Cogs.ActiveQuery
                 return new ActiveEnumerable<TSource>(rangeObservableCollection, mergedElementFaultChangeNotifier, () =>
                 {
                     firstEnumerable.CollectionChanged -= firstCollectionChanged;
+                    firstEnumerable.Dispose();
                     secondEnumerable.CollectionChanged -= secondCollectionChanged;
+                    secondEnumerable.Dispose();
                     mergedElementFaultChangeNotifier.Dispose();
                 });
             });
@@ -2074,6 +2078,7 @@ namespace Cogs.ActiveQuery
                     rangeActiveExpression.ElementResultChanged += elementResultChanged;
                 return new ActiveEnumerable<TSource>(rangeObservableCollection, mergedElementFaultChangeNotifier, () =>
                 {
+                    comparer.Dispose();
                     lastRangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
                     foreach (var (rangeActiveExpression, isDescending) in keySelections)
                     {
@@ -2081,7 +2086,6 @@ namespace Cogs.ActiveQuery
                         rangeActiveExpression.Dispose();
                     }
                     mergedElementFaultChangeNotifier.Dispose();
-                    comparer.Dispose();
                 });
             });
         }
