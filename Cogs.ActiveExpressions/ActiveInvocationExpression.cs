@@ -1,8 +1,8 @@
-using Cogs.Collections;
-using Cogs.Reflection;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -10,22 +10,52 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocationExpression>
     {
-        ActiveInvocationExpression(Type type, ActiveExpression expression, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.Invoke, options, deferEvaluation)
+        ActiveInvocationExpression(InvocationExpression invocationExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(invocationExpression.Type, ExpressionType.Invoke, options, deferEvaluation)
         {
-            this.expression = expression;
-            this.expression.PropertyChanged += ExpressionPropertyChanged;
-            this.arguments = arguments;
-            foreach (var argument in this.arguments)
-                argument.PropertyChanged += ArgumentPropertyChanged;
-            EvaluateIfNotDeferred();
+            this.invocationExpression = invocationExpression;
+            if (this.invocationExpression.Expression is LambdaExpression)
+                activeArguments = invocationExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToImmutableArray();
+            CreateActiveExpression();
+            if (activeArguments is { })
+                foreach (var activeArgument in activeArguments)
+                    activeArgument.PropertyChanged += ActiveArgumentPropertyChanged;
         }
 
-        readonly EquatableList<ActiveExpression> arguments;
+        readonly InvocationExpression invocationExpression;
+        ActiveExpression? activeExpression;
+        readonly IReadOnlyList<ActiveExpression>? activeArguments;
         int disposalCount;
-        readonly ActiveExpression expression;
-        FastMethodInfo? fastMethod;
 
-        void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+        void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+
+        void ActiveArgumentPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (activeExpression is { })
+            {
+                activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
+                activeExpression.Dispose();
+                activeExpression = null;
+            }
+            if (activeExpression is null)
+            {
+                if (activeArguments.All(activeArgument => activeArgument.Fault is null))
+                    CreateActiveExpression();
+                else if (!IsDeferringEvaluation)
+                    Evaluate();
+            }
+        }
+
+        void CreateActiveExpression()
+        {
+            activeExpression = invocationExpression.Expression switch
+            {
+                LambdaExpression lambdaExpression when activeArguments is { } => Create(ReplaceParameters(lambdaExpression, activeArguments.Select(activeArgument => activeArgument.Value).ToArray()), options, IsDeferringEvaluation),
+                ConstantExpression constantExpression when constantExpression.Value is Delegate @delegate => Create(@delegate.Target is null ? Expression.Call(@delegate.Method, invocationExpression.Arguments) : Expression.Call(Expression.Constant(@delegate.Target), @delegate.Method, invocationExpression.Arguments), options, IsDeferringEvaluation),
+                _ => throw new NotSupportedException()
+            };
+            activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
+            EvaluateIfNotDeferred();
+        }
 
         protected override bool Dispose(bool disposing)
         {
@@ -33,76 +63,55 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((expression, arguments, options));
+                    instances.Remove((invocationExpression, options));
                     result = true;
                 }
             if (result)
             {
-                DisposeValueIfNecessaryAndPossible();
-                expression.PropertyChanged -= ExpressionPropertyChanged;
-                expression.Dispose();
-                foreach (var argument in arguments)
+                if (activeExpression is { })
                 {
-                    argument.PropertyChanged -= ArgumentPropertyChanged;
-                    argument.Dispose();
+                    activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
+                    activeExpression.Dispose();
                 }
+                if (activeArguments is { })
+                    foreach (var activeArgument in activeArguments)
+                    {
+                        activeArgument.PropertyChanged -= ActiveArgumentPropertyChanged;
+                        activeArgument.Dispose();
+                    }
             }
             return result;
         }
 
         public override bool Equals(object? obj) => obj is ActiveInvocationExpression other && Equals(other);
 
-        public bool Equals(ActiveInvocationExpression other) => expression == other.expression && arguments == other.arguments && Equals(options, other.options);
+        public bool Equals(ActiveInvocationExpression other) => ExpressionEqualityComparer.Default.Equals(invocationExpression, other.invocationExpression) && Equals(options, other.options);
 
         protected override void Evaluate()
         {
-            try
-            {
-                var expressionFault = expression.Fault;
-                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
-                if (expressionFault is { })
-                    Fault = expressionFault;
-                else if (argumentFault is { })
-                    Fault = argumentFault;
-                else if (expression.Value is Delegate @delegate)
-                {
-                    if (fastMethod?.MethodInfo != @delegate.Method)
-                        fastMethod = FastMethodInfo.Get(@delegate.Method);
-                    Value = fastMethod.Invoke(@delegate.Target, arguments.Select(argument => argument.Value).ToArray());
-                }
-                else
-                {
-                    fastMethod = null;
-                    Fault = new Exception("Unable to invoke expression's value");
-                }
-            }
-            catch (Exception ex)
-            {
-                Fault = ex;
-            }
+            if (activeExpression is { } && activeExpression.Fault is { } activeExpressionFault)
+                Fault = activeExpressionFault;
+            else if (activeArguments is { } && activeArguments.Select(activeArgument => activeArgument.Fault).Where(fault => fault is { }).FirstOrDefault() is { } activeArgumentFault)
+                Fault = activeArgumentFault;
+            else if (activeExpression is { })
+                Value = activeExpression.Value;
         }
 
-        void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+        public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), ExpressionEqualityComparer.Default.GetHashCode(invocationExpression), options);
 
-        public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), expression, arguments, options);
-
-        protected override bool GetShouldValueBeDisposed() => fastMethod is { } && ApplicableOptions.IsMethodReturnValueDisposed(fastMethod.MethodInfo);
-
-        public override string ToString() => $"{expression}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
+        public override string ToString() => $"λ({(activeExpression is { } ? (object)activeExpression : invocationExpression)})";
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression expression, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveInvocationExpression> instances = new Dictionary<(ActiveExpression expression, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveInvocationExpression>();
+        static readonly Dictionary<(InvocationExpression invocationExpression, ActiveExpressionOptions? options), ActiveInvocationExpression> instances = new Dictionary<(InvocationExpression invocationExpression, ActiveExpressionOptions? options), ActiveInvocationExpression>(new InstancesEqualityComparer());
 
         public static ActiveInvocationExpression Create(InvocationExpression invocationExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var expression = Create(invocationExpression.Expression, options, deferEvaluation);
-            var arguments = new EquatableList<ActiveExpression>(invocationExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToList());
-            var key = (expression, arguments, options);
+            var key = (invocationExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeInvocationExpression))
                 {
-                    activeInvocationExpression = new ActiveInvocationExpression(invocationExpression.Type, expression, arguments, options, deferEvaluation);
+                    activeInvocationExpression = new ActiveInvocationExpression(invocationExpression, options, deferEvaluation);
                     instances.Add(key, activeInvocationExpression);
                 }
                 ++activeInvocationExpression.disposalCount;
@@ -112,6 +121,16 @@ namespace Cogs.ActiveExpressions
 
         public static bool operator ==(ActiveInvocationExpression a, ActiveInvocationExpression b) => a.Equals(b);
 
+        [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveInvocationExpression a, ActiveInvocationExpression b) => !(a == b);
+
+        class InstancesEqualityComparer : IEqualityComparer<(InvocationExpression invocationExpression, ActiveExpressionOptions? options)>
+        {
+            public bool Equals((InvocationExpression invocationExpression, ActiveExpressionOptions? options) x, (InvocationExpression invocationExpression, ActiveExpressionOptions? options) y) =>
+                ExpressionEqualityComparer.Default.Equals(x.invocationExpression, y.invocationExpression) && ((x.options is null && y.options is null) || (x.options is { } && y.options is { } && x.options.Equals(y.options)));
+
+            public int GetHashCode((InvocationExpression invocationExpression, ActiveExpressionOptions? options) obj) =>
+                HashCode.Combine(ExpressionEqualityComparer.Default.GetHashCode(obj.invocationExpression), obj.options);
+        }
     }
 }

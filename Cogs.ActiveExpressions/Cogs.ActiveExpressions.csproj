@@ -12,10 +12,11 @@
     <PackageIcon>NuGet.jpg</PackageIcon>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
+    <PackageReleaseNotes>Please write the package release notes in ReleaseNotes.txt.</PackageReleaseNotes>
     <Product>Active Expressions Cog</Product>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>1.8.2</Version>
+    <Version>1.9.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,5 +36,14 @@
       <PackagePath></PackagePath>
     </None>
   </ItemGroup>
+
+  <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
+    <ReadLinesFromFile File="ReleaseNotes.txt">
+      <Output TaskParameter="Lines" ItemName="ReleaseNoteLines"/>
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <PackageReleaseNotes>@(ReleaseNoteLines, '%0a')</PackageReleaseNotes>
+    </PropertyGroup>
+  </Target>
 
 </Project>

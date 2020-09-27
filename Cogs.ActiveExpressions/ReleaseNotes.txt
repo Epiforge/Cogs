@@ -1,0 +1,2 @@
+1.9.0
+- We corrected our implementation for InvocationExpressions, which did not properly support all the features of the expression system.

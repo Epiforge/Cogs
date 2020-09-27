@@ -76,6 +76,18 @@ namespace Cogs.ActiveExpressions
         }
 
         /// <summary>
+        /// Gets whether evaluation is being deferred
+        /// </summary>
+        protected bool IsDeferringEvaluation
+        {
+            get
+            {
+                lock (deferringEvaluationLock)
+                    return deferringEvaluation;
+            }
+        }
+
+        /// <summary>
         /// Gets the <see cref="ExpressionType"/> for this node
         /// </summary>
         public ExpressionType NodeType { get; }
