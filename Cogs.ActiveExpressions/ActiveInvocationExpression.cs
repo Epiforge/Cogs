@@ -70,7 +70,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (activeExpression is { })
                 {
-                    activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
+                    activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
                     activeExpression.Dispose();
                 }
                 if (activeArguments is { })

@@ -1,1 +1,1 @@
-We corrected our implementation for InvocationExpressions, which did not properly support all the features of the expression system.
+We corrected a disposal defect in our recent re-implementation for InvocationExpressions.
