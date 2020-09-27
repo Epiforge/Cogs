@@ -113,7 +113,7 @@ var lambda = Expression.Lambda<Func<bool, bool, bool>>
 
 var expr = ActiveExpression.Create<bool>(lambda, false, false);
 // optimizer has intervened and defined expr as (a, b) => !(a || b)
-// (because Augustus De Morgan said they're essentially the same thing, but this revision involves less steps)
+// (because Augustus De Morgan said they're essentially the same thing, but this involves less steps)
 ```
 
 ## Active Query
