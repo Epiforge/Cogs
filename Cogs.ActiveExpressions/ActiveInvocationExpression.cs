@@ -23,10 +23,9 @@ namespace Cogs.ActiveExpressions
 
         readonly InvocationExpression invocationExpression;
         ActiveExpression? activeExpression;
+        ActiveExpression? activeDelegateExpression;
         readonly IReadOnlyList<ActiveExpression>? activeArguments;
         int disposalCount;
-
-        void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
         void ActiveArgumentPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -36,24 +35,49 @@ namespace Cogs.ActiveExpressions
                 activeExpression.Dispose();
                 activeExpression = null;
             }
-            if (activeExpression is null)
-            {
-                if (activeArguments.All(activeArgument => activeArgument.Fault is null))
-                    CreateActiveExpression();
-                else if (!IsDeferringEvaluation)
-                    Evaluate();
-            }
+            if (activeArguments.All(activeArgument => activeArgument.Fault is null))
+                CreateActiveExpression();
+            else if (!IsDeferringEvaluation)
+                Evaluate();
         }
+
+        void ActiveDelegateExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (activeExpression is { })
+            {
+                activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
+                activeExpression.Dispose();
+                activeExpression = null;
+            }
+            CreateActiveExpression();
+        }
+
+        void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
         void CreateActiveExpression()
         {
-            activeExpression = invocationExpression.Expression switch
+            switch (invocationExpression.Expression)
             {
-                LambdaExpression lambdaExpression when activeArguments is { } => Create(ReplaceParameters(lambdaExpression, activeArguments.Select(activeArgument => activeArgument.Value).ToArray()), options, IsDeferringEvaluation),
-                ConstantExpression constantExpression when constantExpression.Value is Delegate @delegate => Create(@delegate.Target is null ? Expression.Call(@delegate.Method, invocationExpression.Arguments) : Expression.Call(Expression.Constant(@delegate.Target), @delegate.Method, invocationExpression.Arguments), options, IsDeferringEvaluation),
-                _ => throw new NotSupportedException()
-            };
-            activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
+                case LambdaExpression lambdaExpression when activeArguments is { }:
+                    activeExpression = Create(ReplaceParameters(lambdaExpression, activeArguments.Select(activeArgument => activeArgument.Value).ToArray()), options, IsDeferringEvaluation);
+                    break;
+                case Expression expression when typeof(Delegate).IsAssignableFrom(expression.Type):
+                    var activeDelegateExpressionCreated = false;
+                    if (activeDelegateExpression is null)
+                    {
+                        activeDelegateExpression = Create(expression, options, IsDeferringEvaluation);
+                        activeDelegateExpressionCreated = true;
+                    }
+                    if (activeDelegateExpression.Value is Delegate @delegate)
+                        activeExpression = Create(@delegate.Target is null ? Expression.Call(@delegate.Method, invocationExpression.Arguments) : Expression.Call(Expression.Constant(@delegate.Target), @delegate.Method, invocationExpression.Arguments), options, IsDeferringEvaluation);
+                    if (activeDelegateExpressionCreated)
+                        activeDelegateExpression.PropertyChanged += ActiveDelegateExpressionPropertyChanged;
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+            if (activeExpression is { })
+                activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
             EvaluateIfNotDeferred();
         }
 
@@ -72,6 +96,11 @@ namespace Cogs.ActiveExpressions
                 {
                     activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
                     activeExpression.Dispose();
+                }
+                if (activeDelegateExpression is { })
+                {
+                    activeDelegateExpression.PropertyChanged -= ActiveDelegateExpressionPropertyChanged;
+                    activeDelegateExpression.Dispose();
                 }
                 if (activeArguments is { })
                     foreach (var activeArgument in activeArguments)

@@ -1,1 +1,1 @@
-We corrected a disposal defect in our recent re-implementation for InvocationExpressions.
+We no longer assume that the value of the Expression property of an InvocationExpression is either a LambdaExpression or a ConstantExpression and throw when it is not. Now, when we encounter any type other than a LambdaExpression as the value of the Expression property of an InvocationExpression, we require that the type to which it would evaluate is some type of delegate. Then we actively monitor it as we do other nodes in expression trees.
