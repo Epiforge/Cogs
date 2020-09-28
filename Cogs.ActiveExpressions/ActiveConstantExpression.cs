@@ -50,14 +50,14 @@ namespace Cogs.ActiveExpressions
         void ValueChanged(object sender, EventArgs e) => OnPropertyChanged(nameof(Value));
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(Expression? expression, ActiveExpressionOptions? options), ActiveConstantExpression> expressionInstances = new Dictionary<(Expression? expression, ActiveExpressionOptions? options), ActiveConstantExpression>(ExpressionInstanceKeyComparer.Default);
+        static readonly Dictionary<(Expression? expression, ActiveExpressionOptions? options), ActiveConstantExpression> expressionInstances = new Dictionary<(Expression? expression, ActiveExpressionOptions? options), ActiveConstantExpression>(new ExpressionInstancesKeyComparer());
         static readonly Dictionary<(Type type, object? value, ActiveExpressionOptions? options), ActiveConstantExpression> instances = new Dictionary<(Type type, object? value, ActiveExpressionOptions? options), ActiveConstantExpression>();
 
         public static ActiveConstantExpression Create(ConstantExpression constantExpression, ActiveExpressionOptions? options)
         {
             var type = constantExpression.Type;
             var value = constantExpression.Value;
-            if (typeof(Expression).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
+            if (typeof(Expression).IsAssignableFrom(type))
             {
                 var key = ((Expression)value, options);
                 lock (instanceManagementLock)
@@ -92,13 +92,13 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveConstantExpression a, ActiveConstantExpression b) => !(a == b);
 
-        class ExpressionInstanceKeyComparer : IEqualityComparer<(Expression? expression, ActiveExpressionOptions? options)>
+        class ExpressionInstancesKeyComparer : IEqualityComparer<(Expression? expression, ActiveExpressionOptions? options)>
         {
-            public static ExpressionInstanceKeyComparer Default { get; } = new ExpressionInstanceKeyComparer();
+            public bool Equals((Expression? expression, ActiveExpressionOptions? options) x, (Expression? expression, ActiveExpressionOptions? options) y) =>
+                ((x.expression is null && y.expression is null) || (x.expression is { } && y.expression is { } && ExpressionEqualityComparer.Default.Equals(x.expression, y.expression))) && ((x.options is null && y.options is null) || (x.options is { } && y.options is { } && x.options.Equals(y.options)));
 
-            public bool Equals((Expression? expression, ActiveExpressionOptions? options) x, (Expression? expression, ActiveExpressionOptions? options) y) => Equals(x.expression, y.expression) && Equals(x.options, y.options);
-
-            public int GetHashCode((Expression? expression, ActiveExpressionOptions? options) obj) => HashCode.Combine(obj.expression is Expression objExpression ? ExpressionEqualityComparer.Default.GetHashCode(objExpression) : 0, obj.options?.GetHashCode() ?? 0);
+            public int GetHashCode((Expression? expression, ActiveExpressionOptions? options) obj) =>
+            HashCode.Combine(obj.expression is null ? 0 : ExpressionEqualityComparer.Default.GetHashCode(obj.expression), obj.options);
         }
     }
 }
