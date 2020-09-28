@@ -86,6 +86,28 @@ namespace Cogs.ActiveExpressions.Tests
         }
 
         [TestMethod]
+        public void Equals()
+        {
+            var john = TestPerson.CreateJohn();
+            var emily = TestPerson.CreateEmily();
+            var firstParameter1 = Expression.Parameter(typeof(TestPerson));
+            var secondParameter1 = Expression.Parameter(typeof(TestPerson));
+            using var expr1 = ActiveExpression.Create<TestPerson>(Expression.Lambda(Expression.Invoke((Expression<Func<TestPerson, TestPerson, TestPerson>>)((p1, p2) => CombinePeople(p1, p2)), firstParameter1, secondParameter1), firstParameter1, secondParameter1), john, emily);
+            var firstParameter2 = Expression.Parameter(typeof(TestPerson));
+            var secondParameter2 = Expression.Parameter(typeof(TestPerson));
+            using var expr2 = ActiveExpression.Create<TestPerson>(Expression.Lambda(Expression.Invoke((Expression<Func<TestPerson, TestPerson, TestPerson>>)((p1, p2) => CombinePeople(p1, p2)), firstParameter2, secondParameter2), firstParameter2, secondParameter2), john, emily);
+            var firstParameter3 = Expression.Parameter(typeof(TestPerson));
+            var secondParameter3 = Expression.Parameter(typeof(TestPerson));
+            using var expr3 = ActiveExpression.Create<TestPerson>(Expression.Lambda(Expression.Invoke((Expression<Func<TestPerson, TestPerson, TestPerson>>)((p1, p2) => ReversedCombinePeople(p1, p2)), firstParameter3, secondParameter3), firstParameter3, secondParameter3), john, emily);
+            var firstParameter4 = Expression.Parameter(typeof(TestPerson));
+            var secondParameter4 = Expression.Parameter(typeof(TestPerson));
+            using var expr4 = ActiveExpression.Create<TestPerson>(Expression.Lambda(Expression.Invoke((Expression<Func<TestPerson, TestPerson, TestPerson>>)((p1, p2) => CombinePeople(p1, p2)), firstParameter4, secondParameter4), firstParameter4, secondParameter4), emily, john);
+            Assert.IsTrue(expr1.Equals(expr2));
+            Assert.IsFalse(expr1.Equals(expr3));
+            Assert.IsFalse(expr1.Equals(expr4));
+        }
+
+        [TestMethod]
         public void ExpressionFaultPropagation()
         {
             var john = TestPerson.CreateJohn();
