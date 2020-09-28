@@ -7,9 +7,9 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveCoalesceExpression : ActiveBinaryExpression, IEquatable<ActiveCoalesceExpression>
     {
-        public ActiveCoalesceExpression(Type type, ActiveExpression left, ActiveExpression right, LambdaExpression conversion, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.Coalesce, left, right, false, null, options, deferEvaluation, false, false)
+        public ActiveCoalesceExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(binaryExpression, options, deferEvaluation, false, false)
         {
-            if (conversion is { })
+            if (binaryExpression.Conversion is { } conversion)
             {
                 var key = (convertFrom: conversion.Parameters[0].Type, convertTo: conversion.Body.Type);
                 lock (conversionDelegateManagementLock)

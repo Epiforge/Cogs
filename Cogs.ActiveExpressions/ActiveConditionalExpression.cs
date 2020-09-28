@@ -3,22 +3,48 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
+using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
 {
     class ActiveConditionalExpression : ActiveExpression, IEquatable<ActiveConditionalExpression>
     {
-        ActiveConditionalExpression(Type type, ActiveExpression test, ActiveExpression ifTrue, ActiveExpression ifFalse, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.Conditional, options, deferEvaluation)
+        ActiveConditionalExpression(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(conditionalExpression.Type, conditionalExpression.NodeType, options, deferEvaluation)
         {
-            this.test = test;
-            this.test.PropertyChanged += TestPropertyChanged;
-            this.ifTrue = ifTrue;
-            this.ifTrue.PropertyChanged += IfTruePropertyChanged;
-            this.ifFalse = ifFalse;
-            this.ifFalse.PropertyChanged += IfFalsePropertyChanged;
-            EvaluateIfNotDeferred();
+            try
+            {
+                this.conditionalExpression = conditionalExpression;
+                test = Create(conditionalExpression.Test, options, deferEvaluation);
+                test.PropertyChanged += TestPropertyChanged;
+                ifTrue = Create(conditionalExpression.IfTrue, options, true);
+                ifTrue.PropertyChanged += IfTruePropertyChanged;
+                ifFalse = Create(conditionalExpression.IfFalse, options, true);
+                ifFalse.PropertyChanged += IfFalsePropertyChanged;
+                EvaluateIfNotDeferred();
+            }
+            catch (Exception ex)
+            {
+                if (test is { })
+                {
+                    test.PropertyChanged -= TestPropertyChanged;
+                    test.Dispose();
+                }
+                if (ifTrue is { })
+                {
+                    ifTrue.PropertyChanged -= IfTruePropertyChanged;
+                    ifTrue.Dispose();
+                }
+                if (ifFalse is { })
+                {
+                    ifFalse.PropertyChanged -= IfFalsePropertyChanged;
+                    ifFalse.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
         }
 
+        readonly ConditionalExpression conditionalExpression;
         int disposalCount;
         readonly ActiveExpression ifFalse;
         readonly ActiveExpression ifTrue;
@@ -30,7 +56,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((test, ifTrue, ifFalse, options));
+                    instances.Remove((conditionalExpression, options));
                     result = true;
                 }
             if (result)
@@ -124,19 +150,16 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => $"({test} ? {ifTrue} : {ifFalse}) {ToStringSuffix}";
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression test, ActiveExpression ifTrue, ActiveExpression ifFalse, ActiveExpressionOptions? options), ActiveConditionalExpression> instances = new Dictionary<(ActiveExpression test, ActiveExpression ifTrue, ActiveExpression ifFalse, ActiveExpressionOptions? options), ActiveConditionalExpression>();
+        static readonly Dictionary<(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options), ActiveConditionalExpression> instances = new Dictionary<(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options), ActiveConditionalExpression>(new CachedInstancesKeyComparer<ConditionalExpression>());
 
         public static ActiveConditionalExpression Create(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var test = Create(conditionalExpression.Test, options, deferEvaluation);
-            var ifTrue = Create(conditionalExpression.IfTrue, options, true);
-            var ifFalse = Create(conditionalExpression.IfFalse, options, true);
-            var key = (test, ifTrue, ifFalse, options);
+            var key = (conditionalExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeConditionalExpression))
                 {
-                    activeConditionalExpression = new ActiveConditionalExpression(conditionalExpression.Type, test, ifTrue, ifFalse, options, deferEvaluation);
+                    activeConditionalExpression = new ActiveConditionalExpression(conditionalExpression, options, deferEvaluation);
                     instances.Add(key, activeConditionalExpression);
                 }
                 ++activeConditionalExpression.disposalCount;

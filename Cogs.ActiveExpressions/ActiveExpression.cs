@@ -255,6 +255,9 @@ namespace Cogs.ActiveExpressions
                 case MethodCallExpression methodCallExpression:
                     activeExpression = ActiveMethodCallExpression.Create(methodCallExpression, options, deferEvaluation);
                     break;
+                case NewArrayExpression newArrayInitExpression when newArrayInitExpression.NodeType == ExpressionType.NewArrayInit:
+                    activeExpression = ActiveNewArrayInitExpression.Create(newArrayInitExpression, options, deferEvaluation);
+                    break;
                 case NewExpression newExpression:
                     activeExpression = ActiveNewExpression.Create(newExpression, options, deferEvaluation);
                     break;
@@ -529,6 +532,8 @@ namespace Cogs.ActiveExpressions
                     return Expression.MakeMemberAccess(ReplaceParameters(parameterTranslation, memberExpression.Expression), memberExpression.Member);
                 case MethodCallExpression methodCallExpression:
                     return methodCallExpression.Object is null ? Expression.Call(methodCallExpression.Method, methodCallExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument))) : Expression.Call(ReplaceParameters(parameterTranslation, methodCallExpression.Object), methodCallExpression.Method, methodCallExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument)));
+                case NewArrayExpression newArrayInitExpression when newArrayInitExpression.NodeType == ExpressionType.NewArrayInit:
+                    return Expression.NewArrayInit(newArrayInitExpression.Type.GetElementType(), newArrayInitExpression.Expressions.Select(expression => ReplaceParameters(parameterTranslation, expression)));
                 case NewExpression newExpression:
                     var newArguments = newExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument));
                     return newExpression.Members is null ? Expression.New(newExpression.Constructor, newArguments) : Expression.New(newExpression.Constructor, newArguments, newExpression.Members);
@@ -573,6 +578,8 @@ namespace Cogs.ActiveExpressions
                 return memberA == memberB;
             if (a is ActiveMethodCallExpression methodCallA && b is ActiveMethodCallExpression methodCallB)
                 return methodCallA == methodCallB;
+            if (a is ActiveNewArrayInitExpression newArrayInitA && b is ActiveNewArrayInitExpression newArrayInitB)
+                return newArrayInitA == newArrayInitB;
             if (a is ActiveNewExpression newA && b is ActiveNewExpression newB)
                 return newA == newB;
             if (a is ActiveTypeBinaryExpression typeBinaryA && b is ActiveTypeBinaryExpression typeBinaryB)

@@ -7,22 +7,49 @@ using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
 {
     class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression>
     {
-        ActiveIndexExpression(Type type, ActiveExpression @object, PropertyInfo indexer, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.Index, options, deferEvaluation)
+        ActiveIndexExpression(IndexExpression indexExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(indexExpression.Type, indexExpression.NodeType, options, deferEvaluation)
         {
-            this.indexer = indexer;
-            getMethod = this.indexer.GetMethod;
-            fastGetter = FastMethodInfo.Get(getMethod);
-            this.@object = @object;
-            this.@object.PropertyChanged += ObjectPropertyChanged;
-            this.arguments = arguments;
-            foreach (var argument in this.arguments)
-                argument.PropertyChanged += ArgumentPropertyChanged;
-            EvaluateIfNotDeferred();
+            var argumentsList = new List<ActiveExpression>();
+            try
+            {
+                this.indexExpression = indexExpression;
+                indexer = this.indexExpression.Indexer;
+                getMethod = indexer.GetMethod;
+                fastGetter = FastMethodInfo.Get(getMethod);
+                @object = Create(this.indexExpression.Object, options, deferEvaluation);
+                @object.PropertyChanged += ObjectPropertyChanged;
+                foreach (var indexExpressionArgument in this.indexExpression.Arguments)
+                {
+                    var argument = Create(indexExpressionArgument, options, deferEvaluation);
+                    argument.PropertyChanged += ArgumentPropertyChanged;
+                    argumentsList.Add(argument);
+                }
+                arguments = new EquatableList<ActiveExpression>(argumentsList);
+                EvaluateIfNotDeferred();
+            }
+            catch (Exception ex)
+            {
+                DisposeValueIfNecessaryAndPossible();
+                UnsubscribeFromObjectValueNotifications();
+                if (@object is { })
+                {
+                    @object.PropertyChanged -= ObjectPropertyChanged;
+                    @object.Dispose();
+                }
+                foreach (var argument in argumentsList)
+                {
+                    argument.PropertyChanged -= ArgumentPropertyChanged;
+                    argument.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
         }
 
         readonly EquatableList<ActiveExpression> arguments;
@@ -30,6 +57,7 @@ namespace Cogs.ActiveExpressions
         readonly FastMethodInfo fastGetter;
         readonly MethodInfo getMethod;
         readonly PropertyInfo indexer;
+        readonly IndexExpression indexExpression;
         readonly ActiveExpression @object;
         object? objectValue;
 
@@ -41,7 +69,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((@object, indexer, arguments, options));
+                    instances.Remove((indexExpression, options));
                     result = true;
                 }
             if (result)
@@ -189,19 +217,16 @@ namespace Cogs.ActiveExpressions
         }
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression @object, PropertyInfo indexer, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveIndexExpression> instances = new Dictionary<(ActiveExpression @object, PropertyInfo indexer, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveIndexExpression>();
+        static readonly Dictionary<(IndexExpression indexExpression, ActiveExpressionOptions? options), ActiveIndexExpression> instances = new Dictionary<(IndexExpression indexExpression, ActiveExpressionOptions? options), ActiveIndexExpression>(new CachedInstancesKeyComparer<IndexExpression>());
 
         public static ActiveIndexExpression Create(IndexExpression indexExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var @object = Create(indexExpression.Object, options, deferEvaluation);
-            var indexer = indexExpression.Indexer;
-            var arguments = new EquatableList<ActiveExpression>(indexExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToList());
-            var key = (@object, indexer, arguments, options);
+            var key = (indexExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeIndexExpression))
                 {
-                    activeIndexExpression = new ActiveIndexExpression(indexExpression.Type, @object, indexer, arguments, options, deferEvaluation);
+                    activeIndexExpression = new ActiveIndexExpression(indexExpression, options, deferEvaluation);
                     instances.Add(key, activeIndexExpression);
                 }
                 ++activeIndexExpression.disposalCount;

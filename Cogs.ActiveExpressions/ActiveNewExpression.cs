@@ -7,20 +7,41 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
 {
     class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
     {
-        ActiveNewExpression(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.New, options, deferEvaluation)
+        ActiveNewExpression(NewExpression newExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(newExpression.Type, newExpression.NodeType, options, deferEvaluation)
         {
-            this.constructor = constructor;
-            fastConstructor = FastConstructorInfo.Get(this.constructor);
-            this.arguments = arguments;
-            constructorParameterTypes = new EquatableList<Type>(this.arguments.Select(argument => argument.Type).ToList());
-            foreach (var argument in this.arguments)
-                argument.PropertyChanged += ArgumentPropertyChanged;
-            EvaluateIfNotDeferred();
+            var argumentsList = new List<ActiveExpression>();
+            try
+            {
+                this.newExpression = newExpression;
+                constructor = this.newExpression.Constructor;
+                fastConstructor = FastConstructorInfo.Get(constructor);
+                foreach (var newExpressionArgument in this.newExpression.Arguments)
+                {
+                    var argument = Create(newExpressionArgument, options, deferEvaluation);
+                    argument.PropertyChanged += ArgumentPropertyChanged;
+                    argumentsList.Add(argument);
+                }
+                arguments = new EquatableList<ActiveExpression>(argumentsList);
+                constructorParameterTypes = new EquatableList<Type>(arguments.Select(argument => argument.Type).ToList());
+                EvaluateIfNotDeferred();
+            }
+            catch (Exception ex)
+            {
+                DisposeValueIfNecessaryAndPossible();
+                foreach (var argument in argumentsList)
+                {
+                    argument.PropertyChanged -= ArgumentPropertyChanged;
+                    argument.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
         }
 
         readonly EquatableList<ActiveExpression> arguments;
@@ -28,6 +49,7 @@ namespace Cogs.ActiveExpressions
         readonly EquatableList<Type> constructorParameterTypes;
         int disposalCount;
         readonly FastConstructorInfo fastConstructor;
+        readonly NewExpression newExpression;
 
         void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
@@ -37,7 +59,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((Type, constructor, arguments, options));
+                    instances.Remove((newExpression, options));
                     result = true;
                 }
             if (result)
@@ -78,19 +100,17 @@ namespace Cogs.ActiveExpressions
 
         public override string ToString() => $"new {Type.FullName}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
-        static readonly Dictionary<(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression> instances = new Dictionary<(Type type, ConstructorInfo constructor, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveNewExpression>();
+        static readonly Dictionary<(NewExpression newExpression, ActiveExpressionOptions? options), ActiveNewExpression> instances = new Dictionary<(NewExpression newExpression, ActiveExpressionOptions? options), ActiveNewExpression>(new CachedInstancesKeyComparer<NewExpression>());
         static readonly object instanceManagementLock = new object();
 
         public static ActiveNewExpression Create(NewExpression newExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var type = newExpression.Type;
-            var arguments = new EquatableList<ActiveExpression>(newExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToList());
-            var key = (type, newExpression.Constructor, arguments, options);
+            var key = (newExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeNewExpression))
                 {
-                    activeNewExpression = new ActiveNewExpression(type, newExpression.Constructor, arguments, options, deferEvaluation);
+                    activeNewExpression = new ActiveNewExpression(newExpression, options, deferEvaluation);
                     instances.Add(key, activeNewExpression);
                 }
                 ++activeNewExpression.disposalCount;

@@ -4,24 +4,40 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
+using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
 {
     class ActiveTypeBinaryExpression : ActiveExpression, IEquatable<ActiveTypeBinaryExpression>
     {
-        protected ActiveTypeBinaryExpression(ActiveExpression expression, Type typeOperand, ActiveExpressionOptions? options, bool deferEvaluation) : base(typeof(bool), ExpressionType.TypeIs, options, deferEvaluation)
+        protected ActiveTypeBinaryExpression(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(typeBinaryExpression.Type, typeBinaryExpression.NodeType, options, deferEvaluation)
         {
-            this.expression = expression;
-            this.expression.PropertyChanged += ExpressionPropertyChanged;
-            this.typeOperand = typeOperand;
-            var parameter = Expression.Parameter(typeof(object));
-            @delegate = delegates.GetOrAdd(this.typeOperand, CreateDelegate);
-            EvaluateIfNotDeferred();
+            try
+            {
+                this.typeBinaryExpression = typeBinaryExpression;
+                expression = Create(typeBinaryExpression.Expression, options, deferEvaluation);
+                expression.PropertyChanged += ExpressionPropertyChanged;
+                typeOperand = typeBinaryExpression.TypeOperand;
+                var parameter = Expression.Parameter(typeof(object));
+                @delegate = delegates.GetOrAdd(typeOperand, CreateDelegate);
+                EvaluateIfNotDeferred();
+            }
+            catch (Exception ex)
+            {
+                if (expression is { })
+                {
+                    expression.PropertyChanged -= ExpressionPropertyChanged;
+                    expression.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
         }
 
         readonly TypeIsDelegate @delegate;
         int disposalCount;
         readonly ActiveExpression expression;
+        readonly TypeBinaryExpression typeBinaryExpression;
         readonly Type typeOperand;
 
         protected override bool Dispose(bool disposing)
@@ -30,7 +46,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((expression, typeOperand, options));
+                    instances.Remove((typeBinaryExpression, options));
                     result = true;
                 }
             if (result)
@@ -62,18 +78,16 @@ namespace Cogs.ActiveExpressions
 
         static readonly ConcurrentDictionary<Type, TypeIsDelegate> delegates = new ConcurrentDictionary<Type, TypeIsDelegate>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression expression, Type typeOperand, ActiveExpressionOptions? options), ActiveTypeBinaryExpression> instances = new Dictionary<(ActiveExpression expression, Type typeOperand, ActiveExpressionOptions? options), ActiveTypeBinaryExpression>();
+        static readonly Dictionary<(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options), ActiveTypeBinaryExpression> instances = new Dictionary<(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options), ActiveTypeBinaryExpression>(new CachedInstancesKeyComparer<TypeBinaryExpression>());
 
         public static ActiveTypeBinaryExpression Create(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var expression = Create(typeBinaryExpression.Expression, options, deferEvaluation);
-            var typeOperand = typeBinaryExpression.TypeOperand;
-            var key = (expression, typeOperand, options);
+            var key = (typeBinaryExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeTypeBinaryExpression))
                 {
-                    activeTypeBinaryExpression = new ActiveTypeBinaryExpression(expression, typeOperand, options, deferEvaluation);
+                    activeTypeBinaryExpression = new ActiveTypeBinaryExpression(typeBinaryExpression, options, deferEvaluation);
                     instances.Add(key, activeTypeBinaryExpression);
                 }
                 ++activeTypeBinaryExpression.disposalCount;

@@ -7,46 +7,52 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
 {
     class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpression>
     {
-        ActiveMemberExpression(Type type, ActiveExpression expression, MemberInfo member, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.MemberAccess, options, deferEvaluation)
+        ActiveMemberExpression(MemberExpression memberExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(memberExpression.Type, memberExpression.NodeType, options, deferEvaluation)
         {
-            this.expression = expression;
-            this.expression.PropertyChanged += ExpressionPropertyChanged;
-            this.member = member;
-            switch (this.member)
+            try
             {
-                case FieldInfo field:
-                    this.field = field;
-                    isFieldOfCompilerGeneratedType = this.expression.Type.Name.StartsWith("<");
-                    break;
-                case PropertyInfo property:
-                    getMethod = property.GetMethod;
-                    fastGetter = FastMethodInfo.Get(getMethod);
-                    isFieldOfCompilerGeneratedType = false;
-                    break;
+                this.memberExpression = memberExpression;
+                if (this.memberExpression.Expression is { })
+                {
+                    expression = Create(memberExpression.Expression, options, deferEvaluation);
+                    expression.PropertyChanged += ExpressionPropertyChanged;
+                }
+                member = memberExpression.Member;
+                switch (member)
+                {
+                    case FieldInfo field:
+                        this.field = field;
+                        isFieldOfCompilerGeneratedType = expression?.Type.Name.StartsWith("<") ?? false;
+                        break;
+                    case PropertyInfo property:
+                        getMethod = property.GetMethod;
+                        fastGetter = FastMethodInfo.Get(getMethod);
+                        isFieldOfCompilerGeneratedType = false;
+                        break;
+                }
+                EvaluateIfNotDeferred();
             }
-            EvaluateIfNotDeferred();
-        }
-
-        ActiveMemberExpression(Type type, MemberInfo member, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.MemberAccess, options, deferEvaluation)
-        {
-            isFieldOfCompilerGeneratedType = false;
-            this.member = member;
-            switch (this.member)
+            catch (Exception ex)
             {
-                case FieldInfo field:
-                    this.field = field;
-                    break;
-                case PropertyInfo property:
-                    getMethod = property.GetMethod;
-                    fastGetter = FastMethodInfo.Get(getMethod);
-                    break;
+                DisposeValueIfNecessaryAndPossible();
+                if (fastGetter is { })
+                    UnsubscribeFromExpressionValueNotifications();
+                else if (field is { })
+                    UnsubscribeFromValueNotifications();
+                if (expression is { })
+                {
+                    expression.PropertyChanged -= ExpressionPropertyChanged;
+                    expression.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
             }
-            EvaluateIfNotDeferred();
         }
 
         int disposalCount;
@@ -57,6 +63,7 @@ namespace Cogs.ActiveExpressions
         readonly MethodInfo? getMethod;
         readonly bool isFieldOfCompilerGeneratedType;
         readonly MemberInfo member;
+        readonly MemberExpression memberExpression;
 
         protected override bool Dispose(bool disposing)
         {
@@ -64,10 +71,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    if (expression is { })
-                        instanceInstances.Remove((expression, member, options));
-                    else
-                        staticInstances.Remove((member, options));
+                    instances.Remove((memberExpression, options));
                     result = true;
                 }
             if (result)
@@ -176,41 +180,20 @@ namespace Cogs.ActiveExpressions
 
         static readonly object[] emptyArray = Array.Empty<object>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression expression, MemberInfo member, ActiveExpressionOptions? options), ActiveMemberExpression> instanceInstances = new Dictionary<(ActiveExpression expression, MemberInfo member, ActiveExpressionOptions? options), ActiveMemberExpression>();
-        static readonly Dictionary<(MemberInfo member, ActiveExpressionOptions? options), ActiveMemberExpression> staticInstances = new Dictionary<(MemberInfo member, ActiveExpressionOptions? options), ActiveMemberExpression>();
+        static readonly Dictionary<(MemberExpression memberExpression, ActiveExpressionOptions? options), ActiveMemberExpression> instances = new Dictionary<(MemberExpression memberExpression, ActiveExpressionOptions? options), ActiveMemberExpression>(new CachedInstancesKeyComparer<MemberExpression>());
 
         public static ActiveMemberExpression Create(MemberExpression memberExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            if (memberExpression.Expression is null)
+            var key = (memberExpression, options);
+            lock (instanceManagementLock)
             {
-                var member = memberExpression.Member;
-                var key = (member, options);
-                lock (instanceManagementLock)
+                if (!instances.TryGetValue(key, out var activeMemberExpression))
                 {
-                    if (!staticInstances.TryGetValue(key, out var activeMemberExpression))
-                    {
-                        activeMemberExpression = new ActiveMemberExpression(memberExpression.Type, member, options, deferEvaluation);
-                        staticInstances.Add(key, activeMemberExpression);
-                    }
-                    ++activeMemberExpression.disposalCount;
-                    return activeMemberExpression;
+                    activeMemberExpression = new ActiveMemberExpression(memberExpression, options, deferEvaluation);
+                    instances.Add(key, activeMemberExpression);
                 }
-            }
-            else
-            {
-                var expression = Create(memberExpression.Expression, options, deferEvaluation);
-                var member = memberExpression.Member;
-                var key = (expression, member, options);
-                lock (instanceManagementLock)
-                {
-                    if (!instanceInstances.TryGetValue(key, out var activeMemberExpression))
-                    {
-                        activeMemberExpression = new ActiveMemberExpression(memberExpression.Type, expression, member, options, deferEvaluation);
-                        instanceInstances.Add(key, activeMemberExpression);
-                    }
-                    ++activeMemberExpression.disposalCount;
-                    return activeMemberExpression;
-                }
+                ++activeMemberExpression.disposalCount;
+                return activeMemberExpression;
             }
         }
 

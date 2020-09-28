@@ -7,37 +7,57 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
 {
     class ActiveMethodCallExpression : ActiveExpression, IEquatable<ActiveMethodCallExpression>
     {
-        ActiveMethodCallExpression(Type type, ActiveExpression @object, MethodInfo method, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.Call, options, deferEvaluation)
+        ActiveMethodCallExpression(MethodCallExpression methodCallExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(methodCallExpression.Type, methodCallExpression.NodeType, options, deferEvaluation)
         {
-            this.method = method;
-            fastMethod = FastMethodInfo.Get(this.method);
-            this.@object = @object;
-            this.@object.PropertyChanged += ObjectPropertyChanged;
-            this.arguments = arguments;
-            foreach (var argument in this.arguments)
-                argument.PropertyChanged += ArgumentPropertyChanged;
-            EvaluateIfNotDeferred();
-        }
-
-        ActiveMethodCallExpression(Type type, MethodInfo method, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, ExpressionType.Call, options, deferEvaluation)
-        {
-            this.method = method;
-            fastMethod = FastMethodInfo.Get(this.method);
-            this.arguments = arguments;
-            foreach (var argument in this.arguments)
-                argument.PropertyChanged += ArgumentPropertyChanged;
-            EvaluateIfNotDeferred();
+            var argumentsList = new List<ActiveExpression>();
+            try
+            {
+                this.methodCallExpression = methodCallExpression;
+                method = this.methodCallExpression.Method;
+                fastMethod = FastMethodInfo.Get(method);
+                if (methodCallExpression.Object is { })
+                {
+                    @object = Create(this.methodCallExpression.Object, options, deferEvaluation);
+                    @object.PropertyChanged += ObjectPropertyChanged;
+                }
+                foreach (var methodCallExpressionArgument in this.methodCallExpression.Arguments)
+                {
+                    var argument = Create(methodCallExpressionArgument, options, deferEvaluation);
+                    argument.PropertyChanged += ArgumentPropertyChanged;
+                    argumentsList.Add(argument);
+                }
+                arguments = new EquatableList<ActiveExpression>(argumentsList);
+                EvaluateIfNotDeferred();
+            }
+            catch (Exception ex)
+            {
+                DisposeValueIfNecessaryAndPossible();
+                if (@object is { })
+                {
+                    @object.PropertyChanged -= ObjectPropertyChanged;
+                    @object.Dispose();
+                }
+                foreach (var argument in argumentsList)
+                {
+                    argument.PropertyChanged -= ArgumentPropertyChanged;
+                    argument.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
         }
 
         readonly EquatableList<ActiveExpression> arguments;
         int disposalCount;
         readonly FastMethodInfo fastMethod;
         readonly MethodInfo method;
+        readonly MethodCallExpression methodCallExpression;
         readonly ActiveExpression? @object;
 
         void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
@@ -48,10 +68,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    if (@object is null)
-                        staticInstances.Remove((method, arguments, options));
-                    else
-                        instanceInstances.Remove((@object, method, arguments, options));
+                    instances.Remove((methodCallExpression, options));
                     result = true;
                 }
             if (result)
@@ -103,43 +120,20 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => $"{@object?.ToString() ?? method.DeclaringType.FullName}.{method.Name}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression @object, MethodInfo method, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveMethodCallExpression> instanceInstances = new Dictionary<(ActiveExpression @object, MethodInfo method, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveMethodCallExpression>();
-        static readonly Dictionary<(MethodInfo method, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveMethodCallExpression> staticInstances = new Dictionary<(MethodInfo method, EquatableList<ActiveExpression> arguments, ActiveExpressionOptions? options), ActiveMethodCallExpression>();
+        static readonly Dictionary<(MethodCallExpression methodCallExpression, ActiveExpressionOptions? options), ActiveMethodCallExpression> instances = new Dictionary<(MethodCallExpression methodCallExpression, ActiveExpressionOptions? options), ActiveMethodCallExpression>(new CachedInstancesKeyComparer<MethodCallExpression>());
 
         public static ActiveMethodCallExpression Create(MethodCallExpression methodCallExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            if (methodCallExpression.Object is null)
+            var key = (methodCallExpression, options);
+            lock (instanceManagementLock)
             {
-                var method = methodCallExpression.Method;
-                var arguments = new EquatableList<ActiveExpression>(methodCallExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToList());
-                var key = (method, arguments, options);
-                lock (instanceManagementLock)
+                if (!instances.TryGetValue(key, out var activeMethodCallExpression))
                 {
-                    if (!staticInstances.TryGetValue(key, out var activeMethodCallExpression))
-                    {
-                        activeMethodCallExpression = new ActiveMethodCallExpression(methodCallExpression.Type, method, arguments, options, deferEvaluation);
-                        staticInstances.Add(key, activeMethodCallExpression);
-                    }
-                    ++activeMethodCallExpression.disposalCount;
-                    return activeMethodCallExpression;
+                    activeMethodCallExpression = new ActiveMethodCallExpression(methodCallExpression, options, deferEvaluation);
+                    instances.Add(key, activeMethodCallExpression);
                 }
-            }
-            else
-            {
-                var @object = Create(methodCallExpression.Object, options, deferEvaluation);
-                var method = methodCallExpression.Method;
-                var arguments = new EquatableList<ActiveExpression>(methodCallExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToList());
-                var key = (@object, method, arguments, options);
-                lock (instanceManagementLock)
-                {
-                    if (!instanceInstances.TryGetValue(key, out var activeMethodCallExpression))
-                    {
-                        activeMethodCallExpression = new ActiveMethodCallExpression(methodCallExpression.Type, @object, method, arguments, options, deferEvaluation);
-                        instanceInstances.Add(key, activeMethodCallExpression);
-                    }
-                    ++activeMethodCallExpression.disposalCount;
-                    return activeMethodCallExpression;
-                }
+                ++activeMethodCallExpression.disposalCount;
+                return activeMethodCallExpression;
             }
         }
 

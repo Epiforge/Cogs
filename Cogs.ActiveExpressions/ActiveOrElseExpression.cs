@@ -6,7 +6,7 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveOrElseExpression : ActiveBinaryExpression, IEquatable<ActiveOrElseExpression>
     {
-        public ActiveOrElseExpression(ActiveExpression left, ActiveExpression right, ActiveExpressionOptions? options, bool deferEvaluation) : base(typeof(bool), ExpressionType.OrElse, left, right, false, null, options, deferEvaluation, false)
+        public ActiveOrElseExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(binaryExpression, options, deferEvaluation, false)
         {
         }
 

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
 {
@@ -12,13 +13,42 @@ namespace Cogs.ActiveExpressions
     {
         ActiveInvocationExpression(InvocationExpression invocationExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(invocationExpression.Type, ExpressionType.Invoke, options, deferEvaluation)
         {
-            this.invocationExpression = invocationExpression;
-            if (this.invocationExpression.Expression is LambdaExpression)
-                activeArguments = invocationExpression.Arguments.Select(argument => Create(argument, options, deferEvaluation)).ToImmutableArray();
-            CreateActiveExpression();
-            if (activeArguments is { })
-                foreach (var activeArgument in activeArguments)
-                    activeArgument.PropertyChanged += ActiveArgumentPropertyChanged;
+            var activeArgumentsList = new List<ActiveExpression>();
+            try
+            {
+                this.invocationExpression = invocationExpression;
+                if (this.invocationExpression.Expression is LambdaExpression)
+                {
+                    foreach (var invocationExpressionArgument in this.invocationExpression.Arguments)
+                    {
+                        var activeArgument = Create(invocationExpressionArgument, options, deferEvaluation);
+                        activeArgument.PropertyChanged += ActiveArgumentPropertyChanged;
+                        activeArgumentsList.Add(activeArgument);
+                    }
+                    activeArguments = activeArgumentsList.ToImmutableArray();
+                }
+                CreateActiveExpression();
+            }
+            catch (Exception ex)
+            {
+                if (activeExpression is { })
+                {
+                    activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
+                    activeExpression.Dispose();
+                }
+                if (activeDelegateExpression is { })
+                {
+                    activeDelegateExpression.PropertyChanged -= ActiveDelegateExpressionPropertyChanged;
+                    activeDelegateExpression.Dispose();
+                }
+                foreach (var activeArgument in activeArgumentsList)
+                {
+                    activeArgument.PropertyChanged -= ActiveArgumentPropertyChanged;
+                    activeArgument.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
         }
 
         readonly InvocationExpression invocationExpression;
@@ -131,7 +161,7 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => $"λ({(activeExpression is { } ? (object)activeExpression : invocationExpression)})";
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(InvocationExpression invocationExpression, ActiveExpressionOptions? options), ActiveInvocationExpression> instances = new Dictionary<(InvocationExpression invocationExpression, ActiveExpressionOptions? options), ActiveInvocationExpression>(new InstancesEqualityComparer());
+        static readonly Dictionary<(InvocationExpression invocationExpression, ActiveExpressionOptions? options), ActiveInvocationExpression> instances = new Dictionary<(InvocationExpression invocationExpression, ActiveExpressionOptions? options), ActiveInvocationExpression>(new CachedInstancesKeyComparer<InvocationExpression>());
 
         public static ActiveInvocationExpression Create(InvocationExpression invocationExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
@@ -152,14 +182,5 @@ namespace Cogs.ActiveExpressions
 
         [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveInvocationExpression a, ActiveInvocationExpression b) => !(a == b);
-
-        class InstancesEqualityComparer : IEqualityComparer<(InvocationExpression invocationExpression, ActiveExpressionOptions? options)>
-        {
-            public bool Equals((InvocationExpression invocationExpression, ActiveExpressionOptions? options) x, (InvocationExpression invocationExpression, ActiveExpressionOptions? options) y) =>
-                ExpressionEqualityComparer.Default.Equals(x.invocationExpression, y.invocationExpression) && ((x.options is null && y.options is null) || (x.options is { } && y.options is { } && x.options.Equals(y.options)));
-
-            public int GetHashCode((InvocationExpression invocationExpression, ActiveExpressionOptions? options) obj) =>
-                HashCode.Combine(ExpressionEqualityComparer.Default.GetHashCode(obj.invocationExpression), obj.options);
-        }
     }
 }

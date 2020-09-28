@@ -4,37 +4,69 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
 {
     class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpression>
     {
-        protected ActiveBinaryExpression(Type type, ExpressionType nodeType, ActiveExpression left, ActiveExpression right, bool isLiftedToNull, MethodInfo? method, ActiveExpressionOptions? options, bool deferEvaluation, bool getDelegate = true, bool evaluateIfNotDeferred = true) : base(type, nodeType, options, deferEvaluation)
+        protected ActiveBinaryExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, bool deferEvaluation, bool getDelegate = true, bool evaluateIfNotDeferred = true) : base(binaryExpression.Type, binaryExpression.NodeType, options, deferEvaluation)
         {
-            this.left = left;
-            this.left.PropertyChanged += LeftPropertyChanged;
-            this.right = right;
-            this.right.PropertyChanged += RightPropertyChanged;
-            this.isLiftedToNull = isLiftedToNull;
-            this.method = method;
-            if (getDelegate)
+            try
             {
-                var implementationKey = (NodeType, this.left.Type, this.right.Type, Type, this.method);
-                if (!implementations.TryGetValue(implementationKey, out var @delegate))
+                this.binaryExpression = binaryExpression;
+                left = Create(this.binaryExpression.Left, options, deferEvaluation);
+                left.PropertyChanged += LeftPropertyChanged;
+                switch (this.binaryExpression.NodeType)
                 {
-                    var leftParameter = Expression.Parameter(typeof(object));
-                    var rightParameter = Expression.Parameter(typeof(object));
-                    var leftConversion = Expression.Convert(leftParameter, this.left.Type);
-                    var rightConversion = Expression.Convert(rightParameter, this.right.Type);
-                    @delegate = Expression.Lambda<BinaryOperationDelegate>(Expression.Convert(this.method is null ? Expression.MakeBinary(NodeType, leftConversion, rightConversion) : Expression.MakeBinary(NodeType, leftConversion, rightConversion, this.isLiftedToNull, this.method), typeof(object)), leftParameter, rightParameter).Compile();
-                    implementations.Add(implementationKey, @delegate);
+                    case ExpressionType.AndAlso when this.binaryExpression.Type == typeof(bool):
+                    case ExpressionType.Coalesce:
+                    case ExpressionType.OrElse when this.binaryExpression.Type == typeof(bool):
+                        right = Create(this.binaryExpression.Right, options, true);
+                        break;
+                    default:
+                        right = Create(this.binaryExpression.Right, options, deferEvaluation);
+                        break;
                 }
-                this.@delegate = @delegate;
+                right.PropertyChanged += RightPropertyChanged;
+                isLiftedToNull = this.binaryExpression.IsLiftedToNull;
+                method = this.binaryExpression.Method;
+                if (getDelegate)
+                {
+                    var implementationKey = (NodeType, left.Type, right.Type, Type, method);
+                    if (!implementations.TryGetValue(implementationKey, out var @delegate))
+                    {
+                        var leftParameter = Expression.Parameter(typeof(object));
+                        var rightParameter = Expression.Parameter(typeof(object));
+                        var leftConversion = Expression.Convert(leftParameter, left.Type);
+                        var rightConversion = Expression.Convert(rightParameter, right.Type);
+                        @delegate = Expression.Lambda<BinaryOperationDelegate>(Expression.Convert(method is null ? Expression.MakeBinary(NodeType, leftConversion, rightConversion) : Expression.MakeBinary(NodeType, leftConversion, rightConversion, isLiftedToNull, method), typeof(object)), leftParameter, rightParameter).Compile();
+                        implementations.Add(implementationKey, @delegate);
+                    }
+                    this.@delegate = @delegate;
+                }
+                if (evaluateIfNotDeferred)
+                    EvaluateIfNotDeferred();
             }
-            if (evaluateIfNotDeferred)
-                EvaluateIfNotDeferred();
+            catch (Exception ex)
+            {
+                DisposeValueIfNecessaryAndPossible();
+                if (left is { })
+                {
+                    left.PropertyChanged -= LeftPropertyChanged;
+                    left.Dispose();
+                }
+                if (right is { })
+                {
+                    right.PropertyChanged -= RightPropertyChanged;
+                    right.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
         }
 
+        readonly BinaryExpression binaryExpression;
         readonly BinaryOperationDelegate? @delegate;
         int disposalCount;
         readonly bool isLiftedToNull;
@@ -48,7 +80,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((NodeType, left, right, isLiftedToNull, method, options));
+                    instances.Remove((binaryExpression, options));
                     result = true;
                 }
             if (result)
@@ -99,38 +131,21 @@ namespace Cogs.ActiveExpressions
 
         static readonly Dictionary<(ExpressionType nodeType, Type leftType, Type rightType, Type returnValueType, MethodInfo? method), BinaryOperationDelegate> implementations = new Dictionary<(ExpressionType nodeType, Type leftType, Type rightType, Type returnValueType, MethodInfo? method), BinaryOperationDelegate>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ExpressionType nodeType, ActiveExpression left, ActiveExpression right, bool isLiftedToNull, MethodInfo? method, ActiveExpressionOptions? options), ActiveBinaryExpression> instances = new Dictionary<(ExpressionType nodeType, ActiveExpression left, ActiveExpression right, bool isLiftedToNull, MethodInfo? method, ActiveExpressionOptions? options), ActiveBinaryExpression>();
+        static readonly Dictionary<(BinaryExpression binaryExpression, ActiveExpressionOptions? options), ActiveBinaryExpression> instances = new Dictionary<(BinaryExpression binaryExpression, ActiveExpressionOptions? options), ActiveBinaryExpression>(new CachedInstancesKeyComparer<BinaryExpression>());
 
         public static ActiveBinaryExpression Create(BinaryExpression binaryExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var type = binaryExpression.Type;
-            var nodeType = binaryExpression.NodeType;
-            var left = Create(binaryExpression.Left, options, deferEvaluation);
-            var isLiftedToNull = binaryExpression.IsLiftedToNull;
-            var method = binaryExpression.Method;
-            ActiveExpression right;
-            switch (nodeType)
-            {
-                case ExpressionType.AndAlso when type == typeof(bool):
-                case ExpressionType.Coalesce:
-                case ExpressionType.OrElse when type == typeof(bool):
-                    right = Create(binaryExpression.Right, options, true);
-                    break;
-                default:
-                    right = Create(binaryExpression.Right, options, deferEvaluation);
-                    break;
-            }
-            var key = (nodeType, left, right, isLiftedToNull, method, options);
+            var key = (binaryExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeBinaryExpression))
                 {
-                    activeBinaryExpression = nodeType switch
+                    activeBinaryExpression = binaryExpression.NodeType switch
                     {
-                        ExpressionType.AndAlso when type == typeof(bool) => new ActiveAndAlsoExpression(left, right, options, deferEvaluation),
-                        ExpressionType.Coalesce => new ActiveCoalesceExpression(type, left, right, binaryExpression.Conversion, options, deferEvaluation),
-                        ExpressionType.OrElse when type == typeof(bool) => new ActiveOrElseExpression(left, right, options, deferEvaluation),
-                        _ => new ActiveBinaryExpression(type, nodeType, left, right, isLiftedToNull, method, options, deferEvaluation),
+                        ExpressionType.AndAlso when binaryExpression.Type == typeof(bool) => new ActiveAndAlsoExpression(binaryExpression, options, deferEvaluation),
+                        ExpressionType.Coalesce => new ActiveCoalesceExpression(binaryExpression, options, deferEvaluation),
+                        ExpressionType.OrElse when binaryExpression.Type == typeof(bool) => new ActiveOrElseExpression(binaryExpression, options, deferEvaluation),
+                        _ => new ActiveBinaryExpression(binaryExpression, options, deferEvaluation),
                     };
                     instances.Add(key, activeBinaryExpression);
                 }

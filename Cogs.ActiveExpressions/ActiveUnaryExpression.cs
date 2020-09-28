@@ -4,32 +4,49 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
 {
     class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression>
     {
-        ActiveUnaryExpression(ExpressionType nodeType, ActiveExpression operand, Type type, MethodInfo? method, ActiveExpressionOptions? options, bool deferEvaluation) : base(type, nodeType, options, deferEvaluation)
+        ActiveUnaryExpression(UnaryExpression unaryExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(unaryExpression.Type, unaryExpression.NodeType, options, deferEvaluation)
         {
-            this.operand = operand;
-            this.operand.PropertyChanged += OperandPropertyChanged;
-            this.method = method;
-            var implementationKey = (NodeType, this.operand.Type, Type, this.method);
-            if (!implementations.TryGetValue(implementationKey, out var @delegate))
+            try
             {
-                var operandParameter = Expression.Parameter(typeof(object));
-                var operandConversion = Expression.Convert(operandParameter, this.operand.Type);
-                @delegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(this.method is null ? Expression.MakeUnary(NodeType, operandConversion, Type) : Expression.MakeUnary(NodeType, operandConversion, Type, this.method), typeof(object)), operandParameter).Compile();
-                implementations.Add(implementationKey, @delegate);
+                this.unaryExpression = unaryExpression;
+                operand = Create(unaryExpression.Operand, options, deferEvaluation);
+                operand.PropertyChanged += OperandPropertyChanged;
+                method = unaryExpression.Method;
+                var implementationKey = (NodeType, operand.Type, Type, method);
+                if (!implementations.TryGetValue(implementationKey, out var @delegate))
+                {
+                    var operandParameter = Expression.Parameter(typeof(object));
+                    var operandConversion = Expression.Convert(operandParameter, operand.Type);
+                    @delegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(method is null ? Expression.MakeUnary(NodeType, operandConversion, Type) : Expression.MakeUnary(NodeType, operandConversion, Type, method), typeof(object)), operandParameter).Compile();
+                    implementations.Add(implementationKey, @delegate);
+                }
+                this.@delegate = @delegate;
+                EvaluateIfNotDeferred();
             }
-            this.@delegate = @delegate;
-            EvaluateIfNotDeferred();
+            catch (Exception ex)
+            {
+                DisposeValueIfNecessaryAndPossible();
+                if (operand is { })
+                {
+                    operand.PropertyChanged -= OperandPropertyChanged;
+                    operand.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
         }
 
         readonly UnaryOperationDelegate @delegate;
         int disposalCount;
         readonly MethodInfo? method;
         readonly ActiveExpression operand;
+        readonly UnaryExpression unaryExpression;
 
         protected override bool Dispose(bool disposing)
         {
@@ -37,7 +54,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((NodeType, operand, Type, method, options));
+                    instances.Remove((unaryExpression, options));
                     result = true;
                 }
             if (result)
@@ -79,20 +96,16 @@ namespace Cogs.ActiveExpressions
 
         static readonly Dictionary<(ExpressionType nodeType, Type operandType, Type returnValueType, MethodInfo? method), UnaryOperationDelegate> implementations = new Dictionary<(ExpressionType nodeType, Type operandType, Type returnValueType, MethodInfo? method), UnaryOperationDelegate>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ExpressionType nodeType, ActiveExpression opperand, Type type, MethodInfo? method, ActiveExpressionOptions? options), ActiveUnaryExpression> instances = new Dictionary<(ExpressionType nodeType, ActiveExpression opperand, Type type, MethodInfo? method, ActiveExpressionOptions? options), ActiveUnaryExpression>();
+        static readonly Dictionary<(UnaryExpression unaryExpression, ActiveExpressionOptions? options), ActiveUnaryExpression> instances = new Dictionary<(UnaryExpression unaryExpression, ActiveExpressionOptions? options), ActiveUnaryExpression>(new CachedInstancesKeyComparer<UnaryExpression>());
 
         public static ActiveUnaryExpression Create(UnaryExpression unaryExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var nodeType = unaryExpression.NodeType;
-            var operand = Create(unaryExpression.Operand, options, deferEvaluation);
-            var type = unaryExpression.Type;
-            var method = unaryExpression.Method;
-            var key = (nodeType, operand, type, method, options);
+            var key = (unaryExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeUnaryExpression))
                 {
-                    activeUnaryExpression = new ActiveUnaryExpression(nodeType, operand, type, method, options, deferEvaluation);
+                    activeUnaryExpression = new ActiveUnaryExpression(unaryExpression, options, deferEvaluation);
                     instances.Add(key, activeUnaryExpression);
                 }
                 ++activeUnaryExpression.disposalCount;
