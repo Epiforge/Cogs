@@ -16,7 +16,7 @@
         <Product>Active Query Cog</Product>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.0.22</Version>
+        <Version>1.1.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
