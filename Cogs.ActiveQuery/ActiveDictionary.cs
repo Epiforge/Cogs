@@ -177,14 +177,14 @@ namespace Cogs.ActiveQuery
         public IEqualityComparer<TKey>? EqualityComparer => readOnlyDictionary.GetKeyEqualityComparer();
 
         /// <summary>
-        /// Gets an enumerable collection that contains the keys in the read-only dictionary
-        /// </summary>
-        public IEnumerable<TKey> Keys => readOnlyDictionary.Keys;
-
-        /// <summary>
         /// Gets the <see cref="ActiveQuery.IndexingStrategy"/> in use by the <see cref="ActiveDictionary{TKey, TValue}"/>
         /// </summary>
         public IndexingStrategy? IndexingStrategy => readOnlyDictionary.GetIndexingStrategy();
+
+        /// <summary>
+        /// Gets an enumerable collection that contains the keys in the read-only dictionary
+        /// </summary>
+        public IEnumerable<TKey> Keys => readOnlyDictionary.Keys;
 
         /// <summary>
         /// Gets the exception that occured the most recent time the query updated

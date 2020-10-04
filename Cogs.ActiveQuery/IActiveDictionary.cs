@@ -1,7 +1,9 @@
 using Cogs.Collections;
+using Cogs.Disposal;
 using Cogs.Threading;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Cogs.ActiveQuery
 {
@@ -10,7 +12,7 @@ namespace Cogs.ActiveQuery
     /// </summary>
     /// <typeparam name="TKey">The type of keys</typeparam>
     /// <typeparam name="TValue">The type of values</typeparam>
-    public interface IActiveDictionary<TKey, TValue> : IDisposable, INotifyDictionaryChanged, INotifyDictionaryChanged<TKey, TValue>, INotifyElementFaultChanges, IReadOnlyDictionary<TKey, TValue>, ISynchronized
+    public interface IActiveDictionary<TKey, TValue> : IDisposable, IDisposalStatus, INotifyDictionaryChanged, INotifyDictionaryChanged<TKey, TValue>, INotifyDisposed, INotifyDisposing, INotifyElementFaultChanges, INotifyPropertyChanged, INotifyPropertyChanging, IReadOnlyDictionary<TKey, TValue>, ISynchronized
     {
         /// <summary>
         /// Occurs when the dictionary changes
