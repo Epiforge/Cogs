@@ -1,0 +1,1 @@
+SynchronizedRangeObservableCollection now supports removing and retrieving elements with a predicate. SynchronizedObservableDictionary, SynchronizedObservableSortedDictionary, and SynchronizedRangeObservableCollection now support removing and retrieving elements with an asynchronous predicate.

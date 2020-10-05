@@ -72,6 +72,49 @@ namespace Cogs.Collections.Synchronized
         public Task AddRangeAsync(IList<T> items) => AddRangeAsync((IEnumerable<T>)items);
 
         /// <summary>
+        /// Removes all object from the <see cref="SynchronizedRangeObservableCollection{T}"/> that satisfy the <paramref name="predicate"/>
+        /// </summary>
+        /// <param name="predicate">A predicate used to determine whether to remove an object from the <see cref="SynchronizedRangeObservableCollection{T}"/></param>
+        /// <returns>The items that were removed</returns>
+        public IReadOnlyList<T> GetAndRemoveAll(Func<T, bool> predicate) => this.Execute(() =>
+        {
+            var removed = new List<T>();
+            for (var i = 0; i < Items.Count;)
+            {
+                if (predicate(Items[i]))
+                    removed.Add(GetAndRemoveAt(i));
+                else
+                    ++i;
+            }
+            return removed.ToImmutableArray();
+        });
+
+        /// <summary>
+        /// Removes all object from the <see cref="SynchronizedRangeObservableCollection{T}"/> that satisfy the <paramref name="predicate"/>
+        /// </summary>
+        /// <param name="predicate">A predicate used to determine whether to remove an object from the <see cref="SynchronizedRangeObservableCollection{T}"/></param>
+        /// <returns>The items that were removed</returns>
+        public Task<IReadOnlyList<T>> GetAndRemoveAllAsync(Func<T, bool> predicate) => this.ExecuteAsync(() => GetAndRemoveAll(predicate));
+
+        /// <summary>
+        /// Removes all object from the <see cref="SynchronizedRangeObservableCollection{T}"/> that satisfy the <paramref name="asyncPredicate"/>
+        /// </summary>
+        /// <param name="asyncPredicate">An asynchronous predicate used to determine whether to remove an object from the <see cref="SynchronizedRangeObservableCollection{T}"/></param>
+        /// <returns>The items that were removed</returns>
+        public Task<IReadOnlyList<T>> GetAndRemoveAllAsync(Func<T, Task<bool>> asyncPredicate) => this.ExecuteAsync(async () =>
+        {
+            var removed = new List<T>();
+            for (var i = 0; i < Items.Count;)
+            {
+                if (await asyncPredicate(Items[i]))
+                    removed.Add(GetAndRemoveAt(i));
+                else
+                    ++i;
+            }
+            return (IReadOnlyList<T>)removed.ToImmutableArray();
+        });
+
+        /// <summary>
         /// Gets the element at the specified index and removes it from the <see cref="SynchronizedRangeObservableCollection{T}"/>
         /// </summary>
         /// <param name="index">The zero-based index of the element</param>
@@ -181,24 +224,7 @@ namespace Cogs.Collections.Synchronized
         /// </summary>
         /// <param name="predicate">A predicate used to determine whether to remove an object from the <see cref="SynchronizedRangeObservableCollection{T}"/></param>
         /// <returns>The number of items that were removed</returns>
-        public int RemoveAll(Func<T, bool> predicate) => this.Execute(() =>
-        {
-            var removed = 0;
-            for (var i = 0; i < Items.Count;)
-            {
-                var item = Items[i];
-                if (predicate(item))
-                {
-                    Items.RemoveAt(i);
-                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, i));
-                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
-                    ++removed;
-                }
-                else
-                    ++i;
-            }
-            return removed;
-        });
+        public int RemoveAll(Func<T, bool> predicate) => this.Execute(() => GetAndRemoveAll(predicate).Count);
 
         /// <summary>
         /// Removes all object from the <see cref="SynchronizedRangeObservableCollection{T}"/> that satisfy the <paramref name="predicate"/>
@@ -206,6 +232,13 @@ namespace Cogs.Collections.Synchronized
         /// <param name="predicate">A predicate used to determine whether to remove an object from the <see cref="SynchronizedRangeObservableCollection{T}"/></param>
         /// <returns>The number of items that were removed</returns>
         public Task<int> RemoveAllAsync(Func<T, bool> predicate) => this.ExecuteAsync(() => RemoveAll(predicate));
+
+        /// <summary>
+        /// Removes all object from the <see cref="SynchronizedRangeObservableCollection{T}"/> that satisfy the <paramref name="asyncPredicate"/>
+        /// </summary>
+        /// <param name="asyncPredicate">An asynchronous predicate used to determine whether to remove an object from the <see cref="SynchronizedRangeObservableCollection{T}"/></param>
+        /// <returns>The number of items that were removed</returns>
+        public Task<int> RemoveAllAsync(Func<T, Task<bool>> asyncPredicate) => this.ExecuteAsync(async () => (await GetAndRemoveAllAsync(asyncPredicate)).Count);
 
         /// <summary>
         /// Removes the specified items from the <see cref="SynchronizedRangeObservableCollection{T}"/>

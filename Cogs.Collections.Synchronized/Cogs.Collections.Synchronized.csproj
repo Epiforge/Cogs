@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
@@ -12,10 +12,11 @@
     <PackageIcon>NuGet.jpg</PackageIcon>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
+    <PackageReleaseNotes>Please write the package release notes in ReleaseNotes.txt.</PackageReleaseNotes>
     <Product>Collections Cog</Product>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>1.2.3</Version>
+    <Version>1.3.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,5 +34,14 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
+    <ReadLinesFromFile File="ReleaseNotes.txt">
+      <Output TaskParameter="Lines" ItemName="ReleaseNoteLines"/>
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <PackageReleaseNotes>@(ReleaseNoteLines, '%0a')</PackageReleaseNotes>
+    </PropertyGroup>
+  </Target>
 
 </Project>

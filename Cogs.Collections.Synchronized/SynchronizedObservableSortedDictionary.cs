@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -389,6 +390,21 @@ namespace Cogs.Collections.Synchronized
         /// <param name="predicate">A predicate that returns <c>true</c> when passed the key and value of an element to be removed</param>
         /// <returns>The key-value pairs of the elements that were removed</returns>
         public Task<IReadOnlyList<KeyValuePair<TKey, TValue>>> RemoveAllAsync(Func<TKey, TValue, bool> predicate) => this.ExecuteAsync(() => base.RemoveAll(predicate));
+
+        /// <summary>
+        /// Removes any elements that satisfy the specified predicate from the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/>
+        /// </summary>
+        /// <param name="asyncPredicate">An asynchronous predicate that returns <c>true</c> when passed the key and value of an element to be removed</param>
+        /// <returns>The key-value pairs of the elements that were removed</returns>
+        public virtual Task<IReadOnlyList<KeyValuePair<TKey, TValue>>> RemoveAllAsync(Func<TKey, TValue, Task<bool>> asyncPredicate) => this.ExecuteAsync(async () =>
+        {
+            var removing = new List<KeyValuePair<TKey, TValue>>();
+            foreach (var kv in this.ToList())
+                if (await asyncPredicate(kv.Key, kv.Value))
+                    removing.Add(kv);
+            var removedKeys = new HashSet<TKey>(RemoveRange(removing.Select(kv => kv.Key)));
+            return (IReadOnlyList<KeyValuePair<TKey, TValue>>)removing.Where(kv => removedKeys.Contains(kv.Key)).ToImmutableArray();
+        });
 
         /// <summary>
         /// Removes the element with the specified key from the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/>
