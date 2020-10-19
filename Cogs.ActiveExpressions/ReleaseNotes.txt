@@ -1,1 +1,1 @@
-Active Expressions now support NewArrayInit expressions (e.g. new string[] { "Some", "Strings" }). We corrected memory leaks that were present in our implementations of BinaryExpression, ConditionalExpression, IndexExpression, InvocationExpression, MemberExpression, MethodCallExpression, NewExpression, TypeBinaryExpression, and UnaryExpression. This defect could also cause values that should have been disposed not to have been. Moreover, correcting it has increased performance.
+This release requires Cogs.Collections 1.6.0 at minimum.
