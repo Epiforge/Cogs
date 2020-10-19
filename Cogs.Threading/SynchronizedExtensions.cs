@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +12,8 @@ namespace Cogs.Threading
     /// </summary>
     public static class SynchronizedExtensions
     {
+        static readonly ThreadLocal<Stack<SynchronizationContext?>> threadLocalSynchronizationContextStack = new ThreadLocal<Stack<SynchronizationContext?>>(ThreadLocalSynchronizationContextStackValueFactory);
+
         /// <summary>
         /// Executes the specified <paramref name="action"/> on the specified <paramref name="synchronizationContext"/>
         /// </summary>
@@ -17,14 +21,19 @@ namespace Cogs.Threading
         /// <param name="action">The <see cref="Action"/></param>
         public static void Execute(this SynchronizationContext? synchronizationContext, Action action)
         {
-            if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
+            var thisSynchronizationContext = SynchronizationContext.Current;
+            if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
             {
                 action();
                 return;
             }
+            var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
             ExceptionDispatchInfo? edi = default;
             synchronizationContext.Send(state =>
             {
+                foreach (var synchronizationContext in thisSynchronizationContextStack)
+                    threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
+                threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
                 try
                 {
                     action();
@@ -32,6 +41,11 @@ namespace Cogs.Threading
                 catch (Exception ex)
                 {
                     edi = ExceptionDispatchInfo.Capture(ex);
+                }
+                finally
+                {
+                    for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+                        threadLocalSynchronizationContextStack.Value.Pop();
                 }
             }, null);
             edi?.Throw();
@@ -53,12 +67,17 @@ namespace Cogs.Threading
         /// <returns>The result of <paramref name="func"/></returns>
         public static TResult Execute<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func)
         {
-            if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
+            var thisSynchronizationContext = SynchronizationContext.Current;
+            if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
                 return func();
             TResult result = default;
+            var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
             ExceptionDispatchInfo? edi = default;
             synchronizationContext.Send(state =>
             {
+                foreach (var synchronizationContext in thisSynchronizationContextStack)
+                    threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
+                threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
                 try
                 {
                     result = func();
@@ -66,6 +85,11 @@ namespace Cogs.Threading
                 catch (Exception ex)
                 {
                     edi = ExceptionDispatchInfo.Capture(ex);
+                }
+                finally
+                {
+                    for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+                        threadLocalSynchronizationContextStack.Value.Pop();
                 }
             }, null);
             edi?.Throw();
@@ -88,13 +112,23 @@ namespace Cogs.Threading
         /// <param name="action">The <see cref="Action"/></param>
         public static Task ExecuteAsync(this SynchronizationContext? synchronizationContext, Action action)
         {
-            if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
+            var thisSynchronizationContext = SynchronizationContext.Current;
+            if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
             {
                 action();
                 return Task.CompletedTask;
             }
+            var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
             var completion = new TaskCompletionSource<object>();
-            synchronizationContext.Post(state => completion.AttemptSetResult(action), null);
+            synchronizationContext.Post(state =>
+            {
+                foreach (var synchronizationContext in thisSynchronizationContextStack)
+                    threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
+                threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
+                completion.AttemptSetResult(action);
+                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+                    threadLocalSynchronizationContextStack.Value.Pop();
+            }, null);
             return completion.Task;
         }
 
@@ -114,10 +148,20 @@ namespace Cogs.Threading
         /// <returns>The result of <paramref name="func"/></returns>
         public static Task<TResult> ExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func)
         {
-            if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
+            var thisSynchronizationContext = SynchronizationContext.Current;
+            if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
                 return Task.FromResult(func());
+            var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
             var completion = new TaskCompletionSource<TResult>();
-            synchronizationContext.Post(state => completion.AttemptSetResult(func), null);
+            synchronizationContext.Post(state =>
+            {
+                foreach (var synchronizationContext in thisSynchronizationContextStack)
+                    threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
+                threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
+                completion.AttemptSetResult(func);
+                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+                    threadLocalSynchronizationContextStack.Value.Pop();
+            }, null);
             return completion.Task;
         }
 
@@ -137,13 +181,23 @@ namespace Cogs.Threading
         /// <param name="asyncAction">The <see cref="Func{Task}"/></param>
         public static async Task ExecuteAsync(this SynchronizationContext? synchronizationContext, Func<Task> asyncAction)
         {
-            if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
+            var thisSynchronizationContext = SynchronizationContext.Current;
+            if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
             {
                 await asyncAction().ConfigureAwait(false);
                 return;
             }
+            var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
             var completion = new TaskCompletionSource<object>();
-            synchronizationContext.Post(async state => await completion.AttemptSetResultAsync(asyncAction).ConfigureAwait(false), null);
+            synchronizationContext.Post(async state =>
+            {
+                foreach (var synchronizationContext in thisSynchronizationContextStack)
+                    threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
+                threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
+                await completion.AttemptSetResultAsync(asyncAction);
+                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+                    threadLocalSynchronizationContextStack.Value.Pop();
+            }, null);
             await completion.Task.ConfigureAwait(false);
         }
 
@@ -163,10 +217,20 @@ namespace Cogs.Threading
         /// <returns>The result of <paramref name="asyncFunc"/></returns>
         public static async Task<TResult> ExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<Task<TResult>> asyncFunc)
         {
-            if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
+            var thisSynchronizationContext = SynchronizationContext.Current;
+            if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
                 return await asyncFunc().ConfigureAwait(false);
+            var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
             var completion = new TaskCompletionSource<TResult>();
-            synchronizationContext.Post(async state => await completion.AttemptSetResultAsync(asyncFunc).ConfigureAwait(false), null);
+            synchronizationContext.Post(async state =>
+            {
+                foreach (var synchronizationContext in thisSynchronizationContextStack)
+                    threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
+                threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
+                await completion.AttemptSetResultAsync(asyncFunc);
+                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+                    threadLocalSynchronizationContextStack.Value.Pop();
+            }, null);
             return await completion.Task.ConfigureAwait(false);
         }
 
@@ -226,5 +290,7 @@ namespace Cogs.Threading
         /// <param name="asyncFunc">The <see cref="Func{Task}"/> that returns a value</param>
         /// <returns>The result of <paramref name="asyncFunc"/></returns>
         public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) => ExecuteAsync(synchronizable?.SynchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, asyncFunc);
+
+        static Stack<SynchronizationContext?> ThreadLocalSynchronizationContextStackValueFactory() => new Stack<SynchronizationContext?>();
     }
 }

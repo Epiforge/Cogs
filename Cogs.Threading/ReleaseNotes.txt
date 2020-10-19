@@ -1,0 +1,1 @@
+Chains of synchronized extension method calls will no longer potentially produce deadlocks.
