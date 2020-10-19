@@ -1,1 +1,1 @@
-SynchronizedRangeObservableCollection now supports removing and retrieving elements with a predicate. SynchronizedObservableDictionary, SynchronizedObservableSortedDictionary, and SynchronizedRangeObservableCollection now support removing and retrieving elements with an asynchronous predicate.
+This release requires Cogs.Collections 1.6.0 and Cogs.Threading 1.6.0 at minimum.
