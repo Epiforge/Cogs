@@ -1,3 +1,4 @@
+using Nito.AsyncEx;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +19,8 @@ namespace Cogs.Collections.Synchronized
         public AsyncProcessingQueue(Func<T, Task> asyncAction)
         {
             this.asyncAction = asyncAction;
+            count = 0;
+            countChanged = new AsyncManualResetEvent();
             queueCancellationTokenSource = new CancellationTokenSource();
             queue = new BufferBlock<T>(new DataflowBlockOptions { CancellationToken = queueCancellationTokenSource.Token });
             Task.Run(ProcessQueueAsync);
@@ -29,8 +32,20 @@ namespace Cogs.Collections.Synchronized
         ~AsyncProcessingQueue() => Dispose(false);
 
         readonly Func<T, Task> asyncAction;
+        long count;
+        readonly AsyncManualResetEvent countChanged;
         readonly CancellationTokenSource queueCancellationTokenSource;
         readonly BufferBlock<T> queue;
+
+        /// <summary>
+        /// Gets the number of items currently in the queue or being processed
+        /// </summary>
+        public long Count => Interlocked.Read(ref count);
+
+        /// <summary>
+        /// Gets whether the queue has been disposed, and is no longer accepting or processing items
+        /// </summary>
+        public bool IsDisposed { get; private set; }
 
         /// <summary>
         /// Occurs when the action throws an unhandled exception
@@ -52,8 +67,14 @@ namespace Cogs.Collections.Synchronized
         /// <param name="disposing"><c>false</c> if invoked by the finalizer because the object is being garbage collected; otherwise, <c>true</c></param>
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && !IsDisposed)
+            {
                 queueCancellationTokenSource.Cancel();
+                Interlocked.Exchange(ref count, 0);
+                countChanged.Set();
+                countChanged.Reset();
+                IsDisposed = true;
+            }
         }
 
         /// <summary>
@@ -61,7 +82,17 @@ namespace Cogs.Collections.Synchronized
         /// </summary>
         /// <param name="item">The item to be processed</param>
         /// <returns><c>true</c> if the item was added; otherwise, <c>false</c></returns>
-        public bool Enqueue(T item) => queue.Post(item);
+        public bool Enqueue(T item)
+        {
+            if (queue.Post(item))
+            {
+                Interlocked.Increment(ref count);
+                countChanged.Set();
+                countChanged.Reset();
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Raises the <see cref="UnhandledException"/> event
@@ -96,6 +127,67 @@ namespace Cogs.Collections.Synchronized
                         // seriously?
                     }
                 }
+                finally
+                {
+                    if (Interlocked.Decrement(ref count) < 0)
+                        Interlocked.Exchange(ref count, 0);
+                    countChanged.Set();
+                    countChanged.Reset();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Synchronously waits until the queue has finished processing all items that have been enqueued and is now idle (this method may block the calling thread)
+        /// </summary>
+        public void WaitUntilIdle()
+        {
+            while (true)
+            {
+                if (Interlocked.Read(ref count) == 0)
+                    return;
+                countChanged.Wait();
+            }
+        }
+
+        /// <summary>
+        /// Synchronously waits until the queue has finished processing all items that have been enqueued and is now idle (this method may block the calling thread)
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token used to cancel the wait (if this token is already cancelled, this method will first check whether the queue has finished processing)</param>
+        public void WaitUntilIdle(CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                if (Interlocked.Read(ref count) == 0)
+                    return;
+                countChanged.Wait(cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously waits until the queue has finished processing all items that have been enqueued and is now idle
+        /// </summary>
+        public async Task WaitUntilIdleAsync()
+        {
+            while (true)
+            {
+                if (Interlocked.Read(ref count) == 0)
+                    return;
+                await countChanged.WaitAsync();
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously waits until the queue has finished processing all items that have been enqueued and is now idle
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token used to cancel the wait (if this token is already cancelled, this method will first check whether the queue has finished processing)</param>
+        public async Task WaitUntilIdleAsync(CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                if (Interlocked.Read(ref count) == 0)
+                    return;
+                await countChanged.WaitAsync(cancellationToken);
             }
         }
     }

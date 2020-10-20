@@ -4,7 +4,7 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <Authors>Epiforge</Authors>
     <Company>Epiforge</Company>
-    <Description>Cogs for synchronized collections. Includes ISynchronizedObservableRangeDictionary, SynchronizedObservableCollection, SynchronizedObservableDictionary, SynchronizedObservableSortedDictionary, SynchronizedRangeObservableCollection.</Description>
+    <Description>Cogs for synchronized collections. Includes ISynchronizedObservableRangeDictionary, SynchronizedObservableCollection, SynchronizedObservableDictionary, SynchronizedObservableSortedDictionary, SynchronizedRangeObservableCollection, ProcessingQueue, and AsyncProcessingQueue.</Description>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -16,7 +16,7 @@
     <Product>Collections Cog</Product>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>1.4.0</Version>
+    <Version>1.4.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

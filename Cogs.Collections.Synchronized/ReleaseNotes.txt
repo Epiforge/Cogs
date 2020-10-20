@@ -1,1 +1,1 @@
-Added ProcessingQueue and AsyncProcessingQueue, which perform an action (synchronous or asynchronous, respectively) on each item enqueued in serial on a worker pool thread. Enqueueing items does not block.
+Added WaitForIdle methods, and Count and IsDisposed properties to ProcessingQueue and AsyncProcessingQueue.
