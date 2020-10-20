@@ -5,10 +5,13 @@ using Cogs.Reflection;
 using Cogs.Threading;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Cogs.ActiveQuery
 {
@@ -1816,7 +1819,7 @@ namespace Cogs.ActiveQuery
         #region SwitchContext
 
         /// <summary>
-        /// Creates an <see cref="ActiveDictionary{TKey, TValue}"/> that is kept consistent the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IReadOnlyDictionary{TKey, TValue}"/> that implements <see cref="INotifyDictionaryChanged{TKey, TValue}"/>
+        /// Creates an <see cref="ActiveDictionary{TKey, TValue}"/> that is kept consistent the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IReadOnlyDictionary{TKey, TValue}"/> that implements <see cref="INotifyDictionaryChanged{TKey, TValue}"/> (use <see cref="SwitchContextEventually{TKey, TValue}(IReadOnlyDictionary{TKey, TValue})"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
         /// </summary>
         /// <typeparam name="TKey">The type of the keys in <paramref name="source"/></typeparam>
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
@@ -1826,7 +1829,7 @@ namespace Cogs.ActiveQuery
             SwitchContext(source, SynchronizationContext.Current);
 
         /// <summary>
-        /// Creates an <see cref="ActiveDictionary{TKey, TValue}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IReadOnlyDictionary{TKey, TValue}"/> that implements <see cref="INotifyDictionaryChanged{TKey, TValue}"/>
+        /// Creates an <see cref="ActiveDictionary{TKey, TValue}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IReadOnlyDictionary{TKey, TValue}"/> that implements <see cref="INotifyDictionaryChanged{TKey, TValue}"/> (use <see cref="SwitchContextEventually{TKey, TValue}(IReadOnlyDictionary{TKey, TValue}, SynchronizationContext)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
         /// </summary>
         /// <typeparam name="TKey">The type of the keys in <paramref name="source"/></typeparam>
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
@@ -1909,6 +1912,104 @@ namespace Cogs.ActiveQuery
         }
 
         #endregion SwitchContext
+
+        #region SwitchContextEventually
+
+        /// <summary>
+        /// Creates an <see cref="ActiveDictionary{TKey, TValue}"/> that is eventually made consistent the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IReadOnlyDictionary{TKey, TValue}"/> that implements <see cref="INotifyDictionaryChanged{TKey, TValue}"/> (use this method instead of <see cref="SwitchContext{TKey, TValue}(IReadOnlyDictionary{TKey, TValue})"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <typeparam name="TKey">The type of the keys in <paramref name="source"/></typeparam>
+        /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
+        /// <param name="source">A <see cref="IReadOnlyDictionary{TKey, TValue}"/></param>
+        /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> that is eventually made consistent with <paramref name="source"/> the current thread's <see cref="SynchronizationContext"/></returns>
+        public static IActiveDictionary<TKey, TValue> SwitchContextEventually<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
+            SwitchContextEventually(source, SynchronizationContext.Current);
+
+        /// <summary>
+        /// Creates an <see cref="ActiveDictionary{TKey, TValue}"/> that is eventually made consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IReadOnlyDictionary{TKey, TValue}"/> that implements <see cref="INotifyDictionaryChanged{TKey, TValue}"/> (use this method instead of <see cref="SwitchContext{TKey, TValue}(IReadOnlyDictionary{TKey, TValue}, SynchronizationContext)"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <typeparam name="TKey">The type of the keys in <paramref name="source"/></typeparam>
+        /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
+        /// <param name="source">A <see cref="IReadOnlyDictionary{TKey, TValue}"/></param>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
+        /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        public static IActiveDictionary<TKey, TValue> SwitchContextEventually<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, SynchronizationContext synchronizationContext)
+        {
+            var notifier = source as INotifyDictionaryChanged<TKey, TValue>;
+            var queue = new AsyncProcessingQueue<Func<Task>>(async asyncAction => await asyncAction().ConfigureAwait(false));
+            ISynchronizedObservableRangeDictionary<TKey, TValue> rangeObservableDictionary;
+
+            switch (source.GetIndexingStrategy() ?? IndexingStrategy.NoneOrInherit)
+            {
+                case IndexingStrategy.SelfBalancingBinarySearchTree:
+                    var keyComparer = source.GetKeyComparer();
+                    rangeObservableDictionary = keyComparer is { } ? new SynchronizedObservableSortedDictionary<TKey, TValue>(synchronizationContext, keyComparer) : new SynchronizedObservableSortedDictionary<TKey, TValue>(synchronizationContext);
+                    break;
+                default:
+                    var keyEqualityComparer = source.GetKeyEqualityComparer();
+                    rangeObservableDictionary = keyEqualityComparer is { } ? new SynchronizedObservableDictionary<TKey, TValue>(synchronizationContext, keyEqualityComparer) : new SynchronizedObservableDictionary<TKey, TValue>(synchronizationContext);
+                    break;
+            }
+
+            void unhandledException(object sender, ProcessingQueueUnhandledExceptionEventArgs<Func<Task>> e) =>
+                dictionaryChanged(source, new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Reset));
+
+            queue.UnhandledException += unhandledException;
+
+            void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e)
+            {
+                switch (e.Action)
+                {
+                    case NotifyDictionaryChangedAction.Add:
+                        queue.Enqueue(() => rangeObservableDictionary.AddRangeAsync(e.NewItems));
+                        break;
+                    case NotifyDictionaryChangedAction.Remove:
+                        queue.Enqueue(() => rangeObservableDictionary.RemoveRangeAsync(e.OldItems.Select(kv => kv.Key)));
+                        break;
+                    case NotifyDictionaryChangedAction.Replace:
+                        queue.Enqueue(() => rangeObservableDictionary.ReplaceRangeAsync(e.OldItems.Select(kv => kv.Key), e.NewItems));
+                        break;
+                    case NotifyDictionaryChangedAction.Reset:
+                        queue.Enqueue(async () =>
+                        {
+                            IDictionary<TKey, TValue>? resetDictionary;
+                            switch (source.GetIndexingStrategy() ?? IndexingStrategy.NoneOrInherit)
+                            {
+                                case IndexingStrategy.SelfBalancingBinarySearchTree:
+                                    var keyComparer = source.GetKeyComparer();
+                                    resetDictionary = keyComparer is { } ? new NullableKeySortedDictionary<TKey, TValue>(keyComparer) : new NullableKeySortedDictionary<TKey, TValue>();
+                                    break;
+                                default:
+                                    var keyEqualityComparer = source.GetKeyEqualityComparer();
+                                    resetDictionary = keyEqualityComparer is { } ? new NullableKeyDictionary<TKey, TValue>(keyEqualityComparer) : new NullableKeyDictionary<TKey, TValue>();
+                                    break;
+                            }
+                            await (source as ISynchronized).SequentialExecuteAsync(() =>
+                            {
+                                foreach (var kv in source)
+                                    resetDictionary.Add(kv);
+                            }).ConfigureAwait(false);
+                            await rangeObservableDictionary.ResetAsync(resetDictionary).ConfigureAwait(false);
+                        });
+                        break;
+                }
+            }
+
+            dictionaryChanged(source, new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Reset));
+
+            if (notifier is { })
+                notifier.DictionaryChanged += dictionaryChanged;
+
+            return new ActiveDictionary<TKey, TValue>(rangeObservableDictionary, source as INotifyElementFaultChanges, () =>
+            {
+                if (notifier is { })
+                    notifier.DictionaryChanged -= dictionaryChanged;
+                queue.UnhandledException -= unhandledException;
+                queue.Dispose();
+            });
+        }
+
+        #endregion SwitchContextEventually
 
         #region ToActiveDictionary
 

@@ -1,1 +1,1 @@
-This release requires Cogs.ActiveExpressions 1.10.1, Cogs.Collections 1.6.0, Cogs.Collections.Synchronized 1.3.1, and Cogs.Threading 1.6.0 at minimum.
+Added the SwitchContextEventually method for both enumerables and dictionaries, which avoids ever switching contexts when it is called and uses a processing queue to achieve "eventual" consistency with the source synchronized with another context to ensure that deadlocks cannot occur.

@@ -3462,8 +3462,10 @@ namespace Cogs.ActiveQuery
             var queue = new AsyncProcessingQueue<Func<Task>>(async asyncAction => await asyncAction().ConfigureAwait(false));
             var rangeObservableCollection = new SynchronizedRangeObservableCollection<object>(synchronizationContext);
 
-            var items = (source as ISynchronized).SequentialExecute(() => source.Cast<object>().ToImmutableArray());
-            queue.Enqueue(() => rangeObservableCollection.ResetAsync(items));
+            void unhandledException(object sender, ProcessingQueueUnhandledExceptionEventArgs<Func<Task>> e) =>
+                collectionChanged(source, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
+            queue.UnhandledException += unhandledException;
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e)
             {
@@ -3491,6 +3493,9 @@ namespace Cogs.ActiveQuery
                         break;
                 }
             }
+
+            collectionChanged(source, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
             if (notifier is { })
                 notifier.CollectionChanged += collectionChanged;
 
@@ -3498,6 +3503,7 @@ namespace Cogs.ActiveQuery
             {
                 if (notifier is { })
                     notifier.CollectionChanged -= collectionChanged;
+                queue.UnhandledException -= unhandledException;
                 queue.Dispose();
             });
         }
@@ -3525,8 +3531,10 @@ namespace Cogs.ActiveQuery
             var queue = new AsyncProcessingQueue<Func<Task>>(async asyncAction => await asyncAction().ConfigureAwait(false));
             var rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizationContext);
 
-            var items = (source as ISynchronized).SequentialExecute(() => source.ToImmutableArray());
-            queue.Enqueue(() => rangeObservableCollection.ResetAsync(items));
+            void unhandledException(object sender, ProcessingQueueUnhandledExceptionEventArgs<Func<Task>> e) =>
+                genericCollectionChanged(source, new NotifyGenericCollectionChangedEventArgs<TSource>(NotifyCollectionChangedAction.Reset));
+
+            queue.UnhandledException += unhandledException;
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e)
             {
@@ -3549,8 +3557,11 @@ namespace Cogs.ActiveQuery
                         queue.Enqueue(() => rangeObservableCollection.ReplaceRangeAsync(oldStartingIndex, oldItems.Length, newItems));
                         break;
                     case NotifyCollectionChangedAction.Reset:
-                        var resetItems = (source as ISynchronized).SequentialExecute(() => source.ToImmutableArray());
-                        queue.Enqueue(() => rangeObservableCollection.ResetAsync(resetItems));
+                        queue.Enqueue(async () =>
+                        {
+                            var resetItems = await (source as ISynchronized).SequentialExecuteAsync(() => source.ToImmutableArray()).ConfigureAwait(false);
+                            await rangeObservableCollection.ResetAsync(resetItems).ConfigureAwait(false);
+                        });
                         break;
                 }
             }
@@ -3576,11 +3587,16 @@ namespace Cogs.ActiveQuery
                         queue.Enqueue(() => rangeObservableCollection.ReplaceRangeAsync(oldStartingIndex, oldItems.Length, newItems));
                         break;
                     case NotifyCollectionChangedAction.Reset:
-                        var resetItems = (source as ISynchronized).SequentialExecute(() => source.ToImmutableArray());
-                        queue.Enqueue(() => rangeObservableCollection.ResetAsync(resetItems));
+                        queue.Enqueue(async () =>
+                        {
+                            var resetItems = await (source as ISynchronized).SequentialExecuteAsync(() => source.ToImmutableArray()).ConfigureAwait(false);
+                            await rangeObservableCollection.ResetAsync(resetItems).ConfigureAwait(false);
+                        });
                         break;
                 }
             }
+
+            genericCollectionChanged(source, new NotifyGenericCollectionChangedEventArgs<TSource>(NotifyCollectionChangedAction.Reset));
 
             if (genericNotifier is { })
                 genericNotifier.GenericCollectionChanged += genericCollectionChanged;
@@ -3593,6 +3609,7 @@ namespace Cogs.ActiveQuery
                     genericNotifier.GenericCollectionChanged -= genericCollectionChanged;
                 else if (notifier is { })
                     notifier.CollectionChanged -= collectionChanged;
+                queue.UnhandledException -= unhandledException;
                 queue.Dispose();
             });
         }
