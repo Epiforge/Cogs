@@ -1,1 +1,1 @@
-This release requires Cogs.Collections 1.6.0 and Cogs.Threading 1.6.0 at minimum.
+Added ProcessingQueue and AsyncProcessingQueue, which perform an action (synchronous or asynchronous, respectively) on each item enqueued in serial on a worker pool thread. Enqueueing items does not block.
