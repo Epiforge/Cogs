@@ -12,6 +12,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Cogs.ActiveQuery
 {
@@ -3283,7 +3284,7 @@ namespace Cogs.ActiveQuery
         #region SwitchContext
 
         /// <summary>
-        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> (use <see cref="SwitchContextEventually(IEnumerable)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
         /// </summary>
         /// <param name="source">An <see cref="IEnumerable"/></param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is kept consistent with <paramref name="source"/> on the current thread's <see cref="SynchronizationContext"/></returns>
@@ -3291,7 +3292,7 @@ namespace Cogs.ActiveQuery
             SwitchContext(source, SynchronizationContext.Current);
 
         /// <summary>
-        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> (use <see cref="SwitchContextEventually(IEnumerable, SynchronizationContext)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
         /// </summary>
         /// <param name="source">An <see cref="IEnumerable"/></param>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
@@ -3343,7 +3344,7 @@ namespace Cogs.ActiveQuery
         }
 
         /// <summary>
-        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource})"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
         /// </summary>
         /// <typeparam name="TSource">The type of the elements of source</typeparam>
         /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3352,7 +3353,7 @@ namespace Cogs.ActiveQuery
             SwitchContext(source, SynchronizationContext.Current);
 
         /// <summary>
-        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
         /// </summary>
         /// <typeparam name="TSource">The type of the elements of source</typeparam>
         /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3438,6 +3439,165 @@ namespace Cogs.ActiveQuery
         }
 
         #endregion SwitchContext
+
+        #region SwitchContextEventually
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> (use this method instead of <see cref="SwitchContext(IEnumerable)"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <param name="source">An <see cref="IEnumerable"/></param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on the current thread's <see cref="SynchronizationContext"/></returns>
+        public static IActiveEnumerable<object> SwitchContextEventually(this IEnumerable source) =>
+            SwitchContextEventually(source, SynchronizationContext.Current);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> (use this method instead of <see cref="SwitchContext(IEnumerable, SynchronizationContext)"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <param name="source">An <see cref="IEnumerable"/></param>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        public static IActiveEnumerable<object> SwitchContextEventually(this IEnumerable source, SynchronizationContext synchronizationContext)
+        {
+            var notifier = source as INotifyCollectionChanged;
+            var queue = new AsyncProcessingQueue<Func<Task>>(async asyncAction => await asyncAction().ConfigureAwait(false));
+            var rangeObservableCollection = new SynchronizedRangeObservableCollection<object>(synchronizationContext);
+
+            var items = (source as ISynchronized).SequentialExecute(() => source.Cast<object>().ToImmutableArray());
+            queue.Enqueue(() => rangeObservableCollection.ResetAsync(items));
+
+            void collectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+            {
+                var oldStartingIndex = e.OldStartingIndex;
+                var oldItems = (e.OldItems?.Cast<object>() ?? Enumerable.Empty<object>()).ToImmutableArray();
+                var newStartingIndex = e.NewStartingIndex;
+                var newItems = (e.NewItems?.Cast<object>() ?? Enumerable.Empty<object>()).ToImmutableArray();
+                switch (e.Action)
+                {
+                    case NotifyCollectionChangedAction.Add:
+                        queue.Enqueue(() => rangeObservableCollection.InsertRangeAsync(newStartingIndex, newItems));
+                        break;
+                    case NotifyCollectionChangedAction.Move:
+                        queue.Enqueue(() => rangeObservableCollection.MoveRangeAsync(oldStartingIndex, newStartingIndex, oldItems.Length));
+                        break;
+                    case NotifyCollectionChangedAction.Remove:
+                        queue.Enqueue(() => rangeObservableCollection.RemoveRangeAsync(oldStartingIndex, oldItems.Length));
+                        break;
+                    case NotifyCollectionChangedAction.Replace:
+                        queue.Enqueue(() => rangeObservableCollection.ReplaceRangeAsync(oldStartingIndex, oldItems.Length, newItems));
+                        break;
+                    case NotifyCollectionChangedAction.Reset:
+                        var resetItems = (source as ISynchronized).SequentialExecute(() => source.Cast<object>().ToImmutableArray());
+                        queue.Enqueue(() => rangeObservableCollection.ResetAsync(resetItems));
+                        break;
+                }
+            }
+            if (notifier is { })
+                notifier.CollectionChanged += collectionChanged;
+
+            return new ActiveEnumerable<object>(rangeObservableCollection, source as INotifyElementFaultChanges, () =>
+            {
+                if (notifier is { })
+                    notifier.CollectionChanged -= collectionChanged;
+                queue.Dispose();
+            });
+        }
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource})"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/></param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on the current thread's <see cref="SynchronizationContext"/></returns>
+        public static IActiveEnumerable<TSource> SwitchContextEventually<TSource>(this IEnumerable<TSource> source) =>
+            SwitchContextEventually(source, SynchronizationContext.Current);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/></param>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        public static IActiveEnumerable<TSource> SwitchContextEventually<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext)
+        {
+            var genericNotifier = source as INotifyGenericCollectionChanged<TSource>;
+            var notifier = source as INotifyCollectionChanged;
+            var queue = new AsyncProcessingQueue<Func<Task>>(async asyncAction => await asyncAction().ConfigureAwait(false));
+            var rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizationContext);
+
+            var items = (source as ISynchronized).SequentialExecute(() => source.ToImmutableArray());
+            queue.Enqueue(() => rangeObservableCollection.ResetAsync(items));
+
+            void collectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+            {
+                var oldStartingIndex = e.OldStartingIndex;
+                var oldItems = (e.OldItems?.Cast<TSource>() ?? Enumerable.Empty<TSource>()).ToImmutableArray();
+                var newStartingIndex = e.NewStartingIndex;
+                var newItems = (e.NewItems?.Cast<TSource>() ?? Enumerable.Empty<TSource>()).ToImmutableArray();
+                switch (e.Action)
+                {
+                    case NotifyCollectionChangedAction.Add:
+                        queue.Enqueue(() => rangeObservableCollection.InsertRangeAsync(newStartingIndex, newItems));
+                        break;
+                    case NotifyCollectionChangedAction.Move:
+                        queue.Enqueue(() => rangeObservableCollection.MoveRangeAsync(oldStartingIndex, newStartingIndex, oldItems.Length));
+                        break;
+                    case NotifyCollectionChangedAction.Remove:
+                        queue.Enqueue(() => rangeObservableCollection.RemoveRangeAsync(oldStartingIndex, oldItems.Length));
+                        break;
+                    case NotifyCollectionChangedAction.Replace:
+                        queue.Enqueue(() => rangeObservableCollection.ReplaceRangeAsync(oldStartingIndex, oldItems.Length, newItems));
+                        break;
+                    case NotifyCollectionChangedAction.Reset:
+                        var resetItems = (source as ISynchronized).SequentialExecute(() => source.ToImmutableArray());
+                        queue.Enqueue(() => rangeObservableCollection.ResetAsync(resetItems));
+                        break;
+                }
+            }
+
+            void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<TSource> e)
+            {
+                var oldStartingIndex = e.OldStartingIndex;
+                var oldItems = (e.OldItems ?? Enumerable.Empty<TSource>()).ToImmutableArray();
+                var newStartingIndex = e.NewStartingIndex;
+                var newItems = (e.NewItems ?? Enumerable.Empty<TSource>()).ToImmutableArray();
+                switch (e.Action)
+                {
+                    case NotifyCollectionChangedAction.Add:
+                        queue.Enqueue(() => rangeObservableCollection.InsertRangeAsync(newStartingIndex, newItems));
+                        break;
+                    case NotifyCollectionChangedAction.Move:
+                        queue.Enqueue(() => rangeObservableCollection.MoveRangeAsync(oldStartingIndex, newStartingIndex, oldItems.Length));
+                        break;
+                    case NotifyCollectionChangedAction.Remove:
+                        queue.Enqueue(() => rangeObservableCollection.RemoveRangeAsync(oldStartingIndex, oldItems.Length));
+                        break;
+                    case NotifyCollectionChangedAction.Replace:
+                        queue.Enqueue(() => rangeObservableCollection.ReplaceRangeAsync(oldStartingIndex, oldItems.Length, newItems));
+                        break;
+                    case NotifyCollectionChangedAction.Reset:
+                        var resetItems = (source as ISynchronized).SequentialExecute(() => source.ToImmutableArray());
+                        queue.Enqueue(() => rangeObservableCollection.ResetAsync(resetItems));
+                        break;
+                }
+            }
+
+            if (genericNotifier is { })
+                genericNotifier.GenericCollectionChanged += genericCollectionChanged;
+            else if (notifier is { })
+                notifier.CollectionChanged += collectionChanged;
+
+            return new ActiveEnumerable<TSource>(rangeObservableCollection, source as INotifyElementFaultChanges, () =>
+            {
+                if (genericNotifier is { })
+                    genericNotifier.GenericCollectionChanged -= genericCollectionChanged;
+                else if (notifier is { })
+                    notifier.CollectionChanged -= collectionChanged;
+                queue.Dispose();
+            });
+        }
+
+        #endregion SwitchContextEventually
 
         #region ToActiveEnumerable
 
