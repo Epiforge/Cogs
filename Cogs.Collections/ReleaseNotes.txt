@@ -1,1 +1,1 @@
-Added the RangeObservableCollection class, which is exactly what it sounds like: no need to write any more loops to batch operations with observable collections, and with the added benefit of optimized change notifications!
+Added the ObservableConcurrentDictionary class, which behaves exactly the same way as ConcurrentDictionary does, except it also implements INotifyDictionaryChanged.
