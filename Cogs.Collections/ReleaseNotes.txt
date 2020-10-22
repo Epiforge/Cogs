@@ -1,1 +1,1 @@
-Added the ObservableConcurrentDictionary class, which behaves exactly the same way as ConcurrentDictionary does, except it also implements INotifyDictionaryChanged.
+Added the ReadOnlyObservableConcurrentDictionary class, which does exactly what it sounds like.
