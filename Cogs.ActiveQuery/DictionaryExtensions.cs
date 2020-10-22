@@ -69,32 +69,28 @@ namespace Cogs.ActiveQuery
             {
                 ActiveDictionary<TKey, TValue> activeDictionary => activeDictionary.IndexingStrategy,
                 Dictionary<TKey, TValue> _ => IndexingStrategy.HashTable,
-                ObservableDictionary<TKey, TValue> _ => IndexingStrategy.HashTable,
                 SortedDictionary<TKey, TValue> _ => IndexingStrategy.SelfBalancingBinarySearchTree,
-                ObservableSortedDictionary<TKey, TValue> _ => IndexingStrategy.SelfBalancingBinarySearchTree,
-                ObservableConcurrentDictionary<TKey, TValue> _ => IndexingStrategy.HashTable,
+                IHashKeys<TKey> _ => IndexingStrategy.HashTable,
+                ISortKeys<TKey> _ => IndexingStrategy.SelfBalancingBinarySearchTree,
                 _ => null
+            };
+
+        public static IComparer<TKey>? GetKeyComparer<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, bool attemptCoercion = true) =>
+            readOnlyDictionary switch
+            {
+                ActiveDictionary<TKey, TValue> activeDictionary when activeDictionary.IndexingStrategy == IndexingStrategy.SelfBalancingBinarySearchTree => activeDictionary.Comparer,
+                SortedDictionary<TKey, TValue> standard => standard.Comparer,
+                ISortKeys<TKey> keySorter => keySorter.Comparer,
+                _ => attemptCoercion && GetKeyEqualityComparer(readOnlyDictionary, false) is IComparer<TKey> coercedComparer ? coercedComparer : null,
             };
 
         public static IEqualityComparer<TKey>? GetKeyEqualityComparer<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, bool attemptCoercion = true) =>
             readOnlyDictionary switch
             {
                 ActiveDictionary<TKey, TValue> activeDictionary when activeDictionary.IndexingStrategy == IndexingStrategy.HashTable => activeDictionary.EqualityComparer,
-                ObservableConcurrentDictionary<TKey, TValue> observableConcurrent => observableConcurrent.Comparer,
-                SynchronizedObservableDictionary<TKey, TValue> synchronizedObservable => synchronizedObservable.Comparer,
-                ObservableDictionary<TKey, TValue> observable => observable.Comparer,
-                Dictionary<TKey, TValue> standard => standard.Comparer,
-                _ => null
-            } ?? (attemptCoercion && GetKeyComparer(readOnlyDictionary, false) is IEqualityComparer<TKey> coercedEqualityComparer ? coercedEqualityComparer : null);
-
-        public static IComparer<TKey>? GetKeyComparer<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, bool attemptCoercion = true) =>
-            readOnlyDictionary switch
-            {
-                ActiveDictionary<TKey, TValue> activeDictionary when activeDictionary.IndexingStrategy == IndexingStrategy.SelfBalancingBinarySearchTree => activeDictionary.Comparer,
-                SynchronizedObservableSortedDictionary<TKey, TValue> synchronizedObservable => synchronizedObservable.Comparer,
-                ObservableSortedDictionary<TKey, TValue> observable => observable.Comparer,
-                SortedDictionary<TKey, TValue> standard => standard.Comparer,
-                _ => attemptCoercion && GetKeyEqualityComparer(readOnlyDictionary, false) is IComparer<TKey> coercedComparer ? coercedComparer : null,
+                Dictionary<TKey, TValue> dictionary => dictionary.Comparer,
+                IHashKeys<TKey> keyHasher => keyHasher.Comparer,
+                _ => attemptCoercion && GetKeyComparer(readOnlyDictionary, false) is IEqualityComparer<TKey> coercedEqualityComparer ? coercedEqualityComparer : null
             };
     }
 }
