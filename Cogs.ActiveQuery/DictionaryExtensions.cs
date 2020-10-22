@@ -72,6 +72,7 @@ namespace Cogs.ActiveQuery
                 ObservableDictionary<TKey, TValue> _ => IndexingStrategy.HashTable,
                 SortedDictionary<TKey, TValue> _ => IndexingStrategy.SelfBalancingBinarySearchTree,
                 ObservableSortedDictionary<TKey, TValue> _ => IndexingStrategy.SelfBalancingBinarySearchTree,
+                ObservableConcurrentDictionary<TKey, TValue> _ => IndexingStrategy.HashTable,
                 _ => null
             };
 
@@ -79,6 +80,7 @@ namespace Cogs.ActiveQuery
             readOnlyDictionary switch
             {
                 ActiveDictionary<TKey, TValue> activeDictionary when activeDictionary.IndexingStrategy == IndexingStrategy.HashTable => activeDictionary.EqualityComparer,
+                ObservableConcurrentDictionary<TKey, TValue> observableConcurrent => observableConcurrent.Comparer,
                 SynchronizedObservableDictionary<TKey, TValue> synchronizedObservable => synchronizedObservable.Comparer,
                 ObservableDictionary<TKey, TValue> observable => observable.Comparer,
                 Dictionary<TKey, TValue> standard => standard.Comparer,

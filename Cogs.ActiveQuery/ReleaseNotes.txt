@@ -1,1 +1,1 @@
-Added the SwitchContextEventually method for both enumerables and dictionaries, which avoids ever switching contexts when it is called and uses a processing queue to achieve "eventual" consistency with the source synchronized with another context to ensure that deadlocks cannot occur.
+Added support for observable concurrent dictionaries.
