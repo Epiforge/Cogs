@@ -12,7 +12,7 @@ namespace Cogs.Collections
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
-    public class NullableKeyDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
+    public class NullableKeyDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IHashKeys<TKey>, IReadOnlyDictionary<TKey, TValue>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="NullableKeyDictionary{TKey, TValue}"/> class that is empty, has the default initial capacity, and uses the default equality comparer for the key type

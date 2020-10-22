@@ -1,1 +1,1 @@
-Added the ReadOnlyObservableConcurrentDictionary class, which does exactly what it sounds like.
+Added the IHashKeys and ISortKeys interfaces to differentiate between dictionaries implemented with hash tables and binary search trees.
