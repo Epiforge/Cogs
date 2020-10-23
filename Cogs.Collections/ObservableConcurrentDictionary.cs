@@ -568,6 +568,50 @@ namespace Cogs.Collections
         bool IDictionary<TKey, TValue>.Remove(TKey key) => TryRemove(key, out _);
 
         /// <summary>
+        /// Reinitializes the hash table used internally by the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/>, removing all elements
+        /// </summary>
+        public virtual void Reset()
+        {
+            if (comparer is { })
+            {
+                if (concurrencyLevel is { } cl)
+                {
+                    if (capacity is { } c)
+                        cd = new ConcurrentDictionary<TKey, TValue>(cl, c, comparer);
+                    else
+                        cd = new ConcurrentDictionary<TKey, TValue>(cl, Enumerable.Empty<KeyValuePair<TKey, TValue>>(), comparer);
+                }
+                else
+                    cd = new ConcurrentDictionary<TKey, TValue>(comparer);
+            }
+            else if (concurrencyLevel is { } cl && capacity is { } c)
+                cd = new ConcurrentDictionary<TKey, TValue>(cl, c);
+            else
+                cd = new ConcurrentDictionary<TKey, TValue>();
+            NotifyCountChanged();
+            OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Reset));
+        }
+
+        /// <summary>
+        /// Reinitializes the hash table used internally by the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/>, with the specified elements
+        /// </summary>
+        /// <param name="keyValuePairs">The elements with which to reinitialize the dictionary</param>
+        public virtual void Reset(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs)
+        {
+            if (comparer is { } c)
+            {
+                if (concurrencyLevel is { } cl)
+                    cd = new ConcurrentDictionary<TKey, TValue>(cl, keyValuePairs, c);
+                else
+                    cd = new ConcurrentDictionary<TKey, TValue>(keyValuePairs, c);
+            }
+            else
+                cd = new ConcurrentDictionary<TKey, TValue>(keyValuePairs);
+            NotifyCountChanged();
+            OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Reset));
+        }
+
+        /// <summary>
         /// Copies the key and value pairs stored in the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> to a new array
         /// </summary>
         /// <returns>A new array containing a snapshot of key and value pairs copied from the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/></returns>
