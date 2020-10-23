@@ -25,7 +25,7 @@ namespace Cogs.ActiveQuery
         /// <param name="onDispose">The action to take when the <see cref="ActiveEnumerable{TElement}"/> is disposed</param>
         public ActiveEnumerable(IReadOnlyList<TElement> readOnlyList, INotifyElementFaultChanges? faultNotifier = null, Action? onDispose = null)
         {
-            synchronized = readOnlyList as ISynchronized ?? throw new ArgumentException($"{nameof(readOnlyList)} must implement {nameof(ISynchronized)}", nameof(readOnlyList));
+            synchronized = readOnlyList as ISynchronized;
             this.faultNotifier = faultNotifier ?? (readOnlyList as INotifyElementFaultChanges);
             if (this.faultNotifier is { })
             {
@@ -63,7 +63,7 @@ namespace Cogs.ActiveQuery
         readonly bool isGenericCollectionNotifier;
         readonly Action? onDispose;
         readonly IReadOnlyList<TElement> readOnlyList;
-        readonly ISynchronized synchronized;
+        readonly ISynchronized? synchronized;
 
         /// <summary>
         /// Occurs when the collection changes
@@ -154,6 +154,6 @@ namespace Cogs.ActiveQuery
         /// <summary>
         /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
         /// </summary>
-        public SynchronizationContext? SynchronizationContext => synchronized.SynchronizationContext;
+        public SynchronizationContext? SynchronizationContext => synchronized?.SynchronizationContext;
     }
 }

@@ -1,1 +1,1 @@
-Added the ConcurrentlyObserve extension method for dictionaries.
+We corrected a defect in the ActiveDictionary and ActiveEnumerable wrappers that required the backing store to implement Cogs.Threading.ISynchronized.

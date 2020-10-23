@@ -25,7 +25,7 @@ namespace Cogs.ActiveQuery
         /// <param name="onDispose">The action to take when the <see cref="ActiveDictionary{TKey, TValue}"/> is disposed</param>
         public ActiveDictionary(IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, Action? onDispose = null)
         {
-            synchronized = readOnlyDictionary as ISynchronized ?? throw new ArgumentException($"{nameof(readOnlyDictionary)} must implement {nameof(ISynchronized)}", nameof(readOnlyDictionary));
+            synchronized = readOnlyDictionary as ISynchronized;
             if (readOnlyDictionary is ActiveDictionary<TKey, TValue> activeDictionary)
                 this.readOnlyDictionary = activeDictionary.readOnlyDictionary;
             else
@@ -61,7 +61,7 @@ namespace Cogs.ActiveQuery
         readonly Action? onDispose;
         Exception? operationFault;
         readonly IReadOnlyDictionary<TKey, TValue> readOnlyDictionary;
-        readonly ISynchronized synchronized;
+        readonly ISynchronized? synchronized;
 
         event EventHandler<NotifyDictionaryChangedEventArgs<object?, object?>>? INotifyDictionaryChanged.DictionaryChanged
         {
@@ -198,7 +198,7 @@ namespace Cogs.ActiveQuery
         /// <summary>
         /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
         /// </summary>
-        public SynchronizationContext? SynchronizationContext => synchronized.SynchronizationContext;
+        public SynchronizationContext? SynchronizationContext => synchronized?.SynchronizationContext;
 
         /// <summary>
         /// Gets an enumerable collection that contains the values in the read-only dictionary
