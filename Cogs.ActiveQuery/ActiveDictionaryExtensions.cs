@@ -5,6 +5,7 @@ using Cogs.Reflection;
 using Cogs.Threading;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
@@ -224,6 +225,55 @@ namespace Cogs.ActiveQuery
         }
 
         #endregion Average
+
+        #region ConcurrentlyObserve
+
+        /// <summary>
+        /// Actively observes a <see cref="IReadOnlyDictionary{TKey, TValue}"/> using a <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> as the backing store
+        /// </summary>
+        /// <typeparam name="TKey">The type of the keys in <paramref name="source"/></typeparam>
+        /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
+        /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> to observe</param>
+        /// <returns>An <see cref="IActiveDictionary{TKey, TValue}"/> that contains values from <paramref name="source"/></returns>
+        public static IActiveDictionary<TKey, TValue> ConcurrentlyObserve<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source)
+        {
+            var synchronizedSource = source as ISynchronized;
+            var notifyingSource = source as INotifyDictionaryChanged<TKey, TValue>;
+            ObservableConcurrentDictionary<TKey, TValue>? dict = null;
+
+            void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e)
+            {
+                if (e.Action == NotifyDictionaryChangedAction.Reset)
+                    dict!.Reset(source);
+                else
+                {
+                    var removedKeys = new HashSet<TKey>(e.OldItems.Select(kv => kv.Key));
+                    foreach (var removeKey in removedKeys.Except(e.NewItems.Select(kv => kv.Key)))
+                        dict!.TryRemove(removeKey, out _);
+                    foreach (var newItem in e.NewItems)
+                    {
+                        if (removedKeys.Contains(newItem.Key))
+                            dict![newItem.Key] = newItem.Value;
+                        else
+                            dict!.TryAdd(newItem.Key, newItem.Value);
+                    }
+                }
+            }
+
+            return synchronizedSource.SequentialExecute(() =>
+            {
+                dict = new ObservableConcurrentDictionary<TKey, TValue>(source.ToImmutableArray());
+                if (notifyingSource is { })
+                    notifyingSource.DictionaryChanged += dictionaryChanged;
+                return new ActiveDictionary<TKey, TValue>(dict, source as INotifyElementFaultChanges, () =>
+                {
+                    if (notifyingSource is { })
+                        notifyingSource.DictionaryChanged -= dictionaryChanged;
+                });
+            });
+        }
+
+        #endregion ConcurrentlyObserve
 
         #region Count
 
@@ -1273,7 +1323,7 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <typeparam name="TResult">The type to filter the values of the dictionary on</typeparam>
         /// <param name="source">The <see cref="IReadOnlyDictionary{TKey, TValue}"/> the values of which to filter</param>
-        /// <returns>An <see cref="IReadOnlyDictionary{TKey, TValue}"/> that contains values from the input dictionary of type <typeparamref name="TResult"/></returns>
+        /// <returns>An <see cref="IActiveDictionary{TKey, TValue}"/> that contains values from the input dictionary of type <typeparamref name="TResult"/></returns>
         public static IActiveDictionary<TKey, TResult> ActiveOfType<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source)
         {
             var synchronizedSource = source as ISynchronized;
