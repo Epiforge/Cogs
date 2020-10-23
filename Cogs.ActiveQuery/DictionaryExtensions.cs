@@ -45,9 +45,9 @@ namespace Cogs.ActiveQuery
 
         public static ISynchronizedObservableRangeDictionary<TKey, TValue> CreateSimilarSynchronizedObservableDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary) => CreateSimilarSynchronizedObservableDictionary(readOnlyDictionary, SynchronizationContext.Current);
 
-        public static ISynchronizedObservableRangeDictionary<TKey, TValue> CreateSimilarSynchronizedObservableDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, SynchronizationContext synchronizationContext) => CreateSimilarSynchronizedObservableDictionary<TKey, TValue, TValue>(readOnlyDictionary, synchronizationContext);
+        public static ISynchronizedObservableRangeDictionary<TKey, TValue> CreateSimilarSynchronizedObservableDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, SynchronizationContext? synchronizationContext) => CreateSimilarSynchronizedObservableDictionary<TKey, TValue, TValue>(readOnlyDictionary, synchronizationContext);
 
-        public static ISynchronizedObservableRangeDictionary<TKey, TResultValue> CreateSimilarSynchronizedObservableDictionary<TKey, TSourceValue, TResultValue>(this IReadOnlyDictionary<TKey, TSourceValue> readOnlyDictionary, SynchronizationContext synchronizationContext)
+        public static ISynchronizedObservableRangeDictionary<TKey, TResultValue> CreateSimilarSynchronizedObservableDictionary<TKey, TSourceValue, TResultValue>(this IReadOnlyDictionary<TKey, TSourceValue> readOnlyDictionary, SynchronizationContext? synchronizationContext)
         {
             var indexingStrategy = GetIndexingStrategy(readOnlyDictionary);
             return indexingStrategy switch
@@ -57,7 +57,7 @@ namespace Cogs.ActiveQuery
             };
         }
 
-        static ISynchronizedObservableRangeDictionary<TKey, TResultValue> CreateSynchronizedObservableDictionary<TKey, TSourceValue, TResultValue>(SynchronizationContext synchronizationContext, IndexingStrategy? indexingStrategy = null, IEqualityComparer<TKey>? keyEqualityComparer = null, IComparer<TKey>? keyComparer = null) =>
+        static ISynchronizedObservableRangeDictionary<TKey, TResultValue> CreateSynchronizedObservableDictionary<TKey, TSourceValue, TResultValue>(SynchronizationContext? synchronizationContext, IndexingStrategy? indexingStrategy = null, IEqualityComparer<TKey>? keyEqualityComparer = null, IComparer<TKey>? keyComparer = null) =>
             indexingStrategy switch
             {
                 IndexingStrategy.SelfBalancingBinarySearchTree when keyComparer is { } => keyComparer is { } ? new SynchronizedObservableSortedDictionary<TKey, TResultValue>(synchronizationContext, keyComparer) : new SynchronizedObservableSortedDictionary<TKey, TResultValue>(synchronizationContext),

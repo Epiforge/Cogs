@@ -5,9 +5,7 @@ using Cogs.Reflection;
 using Cogs.Threading;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
-using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -1306,7 +1304,7 @@ namespace Cogs.ActiveQuery
 
             return synchronizedSource.SequentialExecute(() =>
             {
-                rangeObservableDictionary = source.GetIndexingStrategy() == IndexingStrategy.SelfBalancingBinarySearchTree ? (ISynchronizedObservableRangeDictionary<TKey, TResult>)(source.GetKeyComparer() is IComparer<TKey> comparer ? new SynchronizedObservableSortedDictionary<TKey, TResult>(comparer) : new SynchronizedObservableSortedDictionary<TKey, TResult>()) : (source.GetKeyEqualityComparer() is IEqualityComparer<TKey> equalityComparer ? new SynchronizedObservableDictionary<TKey, TResult>(equalityComparer) : new SynchronizedObservableDictionary<TKey, TResult>());
+                rangeObservableDictionary = source.GetIndexingStrategy() == IndexingStrategy.SelfBalancingBinarySearchTree ? (ISynchronizedObservableRangeDictionary<TKey, TResult>)(source.GetKeyComparer() is IComparer<TKey> comparer ? new SynchronizedObservableSortedDictionary<TKey, TResult>(synchronizedSource?.SynchronizationContext, comparer) : new SynchronizedObservableSortedDictionary<TKey, TResult>(synchronizedSource?.SynchronizationContext)) : (source.GetKeyEqualityComparer() is IEqualityComparer<TKey> equalityComparer ? new SynchronizedObservableDictionary<TKey, TResult>(synchronizedSource?.SynchronizationContext, equalityComparer) : new SynchronizedObservableDictionary<TKey, TResult>(synchronizedSource?.SynchronizationContext));
                 rangeObservableDictionary.AddRange(OfType<TKey, TValue, TResult>(source));
 
                 if (notifyingSource is { })
@@ -1424,7 +1422,7 @@ namespace Cogs.ActiveQuery
             return synchronizedSource.SequentialExecute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-                rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult>(rangeActiveExpression.GetResults().Select(((TKey key, TResult result) er, int index) =>
+                rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().Select(((TKey key, TResult result) er, int index) =>
                 {
                     keyToIndex.Add(er.key, index);
                     return er.result;
@@ -2316,11 +2314,11 @@ namespace Cogs.ActiveQuery
                 {
                     case IndexingStrategy.SelfBalancingBinarySearchTree:
                         duplicateKeys = keyComparer is null ? new SortedDictionary<TResultKey, int>() : new SortedDictionary<TResultKey, int>(keyComparer);
-                        rangeObservableDictionary = keyComparer is null ? new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>() : new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>(keyComparer);
+                        rangeObservableDictionary = keyComparer is null ? new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext) : new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext, keyComparer);
                         break;
                     default:
                         duplicateKeys = keyEqualityComparer is null ? new Dictionary<TResultKey, int>() : new Dictionary<TResultKey, int>(keyEqualityComparer);
-                        rangeObservableDictionary = keyEqualityComparer is null ? new SynchronizedObservableDictionary<TResultKey, TResultValue>() : new SynchronizedObservableDictionary<TResultKey, TResultValue>(keyEqualityComparer);
+                        rangeObservableDictionary = keyEqualityComparer is null ? new SynchronizedObservableDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext) : new SynchronizedObservableDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext, keyEqualityComparer);
                         break;
                 }
 
@@ -2583,7 +2581,7 @@ namespace Cogs.ActiveQuery
             return synchronizedSource.SequentialExecute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, predicate, predicateOptions);
-                rangeObservableDictionary = source.CreateSimilarSynchronizedObservableDictionary();
+                rangeObservableDictionary = source.CreateSimilarSynchronizedObservableDictionary(synchronizedSource?.SynchronizationContext);
                 rangeObservableDictionary.AddRange(rangeActiveExpression.GetResults().Where(r => r.result).Select(r => new KeyValuePair<TKey, TValue>(r.key, source[r.key])));
                 rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
                 rangeActiveExpression.ValueResultChanged += valueResultChanged;

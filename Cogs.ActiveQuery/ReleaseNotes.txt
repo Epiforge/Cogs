@@ -1,1 +1,1 @@
-Added support for IHashKeys and ISortKeys.
+Active Query methods will now no longer use Cogs.Threading.Synchronization.DefaultSynchronizationContext by default when querying enumerables and dictionaries that do not implement Cogs.Threading.ISynchronized, and now assumes that if the caller is working with unsynchronized objects, they have taken the responsibility of ensuring race conditions will not occur.
