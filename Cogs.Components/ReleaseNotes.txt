@@ -1,0 +1,1 @@
+We upgraded the project language version to C# 9 and leveraged nullable reference type improvements.
