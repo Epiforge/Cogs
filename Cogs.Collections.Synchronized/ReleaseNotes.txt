@@ -1,1 +1,1 @@
-Added WaitForIdle methods, and Count and IsDisposed properties to ProcessingQueue and AsyncProcessingQueue.
+This release requires Cogs.Collections 1.7.4 and Cogs.Threading 1.7.1 at minimum.
