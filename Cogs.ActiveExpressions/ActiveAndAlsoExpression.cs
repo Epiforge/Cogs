@@ -6,7 +6,7 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveAndAlsoExpression : ActiveBinaryExpression, IEquatable<ActiveAndAlsoExpression>
     {
-        public ActiveAndAlsoExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(binaryExpression, options, deferEvaluation, false)
+        public ActiveAndAlsoExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, CachedInstancesKey<BinaryExpression> instancesKey, bool deferEvaluation) : base(binaryExpression, options, instancesKey, deferEvaluation, false)
         {
         }
 

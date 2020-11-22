@@ -48,7 +48,7 @@ namespace Cogs.ActiveExpressions.Tests
 
         public static DisposableTestPerson operator -(DisposableTestPerson disposableTestPerson) => new DisposableTestPerson
         {
-            name = new string(disposableTestPerson.name.Reverse().ToArray()),
+            name = new string(disposableTestPerson.name?.Reverse().ToArray()),
         };
     }
 }

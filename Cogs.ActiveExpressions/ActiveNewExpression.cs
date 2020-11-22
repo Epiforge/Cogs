@@ -13,15 +13,15 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
     {
-        ActiveNewExpression(NewExpression newExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(newExpression.Type, newExpression.NodeType, options, deferEvaluation)
+        ActiveNewExpression(NewExpression newExpression, ActiveExpressionOptions? options, CachedInstancesKey<NewExpression> instancesKey, bool deferEvaluation) : base(newExpression.Type, newExpression.NodeType, options, deferEvaluation)
         {
             var argumentsList = new List<ActiveExpression>();
             try
             {
-                this.newExpression = newExpression;
-                constructor = this.newExpression.Constructor;
+                this.instancesKey = instancesKey;
+                constructor = newExpression.Constructor;
                 fastConstructor = FastConstructorInfo.Get(constructor);
-                foreach (var newExpressionArgument in this.newExpression.Arguments)
+                foreach (var newExpressionArgument in newExpression.Arguments)
                 {
                     var argument = Create(newExpressionArgument, options, deferEvaluation);
                     argument.PropertyChanged += ArgumentPropertyChanged;
@@ -49,7 +49,7 @@ namespace Cogs.ActiveExpressions
         readonly EquatableList<Type> constructorParameterTypes;
         int disposalCount;
         readonly FastConstructorInfo fastConstructor;
-        readonly NewExpression newExpression;
+        readonly CachedInstancesKey<NewExpression> instancesKey;
 
         void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
@@ -59,7 +59,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((newExpression, options));
+                    instances.Remove(instancesKey);
                     result = true;
                 }
             if (result)
@@ -100,17 +100,17 @@ namespace Cogs.ActiveExpressions
 
         public override string ToString() => $"new {Type.FullName}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
-        static readonly Dictionary<(NewExpression newExpression, ActiveExpressionOptions? options), ActiveNewExpression> instances = new Dictionary<(NewExpression newExpression, ActiveExpressionOptions? options), ActiveNewExpression>(new CachedInstancesKeyComparer<NewExpression>());
+        static readonly Dictionary<CachedInstancesKey<NewExpression>, ActiveNewExpression> instances = new Dictionary<CachedInstancesKey<NewExpression>, ActiveNewExpression>(new CachedInstancesKeyComparer<NewExpression>());
         static readonly object instanceManagementLock = new object();
 
         public static ActiveNewExpression Create(NewExpression newExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var key = (newExpression, options);
+            var key = new CachedInstancesKey<NewExpression>(newExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeNewExpression))
                 {
-                    activeNewExpression = new ActiveNewExpression(newExpression, options, deferEvaluation);
+                    activeNewExpression = new ActiveNewExpression(newExpression, options, key, deferEvaluation);
                     instances.Add(key, activeNewExpression);
                 }
                 ++activeNewExpression.disposalCount;

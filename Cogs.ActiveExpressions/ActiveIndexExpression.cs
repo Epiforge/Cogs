@@ -13,18 +13,18 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression>
     {
-        ActiveIndexExpression(IndexExpression indexExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(indexExpression.Type, indexExpression.NodeType, options, deferEvaluation)
+        ActiveIndexExpression(IndexExpression indexExpression, ActiveExpressionOptions? options, CachedInstancesKey<IndexExpression> instancesKey, bool deferEvaluation) : base(indexExpression.Type, indexExpression.NodeType, options, deferEvaluation)
         {
             var argumentsList = new List<ActiveExpression>();
             try
             {
-                this.indexExpression = indexExpression;
-                indexer = this.indexExpression.Indexer;
+                this.instancesKey = instancesKey;
+                indexer = indexExpression.Indexer;
                 getMethod = indexer.GetMethod;
                 fastGetter = FastMethodInfo.Get(getMethod);
-                @object = Create(this.indexExpression.Object, options, deferEvaluation);
+                @object = Create(indexExpression.Object, options, deferEvaluation);
                 @object.PropertyChanged += ObjectPropertyChanged;
-                foreach (var indexExpressionArgument in this.indexExpression.Arguments)
+                foreach (var indexExpressionArgument in indexExpression.Arguments)
                 {
                     var argument = Create(indexExpressionArgument, options, deferEvaluation);
                     argument.PropertyChanged += ArgumentPropertyChanged;
@@ -57,7 +57,7 @@ namespace Cogs.ActiveExpressions
         readonly FastMethodInfo fastGetter;
         readonly MethodInfo getMethod;
         readonly PropertyInfo indexer;
-        readonly IndexExpression indexExpression;
+        readonly CachedInstancesKey<IndexExpression> instancesKey;
         readonly ActiveExpression @object;
         object? objectValue;
 
@@ -69,7 +69,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((indexExpression, options));
+                    instances.Remove(instancesKey);
                     result = true;
                 }
             if (result)
@@ -217,16 +217,16 @@ namespace Cogs.ActiveExpressions
         }
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(IndexExpression indexExpression, ActiveExpressionOptions? options), ActiveIndexExpression> instances = new Dictionary<(IndexExpression indexExpression, ActiveExpressionOptions? options), ActiveIndexExpression>(new CachedInstancesKeyComparer<IndexExpression>());
+        static readonly Dictionary<CachedInstancesKey<IndexExpression>, ActiveIndexExpression> instances = new Dictionary<CachedInstancesKey<IndexExpression>, ActiveIndexExpression>(new CachedInstancesKeyComparer<IndexExpression>());
 
         public static ActiveIndexExpression Create(IndexExpression indexExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var key = (indexExpression, options);
+            var key = new CachedInstancesKey<IndexExpression>(indexExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeIndexExpression))
                 {
-                    activeIndexExpression = new ActiveIndexExpression(indexExpression, options, deferEvaluation);
+                    activeIndexExpression = new ActiveIndexExpression(indexExpression, options, key, deferEvaluation);
                     instances.Add(key, activeIndexExpression);
                 }
                 ++activeIndexExpression.disposalCount;

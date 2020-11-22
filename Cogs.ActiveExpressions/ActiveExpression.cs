@@ -287,72 +287,40 @@ namespace Cogs.ActiveExpressions
         /// <returns>A human-readable representation of the expression</returns>
         public static string GetOperatorExpressionSyntax(ExpressionType expressionType, Type resultType, params object[] operands)
         {
-            switch (expressionType)
+            return expressionType switch
             {
-                case ExpressionType.Add:
-                    return $"({operands[0]} + {operands[1]})";
-                case ExpressionType.AddChecked:
-                    return $"checked({operands[0]} + {operands[1]})";
-                case ExpressionType.And:
-                    return $"({operands[0]} & {operands[1]})";
-                case ExpressionType.Convert:
-                    return $"(({resultType.FullName}){operands[0]})";
-                case ExpressionType.ConvertChecked:
-                    return $"checked(({resultType.FullName}){operands[0]})";
-                case ExpressionType.Decrement:
-                    return $"({operands[0]} - 1)";
-                case ExpressionType.Divide:
-                    return $"({operands[0]} / {operands[1]})";
-                case ExpressionType.Equal:
-                    return $"({operands[0]} == {operands[1]})";
-                case ExpressionType.ExclusiveOr:
-                    return $"({operands[0]} ^ {operands[1]})";
-                case ExpressionType.GreaterThan:
-                    return $"({operands[0]} > {operands[1]})";
-                case ExpressionType.GreaterThanOrEqual:
-                    return $"({operands[0]} >= {operands[1]})";
-                case ExpressionType.Increment:
-                    return $"({operands[0]} + 1)";
-                case ExpressionType.LeftShift:
-                    return $"({operands[0]} << {operands[1]})";
-                case ExpressionType.LessThan:
-                    return $"({operands[0]} < {operands[1]})";
-                case ExpressionType.LessThanOrEqual:
-                    return $"({operands[0]} <= {operands[1]})";
-                case ExpressionType.Modulo:
-                    return $"({operands[0]} % {operands[1]})";
-                case ExpressionType.Multiply:
-                    return $"({operands[0]} * {operands[1]})";
-                case ExpressionType.MultiplyChecked:
-                    return $"checked({operands[0]} * {operands[1]})";
-                case ExpressionType.Negate:
-                    return $"(-{operands[0]})";
-                case ExpressionType.NegateChecked:
-                    return $"checked(-{operands[0]})";
-                case ExpressionType.Not when operands[0] is bool || (operands[0] is ActiveExpression notOperand && (notOperand.Type == typeof(bool) || notOperand.Type == typeof(bool?))):
-                    return $"(!{operands[0]})";
-                case ExpressionType.Not:
-                case ExpressionType.OnesComplement:
-                    return $"(~{operands[0]})";
-                case ExpressionType.NotEqual:
-                    return $"({operands[0]} != {operands[1]})";
-                case ExpressionType.Or:
-                    return $"({operands[0]} | {operands[1]})";
-                case ExpressionType.Power:
-                    return $"{nameof(Math)}.{nameof(Math.Pow)}({operands[0]}, {operands[1]})";
-                case ExpressionType.RightShift:
-                    return $"({operands[0]} >> {operands[1]})";
-                case ExpressionType.Subtract:
-                    return $"({operands[0]} - {operands[1]})";
-                case ExpressionType.SubtractChecked:
-                    return $"checked({operands[0]} - {operands[1]})";
-                case ExpressionType.TypeIs:
-                    return $"({operands[0]} is {operands[1]})";
-                case ExpressionType.UnaryPlus:
-                    return $"(+{operands[0]})";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(expressionType));
-            }
+                ExpressionType.Add => $"({operands[0]} + {operands[1]})",
+                ExpressionType.AddChecked => $"checked({operands[0]} + {operands[1]})",
+                ExpressionType.And => $"({operands[0]} & {operands[1]})",
+                ExpressionType.Convert => $"(({resultType.FullName}){operands[0]})",
+                ExpressionType.ConvertChecked => $"checked(({resultType.FullName}){operands[0]})",
+                ExpressionType.Decrement => $"({operands[0]} - 1)",
+                ExpressionType.Divide => $"({operands[0]} / {operands[1]})",
+                ExpressionType.Equal => $"({operands[0]} == {operands[1]})",
+                ExpressionType.ExclusiveOr => $"({operands[0]} ^ {operands[1]})",
+                ExpressionType.GreaterThan => $"({operands[0]} > {operands[1]})",
+                ExpressionType.GreaterThanOrEqual => $"({operands[0]} >= {operands[1]})",
+                ExpressionType.Increment => $"({operands[0]} + 1)",
+                ExpressionType.LeftShift => $"({operands[0]} << {operands[1]})",
+                ExpressionType.LessThan => $"({operands[0]} < {operands[1]})",
+                ExpressionType.LessThanOrEqual => $"({operands[0]} <= {operands[1]})",
+                ExpressionType.Modulo => $"({operands[0]} % {operands[1]})",
+                ExpressionType.Multiply => $"({operands[0]} * {operands[1]})",
+                ExpressionType.MultiplyChecked => $"checked({operands[0]} * {operands[1]})",
+                ExpressionType.Negate => $"(-{operands[0]})",
+                ExpressionType.NegateChecked => $"checked(-{operands[0]})",
+                ExpressionType.Not when operands[0] is bool || (operands[0] is ActiveExpression notOperand && (notOperand.Type == typeof(bool) || notOperand.Type == typeof(bool?))) => $"(!{operands[0]})",
+                ExpressionType.Not or ExpressionType.OnesComplement => $"(~{operands[0]})",
+                ExpressionType.NotEqual => $"({operands[0]} != {operands[1]})",
+                ExpressionType.Or => $"({operands[0]} | {operands[1]})",
+                ExpressionType.Power => $"{nameof(Math)}.{nameof(Math.Pow)}({operands[0]}, {operands[1]})",
+                ExpressionType.RightShift => $"({operands[0]} >> {operands[1]})",
+                ExpressionType.Subtract => $"({operands[0]} - {operands[1]})",
+                ExpressionType.SubtractChecked => $"checked({operands[0]} - {operands[1]})",
+                ExpressionType.TypeIs => $"({operands[0]} is {operands[1]})",
+                ExpressionType.UnaryPlus => $"(+{operands[0]})",
+                _ => throw new ArgumentOutOfRangeException(nameof(expressionType)),
+            };
         }
 
         static PropertyInfo GetPropertyFromGetMethod(MethodInfo getMethod) => getMethod.DeclaringType.GetRuntimeProperties().FirstOrDefault(property => property.GetMethod == getMethod);
@@ -403,10 +371,10 @@ namespace Cogs.ActiveExpressions
         /// <param name="arg">The argument</param>
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TArg, TResult> Create<TArg, TResult>(Expression<Func<TArg, TResult>> expression, [AllowNull] TArg arg, ActiveExpressionOptions? options = null)
+        public static ActiveExpression<TArg?, TResult> Create<TArg, TResult>(Expression<Func<TArg?, TResult>> expression, TArg? arg, ActiveExpressionOptions? options = null)
         {
             options?.Freeze();
-            return ActiveExpression<TArg, TResult>.Create(expression, arg, options);
+            return ActiveExpression<TArg?, TResult>.Create(expression, arg, options);
         }
 
         /// <summary>
@@ -420,10 +388,10 @@ namespace Cogs.ActiveExpressions
         /// <param name="arg2">The second argument</param>
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TArg1, TArg2, TResult> Create<TArg1, TArg2, TResult>(Expression<Func<TArg1, TArg2, TResult>> expression, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, ActiveExpressionOptions? options = null)
+        public static ActiveExpression<TArg1?, TArg2?, TResult> Create<TArg1, TArg2, TResult>(Expression<Func<TArg1?, TArg2?, TResult>> expression, TArg1? arg1, TArg2? arg2, ActiveExpressionOptions? options = null)
         {
             options?.Freeze();
-            return ActiveExpression<TArg1, TArg2, TResult>.Create(expression, arg1, arg2, options);
+            return ActiveExpression<TArg1?, TArg2?, TResult>.Create(expression, arg1, arg2, options);
         }
 
         /// <summary>
@@ -439,7 +407,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="arg3">The third argument</param>
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TArg1, TArg2, TArg3, TResult> Create<TArg1, TArg2, TArg3, TResult>(Expression<Func<TArg1, TArg2, TArg3, TResult>> expression, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, [AllowNull] TArg3 arg3, ActiveExpressionOptions? options = null)
+        public static ActiveExpression<TArg1?, TArg2?, TArg3?, TResult> Create<TArg1, TArg2, TArg3, TResult>(Expression<Func<TArg1?, TArg2?, TArg3?, TResult>> expression, TArg1? arg1, TArg2? arg2, TArg3? arg3, ActiveExpressionOptions? options = null)
         {
             options?.Freeze();
             return ActiveExpression<TArg1, TArg2, TArg3, TResult>.Create(expression, arg1, arg2, arg3, options);
@@ -624,7 +592,7 @@ namespace Cogs.ActiveExpressions
         readonly EquatableList<object?> arguments;
         int disposalCount;
         Exception? fault;
-        [AllowNull, MaybeNull] TResult val;
+        TResult? val;
 
         /// <summary>
         /// Gets the arguments that were passed to the lambda expression
@@ -648,11 +616,10 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the result of evaluating the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TResult Value
+        public TResult? Value
         {
             get => val;
-            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
+            private set => SetBackedProperty(ref val, in value);
         }
 
         /// <summary>
@@ -666,7 +633,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (--disposalCount > 0)
                     return false;
-                instances.Remove((activeExpression, arguments));
+                instances.Remove(new InstancesKey(activeExpression, arguments));
             }
             activeExpression.PropertyChanged -= ExpressionPropertyChanged;
             activeExpression.Dispose();
@@ -708,13 +675,13 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => activeExpression.ToString();
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression activeExpression, EquatableList<object?> args), ActiveExpression<TResult>> instances = new Dictionary<(ActiveExpression activeExpression, EquatableList<object?> args), ActiveExpression<TResult>>();
+        static readonly Dictionary<InstancesKey, ActiveExpression<TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TResult>>();
 
         internal static ActiveExpression<TResult> Create(LambdaExpression expression, ActiveExpressionOptions? options, params object?[] args)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, args), options, false);
             var arguments = new EquatableList<object?>(args);
-            var key = (activeExpression, arguments);
+            var key = new InstancesKey(activeExpression, arguments);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var instance))
@@ -742,6 +709,8 @@ namespace Cogs.ActiveExpressions
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator !=(ActiveExpression<TResult> a, ActiveExpression<TResult> b) => !(a == b);
+
+        record InstancesKey(ActiveExpression ActiveExpression, EquatableList<object?> Args);
     }
 
     /// <summary>
@@ -751,7 +720,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression<TArg, TResult>, IEquatable<ActiveExpression<TArg, TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, [AllowNull] TArg arg)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg? arg)
         {
             this.activeExpression = activeExpression;
             Options = options;
@@ -766,13 +735,12 @@ namespace Cogs.ActiveExpressions
         readonly EquatableList<object?> arguments;
         int disposalCount;
         Exception? fault;
-        [AllowNull, MaybeNull] TResult val;
+        TResult? val;
 
         /// <summary>
         /// Gets the argument that was passed to the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TArg Arg { get; }
+        public TArg? Arg { get; }
 
         /// <summary>
         /// Gets the arguments that were passed to the lambda expression
@@ -796,11 +764,10 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the result of evaluating the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TResult Value
+        public TResult? Value
         {
             get => val;
-            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
+            private set => SetBackedProperty(ref val, in value);
         }
 
         /// <summary>
@@ -814,7 +781,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (--disposalCount > 0)
                     return false;
-                instances.Remove((activeExpression, Arg));
+                instances.Remove(new InstancesKey(activeExpression, Arg));
             }
             activeExpression.PropertyChanged -= ExpressionPropertyChanged;
             activeExpression.Dispose();
@@ -856,17 +823,17 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => activeExpression.ToString();
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression activeExpression, TArg arg), ActiveExpression<TArg, TResult>> instances = new Dictionary<(ActiveExpression activeExpression, TArg arg), ActiveExpression<TArg, TResult>>();
+        static readonly Dictionary<InstancesKey, ActiveExpression<TArg?, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg?, TResult>>();
 
-        internal static ActiveExpression<TArg, TResult> Create(LambdaExpression expression, [AllowNull] TArg arg, ActiveExpressionOptions? options = null)
+        internal static ActiveExpression<TArg?, TResult> Create(LambdaExpression expression, TArg? arg, ActiveExpressionOptions? options = null)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, arg), options, false);
-            var key = (activeExpression, arg);
+            var key = new InstancesKey(activeExpression, arg);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var instance))
                 {
-                    instance = new ActiveExpression<TArg, TResult>(activeExpression, options, arg);
+                    instance = new ActiveExpression<TArg?, TResult>(activeExpression, options, arg);
                     instances.Add(key, instance);
                 }
                 ++instance.disposalCount;
@@ -889,6 +856,8 @@ namespace Cogs.ActiveExpressions
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator !=(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b) => !(a == b);
+
+        record InstancesKey(ActiveExpression ActiveExpression, TArg? Arg);
     }
 
     /// <summary>
@@ -899,7 +868,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1? arg1, TArg2? arg2)
         {
             this.activeExpression = activeExpression;
             Options = options;
@@ -915,7 +884,7 @@ namespace Cogs.ActiveExpressions
         readonly EquatableList<object?> arguments;
         int disposalCount;
         Exception? fault;
-        [AllowNull, MaybeNull] TResult val;
+        TResult? val;
 
         /// <summary>
         /// Gets the arguments that were passed to the lambda expression
@@ -925,14 +894,12 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the first argument that was passed to the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TArg1 Arg1 { get; }
+        public TArg1? Arg1 { get; }
 
         /// <summary>
         /// Gets the second argument that was passed to the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TArg2 Arg2 { get; }
+        public TArg2? Arg2 { get; }
 
         /// <summary>
         /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
@@ -951,11 +918,10 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the result of evaluating the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TResult Value
+        public TResult? Value
         {
             get => val;
-            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
+            private set => SetBackedProperty(ref val, in value);
         }
 
         /// <summary>
@@ -969,7 +935,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (--disposalCount > 0)
                     return false;
-                instances.Remove((activeExpression, Arg1, Arg2));
+                instances.Remove(new InstancesKey(activeExpression, Arg1, Arg2));
             }
             activeExpression.PropertyChanged -= ExpressionPropertyChanged;
             activeExpression.Dispose();
@@ -1011,17 +977,17 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => activeExpression.ToString();
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression activeExpression, TArg1 arg1, TArg2 arg2), ActiveExpression<TArg1, TArg2, TResult>> instances = new Dictionary<(ActiveExpression activeExpression, TArg1 arg1, TArg2 arg2), ActiveExpression<TArg1, TArg2, TResult>>();
+        static readonly Dictionary<InstancesKey, ActiveExpression<TArg1?, TArg2?, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg1?, TArg2?, TResult>>();
 
-        internal static ActiveExpression<TArg1, TArg2, TResult> Create(LambdaExpression expression, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, ActiveExpressionOptions? options = null)
+        internal static ActiveExpression<TArg1?, TArg2?, TResult> Create(LambdaExpression expression, TArg1? arg1, TArg2? arg2, ActiveExpressionOptions? options = null)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, arg1, arg2), options, false);
-            var key = (activeExpression, arg1, arg2);
+            var key = new InstancesKey(activeExpression, arg1, arg2);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var instance))
                 {
-                    instance = new ActiveExpression<TArg1, TArg2, TResult>(activeExpression, options, arg1, arg2);
+                    instance = new ActiveExpression<TArg1?, TArg2?, TResult>(activeExpression, options, arg1, arg2);
                     instances.Add(key, instance);
                 }
                 ++instance.disposalCount;
@@ -1044,6 +1010,8 @@ namespace Cogs.ActiveExpressions
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator !=(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b) => !(a == b);
+
+        record InstancesKey(ActiveExpression ActiveExpression, TArg1? Arg1, TArg2? Arg2);
     }
 
     /// <summary>
@@ -1055,7 +1023,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TArg3, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TArg3, TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, [AllowNull] TArg3 arg3)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1? arg1, TArg2? arg2, TArg3? arg3)
         {
             this.activeExpression = activeExpression;
             Options = options;
@@ -1072,7 +1040,7 @@ namespace Cogs.ActiveExpressions
         readonly EquatableList<object?> arguments;
         int disposalCount;
         Exception? fault;
-        [AllowNull, MaybeNull] TResult val;
+        TResult? val;
 
         /// <summary>
         /// Gets the arguments that were passed to the lambda expression
@@ -1082,20 +1050,17 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the first argument that was passed to the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TArg1 Arg1 { get; }
+        public TArg1? Arg1 { get; }
 
         /// <summary>
         /// Gets the second argument that was passed to the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TArg2 Arg2 { get; }
+        public TArg2? Arg2 { get; }
 
         /// <summary>
         /// Gets the third argument that was passed to the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TArg3 Arg3 { get; }
+        public TArg3? Arg3 { get; }
 
         /// <summary>
         /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
@@ -1114,11 +1079,10 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the result of evaluating the lambda expression
         /// </summary>
-        [AllowNull, MaybeNull]
-        public TResult Value
+        public TResult? Value
         {
             get => val;
-            private set => SetBackedProperty(ref val! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
+            private set => SetBackedProperty(ref val, in value);
         }
 
         /// <summary>
@@ -1132,7 +1096,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (--disposalCount > 0)
                     return false;
-                instances.Remove((activeExpression, Arg1, Arg2, Arg3));
+                instances.Remove(new InstancesKey(activeExpression, Arg1, Arg2, Arg3));
             }
             activeExpression.PropertyChanged -= ExpressionPropertyChanged;
             activeExpression.Dispose();
@@ -1174,17 +1138,17 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => activeExpression.ToString();
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ActiveExpression activeExpression, TArg1 arg1, TArg2 arg2, TArg3 arg3), ActiveExpression<TArg1, TArg2, TArg3, TResult>> instances = new Dictionary<(ActiveExpression activeExpression, TArg1 arg1, TArg2 arg2, TArg3 arg3), ActiveExpression<TArg1, TArg2, TArg3, TResult>>();
+        static readonly Dictionary<InstancesKey, ActiveExpression<TArg1?, TArg2?, TArg3?, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg1?, TArg2?, TArg3?, TResult>>();
 
-        internal static ActiveExpression<TArg1, TArg2, TArg3, TResult> Create(LambdaExpression expression, [AllowNull] TArg1 arg1, [AllowNull] TArg2 arg2, [AllowNull] TArg3 arg3, ActiveExpressionOptions? options = null)
+        internal static ActiveExpression<TArg1?, TArg2?, TArg3?, TResult> Create(LambdaExpression expression, TArg1? arg1, TArg2? arg2, TArg3? arg3, ActiveExpressionOptions? options = null)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, arg1, arg2, arg3), options, false);
-            var key = (activeExpression, arg1, arg2, arg3);
+            var key = new InstancesKey(activeExpression, arg1, arg2, arg3);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var instance))
                 {
-                    instance = new ActiveExpression<TArg1, TArg2, TArg3, TResult>(activeExpression, options, arg1, arg2, arg3);
+                    instance = new ActiveExpression<TArg1?, TArg2?, TArg3?, TResult>(activeExpression, options, arg1, arg2, arg3);
                     instances.Add(key, instance);
                 }
                 ++instance.disposalCount;
@@ -1207,5 +1171,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator !=(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b) => !(a == b);
+
+        record InstancesKey(ActiveExpression ActiveExpression, TArg1? Arg1, TArg2? Arg2, TArg3? Arg3);
     }
 }

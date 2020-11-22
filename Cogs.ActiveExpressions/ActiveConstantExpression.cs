@@ -11,8 +11,10 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveConstantExpression : ActiveExpression, IEquatable<ActiveConstantExpression>
     {
-        ActiveConstantExpression(Type type, object value, ActiveExpressionOptions? options) : base(type, ExpressionType.Constant, options, value)
+        ActiveConstantExpression(Type type, object value, ActiveExpressionOptions? options, ExpressionInstancesKey? expressionInstancesKey, InstancesKey? instancesKey) : base(type, ExpressionType.Constant, options, value)
         {
+            this.expressionInstancesKey = expressionInstancesKey;
+            this.instancesKey = instancesKey;
             if (ApplicableOptions.ConstantExpressionsListenForDictionaryChanged && value is INotifyDictionaryChanged dictionaryChangedNotifier)
                 dictionaryChangedNotifier.DictionaryChanged += ValueChanged;
             else if (ApplicableOptions.ConstantExpressionsListenForCollectionChanged && value is INotifyCollectionChanged collectionChangedNotifier)
@@ -20,6 +22,8 @@ namespace Cogs.ActiveExpressions
         }
 
         int disposalCount;
+        readonly ExpressionInstancesKey? expressionInstancesKey;
+        readonly InstancesKey? instancesKey;
 
         protected override bool Dispose(bool disposing)
         {
@@ -27,10 +31,10 @@ namespace Cogs.ActiveExpressions
             {
                 if (--disposalCount > 0)
                     return false;
-                if (typeof(Expression).GetTypeInfo().IsAssignableFrom(Type.GetTypeInfo()))
-                    expressionInstances.Remove(((Expression?)Value, options));
+                if (expressionInstancesKey is { })
+                    expressionInstances.Remove(expressionInstancesKey);
                 else
-                    instances.Remove((Type, Value, options));
+                    instances.Remove(instancesKey!);
                 if (ApplicableOptions.ConstantExpressionsListenForDictionaryChanged && Value is INotifyDictionaryChanged dictionaryChangedNotifier)
                     dictionaryChangedNotifier.DictionaryChanged -= ValueChanged;
                 else if (ApplicableOptions.ConstantExpressionsListenForCollectionChanged && Value is INotifyCollectionChanged collectionChangedNotifier)
@@ -50,8 +54,8 @@ namespace Cogs.ActiveExpressions
         void ValueChanged(object sender, EventArgs e) => OnPropertyChanged(nameof(Value));
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(Expression? expression, ActiveExpressionOptions? options), ActiveConstantExpression> expressionInstances = new Dictionary<(Expression? expression, ActiveExpressionOptions? options), ActiveConstantExpression>(new ExpressionInstancesKeyComparer());
-        static readonly Dictionary<(Type type, object? value, ActiveExpressionOptions? options), ActiveConstantExpression> instances = new Dictionary<(Type type, object? value, ActiveExpressionOptions? options), ActiveConstantExpression>();
+        static readonly Dictionary<ExpressionInstancesKey, ActiveConstantExpression> expressionInstances = new Dictionary<ExpressionInstancesKey, ActiveConstantExpression>(new ExpressionInstancesKeyComparer());
+        static readonly Dictionary<InstancesKey, ActiveConstantExpression> instances = new Dictionary<InstancesKey, ActiveConstantExpression>();
 
         public static ActiveConstantExpression Create(ConstantExpression constantExpression, ActiveExpressionOptions? options)
         {
@@ -59,12 +63,12 @@ namespace Cogs.ActiveExpressions
             var value = constantExpression.Value;
             if (typeof(Expression).IsAssignableFrom(type))
             {
-                var key = ((Expression)value, options);
+                var key = new ExpressionInstancesKey((Expression)value, options);
                 lock (instanceManagementLock)
                 {
                     if (!expressionInstances.TryGetValue(key, out var activeConstantExpression))
                     {
-                        activeConstantExpression = new ActiveConstantExpression(type, value, options);
+                        activeConstantExpression = new ActiveConstantExpression(type, value, options, key, null);
                         expressionInstances.Add(key, activeConstantExpression);
                     }
                     ++activeConstantExpression.disposalCount;
@@ -73,12 +77,12 @@ namespace Cogs.ActiveExpressions
             }
             else
             {
-                var key = (type, value, options);
+                var key = new InstancesKey(type, value, options);
                 lock (instanceManagementLock)
                 {
                     if (!instances.TryGetValue(key, out var activeConstantExpression))
                     {
-                        activeConstantExpression = new ActiveConstantExpression(type, value, options);
+                        activeConstantExpression = new ActiveConstantExpression(type, value, options, null, key);
                         instances.Add(key, activeConstantExpression);
                     }
                     ++activeConstantExpression.disposalCount;
@@ -92,13 +96,17 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveConstantExpression a, ActiveConstantExpression b) => !(a == b);
 
-        class ExpressionInstancesKeyComparer : IEqualityComparer<(Expression? expression, ActiveExpressionOptions? options)>
-        {
-            public bool Equals((Expression? expression, ActiveExpressionOptions? options) x, (Expression? expression, ActiveExpressionOptions? options) y) =>
-                ((x.expression is null && y.expression is null) || (x.expression is { } && y.expression is { } && ExpressionEqualityComparer.Default.Equals(x.expression, y.expression))) && ((x.options is null && y.options is null) || (x.options is { } && y.options is { } && x.options.Equals(y.options)));
+        record ExpressionInstancesKey(Expression? Expression, ActiveExpressionOptions? Options);
 
-            public int GetHashCode((Expression? expression, ActiveExpressionOptions? options) obj) =>
-            HashCode.Combine(obj.expression is null ? 0 : ExpressionEqualityComparer.Default.GetHashCode(obj.expression), obj.options);
+        class ExpressionInstancesKeyComparer : IEqualityComparer<ExpressionInstancesKey>
+        {
+            public bool Equals(ExpressionInstancesKey x, ExpressionInstancesKey y) =>
+                ((x.Expression is null && y.Expression is null) || (x.Expression is { } && y.Expression is { } && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression))) && ((x.Options is null && y.Options is null) || (x.Options is { } && y.Options is { } && x.Options.Equals(y.Options)));
+
+            public int GetHashCode(ExpressionInstancesKey obj) =>
+                HashCode.Combine(obj.Expression is null ? 0 : ExpressionEqualityComparer.Default.GetHashCode(obj.Expression), obj.Options);
         }
+
+        record InstancesKey(Type Type, object? Value, ActiveExpressionOptions? Options);
     }
 }

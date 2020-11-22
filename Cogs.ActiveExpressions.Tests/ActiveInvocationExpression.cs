@@ -11,7 +11,7 @@ namespace Cogs.ActiveExpressions.Tests
 
         TestPerson CombinePeople(TestPerson a, TestPerson b) => new TestPerson { Name = $"{a.Name} {b.Name}" };
 
-        TestPerson ReversedCombinePeople(TestPerson a, TestPerson b) => new TestPerson { Name = $"{b.Name} {a.Name}" };
+        static TestPerson ReversedCombinePeople(TestPerson a, TestPerson b) => new TestPerson { Name = $"{b.Name} {a.Name}" };
 
         #endregion TestMethod Methods
 
@@ -22,7 +22,7 @@ namespace Cogs.ActiveExpressions.Tests
             var emily = TestPerson.CreateEmily();
             var firstParameter = Expression.Parameter(typeof(TestPerson));
             var secondParameter = Expression.Parameter(typeof(TestPerson));
-            var testPersonNamePropertyInfo = typeof(TestPerson).GetProperty(nameof(TestPerson.Name));
+            var testPersonNamePropertyInfo = typeof(TestPerson).GetProperty(nameof(TestPerson.Name))!;
             using var expr = ActiveExpression.Create<int>(Expression.Lambda(Expression.Invoke((Expression<Func<string, string, int>>)((p1, p2) => p1.Length + p2.Length), Expression.MakeMemberAccess(firstParameter, testPersonNamePropertyInfo), Expression.MakeMemberAccess(secondParameter, testPersonNamePropertyInfo)), firstParameter, secondParameter), john, emily);
             Assert.AreEqual(9, expr.Value);
             emily.Name = "Arya";
@@ -36,8 +36,8 @@ namespace Cogs.ActiveExpressions.Tests
             var emily = TestPerson.CreateEmily();
             var firstParameter = Expression.Parameter(typeof(TestPerson));
             var secondParameter = Expression.Parameter(typeof(TestPerson));
-            var testPersonNamePropertyInfo = typeof(TestPerson).GetProperty(nameof(TestPerson.Name));
-            var stringLengthPropertyInfo = typeof(string).GetProperty(nameof(string.Length));
+            var testPersonNamePropertyInfo = typeof(TestPerson).GetProperty(nameof(TestPerson.Name))!;
+            var stringLengthPropertyInfo = typeof(string).GetProperty(nameof(string.Length))!;
             using var expr = ActiveExpression.Create<int>(Expression.Lambda(Expression.Invoke((Expression<Func<int, int, int>>)((p1, p2) => p1 + p2), Expression.MakeMemberAccess(Expression.MakeMemberAccess(firstParameter, testPersonNamePropertyInfo), stringLengthPropertyInfo), Expression.MakeMemberAccess(Expression.MakeMemberAccess(secondParameter, testPersonNamePropertyInfo), stringLengthPropertyInfo)), firstParameter, secondParameter), john, emily);
             Assert.IsNull(expr.Fault);
             emily.Name = null;
@@ -114,7 +114,7 @@ namespace Cogs.ActiveExpressions.Tests
             var emily = TestPerson.CreateEmily();
             var firstParameter = Expression.Parameter(typeof(TestPerson));
             var secondParameter = Expression.Parameter(typeof(TestPerson));
-            var testPersonNamePropertyInfo = typeof(TestPerson).GetProperty(nameof(TestPerson.Name));
+            var testPersonNamePropertyInfo = typeof(TestPerson).GetProperty(nameof(TestPerson.Name))!;
             using var expr = ActiveExpression.Create<int>(Expression.Lambda(Expression.Invoke((Expression<Func<string, string, int>>)((p1, p2) => p1.Length + p2.Length), Expression.MakeMemberAccess(firstParameter, testPersonNamePropertyInfo), Expression.MakeMemberAccess(secondParameter, testPersonNamePropertyInfo)), firstParameter, secondParameter), john, emily);
             Assert.IsNull(expr.Fault);
             emily.Name = null;

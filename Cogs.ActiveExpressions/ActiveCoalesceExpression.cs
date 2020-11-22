@@ -7,17 +7,17 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveCoalesceExpression : ActiveBinaryExpression, IEquatable<ActiveCoalesceExpression>
     {
-        public ActiveCoalesceExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(binaryExpression, options, deferEvaluation, false, false)
+        public ActiveCoalesceExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, CachedInstancesKey<BinaryExpression> instancesKey, bool deferEvaluation) : base(binaryExpression, options, instancesKey, deferEvaluation, false, false)
         {
             if (binaryExpression.Conversion is { } conversion)
             {
-                var key = (convertFrom: conversion.Parameters[0].Type, convertTo: conversion.Body.Type);
+                var key = new ConversionDelegatesKey(conversion.Parameters[0].Type, conversion.Body.Type);
                 lock (conversionDelegateManagementLock)
                 {
                     if (!conversionDelegates.TryGetValue(key, out var conversionDelegate))
                     {
                         var parameter = Expression.Parameter(typeof(object));
-                        conversionDelegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(Expression.Invoke(conversion, Expression.Convert(parameter, key.convertFrom)), typeof(object)), parameter).Compile();
+                        conversionDelegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(Expression.Invoke(conversion, Expression.Convert(parameter, key.ConvertFrom)), typeof(object)), parameter).Compile();
                         conversionDelegates.Add(key, conversionDelegate);
                     }
                     this.conversionDelegate = conversionDelegate;
@@ -65,11 +65,13 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => $"({left} ?? {right}) {ToStringSuffix}";
 
         static readonly object conversionDelegateManagementLock = new object();
-        static readonly Dictionary<(Type convertFrom, Type convertTo), UnaryOperationDelegate> conversionDelegates = new Dictionary<(Type convertFrom, Type convertTo), UnaryOperationDelegate>();
+        static readonly Dictionary<ConversionDelegatesKey, UnaryOperationDelegate> conversionDelegates = new Dictionary<ConversionDelegatesKey, UnaryOperationDelegate>();
 
         public static bool operator ==(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => a.Equals(b);
 
         [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => !(a == b);
+
+        record ConversionDelegatesKey(Type ConvertFrom, Type ConvertTo);
     }
 }

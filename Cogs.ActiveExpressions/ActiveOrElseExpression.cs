@@ -6,7 +6,7 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveOrElseExpression : ActiveBinaryExpression, IEquatable<ActiveOrElseExpression>
     {
-        public ActiveOrElseExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(binaryExpression, options, deferEvaluation, false)
+        public ActiveOrElseExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, CachedInstancesKey<BinaryExpression> instancesKey, bool deferEvaluation) : base(binaryExpression, options, instancesKey, deferEvaluation, false)
         {
         }
 
@@ -19,7 +19,7 @@ namespace Cogs.ActiveExpressions
             var leftFault = left.Fault;
             if (leftFault is { })
                 Fault = leftFault;
-            else if (left.Value is bool leftBool ? leftBool : false)
+            else if (left.Value is bool leftBool && leftBool)
                 Value = true;
             else
             {
@@ -27,7 +27,7 @@ namespace Cogs.ActiveExpressions
                 if (rightFault is { })
                     Fault = rightFault;
                 else
-                    Value = right.Value is bool rightBool ? rightBool : false;
+                    Value = right.Value is bool rightBool && rightBool;
             }
         }
 

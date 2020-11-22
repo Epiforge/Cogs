@@ -4,12 +4,12 @@ using System.Linq.Expressions;
 
 namespace Cogs.ActiveExpressions
 {
-    class CachedInstancesKeyComparer<TExpression> : IEqualityComparer<(TExpression expression, ActiveExpressionOptions? options)> where TExpression : Expression
+    class CachedInstancesKeyComparer<TExpression> : IEqualityComparer<CachedInstancesKey<TExpression>> where TExpression : Expression
     {
-        public bool Equals((TExpression expression, ActiveExpressionOptions? options) x, (TExpression expression, ActiveExpressionOptions? options) y) =>
-            ExpressionEqualityComparer.Default.Equals(x.expression, y.expression) && ((x.options is null && y.options is null) || (x.options is { } && y.options is { } && x.options.Equals(y.options)));
+        public bool Equals(CachedInstancesKey<TExpression> x, CachedInstancesKey<TExpression> y) =>
+            ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression) && ((x.Options is null && y.Options is null) || (x.Options is { } && y.Options is { } && x.Options.Equals(y.Options)));
 
-        public int GetHashCode((TExpression expression, ActiveExpressionOptions? options) obj) =>
-            HashCode.Combine(ExpressionEqualityComparer.Default.GetHashCode(obj.expression), obj.options);
+        public int GetHashCode(CachedInstancesKey<TExpression> obj) =>
+            HashCode.Combine(ExpressionEqualityComparer.Default.GetHashCode(obj.Expression), obj.Options);
     }
 }

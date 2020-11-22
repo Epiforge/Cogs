@@ -40,6 +40,6 @@ namespace Cogs.ActiveExpressions.Tests
 
         public static TestPerson operator +(TestPerson a, TestPerson b) => new TestPerson { name = $"{a.name} {b.name}" };
 
-        public static TestPerson operator -(TestPerson testPerson) => new TestPerson { name = new string(testPerson.name.Reverse().ToArray()) };
+        public static TestPerson operator -(TestPerson testPerson) => new TestPerson { name = new string(testPerson.name?.Reverse().ToArray()) };
     }
 }

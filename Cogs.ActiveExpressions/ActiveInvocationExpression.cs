@@ -11,15 +11,16 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocationExpression>
     {
-        ActiveInvocationExpression(InvocationExpression invocationExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(invocationExpression.Type, ExpressionType.Invoke, options, deferEvaluation)
+        ActiveInvocationExpression(InvocationExpression invocationExpression, ActiveExpressionOptions? options, CachedInstancesKey<InvocationExpression> instancesKey, bool deferEvaluation) : base(invocationExpression.Type, ExpressionType.Invoke, options, deferEvaluation)
         {
             var activeArgumentsList = new List<ActiveExpression>();
             try
             {
                 this.invocationExpression = invocationExpression;
-                if (this.invocationExpression.Expression is LambdaExpression)
+                this.instancesKey = instancesKey;
+                if (invocationExpression.Expression is LambdaExpression)
                 {
-                    foreach (var invocationExpressionArgument in this.invocationExpression.Arguments)
+                    foreach (var invocationExpressionArgument in invocationExpression.Arguments)
                     {
                         var activeArgument = Create(invocationExpressionArgument, options, deferEvaluation);
                         activeArgument.PropertyChanged += ActiveArgumentPropertyChanged;
@@ -51,11 +52,12 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        readonly InvocationExpression invocationExpression;
         ActiveExpression? activeExpression;
         ActiveExpression? activeDelegateExpression;
         readonly IReadOnlyList<ActiveExpression>? activeArguments;
         int disposalCount;
+        readonly CachedInstancesKey<InvocationExpression> instancesKey;
+        readonly InvocationExpression invocationExpression;
 
         void ActiveArgumentPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -117,7 +119,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((invocationExpression, options));
+                    instances.Remove(instancesKey);
                     result = true;
                 }
             if (result)
@@ -161,16 +163,16 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => $"λ({(activeExpression is { } ? (object)activeExpression : invocationExpression)})";
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(InvocationExpression invocationExpression, ActiveExpressionOptions? options), ActiveInvocationExpression> instances = new Dictionary<(InvocationExpression invocationExpression, ActiveExpressionOptions? options), ActiveInvocationExpression>(new CachedInstancesKeyComparer<InvocationExpression>());
+        static readonly Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression> instances = new Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression>(new CachedInstancesKeyComparer<InvocationExpression>());
 
         public static ActiveInvocationExpression Create(InvocationExpression invocationExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var key = (invocationExpression, options);
+            var key = new CachedInstancesKey<InvocationExpression>(invocationExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeInvocationExpression))
                 {
-                    activeInvocationExpression = new ActiveInvocationExpression(invocationExpression, options, deferEvaluation);
+                    activeInvocationExpression = new ActiveInvocationExpression(invocationExpression, options, key, deferEvaluation);
                     instances.Add(key, activeInvocationExpression);
                 }
                 ++activeInvocationExpression.disposalCount;

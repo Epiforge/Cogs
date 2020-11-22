@@ -13,12 +13,12 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpression>
     {
-        ActiveMemberExpression(MemberExpression memberExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(memberExpression.Type, memberExpression.NodeType, options, deferEvaluation)
+        ActiveMemberExpression(MemberExpression memberExpression, ActiveExpressionOptions? options, CachedInstancesKey<MemberExpression> instancesKey, bool deferEvaluation) : base(memberExpression.Type, memberExpression.NodeType, options, deferEvaluation)
         {
             try
             {
-                this.memberExpression = memberExpression;
-                if (this.memberExpression.Expression is { })
+                this.instancesKey = instancesKey;
+                if (memberExpression.Expression is { })
                 {
                     expression = Create(memberExpression.Expression, options, deferEvaluation);
                     expression.PropertyChanged += ExpressionPropertyChanged;
@@ -61,9 +61,9 @@ namespace Cogs.ActiveExpressions
         readonly FastMethodInfo? fastGetter;
         readonly FieldInfo? field;
         readonly MethodInfo? getMethod;
+        readonly CachedInstancesKey<MemberExpression> instancesKey;
         readonly bool isFieldOfCompilerGeneratedType;
         readonly MemberInfo member;
-        readonly MemberExpression memberExpression;
 
         protected override bool Dispose(bool disposing)
         {
@@ -71,7 +71,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((memberExpression, options));
+                    instances.Remove(instancesKey);
                     result = true;
                 }
             if (result)
@@ -180,16 +180,16 @@ namespace Cogs.ActiveExpressions
 
         static readonly object[] emptyArray = Array.Empty<object>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(MemberExpression memberExpression, ActiveExpressionOptions? options), ActiveMemberExpression> instances = new Dictionary<(MemberExpression memberExpression, ActiveExpressionOptions? options), ActiveMemberExpression>(new CachedInstancesKeyComparer<MemberExpression>());
+        static readonly Dictionary<CachedInstancesKey<MemberExpression>, ActiveMemberExpression> instances = new Dictionary<CachedInstancesKey<MemberExpression>, ActiveMemberExpression>(new CachedInstancesKeyComparer<MemberExpression>());
 
         public static ActiveMemberExpression Create(MemberExpression memberExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var key = (memberExpression, options);
+            var key = new CachedInstancesKey<MemberExpression>(memberExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeMemberExpression))
                 {
-                    activeMemberExpression = new ActiveMemberExpression(memberExpression, options, deferEvaluation);
+                    activeMemberExpression = new ActiveMemberExpression(memberExpression, options, key, deferEvaluation);
                     instances.Add(key, activeMemberExpression);
                 }
                 ++activeMemberExpression.disposalCount;

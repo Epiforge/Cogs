@@ -69,9 +69,9 @@ namespace Cogs.ActiveExpressions.Tests
         public void FaultPropagation()
         {
             var john = TestPerson.CreateJohn();
-#pragma warning disable CS0183 // 'is' expression's given expression is always of the provided type
+#pragma warning disable CS0183, CS8602 // 'is' expression's given expression is always of the provided type, Dereference of a possibly null reference.
             using var expr = ActiveExpression.Create(p1 => p1.Name!.Length is int, john);
-#pragma warning restore CS0183 // 'is' expression's given expression is always of the provided type
+#pragma warning restore CS0183, CS8602 // 'is' expression's given expression is always of the provided type, Dereference of a possibly null reference.
             Assert.IsNull(expr.Fault);
             john.Name = null;
             Assert.IsNotNull(expr.Fault);
@@ -99,9 +99,11 @@ namespace Cogs.ActiveExpressions.Tests
             var john = TestPerson.CreateJohn();
             var someObject = new SomeObject();
             var values = new BlockingCollection<bool>();
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using (var expr = ActiveExpression.Create(p1 => p1.Property is TestPerson, someObject))
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
             {
-                void propertyChanged(object sender, PropertyChangedEventArgs e) => values.Add(expr.Value);
+                void propertyChanged(object? sender, PropertyChangedEventArgs e) => values.Add(expr.Value);
                 expr.PropertyChanged += propertyChanged;
                 values.Add(expr.Value);
                 someObject.Property = john;

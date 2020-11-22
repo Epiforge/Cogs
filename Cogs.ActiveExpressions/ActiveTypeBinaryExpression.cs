@@ -10,11 +10,11 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveTypeBinaryExpression : ActiveExpression, IEquatable<ActiveTypeBinaryExpression>
     {
-        protected ActiveTypeBinaryExpression(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(typeBinaryExpression.Type, typeBinaryExpression.NodeType, options, deferEvaluation)
+        protected ActiveTypeBinaryExpression(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options, CachedInstancesKey<TypeBinaryExpression> instancesKey, bool deferEvaluation) : base(typeBinaryExpression.Type, typeBinaryExpression.NodeType, options, deferEvaluation)
         {
             try
             {
-                this.typeBinaryExpression = typeBinaryExpression;
+                this.instancesKey = instancesKey;
                 expression = Create(typeBinaryExpression.Expression, options, deferEvaluation);
                 expression.PropertyChanged += ExpressionPropertyChanged;
                 typeOperand = typeBinaryExpression.TypeOperand;
@@ -37,7 +37,7 @@ namespace Cogs.ActiveExpressions
         readonly TypeIsDelegate @delegate;
         int disposalCount;
         readonly ActiveExpression expression;
-        readonly TypeBinaryExpression typeBinaryExpression;
+        readonly CachedInstancesKey<TypeBinaryExpression> instancesKey;
         readonly Type typeOperand;
 
         protected override bool Dispose(bool disposing)
@@ -46,7 +46,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((typeBinaryExpression, options));
+                    instances.Remove(instancesKey);
                     result = true;
                 }
             if (result)
@@ -78,16 +78,16 @@ namespace Cogs.ActiveExpressions
 
         static readonly ConcurrentDictionary<Type, TypeIsDelegate> delegates = new ConcurrentDictionary<Type, TypeIsDelegate>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options), ActiveTypeBinaryExpression> instances = new Dictionary<(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options), ActiveTypeBinaryExpression>(new CachedInstancesKeyComparer<TypeBinaryExpression>());
+        static readonly Dictionary<CachedInstancesKey<TypeBinaryExpression>, ActiveTypeBinaryExpression> instances = new Dictionary<CachedInstancesKey<TypeBinaryExpression>, ActiveTypeBinaryExpression>(new CachedInstancesKeyComparer<TypeBinaryExpression>());
 
         public static ActiveTypeBinaryExpression Create(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var key = (typeBinaryExpression, options);
+            var key = new CachedInstancesKey<TypeBinaryExpression>(typeBinaryExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeTypeBinaryExpression))
                 {
-                    activeTypeBinaryExpression = new ActiveTypeBinaryExpression(typeBinaryExpression, options, deferEvaluation);
+                    activeTypeBinaryExpression = new ActiveTypeBinaryExpression(typeBinaryExpression, options, key, deferEvaluation);
                     instances.Add(key, activeTypeBinaryExpression);
                 }
                 ++activeTypeBinaryExpression.disposalCount;

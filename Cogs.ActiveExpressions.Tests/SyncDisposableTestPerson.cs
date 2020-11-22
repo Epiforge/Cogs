@@ -45,7 +45,7 @@ namespace Cogs.ActiveExpressions.Tests
 
         public static SyncDisposableTestPerson operator -(SyncDisposableTestPerson syncDisposableTestPerson) => new SyncDisposableTestPerson
         {
-            name = new string(syncDisposableTestPerson.name.Reverse().ToArray()),
+            name = new string(syncDisposableTestPerson.name?.Reverse().ToArray()),
         };
     }
 }

@@ -9,11 +9,11 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveConditionalExpression : ActiveExpression, IEquatable<ActiveConditionalExpression>
     {
-        ActiveConditionalExpression(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(conditionalExpression.Type, conditionalExpression.NodeType, options, deferEvaluation)
+        ActiveConditionalExpression(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options, CachedInstancesKey<ConditionalExpression> instancesKey, bool deferEvaluation) : base(conditionalExpression.Type, conditionalExpression.NodeType, options, deferEvaluation)
         {
             try
             {
-                this.conditionalExpression = conditionalExpression;
+                this.instancesKey = instancesKey;
                 test = Create(conditionalExpression.Test, options, deferEvaluation);
                 test.PropertyChanged += TestPropertyChanged;
                 ifTrue = Create(conditionalExpression.IfTrue, options, true);
@@ -44,10 +44,10 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        readonly ConditionalExpression conditionalExpression;
         int disposalCount;
         readonly ActiveExpression ifFalse;
         readonly ActiveExpression ifTrue;
+        readonly CachedInstancesKey<ConditionalExpression> instancesKey;
         readonly ActiveExpression test;
 
         protected override bool Dispose(bool disposing)
@@ -56,7 +56,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((conditionalExpression, options));
+                    instances.Remove(instancesKey);
                     result = true;
                 }
             if (result)
@@ -150,16 +150,16 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => $"({test} ? {ifTrue} : {ifFalse}) {ToStringSuffix}";
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options), ActiveConditionalExpression> instances = new Dictionary<(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options), ActiveConditionalExpression>(new CachedInstancesKeyComparer<ConditionalExpression>());
+        static readonly Dictionary<CachedInstancesKey<ConditionalExpression>, ActiveConditionalExpression> instances = new Dictionary<CachedInstancesKey<ConditionalExpression>, ActiveConditionalExpression>(new CachedInstancesKeyComparer<ConditionalExpression>());
 
         public static ActiveConditionalExpression Create(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var key = (conditionalExpression, options);
+            var key = new CachedInstancesKey<ConditionalExpression>(conditionalExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeConditionalExpression))
                 {
-                    activeConditionalExpression = new ActiveConditionalExpression(conditionalExpression, options, deferEvaluation);
+                    activeConditionalExpression = new ActiveConditionalExpression(conditionalExpression, options, key, deferEvaluation);
                     instances.Add(key, activeConditionalExpression);
                 }
                 ++activeConditionalExpression.disposalCount;

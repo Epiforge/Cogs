@@ -2,6 +2,7 @@ using Cogs.Components;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -31,6 +32,7 @@ namespace Cogs.ActiveExpressions.Tests
                 set => SetBackedProperty(ref syncDisposable, in value);
             }
 
+            [SuppressMessage("Performance", "CA1822:Mark members as static")]
             public SyncDisposableTestPerson GetPersonNamedAfterType(Type type) => new SyncDisposableTestPerson(type.Name);
 
             public SyncDisposableTestPerson GetPersonNamedAfterType<T>() => GetPersonNamedAfterType(typeof(T));
@@ -194,7 +196,7 @@ namespace Cogs.ActiveExpressions.Tests
         public void DisposePropertyValueByReflection()
         {
             var testObjectType = typeof(TestObject);
-            var property = testObjectType.GetProperty(nameof(TestObject.SyncDisposable));
+            var property = testObjectType.GetProperty(nameof(TestObject.SyncDisposable))!;
             var options = new ActiveExpressionOptions();
             Assert.IsTrue(options.AddExpressionValueDisposal(Expression.Lambda<Func<SyncDisposableTestPerson>>(Expression.MakeMemberAccess(Expression.New(testObjectType), property))));
             Assert.IsTrue(options.IsExpressionValueDisposed(Expression.Lambda<Func<SyncDisposableTestPerson>>(Expression.MakeMemberAccess(Expression.New(testObjectType), property))));

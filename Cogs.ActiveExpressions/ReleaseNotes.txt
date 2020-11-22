@@ -1,1 +1,1 @@
-This release requires Cogs.Collections 1.6.0 at minimum.
+We upgraded the project language version to C# 9 and leveraged nullable reference type and records improvements.

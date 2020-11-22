@@ -10,15 +10,15 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression>
     {
-        ActiveUnaryExpression(UnaryExpression unaryExpression, ActiveExpressionOptions? options, bool deferEvaluation) : base(unaryExpression.Type, unaryExpression.NodeType, options, deferEvaluation)
+        ActiveUnaryExpression(UnaryExpression unaryExpression, ActiveExpressionOptions? options, CachedInstancesKey<UnaryExpression> instancesKey, bool deferEvaluation) : base(unaryExpression.Type, unaryExpression.NodeType, options, deferEvaluation)
         {
             try
             {
-                this.unaryExpression = unaryExpression;
+                this.instancesKey = instancesKey;
                 operand = Create(unaryExpression.Operand, options, deferEvaluation);
                 operand.PropertyChanged += OperandPropertyChanged;
                 method = unaryExpression.Method;
-                var implementationKey = (NodeType, operand.Type, Type, method);
+                var implementationKey = new ImplementationsKey(NodeType, operand.Type, Type, method);
                 if (!implementations.TryGetValue(implementationKey, out var @delegate))
                 {
                     var operandParameter = Expression.Parameter(typeof(object));
@@ -44,9 +44,9 @@ namespace Cogs.ActiveExpressions
 
         readonly UnaryOperationDelegate @delegate;
         int disposalCount;
+        readonly CachedInstancesKey<UnaryExpression> instancesKey;
         readonly MethodInfo? method;
         readonly ActiveExpression operand;
-        readonly UnaryExpression unaryExpression;
 
         protected override bool Dispose(bool disposing)
         {
@@ -54,7 +54,7 @@ namespace Cogs.ActiveExpressions
             lock (instanceManagementLock)
                 if (--disposalCount == 0)
                 {
-                    instances.Remove((unaryExpression, options));
+                    instances.Remove(instancesKey);
                     result = true;
                 }
             if (result)
@@ -94,18 +94,18 @@ namespace Cogs.ActiveExpressions
 
         public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, operand)} {ToStringSuffix}";
 
-        static readonly Dictionary<(ExpressionType nodeType, Type operandType, Type returnValueType, MethodInfo? method), UnaryOperationDelegate> implementations = new Dictionary<(ExpressionType nodeType, Type operandType, Type returnValueType, MethodInfo? method), UnaryOperationDelegate>();
+        static readonly Dictionary<ImplementationsKey, UnaryOperationDelegate> implementations = new Dictionary<ImplementationsKey, UnaryOperationDelegate>();
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<(UnaryExpression unaryExpression, ActiveExpressionOptions? options), ActiveUnaryExpression> instances = new Dictionary<(UnaryExpression unaryExpression, ActiveExpressionOptions? options), ActiveUnaryExpression>(new CachedInstancesKeyComparer<UnaryExpression>());
+        static readonly Dictionary<CachedInstancesKey<UnaryExpression>, ActiveUnaryExpression> instances = new Dictionary<CachedInstancesKey<UnaryExpression>, ActiveUnaryExpression>(new CachedInstancesKeyComparer<UnaryExpression>());
 
         public static ActiveUnaryExpression Create(UnaryExpression unaryExpression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            var key = (unaryExpression, options);
+            var key = new CachedInstancesKey<UnaryExpression>(unaryExpression, options);
             lock (instanceManagementLock)
             {
                 if (!instances.TryGetValue(key, out var activeUnaryExpression))
                 {
-                    activeUnaryExpression = new ActiveUnaryExpression(unaryExpression, options, deferEvaluation);
+                    activeUnaryExpression = new ActiveUnaryExpression(unaryExpression, options, key, deferEvaluation);
                     instances.Add(key, activeUnaryExpression);
                 }
                 ++activeUnaryExpression.disposalCount;
@@ -117,5 +117,7 @@ namespace Cogs.ActiveExpressions
 
         [ExcludeFromCodeCoverage]
         public static bool operator !=(ActiveUnaryExpression a, ActiveUnaryExpression b) => !(a == b);
+
+        record ImplementationsKey(ExpressionType NodeType, Type OperandType, Type ReturnValueType, MethodInfo? Method);
     }
 }

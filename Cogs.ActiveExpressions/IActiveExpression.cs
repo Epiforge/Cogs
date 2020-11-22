@@ -2,7 +2,6 @@ using Cogs.Disposal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Cogs.ActiveExpressions
 {
@@ -30,8 +29,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the result of evaluating the lambda expression
         /// </summary>
-        [MaybeNull]
-        TResult Value { get; }
+        TResult? Value { get; }
     }
 
     /// <summary>
@@ -44,8 +42,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the argument that was passed to the lambda expression
         /// </summary>
-        [MaybeNull]
-        TArg Arg { get; }
+        TArg? Arg { get; }
     }
 
     /// <summary>
@@ -59,14 +56,12 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the first argument that was passed to the lambda expression
         /// </summary>
-        [MaybeNull]
-        TArg1 Arg1 { get; }
+        TArg1? Arg1 { get; }
 
         /// <summary>
         /// Gets the second argument that was passed to the lambda expression
         /// </summary>
-        [MaybeNull]
-        TArg2 Arg2 { get; }
+        TArg2? Arg2 { get; }
     }
 
     /// <summary>
@@ -81,7 +76,6 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the third argument that was passed to the lambda expression
         /// </summary>
-        [MaybeNull]
-        TArg3 Arg3 { get; }
+        TArg3? Arg3 { get; }
     }
 }
