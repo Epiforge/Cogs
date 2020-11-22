@@ -448,7 +448,7 @@ namespace Cogs.Collections
         /// <param name="key">The key of the element to remove</param>
         /// <param name="value">The value that was removed</param>
         /// <returns><c>true</c> if the element is successfully removed; otherwise, <c>false</c> (this method also returns <c>false</c> if key was not found in the original <see cref="IDictionary{TKey, TValue}"/>)</returns>
-        public bool Remove(TKey key, [MaybeNullWhen(false)] out TValue value)
+        public bool Remove(TKey key, out TValue? value)
         {
             bool valueRemoved;
             (valueRemoved, value) = TryRemove(key);
