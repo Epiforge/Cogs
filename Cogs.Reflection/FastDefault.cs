@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -16,8 +15,7 @@ namespace Cogs.Reflection
 
         static object? CreateDefault(Type type) => getDefaultValueMethod.MakeGenericMethod(type).Invoke(null, null);
 
-        [return: MaybeNull]
-        static T GetDefaultValue<T>() => default;
+        static T? GetDefaultValue<T>() => default;
 
         /// <summary>
         /// Gets the default value for the specified type

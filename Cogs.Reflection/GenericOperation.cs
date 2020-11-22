@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Cogs.Reflection
@@ -19,8 +18,7 @@ namespace Cogs.Reflection
         /// <param name="a">The first value to add</param>
         /// <param name="b">The second value to add</param>
         /// <returns>The sum of <paramref name="a"/> and <paramref name="b"/></returns>
-        [return: MaybeNull]
-        public static T Add<T>([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Add, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
+        public static T? Add<T>(T? a, T? b) => a is { } && b is { } ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Add, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
         /// <summary>
         /// Divides a specified <typeparamref name="T"/> value by another specified <typeparamref name="T"/> value
@@ -29,8 +27,7 @@ namespace Cogs.Reflection
         /// <param name="a">The value to be divided</param>
         /// <param name="b">The value to divide by</param>
         /// <returns>The result of the division</returns>
-        [return: MaybeNull]
-        public static T Divide<T>([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Divide, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
+        public static T? Divide<T>(T? a, T? b) => a is { } && b is { } ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Divide, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
         /// <summary>
         /// Multiplies two specified <typeparamref name="T"/> values
@@ -39,8 +36,7 @@ namespace Cogs.Reflection
         /// <param name="a">The first value to multiply</param>
         /// <param name="b">The second value to multiply</param>
         /// <returns>The product of <paramref name="a"/> and <paramref name="b"/></returns>
-        [return: MaybeNull]
-        public static T Multiply<T>([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Multiply, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
+        public static T? Multiply<T>(T? a, T? b) => a is { } && b is { } ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Multiply, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
         /// <summary>
         /// Subtracts a <typeparamref name="T"/> value from another <typeparamref name="T"/> value
@@ -49,8 +45,7 @@ namespace Cogs.Reflection
         /// <param name="a">The value to subtract from (the minuend)</param>
         /// <param name="b">he value to subtract (the subtrahend)</param>
         /// <returns>The result of subtracting <paramref name="b"/> from <paramref name="a"/></returns>
-        [return: MaybeNull]
-        public static T Subtract<T>([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? ((Func<T, T, T>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Subtract, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
+        public static T? Subtract<T>(T? a, T? b) => a is { } && b is { } ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Subtract, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
         internal static Delegate CompiledBinaryOperationMethodsValueFactory((BinaryOperation operation, Type type) key)
         {
@@ -88,16 +83,16 @@ namespace Cogs.Reflection
         public GenericOperations()
         {
             var type = typeof(T);
-            add = (Func<T, T, T>)GenericOperations.CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Add, type), GenericOperations.CompiledBinaryOperationMethodsValueFactory);
-            divide = (Func<T, T, T>)GenericOperations.CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Divide, type), GenericOperations.CompiledBinaryOperationMethodsValueFactory);
-            multiply = (Func<T, T, T>)GenericOperations.CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Multiply, type), GenericOperations.CompiledBinaryOperationMethodsValueFactory);
-            subtract = (Func<T, T, T>)GenericOperations.CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Subtract, type), GenericOperations.CompiledBinaryOperationMethodsValueFactory);
+            add = (Func<T?, T?, T?>)GenericOperations.CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Add, type), GenericOperations.CompiledBinaryOperationMethodsValueFactory);
+            divide = (Func<T?, T?, T?>)GenericOperations.CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Divide, type), GenericOperations.CompiledBinaryOperationMethodsValueFactory);
+            multiply = (Func<T?, T?, T?>)GenericOperations.CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Multiply, type), GenericOperations.CompiledBinaryOperationMethodsValueFactory);
+            subtract = (Func<T?, T?, T?>)GenericOperations.CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Subtract, type), GenericOperations.CompiledBinaryOperationMethodsValueFactory);
         }
 
-        readonly Func<T, T, T> add;
-        readonly Func<T, T, T> divide;
-        readonly Func<T, T, T> multiply;
-        readonly Func<T, T, T> subtract;
+        readonly Func<T?, T?, T?> add;
+        readonly Func<T?, T?, T?> divide;
+        readonly Func<T?, T?, T?> multiply;
+        readonly Func<T?, T?, T?> subtract;
 
         /// <summary>
         /// Adds the values of two specified <typeparamref name="T"/> objects
@@ -105,8 +100,7 @@ namespace Cogs.Reflection
         /// <param name="a">The first value to add</param>
         /// <param name="b">The second value to add</param>
         /// <returns>The sum of <paramref name="a"/> and <paramref name="b"/></returns>
-        [return: MaybeNull]
-        public T Add([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? add(a, b) : default;
+        public T? Add(T? a, T? b) => a is { } && b is { } ? add(a, b) : default;
 
         /// <summary>
         /// Divides a specified <typeparamref name="T"/> value by another specified <typeparamref name="T"/> value
@@ -114,8 +108,7 @@ namespace Cogs.Reflection
         /// <param name="a">The value to be divided</param>
         /// <param name="b">The value to divide by</param>
         /// <returns>The result of the division</returns>
-        [return: MaybeNull]
-        public T Divide([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? divide(a, b) : default;
+        public T? Divide(T? a, T? b) => a is { } && b is { } ? divide(a, b) : default;
 
         /// <summary>
         /// Multiplies two specified <typeparamref name="T"/> values
@@ -123,8 +116,7 @@ namespace Cogs.Reflection
         /// <param name="a">The first value to multiply</param>
         /// <param name="b">The second value to multiply</param>
         /// <returns>The product of <paramref name="a"/> and <paramref name="b"/></returns>
-        [return: MaybeNull]
-        public T Multiply([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? multiply(a, b) : default;
+        public T? Multiply(T? a, T? b) => a is { } && b is { } ? multiply(a, b) : default;
 
         /// <summary>
         /// Subtracts a <typeparamref name="T"/> value from another <typeparamref name="T"/> value
@@ -132,7 +124,6 @@ namespace Cogs.Reflection
         /// <param name="a">The value to subtract from (the minuend)</param>
         /// <param name="b">he value to subtract (the subtrahend)</param>
         /// <returns>The result of subtracting <paramref name="b"/> from <paramref name="a"/></returns>
-        [return: MaybeNull]
-        public T Subtract([AllowNull] T a, [AllowNull] T b) => a is { } && b is { } ? subtract(a, b) : default;
+        public T? Subtract(T? a, T? b) => a is { } && b is { } ? subtract(a, b) : default;
     }
 }
