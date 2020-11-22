@@ -1,37 +1,48 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <Authors>Epiforge</Authors>
-    <Company>Epiforge</Company>
-    <Description>Cogs for handling disposal. Includes AsyncDisposable, Disposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, SyncDisposable.</Description>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Nullable>enable</Nullable>
-    <PackageIcon>NuGet.jpg</PackageIcon>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
-    <Product>Disposal Cogs</Product>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>1.1.2</Version>
-  </PropertyGroup>
+    <PropertyGroup>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <Authors>Epiforge</Authors>
+        <Company>Epiforge</Company>
+        <Description>Cogs for handling disposal. Includes AsyncDisposable, Disposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, SyncDisposable.</Description>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <PackageIcon>NuGet.jpg</PackageIcon>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
+        <PackageReleaseNotes>Please write the package release notes in ReleaseNotes.txt.</PackageReleaseNotes>
+        <Product>Disposal Cogs</Product>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <Version>1.1.3</Version>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Cogs.Components" Version="1.0.5" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Cogs.Components" Version="1.0.6" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Nito.AsyncEx" Version="5.1.0" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\NuGet.jpg">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\NuGet.jpg">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
+    </ItemGroup>
+
+    <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
+        <ReadLinesFromFile File="ReleaseNotes.txt">
+            <Output TaskParameter="Lines" ItemName="ReleaseNoteLines" />
+        </ReadLinesFromFile>
+        <PropertyGroup>
+            <PackageReleaseNotes>@(ReleaseNoteLines, '%0a')</PackageReleaseNotes>
+        </PropertyGroup>
+    </Target>
 
 </Project>

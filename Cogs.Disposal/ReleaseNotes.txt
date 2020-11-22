@@ -1,0 +1,1 @@
+This release requires Cogs.Components 1.0.6 at minimum.
