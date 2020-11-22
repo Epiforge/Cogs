@@ -28,13 +28,12 @@ namespace Cogs.Threading
         /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="action">The void method to invoke</param>
-        [Obsolete("This method sets the result of the task completion source with a default value, which may be null, despite the fact that produces task may not indicate the possibility of a null value; use the AttemptSetResult<TResult>(TaskCompletionSource<TResult>, Action, TResult) overload instead")]
-        public static void AttemptSetResult<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Action action)
+        public static void AttemptSetResult<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Action action)
         {
             try
             {
                 action();
-                taskCompletionSource.SetResult(default!);
+                taskCompletionSource.SetResult(default);
             }
             catch (Exception ex)
             {
@@ -93,8 +92,7 @@ namespace Cogs.Threading
         /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
         /// <param name="taskCompletionSource">The task completion source</param>
         /// <param name="asyncAction">The void async method to invoke</param>
-        [Obsolete("This method sets the result of the task completion source with a default value, which may be null, despite the fact that produces task may not indicate the possibility of a null value; use the AttemptSetResult<TResult>(TaskCompletionSource<TResult>, Action, TResult) overload instead")]
-        public static async Task AttemptSetResultAsync<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<Task> asyncAction)
+        public static async Task AttemptSetResultAsync<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Func<Task> asyncAction)
         {
             try
             {
