@@ -371,10 +371,10 @@ namespace Cogs.ActiveExpressions
         /// <param name="arg">The argument</param>
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TArg?, TResult> Create<TArg, TResult>(Expression<Func<TArg?, TResult>> expression, TArg? arg, ActiveExpressionOptions? options = null)
+        public static ActiveExpression<TArg, TResult> Create<TArg, TResult>(Expression<Func<TArg, TResult>> expression, TArg arg, ActiveExpressionOptions? options = null)
         {
             options?.Freeze();
-            return ActiveExpression<TArg?, TResult>.Create(expression, arg, options);
+            return ActiveExpression<TArg, TResult>.Create(expression, arg, options);
         }
 
         /// <summary>
@@ -388,10 +388,10 @@ namespace Cogs.ActiveExpressions
         /// <param name="arg2">The second argument</param>
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TArg1?, TArg2?, TResult> Create<TArg1, TArg2, TResult>(Expression<Func<TArg1?, TArg2?, TResult>> expression, TArg1? arg1, TArg2? arg2, ActiveExpressionOptions? options = null)
+        public static ActiveExpression<TArg1, TArg2, TResult> Create<TArg1, TArg2, TResult>(Expression<Func<TArg1, TArg2, TResult>> expression, TArg1 arg1, TArg2 arg2, ActiveExpressionOptions? options = null)
         {
             options?.Freeze();
-            return ActiveExpression<TArg1?, TArg2?, TResult>.Create(expression, arg1, arg2, options);
+            return ActiveExpression<TArg1, TArg2, TResult>.Create(expression, arg1, arg2, options);
         }
 
         /// <summary>
@@ -407,7 +407,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="arg3">The third argument</param>
         /// <param name="options">Active expression options to use instead of <see cref="ActiveExpressionOptions.Default"/></param>
         /// <returns>The active expression</returns>
-        public static ActiveExpression<TArg1?, TArg2?, TArg3?, TResult> Create<TArg1, TArg2, TArg3, TResult>(Expression<Func<TArg1?, TArg2?, TArg3?, TResult>> expression, TArg1? arg1, TArg2? arg2, TArg3? arg3, ActiveExpressionOptions? options = null)
+        public static ActiveExpression<TArg1, TArg2, TArg3, TResult> Create<TArg1, TArg2, TArg3, TResult>(Expression<Func<TArg1, TArg2, TArg3, TResult>> expression, TArg1 arg1, TArg2 arg2, TArg3 arg3, ActiveExpressionOptions? options = null)
         {
             options?.Freeze();
             return ActiveExpression<TArg1, TArg2, TArg3, TResult>.Create(expression, arg1, arg2, arg3, options);
@@ -720,7 +720,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression<TArg, TResult>, IEquatable<ActiveExpression<TArg, TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg? arg)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg arg)
         {
             this.activeExpression = activeExpression;
             Options = options;
@@ -740,7 +740,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the argument that was passed to the lambda expression
         /// </summary>
-        public TArg? Arg { get; }
+        public TArg Arg { get; }
 
         /// <summary>
         /// Gets the arguments that were passed to the lambda expression
@@ -823,9 +823,9 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => activeExpression.ToString();
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<InstancesKey, ActiveExpression<TArg?, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg?, TResult>>();
+        static readonly Dictionary<InstancesKey, ActiveExpression<TArg, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg, TResult>>();
 
-        internal static ActiveExpression<TArg?, TResult> Create(LambdaExpression expression, TArg? arg, ActiveExpressionOptions? options = null)
+        internal static ActiveExpression<TArg, TResult> Create(LambdaExpression expression, TArg arg, ActiveExpressionOptions? options = null)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, arg), options, false);
             var key = new InstancesKey(activeExpression, arg);
@@ -833,7 +833,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!instances.TryGetValue(key, out var instance))
                 {
-                    instance = new ActiveExpression<TArg?, TResult>(activeExpression, options, arg);
+                    instance = new ActiveExpression<TArg, TResult>(activeExpression, options, arg);
                     instances.Add(key, instance);
                 }
                 ++instance.disposalCount;
@@ -857,7 +857,7 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator !=(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b) => !(a == b);
 
-        record InstancesKey(ActiveExpression ActiveExpression, TArg? Arg);
+        record InstancesKey(ActiveExpression ActiveExpression, TArg Arg);
     }
 
     /// <summary>
@@ -868,7 +868,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1? arg1, TArg2? arg2)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2)
         {
             this.activeExpression = activeExpression;
             Options = options;
@@ -894,12 +894,12 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the first argument that was passed to the lambda expression
         /// </summary>
-        public TArg1? Arg1 { get; }
+        public TArg1 Arg1 { get; }
 
         /// <summary>
         /// Gets the second argument that was passed to the lambda expression
         /// </summary>
-        public TArg2? Arg2 { get; }
+        public TArg2 Arg2 { get; }
 
         /// <summary>
         /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
@@ -977,9 +977,9 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => activeExpression.ToString();
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<InstancesKey, ActiveExpression<TArg1?, TArg2?, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg1?, TArg2?, TResult>>();
+        static readonly Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TResult>>();
 
-        internal static ActiveExpression<TArg1?, TArg2?, TResult> Create(LambdaExpression expression, TArg1? arg1, TArg2? arg2, ActiveExpressionOptions? options = null)
+        internal static ActiveExpression<TArg1, TArg2, TResult> Create(LambdaExpression expression, TArg1 arg1, TArg2 arg2, ActiveExpressionOptions? options = null)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, arg1, arg2), options, false);
             var key = new InstancesKey(activeExpression, arg1, arg2);
@@ -987,7 +987,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!instances.TryGetValue(key, out var instance))
                 {
-                    instance = new ActiveExpression<TArg1?, TArg2?, TResult>(activeExpression, options, arg1, arg2);
+                    instance = new ActiveExpression<TArg1, TArg2, TResult>(activeExpression, options, arg1, arg2);
                     instances.Add(key, instance);
                 }
                 ++instance.disposalCount;
@@ -1011,7 +1011,7 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator !=(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b) => !(a == b);
 
-        record InstancesKey(ActiveExpression ActiveExpression, TArg1? Arg1, TArg2? Arg2);
+        record InstancesKey(ActiveExpression ActiveExpression, TArg1 Arg1, TArg2 Arg2);
     }
 
     /// <summary>
@@ -1023,7 +1023,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
     public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TArg3, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TArg3, TResult>>
     {
-        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1? arg1, TArg2? arg2, TArg3? arg3)
+        ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2, TArg3 arg3)
         {
             this.activeExpression = activeExpression;
             Options = options;
@@ -1050,17 +1050,17 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the first argument that was passed to the lambda expression
         /// </summary>
-        public TArg1? Arg1 { get; }
+        public TArg1 Arg1 { get; }
 
         /// <summary>
         /// Gets the second argument that was passed to the lambda expression
         /// </summary>
-        public TArg2? Arg2 { get; }
+        public TArg2 Arg2 { get; }
 
         /// <summary>
         /// Gets the third argument that was passed to the lambda expression
         /// </summary>
-        public TArg3? Arg3 { get; }
+        public TArg3 Arg3 { get; }
 
         /// <summary>
         /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
@@ -1138,9 +1138,9 @@ namespace Cogs.ActiveExpressions
         public override string ToString() => activeExpression.ToString();
 
         static readonly object instanceManagementLock = new object();
-        static readonly Dictionary<InstancesKey, ActiveExpression<TArg1?, TArg2?, TArg3?, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg1?, TArg2?, TArg3?, TResult>>();
+        static readonly Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TArg3, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TArg3, TResult>>();
 
-        internal static ActiveExpression<TArg1?, TArg2?, TArg3?, TResult> Create(LambdaExpression expression, TArg1? arg1, TArg2? arg2, TArg3? arg3, ActiveExpressionOptions? options = null)
+        internal static ActiveExpression<TArg1, TArg2, TArg3, TResult> Create(LambdaExpression expression, TArg1 arg1, TArg2 arg2, TArg3 arg3, ActiveExpressionOptions? options = null)
         {
             var activeExpression = ActiveExpression.Create(ActiveExpression.ReplaceParameters(expression, arg1, arg2, arg3), options, false);
             var key = new InstancesKey(activeExpression, arg1, arg2, arg3);
@@ -1148,7 +1148,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!instances.TryGetValue(key, out var instance))
                 {
-                    instance = new ActiveExpression<TArg1?, TArg2?, TArg3?, TResult>(activeExpression, options, arg1, arg2, arg3);
+                    instance = new ActiveExpression<TArg1, TArg2, TArg3, TResult>(activeExpression, options, arg1, arg2, arg3);
                     instances.Add(key, instance);
                 }
                 ++instance.disposalCount;
@@ -1172,6 +1172,6 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
         public static bool operator !=(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b) => !(a == b);
 
-        record InstancesKey(ActiveExpression ActiveExpression, TArg1? Arg1, TArg2? Arg2, TArg3? Arg3);
+        record InstancesKey(ActiveExpression ActiveExpression, TArg1 Arg1, TArg2 Arg2, TArg3 Arg3);
     }
 }

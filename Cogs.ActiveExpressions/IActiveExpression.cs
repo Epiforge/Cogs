@@ -42,7 +42,7 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the argument that was passed to the lambda expression
         /// </summary>
-        TArg? Arg { get; }
+        TArg Arg { get; }
     }
 
     /// <summary>
@@ -56,12 +56,12 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the first argument that was passed to the lambda expression
         /// </summary>
-        TArg1? Arg1 { get; }
+        TArg1 Arg1 { get; }
 
         /// <summary>
         /// Gets the second argument that was passed to the lambda expression
         /// </summary>
-        TArg2? Arg2 { get; }
+        TArg2 Arg2 { get; }
     }
 
     /// <summary>
@@ -76,6 +76,6 @@ namespace Cogs.ActiveExpressions
         /// <summary>
         /// Gets the third argument that was passed to the lambda expression
         /// </summary>
-        TArg3? Arg3 { get; }
+        TArg3 Arg3 { get; }
     }
 }
