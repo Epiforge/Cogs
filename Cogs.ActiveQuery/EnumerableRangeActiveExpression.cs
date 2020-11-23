@@ -20,33 +20,12 @@ namespace Cogs.ActiveQuery
     /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
     class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementFaultChanges, INotifyGenericCollectionChanged<(object? element, TResult result)>
     {
-        static readonly object rangeActiveExpressionsAccess = new object();
-        static readonly Dictionary<(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options), EnumerableRangeActiveExpression<TResult>> rangeActiveExpressions = new Dictionary<(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options), EnumerableRangeActiveExpression<TResult>>(CachedRangeActiveExpressionKeyEqualityComparer<TResult>.Default);
-
-        public static EnumerableRangeActiveExpression<TResult> Create(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options = null)
-        {
-            EnumerableRangeActiveExpression<TResult> rangeActiveExpression;
-            bool monitorCreated;
-            var key = (source, expression, options);
-            lock (rangeActiveExpressionsAccess)
-            {
-                if (monitorCreated = !rangeActiveExpressions.TryGetValue(key, out rangeActiveExpression))
-                {
-                    rangeActiveExpression = new EnumerableRangeActiveExpression<TResult>(source, expression, options);
-                    rangeActiveExpressions.Add(key, rangeActiveExpression);
-                }
-                ++rangeActiveExpression.disposalCount;
-            }
-            if (monitorCreated)
-                rangeActiveExpression.Initialize();
-            return rangeActiveExpression;
-        }
-
-        EnumerableRangeActiveExpression(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options)
+        EnumerableRangeActiveExpression(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options, RangeActiveExpressionsKey rangeActiveExpressionsKey)
         {
             this.source = source;
             this.expression = expression;
             Options = options;
+            this.rangeActiveExpressionsKey = rangeActiveExpressionsKey;
         }
 
         readonly Dictionary<IActiveExpression<object?, TResult>, int> activeExpressionCounts = new Dictionary<IActiveExpression<object?, TResult>, int>();
@@ -54,6 +33,7 @@ namespace Cogs.ActiveQuery
         readonly ReaderWriterLockSlim activeExpressionsAccess = new ReaderWriterLockSlim();
         int disposalCount;
         readonly Expression<Func<object?, TResult>> expression;
+        readonly RangeActiveExpressionsKey rangeActiveExpressionsKey;
         readonly IEnumerable source;
 
         public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
@@ -220,7 +200,7 @@ namespace Cogs.ActiveQuery
             {
                 if (--disposalCount > 0)
                     return false;
-                rangeActiveExpressions.Remove((source, expression, Options));
+                rangeActiveExpressions.Remove(rangeActiveExpressionsKey);
             }
             RemoveActiveExpressions(0, activeExpressions.Count);
             if (source is INotifyCollectionChanged collectionChangedNotifier)
@@ -346,28 +326,20 @@ namespace Cogs.ActiveQuery
         void SourceElementFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(sender, e);
 
         public ActiveExpressionOptions? Options { get; }
-    }
 
-    /// <summary>
-    /// Represents the sequence of results derived from creating an active expression for each element in a sequence
-    /// </summary>
-    /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
-    /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
-    class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INotifyElementFaultChanges, INotifyGenericCollectionChanged<(TElement element, TResult result)>
-    {
         static readonly object rangeActiveExpressionsAccess = new object();
-        static readonly Dictionary<(IEnumerable<TElement> source, Expression<Func<TElement, TResult>> expression, ActiveExpressionOptions? options), EnumerableRangeActiveExpression<TElement, TResult>> rangeActiveExpressions = new Dictionary<(IEnumerable<TElement> source, Expression<Func<TElement, TResult>> expression, ActiveExpressionOptions? options), EnumerableRangeActiveExpression<TElement, TResult>>(CachedRangeActiveExpressionKeyEqualityComparer<TElement, TResult>.Default);
+        static readonly Dictionary<RangeActiveExpressionsKey, EnumerableRangeActiveExpression<TResult>> rangeActiveExpressions = new Dictionary<RangeActiveExpressionsKey, EnumerableRangeActiveExpression<TResult>>(new RangeActiveExpressionsKeyEqualityComparer());
 
-        public static EnumerableRangeActiveExpression<TElement, TResult> Create(IEnumerable<TElement> source, Expression<Func<TElement, TResult>> expression, ActiveExpressionOptions? options = null)
+        public static EnumerableRangeActiveExpression<TResult> Create(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options = null)
         {
-            EnumerableRangeActiveExpression<TElement, TResult> rangeActiveExpression;
+            EnumerableRangeActiveExpression<TResult> rangeActiveExpression;
             bool monitorCreated;
-            var key = (source, expression, options);
+            var key = new RangeActiveExpressionsKey(source, expression, options);
             lock (rangeActiveExpressionsAccess)
             {
                 if (monitorCreated = !rangeActiveExpressions.TryGetValue(key, out rangeActiveExpression))
                 {
-                    rangeActiveExpression = new EnumerableRangeActiveExpression<TElement, TResult>(source, expression, options);
+                    rangeActiveExpression = new EnumerableRangeActiveExpression<TResult>(source, expression, options, key);
                     rangeActiveExpressions.Add(key, rangeActiveExpression);
                 }
                 ++rangeActiveExpression.disposalCount;
@@ -377,11 +349,31 @@ namespace Cogs.ActiveQuery
             return rangeActiveExpression;
         }
 
-        EnumerableRangeActiveExpression(IEnumerable<TElement> source, Expression<Func<TElement, TResult>> expression, ActiveExpressionOptions? options)
+        record RangeActiveExpressionsKey(IEnumerable Source, Expression<Func<object?, TResult>> Expression, ActiveExpressionOptions? Options);
+
+        class RangeActiveExpressionsKeyEqualityComparer : IEqualityComparer<RangeActiveExpressionsKey>
+        {
+            public bool Equals(RangeActiveExpressionsKey x, RangeActiveExpressionsKey y) =>
+                ReferenceEquals(x.Source, y.Source) && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression) && Equals(x.Options, y.Options);
+
+            public int GetHashCode(RangeActiveExpressionsKey obj) =>
+                HashCode.Combine(typeof(RangeActiveExpressionsKey), obj.Source?.GetHashCode() ?? 0, ExpressionEqualityComparer.Default.GetHashCode(obj.Expression), obj.Options?.GetHashCode() ?? 0);
+        }
+    }
+
+    /// <summary>
+    /// Represents the sequence of results derived from creating an active expression for each element in a sequence
+    /// </summary>
+    /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
+    /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
+    class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INotifyElementFaultChanges, INotifyGenericCollectionChanged<(TElement element, TResult result)>
+    {
+        EnumerableRangeActiveExpression(IEnumerable<TElement> source, Expression<Func<TElement, TResult>> expression, ActiveExpressionOptions? options, RangeActiveExpressionKey rangeActiveExpressionKey)
         {
             this.source = source;
             this.expression = expression;
             Options = options;
+            this.rangeActiveExpressionKey = rangeActiveExpressionKey;
         }
 
         readonly Dictionary<IActiveExpression<TElement, TResult>, int> activeExpressionCounts = new Dictionary<IActiveExpression<TElement, TResult>, int>();
@@ -389,6 +381,7 @@ namespace Cogs.ActiveQuery
         readonly ReaderWriterLockSlim activeExpressionsAccess = new ReaderWriterLockSlim();
         int disposalCount;
         readonly Expression<Func<TElement, TResult>> expression;
+        readonly RangeActiveExpressionKey rangeActiveExpressionKey;
         readonly IEnumerable<TElement> source;
 
         public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
@@ -555,7 +548,7 @@ namespace Cogs.ActiveQuery
             {
                 if (--disposalCount > 0)
                     return false;
-                rangeActiveExpressions.Remove((source, expression, Options));
+                rangeActiveExpressions.Remove(rangeActiveExpressionKey);
             }
             RemoveActiveExpressions(0, activeExpressions.Count);
             if (source is INotifyCollectionChanged collectionChangedNotifier)
@@ -696,5 +689,38 @@ namespace Cogs.ActiveQuery
         void SourceElementFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(sender, e);
 
         public ActiveExpressionOptions? Options { get; }
+
+        static readonly object rangeActiveExpressionsAccess = new object();
+        static readonly Dictionary<RangeActiveExpressionKey, EnumerableRangeActiveExpression<TElement, TResult>> rangeActiveExpressions = new Dictionary<RangeActiveExpressionKey, EnumerableRangeActiveExpression<TElement, TResult>>(new RangeActiveExpressionKeyEqualityComparer());
+
+        public static EnumerableRangeActiveExpression<TElement, TResult> Create(IEnumerable<TElement> source, Expression<Func<TElement, TResult>> expression, ActiveExpressionOptions? options = null)
+        {
+            EnumerableRangeActiveExpression<TElement, TResult> rangeActiveExpression;
+            bool monitorCreated;
+            var key = new RangeActiveExpressionKey(source, expression, options);
+            lock (rangeActiveExpressionsAccess)
+            {
+                if (monitorCreated = !rangeActiveExpressions.TryGetValue(key, out rangeActiveExpression))
+                {
+                    rangeActiveExpression = new EnumerableRangeActiveExpression<TElement, TResult>(source, expression, options, key);
+                    rangeActiveExpressions.Add(key, rangeActiveExpression);
+                }
+                ++rangeActiveExpression.disposalCount;
+            }
+            if (monitorCreated)
+                rangeActiveExpression.Initialize();
+            return rangeActiveExpression;
+        }
+
+        record RangeActiveExpressionKey(IEnumerable<TElement> Source, Expression<Func<TElement, TResult>> Expression, ActiveExpressionOptions? Options);
+
+        class RangeActiveExpressionKeyEqualityComparer : IEqualityComparer<RangeActiveExpressionKey>
+        {
+            public bool Equals(RangeActiveExpressionKey x, RangeActiveExpressionKey y) =>
+                ReferenceEquals(x.Source, y.Source) && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression) && Equals(x.Options, y.Options);
+
+            public int GetHashCode(RangeActiveExpressionKey obj) =>
+                HashCode.Combine(typeof(RangeActiveExpressionKey), obj.Source?.GetHashCode() ?? 0, ExpressionEqualityComparer.Default.GetHashCode(obj.Expression), obj.Options?.GetHashCode() ?? 0);
+        }
     }
 }

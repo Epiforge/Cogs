@@ -20,33 +20,12 @@ namespace Cogs.ActiveQuery
     /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
     class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDisposable, INotifyDictionaryChanged<TKey, TResult>, INotifyElementFaultChanges
     {
-        static readonly object rangeActiveExpressionsAccess = new object();
-        static readonly Dictionary<(IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> expression, ActiveExpressionOptions? options), ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult>> rangeActiveExpressions = new Dictionary<(IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> expression, ActiveExpressionOptions? options), ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult>>(CachedRangeActiveExpressionKeyEqualityComparer<TKey, TValue, TResult>.Default);
-
-        public static ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> Create(IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> expression, ActiveExpressionOptions? options = null)
-        {
-            ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
-            bool monitorCreated;
-            var key = (source, expression, options);
-            lock (rangeActiveExpressionsAccess)
-            {
-                if (monitorCreated = !rangeActiveExpressions.TryGetValue(key, out rangeActiveExpression))
-                {
-                    rangeActiveExpression = new ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult>(source, expression, options);
-                    rangeActiveExpressions.Add(key, rangeActiveExpression);
-                }
-                ++rangeActiveExpression.disposalCount;
-            }
-            if (monitorCreated)
-                rangeActiveExpression.Initialize();
-            return rangeActiveExpression;
-        }
-
-        ReadOnlyDictionaryRangeActiveExpression(IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> expression, ActiveExpressionOptions? options)
+        ReadOnlyDictionaryRangeActiveExpression(IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> expression, ActiveExpressionOptions? options, RangeActiveExpressionsKey rangeActiveExpressionsKey)
         {
             this.source = source;
             this.expression = expression;
             Options = options;
+            this.rangeActiveExpressionsKey = rangeActiveExpressionsKey;
             activeExpressions = this.source.CreateSimilarDictionary<TKey, TValue, IActiveExpression<TKey, TValue, TResult>>();
         }
 
@@ -54,6 +33,7 @@ namespace Cogs.ActiveQuery
         readonly ReaderWriterLockSlim activeExpressionsAccess = new ReaderWriterLockSlim();
         int disposalCount;
         readonly Expression<Func<TKey, TValue, TResult>> expression;
+        readonly RangeActiveExpressionsKey rangeActiveExpressionsKey;
         readonly IReadOnlyDictionary<TKey, TValue> source;
 
         public event EventHandler<NotifyDictionaryChangedEventArgs<TKey, TResult>>? DictionaryChanged;
@@ -159,7 +139,7 @@ namespace Cogs.ActiveQuery
             {
                 if (--disposalCount > 0)
                     return false;
-                rangeActiveExpressions.Remove((source, expression, Options));
+                rangeActiveExpressions.Remove(rangeActiveExpressionsKey);
             }
             RemoveActiveExpressions(activeExpressions.Keys.ToImmutableArray());
             if (source is INotifyDictionaryChanged<TKey, TValue> dictionaryChangedNotifier)
@@ -334,5 +314,38 @@ namespace Cogs.ActiveQuery
         void SourceFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(sender, e);
 
         public ActiveExpressionOptions? Options { get; }
+
+        static readonly object rangeActiveExpressionsAccess = new object();
+        static readonly Dictionary<RangeActiveExpressionsKey, ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult>> rangeActiveExpressions = new Dictionary<RangeActiveExpressionsKey, ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult>>(new RangeActiveExpressionsKeyEqualityComparer());
+
+        public static ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> Create(IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> expression, ActiveExpressionOptions? options = null)
+        {
+            ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
+            bool monitorCreated;
+            var key = new RangeActiveExpressionsKey(source, expression, options);
+            lock (rangeActiveExpressionsAccess)
+            {
+                if (monitorCreated = !rangeActiveExpressions.TryGetValue(key, out rangeActiveExpression))
+                {
+                    rangeActiveExpression = new ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult>(source, expression, options, key);
+                    rangeActiveExpressions.Add(key, rangeActiveExpression);
+                }
+                ++rangeActiveExpression.disposalCount;
+            }
+            if (monitorCreated)
+                rangeActiveExpression.Initialize();
+            return rangeActiveExpression;
+        }
+
+        record RangeActiveExpressionsKey(IReadOnlyDictionary<TKey, TValue> Source, Expression<Func<TKey, TValue, TResult>> Expression, ActiveExpressionOptions? Options);
+
+        class RangeActiveExpressionsKeyEqualityComparer : IEqualityComparer<RangeActiveExpressionsKey>
+        {
+            public bool Equals(RangeActiveExpressionsKey x, RangeActiveExpressionsKey y) =>
+                ReferenceEquals(x.Source, y.Source) && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression) && Equals(x.Options, y.Options);
+
+            public int GetHashCode(RangeActiveExpressionsKey obj) =>
+                HashCode.Combine(typeof(RangeActiveExpressionsKey), obj.Source?.GetHashCode() ?? 0, ExpressionEqualityComparer.Default.GetHashCode(obj.Expression), obj.Options?.GetHashCode() ?? 0);
+        }
     }
 }
