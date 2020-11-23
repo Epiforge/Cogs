@@ -1,7 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace Cogs.ActiveQuery
 {
@@ -19,12 +17,11 @@ namespace Cogs.ActiveQuery
         /// <param name="list">The list of members of the group</param>
         /// <param name="faultNotifier">The <see cref="INotifyElementFaultChanges"/> for the underlying data of the group's members</param>
         /// <param name="onDispose">The action to take when the <see cref="ActiveGrouping{TKey, TValue}"/> is disposed</param>
-        public ActiveGrouping([AllowNull] TKey key, ObservableCollection<TElement> list, INotifyElementFaultChanges? faultNotifier = null, Action? onDispose = null) : base(list, faultNotifier, onDispose) => Key = key;
+        public ActiveGrouping(TKey key, ObservableCollection<TElement> list, INotifyElementFaultChanges? faultNotifier = null, Action? onDispose = null) : base(list, faultNotifier, onDispose) => Key = key;
 
         /// <summary>
         /// Gets the value shared by the source elements in this group
         /// </summary>
-        [AllowNull, MaybeNull]
         public TKey Key { get; }
     }
 }

@@ -215,25 +215,25 @@ namespace Cogs.ActiveQuery
         protected virtual void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
             ElementFaultChanged?.Invoke(this, e);
 
-        protected void OnElementFaultChanged([AllowNull] TKey key, Exception? fault) =>
+        protected void OnElementFaultChanged(TKey key, Exception? fault) =>
             OnElementFaultChanged(new ElementFaultChangeEventArgs(key, fault));
 
         protected virtual void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
             ElementFaultChanging?.Invoke(this, e);
 
-        protected void OnElementFaultChanging([AllowNull] TKey key, Exception? fault) =>
+        protected void OnElementFaultChanging(TKey key, Exception? fault) =>
             OnElementFaultChanging(new ElementFaultChangeEventArgs(key, fault));
 
         protected virtual void OnValueResultChanged(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
             ValueResultChanged?.Invoke(this, e);
 
-        protected void OnValueResultChanged([AllowNull] TKey key, [AllowNull] TResult result) =>
+        protected void OnValueResultChanged(TKey key, TResult result) =>
             OnValueResultChanged(new RangeActiveExpressionResultChangeEventArgs<TKey, TResult>(key, result));
 
         protected virtual void OnValueResultChanging(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
             ValueResultChanging?.Invoke(this, e);
 
-        protected void OnValueResultChanging([AllowNull] TKey key, [AllowNull] TResult result) =>
+        protected void OnValueResultChanging(TKey key, TResult result) =>
             OnValueResultChanging(new RangeActiveExpressionResultChangeEventArgs<TKey, TResult>(key, result));
 
         IReadOnlyList<KeyValuePair<TKey, TResult>> RemoveActiveExpressions(IReadOnlyList<TKey> keys)

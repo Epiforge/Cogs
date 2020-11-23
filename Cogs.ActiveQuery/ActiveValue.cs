@@ -2,7 +2,6 @@ using Cogs.Disposal;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Cogs.ActiveQuery
@@ -20,7 +19,7 @@ namespace Cogs.ActiveQuery
         /// <param name="operationFault">The current operation fault</param>
         /// <param name="elementFaultChangeNotifier">The <see cref="INotifyElementFaultChanges"/> for the underlying data from which the value is aggregated</param>
         /// <param name="onDispose">The action to take when the <see cref="ActiveValue{TValue}"/> is disposed</param>
-        public ActiveValue([AllowNull] TValue value, Exception? operationFault = null, INotifyElementFaultChanges? elementFaultChangeNotifier = null, Action? onDispose = null)
+        public ActiveValue(TValue value, Exception? operationFault = null, INotifyElementFaultChanges? elementFaultChangeNotifier = null, Action? onDispose = null)
         {
             this.value = value;
             this.operationFault = operationFault;
@@ -32,7 +31,7 @@ namespace Cogs.ActiveQuery
         readonly INotifyElementFaultChanges? elementFaultChangeNotifier;
         readonly Action? onDispose;
         Exception? operationFault;
-        [AllowNull, MaybeNull] TValue value;
+        TValue value;
 
         /// <summary>
         /// Occurs when the fault for an element has changed
@@ -90,11 +89,10 @@ namespace Cogs.ActiveQuery
         /// <summary>
         /// Gets the value from the most recent time the query updated
         /// </summary>
-        [AllowNull, MaybeNull]
         public TValue Value
         {
             get => value;
-            protected internal set => SetBackedProperty(ref this.value! /* this could be null, but it won't matter if it is */, in value! /* this could be null, but it won't matter if it is */);
+            protected internal set => SetBackedProperty(ref this.value!, in value);
         }
     }
 }

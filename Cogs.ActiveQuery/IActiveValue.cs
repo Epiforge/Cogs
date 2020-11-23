@@ -1,7 +1,6 @@
 using Cogs.Disposal;
 using System;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Cogs.ActiveQuery
 {
@@ -19,7 +18,6 @@ namespace Cogs.ActiveQuery
         /// <summary>
         /// Gets the value from the most recent time the query updated
         /// </summary>
-        [MaybeNull]
         TValue Value { get; }
     }
 }
