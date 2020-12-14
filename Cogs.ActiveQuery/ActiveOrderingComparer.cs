@@ -18,11 +18,11 @@ namespace Cogs.ActiveQuery
             switch (this.indexingStrategy)
             {
                 case IndexingStrategy.HashTable:
-                    comparables = new NullableKeyDictionary<TElement, List<IComparable>>();
+                    comparables = new NullableKeyDictionary<TElement, List<IComparable?>>();
                     counts = new NullableKeyDictionary<TElement, int>();
                     break;
                 case IndexingStrategy.SelfBalancingBinarySearchTree:
-                    comparables = new NullableKeySortedDictionary<TElement, List<IComparable>>();
+                    comparables = new NullableKeySortedDictionary<TElement, List<IComparable?>>();
                     counts = new NullableKeySortedDictionary<TElement, int>();
                     break;
             }
@@ -46,7 +46,7 @@ namespace Cogs.ActiveQuery
                         foreach (var elementAndResults in rangeActiveExpression.GetResults().GroupBy(er => er.element, er => er.result))
                         {
                             var element = elementAndResults.Key;
-                            var elementComparables = new List<IComparable>();
+                            var elementComparables = new List<IComparable?>();
                             comparables!.Add(element, elementComparables);
                             elementComparables.Add(elementAndResults.First());
                             counts!.Add(element, elementAndResults.Count());
@@ -62,7 +62,7 @@ namespace Cogs.ActiveQuery
             }
         }
 
-        IDictionary<TElement, List<IComparable>>? comparables;
+        IDictionary<TElement, List<IComparable?>>? comparables;
         readonly object comparablesAccess = new object();
         IDictionary<TElement, int>? counts;
         readonly IndexingStrategy indexingStrategy;
@@ -72,7 +72,7 @@ namespace Cogs.ActiveQuery
 
         public int Compare(TElement x, TElement y)
         {
-            IReadOnlyList<IComparable> xList, yList;
+            IReadOnlyList<IComparable?> xList, yList;
             if (indexingStrategy == IndexingStrategy.NoneOrInherit)
             {
                 xList = GetComparables(x);
@@ -110,17 +110,17 @@ namespace Cogs.ActiveQuery
             return true;
         }
 
-        IReadOnlyList<IComparable> GetComparables(TElement element) =>
+        IReadOnlyList<IComparable?> GetComparables(TElement element) =>
             selectors.Select(expressionAndOrder => expressionAndOrder.rangeActiveExpression.GetResultsUnderLock().First(er => equalityComparer.Equals(er.element, element)).result).ToImmutableArray();
 
-        void RangeActiveExpressionElementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TElement, IComparable> e)
+        void RangeActiveExpressionElementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TElement, IComparable?> e)
         {
             lock (comparablesAccess)
-                if (comparables!.ContainsKey(e.Element! /* this could be null, but it won't matter if it is */))
-                    comparables[e.Element! /* this could be null, but it won't matter if it is */][rangeActiveExpressionIndicies![(EnumerableRangeActiveExpression<TElement, IComparable>)sender]] = e.Result!;
+                if (comparables!.ContainsKey(e.Element))
+                    comparables[e.Element][rangeActiveExpressionIndicies![(EnumerableRangeActiveExpression<TElement, IComparable>)sender]] = e.Result!;
         }
 
-        void RangeActiveExpressionGenericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TElement element, IComparable comparable)> e)
+        void RangeActiveExpressionGenericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TElement element, IComparable? comparable)> e)
         {
             lock (comparablesAccess)
             {
@@ -129,11 +129,11 @@ namespace Cogs.ActiveQuery
                     switch (indexingStrategy)
                     {
                         case IndexingStrategy.HashTable:
-                            comparables = new NullableKeyDictionary<TElement, List<IComparable>>();
+                            comparables = new NullableKeyDictionary<TElement, List<IComparable?>>();
                             counts = new NullableKeyDictionary<TElement, int>();
                             break;
                         case IndexingStrategy.SelfBalancingBinarySearchTree:
-                            comparables = new NullableKeySortedDictionary<TElement, List<IComparable>>();
+                            comparables = new NullableKeySortedDictionary<TElement, List<IComparable?>>();
                             counts = new NullableKeySortedDictionary<TElement, int>();
                             break;
                     }
@@ -145,7 +145,7 @@ namespace Cogs.ActiveQuery
                         foreach (var elementAndResults in rangeActiveExpression.GetResults().GroupBy(er => er.element, er => er.result))
                         {
                             var element = elementAndResults.Key;
-                            var elementComparables = new List<IComparable>();
+                            var elementComparables = new List<IComparable?>();
                             comparables!.Add(element, elementComparables);
                             elementComparables.Add(elementAndResults.First());
                             counts!.Add(element, elementAndResults.Count());
@@ -186,7 +186,7 @@ namespace Cogs.ActiveQuery
                                 var count = elementAndResults.Count();
                                 if (!comparables!.TryGetValue(element, out var elementComparables))
                                 {
-                                    elementComparables = new List<IComparable>();
+                                    elementComparables = new List<IComparable?>();
                                     comparables.Add(elementAndResults.Key, elementComparables);
                                     elementComparables.Add(elementAndResults.First());
                                     counts!.Add(element, count);

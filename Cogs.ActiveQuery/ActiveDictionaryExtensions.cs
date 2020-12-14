@@ -156,7 +156,7 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">A dictionary that values of which to calculate the average</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the average of the values</returns>
-        public static IActiveValue<TValue> ActiveAverage<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
+        public static IActiveValue<TValue?> ActiveAverage<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
             ActiveAverage(source, (key, value) => value);
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">A dictionary that values of which to calculate the average</param>
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the average of the values</returns>
-        public static IActiveValue<TResult> ActiveAverage<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
+        public static IActiveValue<TResult?> ActiveAverage<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
             ActiveAverage(source, selector, null);
 
         /// <summary>
@@ -181,15 +181,15 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the average of the values</returns>
-        public static IActiveValue<TResult> ActiveAverage<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
+        public static IActiveValue<TResult?> ActiveAverage<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
 
             var convertCount = CountConversion.GetConverter(typeof(TResult));
             var operations = new GenericOperations<TResult>();
             var synchronizedSource = source as ISynchronized;
-            IActiveValue<TResult> sum;
-            ActiveValue<TResult>? activeValue = null;
+            IActiveValue<TResult?> sum;
+            ActiveValue<TResult?>? activeValue = null;
 
             void propertyChanged(object sender, PropertyChangedEventArgs e) =>
                 synchronizedSource.SequentialExecute(() =>
@@ -214,7 +214,7 @@ namespace Cogs.ActiveQuery
             {
                 sum = ActiveSum(source, selector, selectorOptions);
                 var currentCount = source.Count;
-                activeValue = new ActiveValue<TResult>(currentCount > 0 ? operations.Divide(sum.Value, (TResult)convertCount(currentCount)) : default, currentCount == 0 ? ExceptionHelper.SequenceContainsNoElements : null, sum, () =>
+                activeValue = new ActiveValue<TResult?>(currentCount > 0 ? operations.Divide(sum.Value, (TResult)convertCount(currentCount)) : default, currentCount == 0 ? ExceptionHelper.SequenceContainsNoElements : null, sum, () =>
                 {
                     sum.PropertyChanged -= propertyChanged;
                     sum.Dispose();
@@ -1044,7 +1044,7 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">A dictionary of key/value pairs to determine the maximum value of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the maximum value in the dictionary</returns>
-        public static IActiveValue<TValue> ActiveMax<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
+        public static IActiveValue<TValue?> ActiveMax<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
             ActiveMax(source, (key, value) => value);
 
         /// <summary>
@@ -1056,7 +1056,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">A dictionary of key/value pairs to determine the maximum value of</param>
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the maximum value in the dictionary</returns>
-        public static IActiveValue<TResult> ActiveMax<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
+        public static IActiveValue<TResult?> ActiveMax<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
             ActiveMax(source, selector, null);
 
         /// <summary>
@@ -1069,14 +1069,14 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the maximum value in the dictionary</returns>
-        public static IActiveValue<TResult> ActiveMax<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
+        public static IActiveValue<TResult?> ActiveMax<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
 
             var comparer = Comparer<TResult>.Default;
             var synchronizedSource = source as ISynchronized;
             ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
-            ActiveValue<TResult>? activeValue = null;
+            ActiveValue<TResult?>? activeValue = null;
 
             void dispose()
             {
@@ -1156,14 +1156,14 @@ namespace Cogs.ActiveQuery
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 try
                 {
-                    activeValue = new ActiveValue<TResult>(rangeActiveExpression.GetResults().Max(kr => kr.result), null, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Max(kr => kr.result), null, rangeActiveExpression, dispose);
                     rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged += valueResultChanged;
                     return activeValue;
                 }
                 catch (Exception ex)
                 {
-                    activeValue = new ActiveValue<TResult>(default, ex, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult?>(default, ex, rangeActiveExpression, dispose);
                     rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged += valueResultChanged;
                     return activeValue;
@@ -1182,7 +1182,7 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">A dictionary of key/value pairs to determine the maximum value of</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the minimum value in the dictionary</returns>
-        public static IActiveValue<TValue> ActiveMin<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
+        public static IActiveValue<TValue?> ActiveMin<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
             ActiveMin(source, (key, value) => value);
 
         /// <summary>
@@ -1194,7 +1194,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">A dictionary of key/value pairs to determine the maximum value of</param>
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the minimum value in the dictionary</returns>
-        public static IActiveValue<TResult> ActiveMin<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
+        public static IActiveValue<TResult?> ActiveMin<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
             ActiveMin(source, selector, null);
 
         /// <summary>
@@ -1207,14 +1207,14 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the minimum value in the dictionary</returns>
-        public static IActiveValue<TResult> ActiveMin<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
+        public static IActiveValue<TResult?> ActiveMin<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
 
             var comparer = Comparer<TResult>.Default;
             var synchronizedSource = source as ISynchronized;
             ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
-            ActiveValue<TResult>? activeValue = null;
+            ActiveValue<TResult?>? activeValue = null;
 
             void dispose()
             {
@@ -1294,14 +1294,14 @@ namespace Cogs.ActiveQuery
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 try
                 {
-                    activeValue = new ActiveValue<TResult>(rangeActiveExpression.GetResults().Select(kr => kr.result).Min(), null, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Select(kr => kr.result).Min(), null, rangeActiveExpression, dispose);
                     rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged += valueResultChanged;
                     return activeValue;
                 }
                 catch (Exception ex)
                 {
-                    activeValue = new ActiveValue<TResult>(default, ex, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult?>(default, ex, rangeActiveExpression, dispose);
                     rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged += valueResultChanged;
                     return activeValue;
@@ -1381,7 +1381,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">A dictionary of key/value pairs to invoke a transform function on</param>
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> the elements of which are the result of invoking the transform function on each key/value pair of <paramref name="source"/></returns>
-        public static IActiveEnumerable<TResult> ActiveSelect<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
+        public static IActiveEnumerable<TResult?> ActiveSelect<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
             ActiveSelect(source, selector, null);
 
         /// <summary>
@@ -1394,21 +1394,21 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> the elements of which are the result of invoking the transform function on each key/value pair of <paramref name="source"/></returns>
-        public static IActiveEnumerable<TResult> ActiveSelect<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
+        public static IActiveEnumerable<TResult?> ActiveSelect<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
 
             var synchronizedSource = source as ISynchronized;
             ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
             var keyToIndex = source.CreateSimilarNullableKeyDictionary<TKey, TValue, int>();
-            SynchronizedRangeObservableCollection<TResult>? rangeObservableCollection = null;
+            SynchronizedRangeObservableCollection<TResult?>? rangeObservableCollection = null;
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
                 synchronizedSource.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
-                        rangeObservableCollection!.Reset(rangeActiveExpression.GetResults().Select(((TKey key, TResult result) er, int index) =>
+                        rangeObservableCollection!.Reset(rangeActiveExpression.GetResults().Select(((TKey key, TResult? result) er, int index) =>
                         {
                             keyToIndex!.Add(er.key, index);
                             return er.result;
@@ -1467,19 +1467,19 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => rangeObservableCollection!.Replace(keyToIndex![e.Element! /* this could be null, but it won't matter if it is */], e.Result! /* this could be null, but it won't matter if it is */));
+            void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => rangeObservableCollection!.Replace(keyToIndex![e.Element], e.Result));
 
             return synchronizedSource.SequentialExecute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-                rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().Select(((TKey key, TResult result) er, int index) =>
+                rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult?>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().Select(((TKey key, TResult? result) er, int index) =>
                 {
                     keyToIndex.Add(er.key, index);
                     return er.result;
                 }));
                 rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
                 rangeActiveExpression.ValueResultChanged += valueResultChanged;
-                return new ActiveEnumerable<TResult>(rangeObservableCollection, rangeActiveExpression, () =>
+                return new ActiveEnumerable<TResult?>(rangeObservableCollection, rangeActiveExpression, () =>
                 {
                     rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged -= valueResultChanged;
@@ -1770,7 +1770,7 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">A dictionary that is used to calculate a sum</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the sum of the values in the dictionary</returns>
-        public static IActiveValue<TValue> ActiveSum<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
+        public static IActiveValue<TValue?> ActiveSum<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
             ActiveSum(source, (key, value) => value);
 
         /// <summary>
@@ -1782,7 +1782,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">A dictionary that is used to calculate a sum</param>
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the sum of the projected values</returns>
-        public static IActiveValue<TResult> ActiveSum<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
+        public static IActiveValue<TResult?> ActiveSum<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector) =>
             ActiveSum(source, selector, null);
 
         /// <summary>
@@ -1795,28 +1795,28 @@ namespace Cogs.ActiveQuery
         /// <param name="selector">A transform function to apply to each key/value pair</param>
         /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
         /// <returns>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the sum of the projected values</returns>
-        public static IActiveValue<TResult> ActiveSum<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
+        public static IActiveValue<TResult?> ActiveSum<TKey, TValue, TResult>(this IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> selector, ActiveExpressionOptions? selectorOptions)
         {
             ActiveQueryOptions.Optimize(ref selector);
 
             var operations = new GenericOperations<TResult>();
             var synchronizedSource = source as ISynchronized;
             ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
-            ActiveValue<TResult>? activeValue = null;
-            var valuesChanging = new NullableKeyDictionary<TKey, TResult>();
+            ActiveValue<TResult?>? activeValue = null;
+            var valuesChanging = new NullableKeyDictionary<TKey, TResult?>();
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
                 synchronizedSource.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
-                        activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations!.Add);
+                        activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations!.Add!);
                     else
                     {
                         var sum = activeValue!.Value;
                         if ((e.OldItems?.Count ?? 0) > 0)
-                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.OldItems.Select(kv => kv.Value)).Aggregate(operations!.Subtract);
+                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.OldItems.Select(kv => kv.Value)).Aggregate(operations!.Subtract!);
                         if ((e.NewItems?.Count ?? 0) > 0)
-                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.NewItems.Select(kv => kv.Value)).Aggregate(operations!.Add);
+                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.NewItems.Select(kv => kv.Value)).Aggregate(operations!.Add!);
                         activeValue!.Value = sum;
                     }
                 });
@@ -1825,11 +1825,11 @@ namespace Cogs.ActiveQuery
                 synchronizedSource.SequentialExecute(() =>
                 {
                     var key = e.Element;
-                    activeValue!.Value = operations!.Add(activeValue!.Value, operations.Subtract(e.Result, valuesChanging![key! /* this could be null, but it won't matter if it is */]));
-                    valuesChanging.Remove(key! /* this could be null, but it won't matter if it is */);
+                    activeValue!.Value = operations!.Add(activeValue!.Value, operations.Subtract(e.Result, valuesChanging![key]));
+                    valuesChanging.Remove(key);
                 });
 
-            void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => valuesChanging!.Add(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */));
+            void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => valuesChanging!.Add(e.Element, e.Result));
 
             return synchronizedSource.SequentialExecute(() =>
             {
@@ -1845,7 +1845,7 @@ namespace Cogs.ActiveQuery
 
                 try
                 {
-                    activeValue = new ActiveValue<TResult>(rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations.Add), null, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations.Add!), null, rangeActiveExpression, dispose);
                     rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged += valueResultChanged;
                     rangeActiveExpression.ValueResultChanging += valueResultChanging;
@@ -1853,7 +1853,7 @@ namespace Cogs.ActiveQuery
                 }
                 catch (InvalidOperationException)
                 {
-                    activeValue = new ActiveValue<TResult>(default, null, rangeActiveExpression, dispose);
+                    activeValue = new ActiveValue<TResult?>(default, null, rangeActiveExpression, dispose);
                     rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
                     rangeActiveExpression.ValueResultChanged += valueResultChanged;
                     rangeActiveExpression.ValueResultChanging += valueResultChanging;
@@ -2405,7 +2405,7 @@ namespace Cogs.ActiveQuery
         /// <typeparam name="TValue">The type of the values in <paramref name="source"/></typeparam>
         /// <param name="source">An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to convert</param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> equivalent to the values of <paramref name="source"/> (and mutates with it so long as <paramref name="source"/> implements <see cref="INotifyDictionaryChanged{TKey, TValue}"/>)</returns>
-        public static IActiveEnumerable<TValue> ToActiveEnumerable<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
+        public static IActiveEnumerable<TValue?> ToActiveEnumerable<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source) =>
             ActiveSelect(source, (key, value) => value);
 
         #endregion ToActiveEnumerable
@@ -2420,13 +2420,13 @@ namespace Cogs.ActiveQuery
         /// <param name="source">>An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return a value from</param>
         /// <param name="key">The key of the value to retrieve</param>
         /// <returns>>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is the value for the specified key in the source dictionary</returns>
-        public static IActiveValue<TValue> ActiveValueFor<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, TKey key)
+        public static IActiveValue<TValue?> ActiveValueFor<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, TKey key)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
             if (source is INotifyDictionaryChanged<TKey, TValue> changingSource)
             {
                 var synchronizedSource = source as ISynchronized;
-                ActiveValue<TValue>? activeValue = null;
+                ActiveValue<TValue?>? activeValue = null;
 
                 Func<TKey, bool> equalsKey;
                 var keyComparer = source.GetKeyComparer();
@@ -2478,13 +2478,13 @@ namespace Cogs.ActiveQuery
                 {
                     try
                     {
-                        activeValue = new ActiveValue<TValue>(source[key], elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                        activeValue = new ActiveValue<TValue?>(source[key], elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
                         changingSource.DictionaryChanged += sourceChanged;
                         return activeValue;
                     }
                     catch (Exception ex)
                     {
-                        activeValue = new ActiveValue<TValue>(default!, ex, elementFaultChangeNotifier, dispose);
+                        activeValue = new ActiveValue<TValue?>(default!, ex, elementFaultChangeNotifier, dispose);
                         changingSource.DictionaryChanged += sourceChanged;
                         return activeValue;
                     }
@@ -2492,11 +2492,11 @@ namespace Cogs.ActiveQuery
             }
             try
             {
-                return new ActiveValue<TValue>(source[key], elementFaultChangeNotifier: elementFaultChangeNotifier);
+                return new ActiveValue<TValue?>(source[key], elementFaultChangeNotifier: elementFaultChangeNotifier);
             }
             catch (Exception ex)
             {
-                return new ActiveValue<TValue>(default!, ex, elementFaultChangeNotifier);
+                return new ActiveValue<TValue?>(default!, ex, elementFaultChangeNotifier);
             }
         }
 
@@ -2512,13 +2512,13 @@ namespace Cogs.ActiveQuery
         /// <param name="source">>An <see cref="IReadOnlyDictionary{TKey, TValue}"/> to return a value from</param>
         /// <param name="key">The key of the value to retrieve</param>
         /// <returns>>An <see cref="IActiveValue{TValue}"/> the <see cref="IActiveValue{TValue}.Value"/> of which is <c>default</c>(<typeparamref name="TValue"/>) if the key is not in the source dictionary; otherwise, the value for the specified key in the source dictionary</returns>
-        public static IActiveValue<TValue> ActiveValueForOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, TKey key)
+        public static IActiveValue<TValue?> ActiveValueForOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, TKey key)
         {
             var elementFaultChangeNotifier = source as INotifyElementFaultChanges;
             if (source is INotifyDictionaryChanged<TKey, TValue> changingSource)
             {
                 var synchronizedSource = source as ISynchronized;
-                ActiveValue<TValue>? activeValue = null;
+                ActiveValue<TValue?>? activeValue = null;
 
                 Func<TKey, bool> equalsKey;
                 var keyComparer = source.GetKeyComparer();
@@ -2552,13 +2552,13 @@ namespace Cogs.ActiveQuery
 
                 return synchronizedSource.SequentialExecute(() =>
                 {
-                    activeValue = new ActiveValue<TValue>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
+                    activeValue = new ActiveValue<TValue?>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
                     changingSource.DictionaryChanged += sourceChanged;
                     return activeValue;
                 });
             }
             else
-                return new ActiveValue<TValue>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier);
+                return new ActiveValue<TValue?>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier);
         }
 
         #endregion ValueForOrDefault

@@ -17,7 +17,7 @@ namespace Cogs.ActiveQuery
     /// Represents the sequence of results derived from creating an active expression for each element in a sequence
     /// </summary>
     /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
-    class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementFaultChanges, INotifyGenericCollectionChanged<(object? element, TResult result)>
+    class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementFaultChanges, INotifyGenericCollectionChanged<(object? element, TResult? result)>
     {
         EnumerableRangeActiveExpression(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options, RangeActiveExpressionsKey rangeActiveExpressionsKey)
         {
@@ -37,9 +37,9 @@ namespace Cogs.ActiveQuery
 
         public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
         public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
-        public event EventHandler<RangeActiveExpressionResultChangeEventArgs<object?, TResult>>? ElementResultChanged;
-        public event EventHandler<RangeActiveExpressionResultChangeEventArgs<object?, TResult>>? ElementResultChanging;
-        public event NotifyGenericCollectionChangedEventHandler<(object? element, TResult result)>? GenericCollectionChanged;
+        public event EventHandler<RangeActiveExpressionResultChangeEventArgs<object?, TResult?>>? ElementResultChanged;
+        public event EventHandler<RangeActiveExpressionResultChangeEventArgs<object?, TResult?>>? ElementResultChanging;
+        public event NotifyGenericCollectionChangedEventHandler<(object? element, TResult? result)>? GenericCollectionChanged;
 
         void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -99,7 +99,7 @@ namespace Cogs.ActiveQuery
             }
         }
 
-        IReadOnlyList<(object? element, TResult result)>? AddActiveExpressions(int index, IEnumerable<object?> elements)
+        IReadOnlyList<(object? element, TResult? result)>? AddActiveExpressions(int index, IEnumerable<object?> elements)
         {
             if (elements.Any())
             {
@@ -143,7 +143,7 @@ namespace Cogs.ActiveQuery
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult result)>(NotifyCollectionChangedAction.Add, AddActiveExpressions(e.NewStartingIndex, e.NewItems.Cast<object?>()), e.NewStartingIndex));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressions(e.NewStartingIndex, e.NewItems.Cast<object?>()), e.NewStartingIndex));
                     break;
                 case NotifyCollectionChangedAction.Move:
                     activeExpressionsAccess.EnterWriteLock();
@@ -158,24 +158,24 @@ namespace Cogs.ActiveQuery
                     {
                         activeExpressionsAccess.ExitWriteLock();
                     }
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)), e.NewStartingIndex, e.OldStartingIndex));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)), e.NewStartingIndex, e.OldStartingIndex));
                     break;
                 case NotifyCollectionChangedAction.Remove:
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressions(e.OldStartingIndex, e.OldItems.Count), e.OldStartingIndex));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressions(e.OldStartingIndex, e.OldItems.Count), e.OldStartingIndex));
                     break;
                 case NotifyCollectionChangedAction.Replace:
                     activeExpressionsAccess.EnterWriteLock();
-                    IEnumerable<(object? element, TResult result)> removed, added;
+                    IEnumerable<(object? element, TResult? result)> removed, added;
                     try
                     {
                         removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count);
-                        added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>()).Select(ae => (ae.Arg, ae.Value));
+                        added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>()).Select(ae => ((object?)ae.Arg, ae.Value));
                     }
                     finally
                     {
                         activeExpressionsAccess.ExitWriteLock();
                     }
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex));
                     break;
                 default:
                     activeExpressionsAccess.EnterWriteLock();
@@ -188,7 +188,7 @@ namespace Cogs.ActiveQuery
                     {
                         activeExpressionsAccess.ExitWriteLock();
                     }
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult result)>(NotifyCollectionChangedAction.Reset));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Reset));
                     break;
             }
         }
@@ -227,7 +227,7 @@ namespace Cogs.ActiveQuery
 
         internal IReadOnlyList<(object? element, Exception? fault)> GetElementFaultsUnderLock() => activeExpressions.Select(eae => (eae.element, fault: eae.activeExpression.Fault)).Where(ef => ef.fault is { }).ToImmutableArray();
 
-        public IReadOnlyList<(object element, TResult result)> GetResults()
+        public IReadOnlyList<(object element, TResult? result)> GetResults()
         {
             activeExpressionsAccess.EnterReadLock();
             try
@@ -240,7 +240,7 @@ namespace Cogs.ActiveQuery
             }
         }
 
-        internal IReadOnlyList<(object element, TResult result)> GetResultsUnderLock() => activeExpressions.Select(eae => (eae.element, eae.activeExpression.Value)).ToImmutableArray();
+        internal IReadOnlyList<(object element, TResult? result)> GetResultsUnderLock() => activeExpressions.Select(eae => (eae.element, eae.activeExpression.Value)).ToImmutableArray();
 
         void Initialize()
         {
@@ -266,24 +266,24 @@ namespace Cogs.ActiveQuery
         protected void OnElementFaultChanging(object? element, Exception? fault, int count) =>
             OnElementFaultChanging(new ElementFaultChangeEventArgs(element, fault, count));
 
-        protected virtual void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<object?, TResult> e) =>
+        protected virtual void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<object?, TResult?> e) =>
             ElementResultChanged?.Invoke(this, e);
 
-        protected void OnElementResultChanged(object? element, TResult result, int count) =>
-            OnElementResultChanged(new RangeActiveExpressionResultChangeEventArgs<object?, TResult>(element, result, count));
+        protected void OnElementResultChanged(object? element, TResult? result, int count) =>
+            OnElementResultChanged(new RangeActiveExpressionResultChangeEventArgs<object?, TResult?>(element, result, count));
 
-        protected virtual void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<object?, TResult> e) =>
+        protected virtual void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<object?, TResult?> e) =>
             ElementResultChanging?.Invoke(this, e);
 
-        protected void OnElementResultChanging(object? element, TResult result, int count) =>
-            OnElementResultChanging(new RangeActiveExpressionResultChangeEventArgs<object?, TResult>(element, result, count));
+        protected void OnElementResultChanging(object? element, TResult? result, int count) =>
+            OnElementResultChanging(new RangeActiveExpressionResultChangeEventArgs<object?, TResult?>(element, result, count));
 
-        protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<(object? element, TResult result)> e) =>
+        protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)> e) =>
             GenericCollectionChanged?.Invoke(this, e);
 
-        IReadOnlyList<(object? element, TResult result)> RemoveActiveExpressions(int index, int count)
+        IReadOnlyList<(object? element, TResult? result)> RemoveActiveExpressions(int index, int count)
         {
-            List<(object? element, TResult result)>? result = null;
+            List<(object? element, TResult? result)>? result = null;
             if (count > 0)
             {
                 activeExpressionsAccess.EnterWriteLock();
@@ -296,12 +296,12 @@ namespace Cogs.ActiveQuery
                     activeExpressionsAccess.ExitWriteLock();
                 }
             }
-            return (result ?? Enumerable.Empty<(object? element, TResult result)>()).ToImmutableArray();
+            return (result ?? Enumerable.Empty<(object? element, TResult? result)>()).ToImmutableArray();
         }
 
-        List<(object? element, TResult result)> RemoveActiveExpressionsUnderLock(int index, int count)
+        List<(object? element, TResult? result)> RemoveActiveExpressionsUnderLock(int index, int count)
         {
-            var result = new List<(object? element, TResult result)>();
+            var result = new List<(object? element, TResult? result)>();
             foreach (var (element, activeExpression) in activeExpressions.GetRange(index, count))
             {
                 result.Add((element, activeExpression.Value));
@@ -365,7 +365,7 @@ namespace Cogs.ActiveQuery
     /// </summary>
     /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
     /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
-    class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INotifyElementFaultChanges, INotifyGenericCollectionChanged<(TElement element, TResult result)>
+    class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INotifyElementFaultChanges, INotifyGenericCollectionChanged<(TElement element, TResult? result)>
     {
         EnumerableRangeActiveExpression(IEnumerable<TElement> source, Expression<Func<TElement, TResult>> expression, ActiveExpressionOptions? options, RangeActiveExpressionKey rangeActiveExpressionKey)
         {
@@ -385,9 +385,9 @@ namespace Cogs.ActiveQuery
 
         public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
         public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
-        public event EventHandler<RangeActiveExpressionResultChangeEventArgs<TElement, TResult>>? ElementResultChanged;
-        public event EventHandler<RangeActiveExpressionResultChangeEventArgs<TElement, TResult>>? ElementResultChanging;
-        public event NotifyGenericCollectionChangedEventHandler<(TElement element, TResult result)>? GenericCollectionChanged;
+        public event EventHandler<RangeActiveExpressionResultChangeEventArgs<TElement, TResult?>>? ElementResultChanged;
+        public event EventHandler<RangeActiveExpressionResultChangeEventArgs<TElement, TResult?>>? ElementResultChanging;
+        public event NotifyGenericCollectionChangedEventHandler<(TElement element, TResult? result)>? GenericCollectionChanged;
 
         void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -447,7 +447,7 @@ namespace Cogs.ActiveQuery
             }
         }
 
-        IReadOnlyList<(TElement element, TResult result)>? AddActiveExpressions(int index, IEnumerable<TElement> elements)
+        IReadOnlyList<(TElement element, TResult? result)>? AddActiveExpressions(int index, IEnumerable<TElement> elements)
         {
             if (elements.Any())
             {
@@ -491,7 +491,7 @@ namespace Cogs.ActiveQuery
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult result)>(NotifyCollectionChangedAction.Add, AddActiveExpressions(e.NewStartingIndex, e.NewItems.Cast<TElement>()), e.NewStartingIndex));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressions(e.NewStartingIndex, e.NewItems.Cast<TElement>()), e.NewStartingIndex));
                     break;
                 case NotifyCollectionChangedAction.Move:
                     activeExpressionsAccess.EnterWriteLock();
@@ -506,14 +506,14 @@ namespace Cogs.ActiveQuery
                     {
                         activeExpressionsAccess.ExitWriteLock();
                     }
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)), e.NewStartingIndex, e.OldStartingIndex));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)), e.NewStartingIndex, e.OldStartingIndex));
                     break;
                 case NotifyCollectionChangedAction.Remove:
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressions(e.OldStartingIndex, e.OldItems.Count), e.OldStartingIndex));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressions(e.OldStartingIndex, e.OldItems.Count), e.OldStartingIndex));
                     break;
                 case NotifyCollectionChangedAction.Replace:
                     activeExpressionsAccess.EnterWriteLock();
-                    IEnumerable<(TElement element, TResult result)> removed, added;
+                    IEnumerable<(TElement element, TResult? result)> removed, added;
                     try
                     {
                         removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count);
@@ -523,7 +523,7 @@ namespace Cogs.ActiveQuery
                     {
                         activeExpressionsAccess.ExitWriteLock();
                     }
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex));
                     break;
                 default:
                     activeExpressionsAccess.EnterWriteLock();
@@ -536,7 +536,7 @@ namespace Cogs.ActiveQuery
                     {
                         activeExpressionsAccess.ExitWriteLock();
                     }
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult result)>(NotifyCollectionChangedAction.Reset));
+                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Reset));
                     break;
             }
         }
@@ -575,7 +575,7 @@ namespace Cogs.ActiveQuery
 
         internal IReadOnlyList<(object? element, Exception? fault)> GetElementFaultsUnderLock() => activeExpressions.Select(ae => (element: (object?)ae.element, fault: ae.activeExpression.Fault)).Where(ef => ef.fault is { }).ToImmutableArray();
 
-        public IReadOnlyList<(TElement element, TResult result)> GetResults()
+        public IReadOnlyList<(TElement element, TResult? result)> GetResults()
         {
             activeExpressionsAccess.EnterReadLock();
             try
@@ -588,7 +588,7 @@ namespace Cogs.ActiveQuery
             }
         }
 
-        internal IReadOnlyList<(TElement element, TResult result)> GetResultsUnderLock() => activeExpressions.Select(ae => (ae.element, ae.activeExpression.Value)).ToImmutableArray();
+        internal IReadOnlyList<(TElement element, TResult? result)> GetResultsUnderLock() => activeExpressions.Select(ae => (ae.element, ae.activeExpression.Value)).ToImmutableArray();
 
         public IReadOnlyList<(TElement element, TResult result, Exception fault, int count)> GetResultsFaultsAndCounts()
         {
@@ -629,24 +629,24 @@ namespace Cogs.ActiveQuery
         protected void OnElementFaultChanging(TElement element, Exception? fault, int count) =>
             OnElementFaultChanging(new ElementFaultChangeEventArgs(element, fault, count));
 
-        protected virtual void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<TElement, TResult> e) =>
+        protected virtual void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<TElement, TResult?> e) =>
             ElementResultChanged?.Invoke(this, e);
 
-        protected void OnElementResultChanged(TElement element, TResult result, int count) =>
-            OnElementResultChanged(new RangeActiveExpressionResultChangeEventArgs<TElement, TResult>(element, result, count));
+        protected void OnElementResultChanged(TElement element, TResult? result, int count) =>
+            OnElementResultChanged(new RangeActiveExpressionResultChangeEventArgs<TElement, TResult?>(element, result, count));
 
-        protected virtual void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<TElement, TResult> e) =>
+        protected virtual void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<TElement, TResult?> e) =>
             ElementResultChanging?.Invoke(this, e);
 
-        protected void OnElementResultChanging(TElement element, TResult result, int count) =>
-            OnElementResultChanging(new RangeActiveExpressionResultChangeEventArgs<TElement, TResult>(element, result, count));
+        protected void OnElementResultChanging(TElement element, TResult? result, int count) =>
+            OnElementResultChanging(new RangeActiveExpressionResultChangeEventArgs<TElement, TResult?>(element, result, count));
 
-        protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<(TElement element, TResult result)> e) =>
+        protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)> e) =>
             GenericCollectionChanged?.Invoke(this, e);
 
-        IReadOnlyList<(TElement element, TResult result)> RemoveActiveExpressions(int index, int count)
+        IReadOnlyList<(TElement element, TResult? result)> RemoveActiveExpressions(int index, int count)
         {
-            List<(TElement element, TResult result)>? result = null;
+            List<(TElement element, TResult? result)>? result = null;
             if (count > 0)
             {
                 activeExpressionsAccess.EnterWriteLock();
@@ -659,12 +659,12 @@ namespace Cogs.ActiveQuery
                     activeExpressionsAccess.ExitWriteLock();
                 }
             }
-            return (result ?? Enumerable.Empty<(TElement element, TResult result)>()).ToImmutableArray();
+            return (result ?? Enumerable.Empty<(TElement element, TResult? result)>()).ToImmutableArray();
         }
 
-        List<(TElement element, TResult result)> RemoveActiveExpressionsUnderLock(int index, int count)
+        List<(TElement element, TResult? result)> RemoveActiveExpressionsUnderLock(int index, int count)
         {
-            var result = new List<(TElement element, TResult result)>();
+            var result = new List<(TElement element, TResult? result)>();
             foreach (var (element, activeExpression) in activeExpressions.GetRange(index, count))
             {
                 result.Add((element, activeExpression.Value));

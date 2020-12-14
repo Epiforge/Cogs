@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -167,7 +166,7 @@ namespace Cogs.ActiveQuery
 
         internal IReadOnlyList<(object? element, Exception? fault)> GetElementFaultsUnderLock() => activeExpressions.Select(ae => (element: (object?)ae.Key, fault: ae.Value.Fault)).Where(ef => ef.fault is { }).ToImmutableArray();
 
-        public IReadOnlyList<(TKey key, TResult result)> GetResults()
+        public IReadOnlyList<(TKey key, TResult? result)> GetResults()
         {
             activeExpressionsAccess.EnterReadLock();
             try
@@ -180,9 +179,9 @@ namespace Cogs.ActiveQuery
             }
         }
 
-        internal IReadOnlyList<(TKey key, TResult result)> GetResultsUnderLock() => activeExpressions.Select(ae => (ae.Key, ae.Value.Value)).ToImmutableArray();
+        internal IReadOnlyList<(TKey key, TResult? result)> GetResultsUnderLock() => activeExpressions.Select(ae => (ae.Key, ae.Value.Value)).ToImmutableArray();
 
-        public IReadOnlyList<(TKey key, TResult result, Exception fault)> GetResultsAndFaults()
+        public IReadOnlyList<(TKey key, TResult? result, Exception fault)> GetResultsAndFaults()
         {
             activeExpressionsAccess.EnterReadLock();
             try
@@ -195,7 +194,7 @@ namespace Cogs.ActiveQuery
             }
         }
 
-        internal IReadOnlyList<(TKey key, TResult result, Exception fault)> GetResultsAndFaultsUnderLock() => activeExpressions.Select(ae => (ae.Key, ae.Value.Value, ae.Value.Fault)).ToImmutableArray();
+        internal IReadOnlyList<(TKey key, TResult? result, Exception fault)> GetResultsAndFaultsUnderLock() => activeExpressions.Select(ae => (ae.Key, ae.Value.Value, ae.Value.Fault)).ToImmutableArray();
 
         void Initialize()
         {
@@ -227,13 +226,13 @@ namespace Cogs.ActiveQuery
         protected virtual void OnValueResultChanged(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
             ValueResultChanged?.Invoke(this, e);
 
-        protected void OnValueResultChanged(TKey key, TResult result) =>
+        protected void OnValueResultChanged(TKey key, TResult? result) =>
             OnValueResultChanged(new RangeActiveExpressionResultChangeEventArgs<TKey, TResult>(key, result));
 
         protected virtual void OnValueResultChanging(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
             ValueResultChanging?.Invoke(this, e);
 
-        protected void OnValueResultChanging(TKey key, TResult result) =>
+        protected void OnValueResultChanging(TKey key, TResult? result) =>
             OnValueResultChanging(new RangeActiveExpressionResultChangeEventArgs<TKey, TResult>(key, result));
 
         IReadOnlyList<KeyValuePair<TKey, TResult>> RemoveActiveExpressions(IReadOnlyList<TKey> keys)

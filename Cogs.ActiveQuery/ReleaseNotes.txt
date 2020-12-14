@@ -1,1 +1,1 @@
-We corrected a defect in the ActiveDictionary and ActiveEnumerable wrappers that required the backing store to implement Cogs.Threading.ISynchronized.
+We made some revisions to how we utilized new nullable reference type features in C# 9.
