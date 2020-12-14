@@ -54,13 +54,9 @@ namespace Cogs.ActiveExpressions.Tests
             int hashCode1, hashCode2;
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8604 // Possible null reference argument.
             using (var expr = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), john, emily))
-#pragma warning restore CS8604 // Possible null reference argument.
                 hashCode1 = expr.GetHashCode();
-#pragma warning disable CS8604 // Possible null reference argument.
             using (var expr = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), john, emily))
-#pragma warning restore CS8604 // Possible null reference argument.
                 hashCode2 = expr.GetHashCode();
             Assert.IsTrue(hashCode1 == hashCode2);
         }
@@ -70,12 +66,10 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8604 // Possible null reference argument.
             using var expr1 = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), john, emily);
             using var expr2 = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), john, emily);
             using var expr3 = ActiveExpression.Create((p1, p2) => ReversedCombinePeople(p1, p2), john, emily);
             using var expr4 = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), emily, john);
-#pragma warning restore CS8604 // Possible null reference argument.
             Assert.IsTrue(expr1 == expr2);
             Assert.IsFalse(expr1 == expr3);
             Assert.IsFalse(expr1 == expr4);
@@ -86,12 +80,10 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8604 // Possible null reference argument.
             using var expr1 = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), john, emily);
             using var expr2 = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), john, emily);
             using var expr3 = ActiveExpression.Create((p1, p2) => ReversedCombinePeople(p1, p2), john, emily);
             using var expr4 = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), emily, john);
-#pragma warning restore CS8604 // Possible null reference argument.
             Assert.IsTrue(expr1.Equals(expr2));
             Assert.IsFalse(expr1.Equals(expr3));
             Assert.IsFalse(expr1.Equals(expr4));
@@ -102,12 +94,10 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8604 // Possible null reference argument.
             using var expr1 = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), john, emily);
             using var expr2 = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), john, emily);
             using var expr3 = ActiveExpression.Create((p1, p2) => ReversedCombinePeople(p1, p2), john, emily);
             using var expr4 = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), emily, john);
-#pragma warning restore CS8604 // Possible null reference argument.
             Assert.IsFalse(expr1 != expr2);
             Assert.IsTrue(expr1 != expr3);
             Assert.IsTrue(expr1 != expr4);
@@ -131,9 +121,7 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8604 // Possible null reference argument.
             using var expr = ActiveExpression.Create((p1, p2) => CombinePeople(p1, p2), john, emily);
-#pragma warning restore CS8604 // Possible null reference argument.
             Assert.AreEqual($"{{C}} /* {this} */.CombinePeople({{C}} /* {john} */, {{C}} /* {emily} */) /* {expr.Value} */", expr.ToString());
         }
 

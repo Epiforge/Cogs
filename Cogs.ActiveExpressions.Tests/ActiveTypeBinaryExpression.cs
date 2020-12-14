@@ -99,9 +99,7 @@ namespace Cogs.ActiveExpressions.Tests
             var john = TestPerson.CreateJohn();
             var someObject = new SomeObject();
             var values = new BlockingCollection<bool>();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using (var expr = ActiveExpression.Create(p1 => p1.Property is TestPerson, someObject))
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
             {
                 void propertyChanged(object? sender, PropertyChangedEventArgs e) => values.Add(expr.Value);
                 expr.PropertyChanged += propertyChanged;

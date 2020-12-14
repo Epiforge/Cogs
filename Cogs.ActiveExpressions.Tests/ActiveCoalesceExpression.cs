@@ -15,13 +15,9 @@ namespace Cogs.ActiveExpressions.Tests
         {
             int hashCode1, hashCode2;
             var john = TestPerson.CreateJohn();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using (var expr = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, john))
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 hashCode1 = expr.GetHashCode();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using (var expr = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, john))
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 hashCode2 = expr.GetHashCode();
             Assert.IsTrue(hashCode1 == hashCode2);
         }
@@ -31,12 +27,10 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using var expr1 = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, john);
             using var expr2 = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, john);
             using var expr3 = ActiveExpression.Create(p1 => p1.Name ?? "Another String", john);
             using var expr4 = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, emily);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.IsTrue(expr1 == expr2);
             Assert.IsFalse(expr1 == expr3);
             Assert.IsFalse(expr1 == expr4);
@@ -47,12 +41,10 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using var expr1 = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, john);
             using var expr2 = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, john);
             using var expr3 = ActiveExpression.Create(p1 => p1.Name ?? "Another String", john);
             using var expr4 = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, emily);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.IsTrue(expr1.Equals(expr2));
             Assert.IsFalse(expr1.Equals(expr3));
             Assert.IsFalse(expr1.Equals(expr4));
@@ -63,9 +55,7 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using var expr = ActiveExpression.Create((p1, p2) => p1.Name!.ToString() ?? p2.Name!.ToString(), john, emily);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.IsNull(expr.Fault);
             john.Name = null;
             Assert.IsNotNull(expr.Fault);
@@ -78,9 +68,9 @@ namespace Cogs.ActiveExpressions.Tests
         public void FaultShortCircuiting()
         {
             var john = TestPerson.CreateJohn();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             using var expr = ActiveExpression.Create<TestPerson, TestPerson, string>((p1, p2) => p1.Name ?? p2.Name!, john, null);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             Assert.AreEqual(john.Name, expr.Value);
             Assert.IsNull(expr.Fault);
         }
@@ -126,12 +116,10 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using var expr1 = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, john);
             using var expr2 = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, john);
             using var expr3 = ActiveExpression.Create(p1 => p1.Name ?? "Another String", john);
             using var expr4 = ActiveExpression.Create(p1 => p1.Name ?? string.Empty, emily);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.IsFalse(expr1 != expr2);
             Assert.IsTrue(expr1 != expr3);
             Assert.IsTrue(expr1 != expr4);
@@ -143,9 +131,7 @@ namespace Cogs.ActiveExpressions.Tests
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
             var values = new BlockingCollection<string>();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using (var expr = ActiveExpression.Create((p1, p2) => p1.Name ?? p2.Name, john, emily))
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
             {
                 void propertyChanged(object? sender, PropertyChangedEventArgs e) => values.Add(expr.Value!);
                 expr.PropertyChanged += propertyChanged;
@@ -168,9 +154,7 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var emily = TestPerson.CreateEmily();
             emily.Name = "X";
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using var expr = ActiveExpression.Create(p1 => p1.Name ?? p1.Name!.Length.ToString(), emily);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.AreEqual("({C} /* {X} */.Name /* \"X\" */ ?? {C} /* {X} */.Name /* \"X\" */.Length /* ? */.ToString() /* ? */) /* \"X\" */", expr.ToString());
         }
 
@@ -179,9 +163,7 @@ namespace Cogs.ActiveExpressions.Tests
         {
             var john = TestPerson.CreateJohn();
             var emily = TestPerson.CreateEmily();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             using (var expr = ActiveExpression.Create((p1, p2) => p1.Name ?? p2.Name, john, emily))
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 Assert.AreEqual(john.Name, expr.Value);
             Assert.AreEqual(0, emily.NameGets);
         }
