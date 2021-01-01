@@ -14,7 +14,7 @@ namespace Cogs.Windows
         {
             synchronizationContext = SynchronizationContext.Current;
 
-            colorKey = colorHive.OpenSubKey(colorKeyName);
+            colorKey = colorHive.OpenSubKey(colorKeyName) ?? throw new PlatformNotSupportedException($"The DWM key (\"{colorKeyName}\") could not be found");
             color = FetchColor();
             try
             {
@@ -27,7 +27,7 @@ namespace Cogs.Windows
                 // Oh, I see how it is
             }
 
-            isDarkKey = isDarkHive.OpenSubKey(isDarkKeyName);
+            isDarkKey = isDarkHive.OpenSubKey(isDarkKeyName) ?? throw new PlatformNotSupportedException($"The Personalize key (\"{isDarkKeyName}\") could not be found");
             isDark = FetchIsDark();
             try
             {
