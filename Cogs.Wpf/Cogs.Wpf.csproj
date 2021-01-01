@@ -1,26 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
-  <PropertyGroup>
-    <Authors>Epiforge</Authors>
-    <Description>Cogs for value conversions in WPF.</Description>
-    <LangVersion>8.0</LangVersion>
-    <Nullable>enable</Nullable>
-    <PackageIcon>NuGet.jpg</PackageIcon>
-    <PackageIconUrl />
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
-    <Product>WPF Value Conversion Cogs</Product>
-    <RepositoryType>GitHub</RepositoryType>
-    <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
+    <PropertyGroup>
+        <Authors>Epiforge</Authors>
+        <Description>Cogs for value conversions in WPF.</Description>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <PackageIcon>NuGet.jpg</PackageIcon>
+        <PackageIconUrl />
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
+        <Product>WPF Value Conversion Cogs</Product>
+        <RepositoryType>GitHub</RepositoryType>
+        <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\NuGet.jpg">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\NuGet.jpg">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
+    </ItemGroup>
 
 </Project>
