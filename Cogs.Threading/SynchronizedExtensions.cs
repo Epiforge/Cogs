@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,8 +20,11 @@ namespace Cogs.Threading
         /// </summary>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
         /// <param name="action">The <see cref="Action"/></param>
+        [SuppressMessage("Code Analysis", "CA1508: Avoid dead conditional code", Justification = "The analyzer is mistaken")]
         public static void Execute(this SynchronizationContext? synchronizationContext, Action action)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var thisSynchronizationContext = SynchronizationContext.Current;
             if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
             {
@@ -65,8 +69,11 @@ namespace Cogs.Threading
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
         /// <param name="func">The <see cref="Func{TResult}"/></param>
         /// <returns>The result of <paramref name="func"/></returns>
+        [SuppressMessage("Code Analysis", "CA1508: Avoid dead conditional code", Justification = "The analyzer is mistaken")]
         public static TResult Execute<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var thisSynchronizationContext = SynchronizationContext.Current;
             if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
                 return func();
@@ -112,6 +119,8 @@ namespace Cogs.Threading
         /// <param name="action">The <see cref="Action"/></param>
         public static Task ExecuteAsync(this SynchronizationContext? synchronizationContext, Action action)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var thisSynchronizationContext = SynchronizationContext.Current;
             if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
             {
@@ -148,6 +157,8 @@ namespace Cogs.Threading
         /// <returns>The result of <paramref name="func"/></returns>
         public static Task<TResult> ExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var thisSynchronizationContext = SynchronizationContext.Current;
             if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
                 return Task.FromResult(func());
@@ -181,6 +192,8 @@ namespace Cogs.Threading
         /// <param name="asyncAction">The <see cref="Func{Task}"/></param>
         public static async Task ExecuteAsync(this SynchronizationContext? synchronizationContext, Func<Task> asyncAction)
         {
+            if (asyncAction is null)
+                throw new ArgumentNullException(nameof(asyncAction));
             var thisSynchronizationContext = SynchronizationContext.Current;
             if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
             {
@@ -194,7 +207,7 @@ namespace Cogs.Threading
                 foreach (var synchronizationContext in thisSynchronizationContextStack)
                     threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
                 threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
-                await completion.AttemptSetResultAsync(asyncAction);
+                await completion.AttemptSetResultAsync(asyncAction).ConfigureAwait(false);
                 for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
                     threadLocalSynchronizationContextStack.Value.Pop();
             }, null);
@@ -217,6 +230,8 @@ namespace Cogs.Threading
         /// <returns>The result of <paramref name="asyncFunc"/></returns>
         public static async Task<TResult> ExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<Task<TResult>> asyncFunc)
         {
+            if (asyncFunc is null)
+                throw new ArgumentNullException(nameof(asyncFunc));
             var thisSynchronizationContext = SynchronizationContext.Current;
             if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
                 return await asyncFunc().ConfigureAwait(false);
@@ -227,7 +242,7 @@ namespace Cogs.Threading
                 foreach (var synchronizationContext in thisSynchronizationContextStack)
                     threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
                 threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
-                await completion.AttemptSetResultAsync(asyncFunc);
+                await completion.AttemptSetResultAsync(asyncFunc).ConfigureAwait(false);
                 for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
                     threadLocalSynchronizationContextStack.Value.Pop();
             }, null);

@@ -28,6 +28,8 @@ namespace Cogs.Threading
         /// <param name="action">The void method to execute</param>
         public void WithReaderLock(Action action)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -56,6 +58,8 @@ namespace Cogs.Threading
         /// <param name="cancellationToken">If cancellation is requested, the action will be executed only if the lock is already acquired or can be acquired immediately</param>
         public void WithReaderLock(Action action, CancellationToken cancellationToken)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -83,6 +87,8 @@ namespace Cogs.Threading
         /// <param name="func">The method to execute</param>
         public T WithReaderLock<T>(Func<T> func)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -111,6 +117,8 @@ namespace Cogs.Threading
         /// <param name="cancellationToken">If cancellation is requested, the method will be executed only if the lock is already acquired or can be acquired immediately</param>
         public T WithReaderLock<T>(Func<T> func, CancellationToken cancellationToken)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -138,6 +146,8 @@ namespace Cogs.Threading
         /// <param name="action">The void action to execute</param>
         public async Task WithReaderLockAsync(Action action)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -166,6 +176,8 @@ namespace Cogs.Threading
         /// <param name="cancellationToken">If cancellation is requested, the action will be executed only if the lock is already acquired or can be acquired immediately</param>
         public async Task WithReaderLockAsync(Action action, CancellationToken cancellationToken)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -193,6 +205,8 @@ namespace Cogs.Threading
         /// <param name="func">The method to execute</param>
         public async Task<T> WithReaderLockAsync<T>(Func<T> func)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -221,6 +235,8 @@ namespace Cogs.Threading
         /// <param name="cancellationToken">If cancellation is requested, the method will be executed only if the lock is already acquired or can be acquired immediately</param>
         public async Task<T> WithReaderLockAsync<T>(Func<T> func, CancellationToken cancellationToken)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -248,6 +264,8 @@ namespace Cogs.Threading
         /// <param name="asyncAction">The asynchronous void method to execute</param>
         public async Task WithReaderLockAsync(Func<Task> asyncAction)
         {
+            if (asyncAction is null)
+                throw new ArgumentNullException(nameof(asyncAction));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -276,6 +294,8 @@ namespace Cogs.Threading
         /// <param name="cancellationToken">If cancellation is requested, the method will be executed only if the lock is already acquired or can be acquired immediately</param>
         public async Task WithReaderLockAsync(Func<Task> asyncAction, CancellationToken cancellationToken)
         {
+            if (asyncAction is null)
+                throw new ArgumentNullException(nameof(asyncAction));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -303,6 +323,8 @@ namespace Cogs.Threading
         /// <param name="asyncFunc">The asynchronous method to execute</param>
         public async Task<T> WithReaderLockAsync<T>(Func<Task<T>> asyncFunc)
         {
+            if (asyncFunc is null)
+                throw new ArgumentNullException(nameof(asyncFunc));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -331,6 +353,8 @@ namespace Cogs.Threading
         /// <param name="cancellationToken">If cancellation is requested, the method will be executed only if the lock is already acquired or can be acquired immediately</param>
         public async Task<T> WithReaderLockAsync<T>(Func<Task<T>> asyncFunc, CancellationToken cancellationToken)
         {
+            if (asyncFunc is null)
+                throw new ArgumentNullException(nameof(asyncFunc));
             var (token, _) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -359,6 +383,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public void WithWriterLock(Action action)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -390,6 +416,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public void WithWriterLock(Action action, CancellationToken cancellationToken)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -420,6 +448,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public T WithWriterLock<T>(Func<T> func)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -451,6 +481,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public T WithWriterLock<T>(Func<T> func, CancellationToken cancellationToken)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -481,6 +513,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public async Task WithWriterLockAsync(Action action)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -512,6 +546,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public async Task WithWriterLockAsync(Action action, CancellationToken cancellationToken)
         {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -542,6 +578,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public async Task<T> WithWriterLockAsync<T>(Func<T> func)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -573,6 +611,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public async Task<T> WithWriterLockAsync<T>(Func<T> func, CancellationToken cancellationToken)
         {
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -603,6 +643,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public async Task WithWriterLockAsync(Func<Task> asyncAction)
         {
+            if (asyncAction is null)
+                throw new ArgumentNullException(nameof(asyncAction));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -634,6 +676,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public async Task WithWriterLockAsync(Func<Task> asyncAction, CancellationToken cancellationToken)
         {
+            if (asyncAction is null)
+                throw new ArgumentNullException(nameof(asyncAction));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -664,6 +708,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public async Task<T> WithWriterLockAsync<T>(Func<Task<T>> asyncFunc)
         {
+            if (asyncFunc is null)
+                throw new ArgumentNullException(nameof(asyncFunc));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)
@@ -695,6 +741,8 @@ namespace Cogs.Threading
         /// <exception cref="LockEscalationException">This flow has already acquired this lock as a reader</exception>
         public async Task<T> WithWriterLockAsync<T>(Func<Task<T>> asyncFunc, CancellationToken cancellationToken)
         {
+            if (asyncFunc is null)
+                throw new ArgumentNullException(nameof(asyncFunc));
             var (token, isWriting) = acquiredAccess.Value;
             bool lockAcquiredHere;
             if (lockAcquiredHere = token is null)

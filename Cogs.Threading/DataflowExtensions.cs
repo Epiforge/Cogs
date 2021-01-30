@@ -40,6 +40,8 @@ namespace Cogs.Threading
         /// <param name="options">Manual Dataflow options</param>
         public static Task DataflowForAllAsync<TSource>(this IEnumerable<TSource> source, Action<TSource> action, ExecutionDataflowBlockOptions options)
         {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
             var block = new ActionBlock<TSource>(action, options);
             foreach (var element in source)
                 block.Post(element);
@@ -56,6 +58,8 @@ namespace Cogs.Threading
         /// <param name="options">Manual Dataflow options</param>
         public static Task DataflowForAllAsync<TSource>(this IEnumerable<TSource> source, Func<TSource, Task> asyncAction, ExecutionDataflowBlockOptions options)
         {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
             var block = new ActionBlock<TSource>(asyncAction, options);
             foreach (var element in source)
                 block.Post(element);
@@ -94,6 +98,8 @@ namespace Cogs.Threading
         /// <returns>The results of the transform on each element in no particular order</returns>
         public static async Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector, ExecutionDataflowBlockOptions options)
         {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
             var results = new BlockingCollection<TResult>();
             var transformBlock = new TransformBlock<TSource, TResult>(selector, options);
             var actionBlock = new ActionBlock<TResult>(result => results.Add(result), singleThreadBlock);
@@ -116,6 +122,8 @@ namespace Cogs.Threading
         /// <returns>The results of the asynchronous transform on each element in no particular order</returns>
         public static async Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> asyncSelector, ExecutionDataflowBlockOptions options)
         {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
             var results = new BlockingCollection<TResult>();
             var transformBlock = new TransformBlock<TSource, TResult>(asyncSelector, options);
             var actionBlock = new ActionBlock<TResult>(result => results.Add(result), singleThreadBlock);

@@ -30,6 +30,10 @@ namespace Cogs.Threading
         /// <param name="action">The void method to invoke</param>
         public static void AttemptSetResult<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Action action)
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             try
             {
                 action();
@@ -50,6 +54,10 @@ namespace Cogs.Threading
         /// <param name="result">The result to set for <paramref name="taskCompletionSource"/></param>
         public static void AttemptSetResult<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Action action, TResult result)
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             try
             {
                 action();
@@ -69,6 +77,10 @@ namespace Cogs.Threading
         /// <param name="func">The method with a return value to invoke</param>
         public static void AttemptSetResult<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<TResult> func)
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             try
             {
                 taskCompletionSource.SetResult(func());
@@ -94,6 +106,10 @@ namespace Cogs.Threading
         /// <param name="asyncAction">The void async method to invoke</param>
         public static async Task AttemptSetResultAsync<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Func<Task> asyncAction)
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (asyncAction is null)
+                throw new ArgumentNullException(nameof(asyncAction));
             try
             {
                 await asyncAction().ConfigureAwait(false);
@@ -114,6 +130,10 @@ namespace Cogs.Threading
         /// <param name="result">The result to set for <paramref name="taskCompletionSource"/></param>
         public static async Task AttemptSetResultAsync<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<Task> asyncAction, TResult result)
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (asyncAction is null)
+                throw new ArgumentNullException(nameof(asyncAction));
             try
             {
                 await asyncAction().ConfigureAwait(false);
@@ -133,6 +153,10 @@ namespace Cogs.Threading
         /// <param name="asyncFunc">The async method with a return value to invoke</param>
         public static async Task AttemptSetResultAsync<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<Task<TResult>> asyncFunc)
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (asyncFunc is null)
+                throw new ArgumentNullException(nameof(asyncFunc));
             try
             {
                 taskCompletionSource.SetResult(await asyncFunc().ConfigureAwait(false));
@@ -151,6 +175,10 @@ namespace Cogs.Threading
         /// <param name="action">The void method to invoke</param>
         public static bool AttemptTrySetResult<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Action action) where TResult : class
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
             try
             {
                 action();
@@ -170,6 +198,10 @@ namespace Cogs.Threading
         /// <param name="func">The method with a return value to invoke</param>
         public static bool AttemptTrySetResult<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<TResult> func)
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (func is null)
+                throw new ArgumentNullException(nameof(func));
             try
             {
                 return taskCompletionSource.TrySetResult(func());
@@ -188,6 +220,10 @@ namespace Cogs.Threading
         /// <param name="asyncAction">The void async method to invoke</param>
         public static async Task<bool> AttemptTrySetResultAsync<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Func<Task> asyncAction) where TResult : class
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (asyncAction is null)
+                throw new ArgumentNullException(nameof(asyncAction));
             try
             {
                 await asyncAction().ConfigureAwait(false);
@@ -207,6 +243,10 @@ namespace Cogs.Threading
         /// <param name="asyncFunc">The async method with a return value to invoke</param>
         public static async Task<bool> AttemptTrySetResultAsync<TResult>(this TaskCompletionSource<TResult> taskCompletionSource, Func<Task<TResult>> asyncFunc)
         {
+            if (taskCompletionSource is null)
+                throw new ArgumentNullException(nameof(taskCompletionSource));
+            if (asyncFunc is null)
+                throw new ArgumentNullException(nameof(asyncFunc));
             try
             {
                 return taskCompletionSource.TrySetResult(await asyncFunc().ConfigureAwait(false));

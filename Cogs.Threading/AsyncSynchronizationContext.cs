@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,7 +34,7 @@ namespace Cogs.Threading
 
         readonly bool allowDisposal;
         readonly BufferBlock<(SendOrPostCallback callback, object? state, ManualResetEventSlim? signal, Exception? exception)> queuedCallbacks;
-        readonly CancellationTokenSource queuedCallbacksCancellationTokenSource;
+        [SuppressMessage("Code Analysis", "CA2213: Disposable fields should be disposed", Justification = "The analyzer is mistaken")] readonly CancellationTokenSource queuedCallbacksCancellationTokenSource;
 
         async Task ProcessCallbacks()
         {
