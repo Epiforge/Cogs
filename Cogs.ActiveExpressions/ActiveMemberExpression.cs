@@ -18,7 +18,7 @@ namespace Cogs.ActiveExpressions
             try
             {
                 this.instancesKey = instancesKey;
-                if (memberExpression.Expression is { })
+                if (memberExpression.Expression is not null)
                 {
                     expression = Create(memberExpression.Expression, options, deferEvaluation);
                     expression.PropertyChanged += ExpressionPropertyChanged;
@@ -41,11 +41,11 @@ namespace Cogs.ActiveExpressions
             catch (Exception ex)
             {
                 DisposeValueIfNecessaryAndPossible();
-                if (fastGetter is { })
+                if (fastGetter is not null)
                     UnsubscribeFromExpressionValueNotifications();
-                else if (field is { })
+                else if (field is not null)
                     UnsubscribeFromValueNotifications();
-                if (expression is { })
+                if (expression is not null)
                 {
                     expression.PropertyChanged -= ExpressionPropertyChanged;
                     expression.Dispose();
@@ -77,11 +77,11 @@ namespace Cogs.ActiveExpressions
             if (result)
             {
                 DisposeValueIfNecessaryAndPossible();
-                if (fastGetter is { })
+                if (fastGetter is not null)
                     UnsubscribeFromExpressionValueNotifications();
-                else if (field is { })
+                else if (field is not null)
                     UnsubscribeFromValueNotifications();
-                if (expression is { })
+                if (expression is not null)
                 {
                     expression.PropertyChanged -= ExpressionPropertyChanged;
                     expression.Dispose();
@@ -99,11 +99,11 @@ namespace Cogs.ActiveExpressions
             try
             {
                 var expressionFault = expression?.Fault;
-                if (expressionFault is { })
+                if (expressionFault is not null)
                     Fault = expressionFault;
                 else
                 {
-                    if (fastGetter is { })
+                    if (fastGetter is not null)
                     {
                         var newExpressionValue = expression?.Value;
                         if (newExpressionValue != expressionValue)
@@ -114,7 +114,7 @@ namespace Cogs.ActiveExpressions
                         }
                         Value = fastGetter.Invoke(expressionValue, emptyArray);
                     }
-                    else if (field is { })
+                    else if (field is not null)
                     {
                         UnsubscribeFromValueNotifications();
                         Value = field.GetValue(expression?.Value);
@@ -138,7 +138,7 @@ namespace Cogs.ActiveExpressions
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveMemberExpression), expression, member, options);
 
-        protected override bool GetShouldValueBeDisposed() => getMethod is { } && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
+        protected override bool GetShouldValueBeDisposed() => getMethod is not null && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
 
         public override string ToString() => $"{expression?.ToString() ?? member.DeclaringType.FullName}.{member.Name} {ToStringSuffix}";
 

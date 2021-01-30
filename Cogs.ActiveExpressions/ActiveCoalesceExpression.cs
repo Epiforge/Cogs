@@ -37,17 +37,17 @@ namespace Cogs.ActiveExpressions
             try
             {
                 var leftFault = left.Fault;
-                if (leftFault is { })
+                if (leftFault is not null)
                     Fault = leftFault;
                 else
                 {
                     var leftValue = left.Value;
-                    if (leftValue is { })
+                    if (leftValue is not null)
                         Value = conversionDelegate is null ? leftValue : conversionDelegate(leftValue);
                     else
                     {
                         var rightFault = right.Fault;
-                        if (rightFault is { })
+                        if (rightFault is not null)
                             Fault = rightFault;
                         else
                             Value = right.Value;

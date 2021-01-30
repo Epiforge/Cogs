@@ -32,7 +32,7 @@ namespace Cogs.ActiveExpressions
             catch (Exception ex)
             {
                 DisposeValueIfNecessaryAndPossible();
-                if (operand is { })
+                if (operand is not null)
                 {
                     operand.PropertyChanged -= OperandPropertyChanged;
                     operand.Dispose();
@@ -75,7 +75,7 @@ namespace Cogs.ActiveExpressions
             try
             {
                 var operandFault = operand.Fault;
-                if (operandFault is { })
+                if (operandFault is not null)
                     Fault = operandFault;
                 else
                     Value = @delegate.Invoke(operand.Value);
@@ -88,7 +88,7 @@ namespace Cogs.ActiveExpressions
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveUnaryExpression), method, NodeType, operand, options);
 
-        protected override bool GetShouldValueBeDisposed() => method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method);
+        protected override bool GetShouldValueBeDisposed() => method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
 
         void OperandPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 

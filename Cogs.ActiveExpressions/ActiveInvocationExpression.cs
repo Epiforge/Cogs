@@ -32,12 +32,12 @@ namespace Cogs.ActiveExpressions
             }
             catch (Exception ex)
             {
-                if (activeExpression is { })
+                if (activeExpression is not null)
                 {
                     activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
                     activeExpression.Dispose();
                 }
-                if (activeDelegateExpression is { })
+                if (activeDelegateExpression is not null)
                 {
                     activeDelegateExpression.PropertyChanged -= ActiveDelegateExpressionPropertyChanged;
                     activeDelegateExpression.Dispose();
@@ -61,7 +61,7 @@ namespace Cogs.ActiveExpressions
 
         void ActiveArgumentPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (activeExpression is { })
+            if (activeExpression is not null)
             {
                 activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
                 activeExpression.Dispose();
@@ -75,7 +75,7 @@ namespace Cogs.ActiveExpressions
 
         void ActiveDelegateExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (activeExpression is { })
+            if (activeExpression is not null)
             {
                 activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
                 activeExpression.Dispose();
@@ -90,7 +90,7 @@ namespace Cogs.ActiveExpressions
         {
             switch (invocationExpression.Expression)
             {
-                case LambdaExpression lambdaExpression when activeArguments is { }:
+                case LambdaExpression lambdaExpression when activeArguments is not null:
                     activeExpression = Create(ReplaceParameters(lambdaExpression, activeArguments.Select(activeArgument => activeArgument.Value).ToArray()), options, IsDeferringEvaluation);
                     break;
                 case Expression expression when typeof(Delegate).IsAssignableFrom(expression.Type):
@@ -108,7 +108,7 @@ namespace Cogs.ActiveExpressions
                 default:
                     throw new NotSupportedException();
             }
-            if (activeExpression is { })
+            if (activeExpression is not null)
                 activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
             EvaluateIfNotDeferred();
         }
@@ -124,17 +124,17 @@ namespace Cogs.ActiveExpressions
                 }
             if (result)
             {
-                if (activeExpression is { })
+                if (activeExpression is not null)
                 {
                     activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
                     activeExpression.Dispose();
                 }
-                if (activeDelegateExpression is { })
+                if (activeDelegateExpression is not null)
                 {
                     activeDelegateExpression.PropertyChanged -= ActiveDelegateExpressionPropertyChanged;
                     activeDelegateExpression.Dispose();
                 }
-                if (activeArguments is { })
+                if (activeArguments is not null)
                     foreach (var activeArgument in activeArguments)
                     {
                         activeArgument.PropertyChanged -= ActiveArgumentPropertyChanged;
@@ -150,17 +150,17 @@ namespace Cogs.ActiveExpressions
 
         protected override void Evaluate()
         {
-            if (activeExpression is { } && activeExpression.Fault is { } activeExpressionFault)
+            if (activeExpression is not null && activeExpression.Fault is { } activeExpressionFault)
                 Fault = activeExpressionFault;
-            else if (activeArguments is { } && activeArguments.Select(activeArgument => activeArgument.Fault).Where(fault => fault is { }).FirstOrDefault() is { } activeArgumentFault)
+            else if (activeArguments is not null && activeArguments.Select(activeArgument => activeArgument.Fault).Where(fault => fault is not null).FirstOrDefault() is { } activeArgumentFault)
                 Fault = activeArgumentFault;
-            else if (activeExpression is { })
+            else if (activeExpression is not null)
                 Value = activeExpression.Value;
         }
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), ExpressionEqualityComparer.Default.GetHashCode(invocationExpression), options);
 
-        public override string ToString() => $"λ({(activeExpression is { } ? (object)activeExpression : invocationExpression)})";
+        public override string ToString() => $"λ({(activeExpression is not null ? (object)activeExpression : invocationExpression)})";
 
         static readonly object instanceManagementLock = new object();
         static readonly Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression> instances = new Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression>(new CachedInstancesKeyComparer<InvocationExpression>());

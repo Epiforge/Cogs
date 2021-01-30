@@ -35,7 +35,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\Shared\IsExternalInit.cs" Link="IsExternalInit.cs" />
+        <Compile Include="..\Common\IsExternalInit.cs" Link="IsExternalInit.cs" />
     </ItemGroup>
 
     <ItemGroup>

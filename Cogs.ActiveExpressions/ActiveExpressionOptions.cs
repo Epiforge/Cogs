@@ -163,6 +163,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
         public bool AddConstructedTypeDisposal(ConstructorInfo constructor)
         {
+            if (constructor is null)
+                throw new ArgumentNullException(nameof(constructor));
             RequireUnfrozen();
             return disposeConstructedTypes.TryAdd((constructor.DeclaringType, new EquatableList<Type>(constructor.GetParameters().Select(parameterInfo => parameterInfo.ParameterType).ToList())), true);
         }
@@ -184,6 +186,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
         public bool AddExpressionValueDisposal<T>(Expression<Func<T>> lambda, bool useGenericDefinition)
         {
+            if (lambda is null)
+                throw new ArgumentNullException(nameof(lambda));
             RequireUnfrozen();
             return lambda.Body switch
             {
@@ -213,6 +217,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
         public bool AddMethodReturnValueDisposal(MethodInfo method, bool useGenericDefinition)
         {
+            if (method is null)
+                throw new ArgumentNullException(nameof(method));
             RequireUnfrozen();
             if (useGenericDefinition)
             {
@@ -238,6 +244,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
         public bool AddPropertyValueDisposal(PropertyInfo property, bool useGenericDefinition)
         {
+            if (property is null)
+                throw new ArgumentNullException(nameof(property));
             RequireUnfrozen();
             return AddMethodReturnValueDisposal(property.GetMethod, useGenericDefinition);
         }
@@ -254,17 +262,21 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The other options</param>
         /// <returns><c>true</c> if the specified options are equal to the current options; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpressionOptions other) =>
-            blockOnAsyncDisposal == other.blockOnAsyncDisposal &&
-            constantExpressionsListenForCollectionChanged == other.constantExpressionsListenForCollectionChanged &&
-            constantExpressionsListenForDictionaryChanged == other.constantExpressionsListenForDictionaryChanged &&
-            disposeConstructedObjects == other.disposeConstructedObjects &&
-            disposeStaticMethodReturnValues == other.disposeStaticMethodReturnValues &&
-            memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged &&
-            memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged &&
-            preferAsyncDisposal == other.preferAsyncDisposal &&
-            disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other?.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value))) &&
-            disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other?.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)));
+        public bool Equals(ActiveExpressionOptions other)
+        {
+            if (other is null)
+                throw new ArgumentNullException(nameof(other));
+            return blockOnAsyncDisposal == other.blockOnAsyncDisposal &&
+                constantExpressionsListenForCollectionChanged == other.constantExpressionsListenForCollectionChanged &&
+                constantExpressionsListenForDictionaryChanged == other.constantExpressionsListenForDictionaryChanged &&
+                disposeConstructedObjects == other.disposeConstructedObjects &&
+                disposeStaticMethodReturnValues == other.disposeStaticMethodReturnValues &&
+                memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged &&
+                memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged &&
+                preferAsyncDisposal == other.preferAsyncDisposal &&
+                disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value))) &&
+                disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)));
+        }
 
         internal void Freeze() => isFrozen = true;
 
@@ -309,7 +321,12 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="constructor">The constructor</param>
         /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-        public bool IsConstructedTypeDisposed(ConstructorInfo constructor) => disposeConstructedTypes.ContainsKey((constructor.DeclaringType, new EquatableList<Type>(constructor.GetParameters().Select(parameterInfo => parameterInfo.ParameterType).ToList())));
+        public bool IsConstructedTypeDisposed(ConstructorInfo constructor)
+        {
+            if (constructor is null)
+                throw new ArgumentNullException(nameof(constructor));
+            return disposeConstructedTypes.ContainsKey((constructor.DeclaringType, new EquatableList<Type>(constructor.GetParameters().Select(parameterInfo => parameterInfo.ParameterType).ToList())));
+        }
 
         /// <summary>
         /// Gets whether active expressions using these options should dispose of objects they have received as a result of invoking a constructor, operator, or method, or getting the value of a property or indexer when the objects are replaced or otherwise discarded
@@ -319,6 +336,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
         public bool IsExpressionValueDisposed<T>(Expression<Func<T>> lambda)
         {
+            if (lambda is null)
+                throw new ArgumentNullException(nameof(lambda));
             return lambda.Body switch
             {
                 BinaryExpression binary => IsMethodReturnValueDisposed(binary.Method),
@@ -337,14 +356,24 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="method">The method yielding the objects</param>
         /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-        public bool IsMethodReturnValueDisposed(MethodInfo method) => (method.IsStatic && DisposeStaticMethodReturnValues) || disposeMethodReturnValues.ContainsKey(method) || (method.IsGenericMethod && disposeMethodReturnValues.ContainsKey(genericMethodToGenericMethodDefinition.GetOrAdd(method, GetGenericMethodDefinitionFromGenericMethod)));
+        public bool IsMethodReturnValueDisposed(MethodInfo method)
+        {
+            if (method is null)
+                throw new ArgumentNullException(nameof(method));
+            return (method.IsStatic && DisposeStaticMethodReturnValues) || disposeMethodReturnValues.ContainsKey(method) || (method.IsGenericMethod && disposeMethodReturnValues.ContainsKey(genericMethodToGenericMethodDefinition.GetOrAdd(method, GetGenericMethodDefinitionFromGenericMethod)));
+        }
 
         /// <summary>
         /// Gets whether active expressions using these options should dispose of objects they have received as a result of getting the value of a specified property when the objects are replaced or otherwise discarded
         /// </summary>
         /// <param name="property">The property yielding the objects</param>
         /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-        public bool IsPropertyValueDisposed(PropertyInfo property) => IsMethodReturnValueDisposed(property.GetMethod);
+        public bool IsPropertyValueDisposed(PropertyInfo property)
+        {
+            if (property is null)
+                throw new ArgumentNullException(nameof(property));
+            return IsMethodReturnValueDisposed(property.GetMethod);
+        }
 
         /// <summary>
         /// Specifies that active expressions using these options should not dispose of objects they have created of the specified type and using constructor arguments of the specified types when the objects are replaced or otherwise discarded
@@ -365,6 +394,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
         public bool RemoveConstructedTypeDisposal(ConstructorInfo constructor)
         {
+            if (constructor is null)
+                throw new ArgumentNullException(nameof(constructor));
             RequireUnfrozen();
             return disposeConstructedTypes.TryRemove((constructor.DeclaringType, new EquatableList<Type>(constructor.GetParameters().Select(parameterInfo => parameterInfo.ParameterType).ToList())), out var discard);
         }
@@ -377,6 +408,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
         public bool RemoveExpressionValueDisposal<T>(Expression<Func<T>> lambda)
         {
+            if (lambda is null)
+                throw new ArgumentNullException(nameof(lambda));
             RequireUnfrozen();
             return lambda.Body switch
             {
@@ -409,6 +442,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
         public bool RemovePropertyValueDisposal(PropertyInfo property)
         {
+            if (property is null)
+                throw new ArgumentNullException(nameof(property));
             RequireUnfrozen();
             return IsMethodReturnValueDisposed(property.GetMethod);
         }
@@ -439,7 +474,12 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first options to compare, or null</param>
         /// <param name="b">The second options to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpressionOptions a, ActiveExpressionOptions b) => a.Equals(b);
+        public static bool operator ==(ActiveExpressionOptions a, ActiveExpressionOptions b)
+        {
+            if (a is null)
+                throw new ArgumentNullException(nameof(a));
+            return a.Equals(b);
+        }
 
         /// <summary>
         /// Determines whether two active expression options are different

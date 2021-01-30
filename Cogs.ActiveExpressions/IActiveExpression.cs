@@ -2,6 +2,7 @@ using Cogs.Disposal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cogs.ActiveExpressions
 {
@@ -51,6 +52,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TArg1">The type of the first argument passed to the lambda expression</typeparam>
     /// <typeparam name="TArg2">The type of the second argument passed to the lambda expression</typeparam>
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
+    [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
     public interface IActiveExpression<out TArg1, out TArg2, out TResult> : IActiveExpression<TResult>, IDisposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, INotifyPropertyChanged, INotifyPropertyChanging
     {
         /// <summary>
@@ -71,6 +73,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TArg2">The type of the second argument passed to the lambda expression</typeparam>
     /// <typeparam name="TArg3">The type of the third argument passed to the lambda expression</typeparam>
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
+    [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
     public interface IActiveExpression<out TArg1, out TArg2, out TArg3, out TResult> : IActiveExpression<TArg1, TArg2, TResult>
     {
         /// <summary>

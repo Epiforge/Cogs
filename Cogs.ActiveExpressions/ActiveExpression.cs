@@ -132,7 +132,7 @@ namespace Cogs.ActiveExpressions
                     if (ApplicableOptions.BlockOnAsyncDisposal)
                         asyncDisposable.DisposeAsync().AsTask().Wait();
                     else
-                        ThreadPool.QueueUserWorkItem(async state => await asyncDisposable.DisposeAsync());
+                        ThreadPool.QueueUserWorkItem(async state => await asyncDisposable.DisposeAsync().ConfigureAwait(false));
                 }
                 else if (value is IDisposable disposable)
                     disposable.Dispose();
@@ -223,56 +223,33 @@ namespace Cogs.ActiveExpressions
 
         static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyGetMethodToProperty = new ConcurrentDictionary<MethodInfo, PropertyInfo>(); // NCrunch: no coverage
 
+        [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope", Justification = "True, but it will be disposed elsewhere")]
         internal static ActiveExpression Create(Expression? expression, ActiveExpressionOptions? options, bool deferEvaluation)
         {
-            ActiveExpression activeExpression;
-            switch (expression)
+            ActiveExpression activeExpression = expression switch
             {
-                case BinaryExpression binaryExpression:
-                    activeExpression = ActiveBinaryExpression.Create(binaryExpression, options, deferEvaluation);
-                    break;
-                case ConditionalExpression conditionalExpression:
-                    activeExpression = ActiveConditionalExpression.Create(conditionalExpression, options, deferEvaluation);
-                    break;
-                case ConstantExpression constantExpression:
-                    activeExpression = ActiveConstantExpression.Create(constantExpression, options);
-                    break;
-                case InvocationExpression invocationExpression:
-                    activeExpression = ActiveInvocationExpression.Create(invocationExpression, options, deferEvaluation);
-                    break;
-                case IndexExpression indexExpression:
-                    activeExpression = ActiveIndexExpression.Create(indexExpression, options, deferEvaluation);
-                    break;
-                case MemberExpression memberExpression:
-                    activeExpression = ActiveMemberExpression.Create(memberExpression, options, deferEvaluation);
-                    break;
-                case MethodCallExpression methodCallExpressionForPropertyGet when propertyGetMethodToProperty.GetOrAdd(methodCallExpressionForPropertyGet.Method, GetPropertyFromGetMethod) is PropertyInfo property:
-                    if (methodCallExpressionForPropertyGet.Arguments.Count > 0)
-                        activeExpression = ActiveIndexExpression.Create(Expression.MakeIndex(methodCallExpressionForPropertyGet.Object, property, methodCallExpressionForPropertyGet.Arguments), options, deferEvaluation);
-                    else
-                        activeExpression = ActiveMemberExpression.Create(Expression.MakeMemberAccess(methodCallExpressionForPropertyGet.Object, property), options, deferEvaluation);
-                    break;
-                case MethodCallExpression methodCallExpression:
-                    activeExpression = ActiveMethodCallExpression.Create(methodCallExpression, options, deferEvaluation);
-                    break;
-                case NewArrayExpression newArrayInitExpression when newArrayInitExpression.NodeType == ExpressionType.NewArrayInit:
-                    activeExpression = ActiveNewArrayInitExpression.Create(newArrayInitExpression, options, deferEvaluation);
-                    break;
-                case NewExpression newExpression:
-                    activeExpression = ActiveNewExpression.Create(newExpression, options, deferEvaluation);
-                    break;
-                case TypeBinaryExpression typeBinaryExpression:
-                    activeExpression = ActiveTypeBinaryExpression.Create(typeBinaryExpression, options, deferEvaluation);
-                    break;
-                case UnaryExpression unaryExpression when unaryExpression.NodeType == ExpressionType.Quote:
-                    activeExpression = ActiveConstantExpression.Create(Expression.Constant(unaryExpression.Operand), options);
-                    break;
-                case UnaryExpression unaryExpression:
-                    activeExpression = ActiveUnaryExpression.Create(unaryExpression, options, deferEvaluation);
-                    break;
-                default:
-                    throw new NotSupportedException();
-            }
+                BinaryExpression binaryExpression => ActiveBinaryExpression.Create(binaryExpression, options, deferEvaluation),
+                ConditionalExpression conditionalExpression => ActiveConditionalExpression.Create(conditionalExpression, options, deferEvaluation),
+                ConstantExpression constantExpression => ActiveConstantExpression.Create(constantExpression, options),
+                InvocationExpression invocationExpression => ActiveInvocationExpression.Create(invocationExpression, options, deferEvaluation),
+                IndexExpression indexExpression => ActiveIndexExpression.Create(indexExpression, options, deferEvaluation),
+                MemberExpression memberExpression => ActiveMemberExpression.Create(memberExpression, options, deferEvaluation),
+                MethodCallExpression methodCallExpressionForPropertyGet when propertyGetMethodToProperty.GetOrAdd(methodCallExpressionForPropertyGet.Method, GetPropertyFromGetMethod) is PropertyInfo property =>
+                    methodCallExpressionForPropertyGet.Arguments.Count > 0
+                    ?
+                    ActiveIndexExpression.Create(Expression.MakeIndex(methodCallExpressionForPropertyGet.Object, property, methodCallExpressionForPropertyGet.Arguments), options, deferEvaluation)
+                    :
+                    ActiveMemberExpression.Create(Expression.MakeMemberAccess(methodCallExpressionForPropertyGet.Object, property), options, deferEvaluation),
+                MethodCallExpression methodCallExpression => ActiveMethodCallExpression.Create(methodCallExpression, options, deferEvaluation),
+                NewArrayExpression newArrayInitExpression when newArrayInitExpression.NodeType == ExpressionType.NewArrayInit =>
+                    ActiveNewArrayInitExpression.Create(newArrayInitExpression, options, deferEvaluation),
+                NewExpression newExpression => ActiveNewExpression.Create(newExpression, options, deferEvaluation),
+                TypeBinaryExpression typeBinaryExpression => ActiveTypeBinaryExpression.Create(typeBinaryExpression, options, deferEvaluation),
+                UnaryExpression unaryExpression when unaryExpression.NodeType == ExpressionType.Quote =>
+                    ActiveConstantExpression.Create(Expression.Constant(unaryExpression.Operand), options),
+                UnaryExpression unaryExpression => ActiveUnaryExpression.Create(unaryExpression, options, deferEvaluation),
+                _ => throw new NotSupportedException()
+            };
             if (!deferEvaluation)
                 activeExpression.EvaluateIfDeferred();
             return activeExpression;
@@ -287,6 +264,8 @@ namespace Cogs.ActiveExpressions
         /// <returns>A human-readable representation of the expression</returns>
         public static string GetOperatorExpressionSyntax(ExpressionType expressionType, Type resultType, params object[] operands)
         {
+            if (resultType is null)
+                throw new ArgumentNullException(nameof(resultType));
             return expressionType switch
             {
                 ExpressionType.Add => $"({operands[0]} + {operands[1]})",
@@ -422,7 +401,7 @@ namespace Cogs.ActiveExpressions
         /// <returns>The string representation of the node's value</returns>
         protected static string GetValueString(Exception? fault, bool deferred, object? value)
         {
-            if (fault is { })
+            if (fault is not null)
                 return $"[{fault.GetType().Name}: {fault.Message}]";
             if (deferred)
                 return "?";
@@ -524,6 +503,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first node to compare, or null</param>
         /// <param name="b">The second node to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
+        [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
         public static bool operator ==(ActiveExpression a, ActiveExpression b)
         {
             if (a is ActiveAndAlsoExpression andAlsoA && b is ActiveAndAlsoExpression andAlsoB)
@@ -652,7 +632,12 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The other <see cref="ActiveExpression{TResult}"/></param>
         /// <returns><c>true</c> if the specified <see cref="ActiveExpression{TResult}"/> is equal to the current <see cref="ActiveExpression{TResult}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpression<TResult> other) => activeExpression == other.activeExpression;
+        public bool Equals(ActiveExpression<TResult> other)
+        {
+            if (other is null)
+                throw new ArgumentNullException(nameof(other));
+            return activeExpression == other.activeExpression;
+        }
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -700,7 +685,12 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpression<TResult> a, ActiveExpression<TResult> b) => a.Equals(b);
+        public static bool operator ==(ActiveExpression<TResult> a, ActiveExpression<TResult> b)
+        {
+            if (a is null)
+                throw new ArgumentNullException(nameof(a));
+            return a.Equals(b);
+        }
 
         /// <summary>
         /// Determines whether two active expressions are different
@@ -800,7 +790,12 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The <see cref="ActiveExpression{TArg, TResult}"/> to compare with the current <see cref="ActiveExpression{TArg, TResult}"/></param>
         /// <returns><c>true</c> if the specified <see cref="ActiveExpression{TArg, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg, TResult}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpression<TArg, TResult> other) => activeExpression == other.activeExpression;
+        public bool Equals(ActiveExpression<TArg, TResult> other)
+        {
+            if (other is null)
+                throw new ArgumentNullException(nameof(other));
+            return activeExpression == other.activeExpression;
+        }
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -847,7 +842,12 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b) => a.Equals(b);
+        public static bool operator ==(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b)
+        {
+            if (a is null)
+                throw new ArgumentNullException(nameof(a));
+            return a.Equals(b);
+        }
 
         /// <summary>
         /// Determines whether two active expressions are different
@@ -866,6 +866,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TArg1">The type of the first argument passed to the lambda expression</typeparam>
     /// <typeparam name="TArg2">The type of the second argument passed to the lambda expression</typeparam>
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
+    [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
     public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TResult>>
     {
         ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2)
@@ -954,7 +955,12 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The object to compare with the current object</param>
         /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpression<TArg1, TArg2, TResult> other) => activeExpression == other.activeExpression;
+        public bool Equals(ActiveExpression<TArg1, TArg2, TResult> other)
+        {
+            if (other is null)
+                throw new ArgumentNullException(nameof(other));
+            return activeExpression == other.activeExpression;
+        }
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -1001,7 +1007,12 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b) => a.Equals(b);
+        public static bool operator ==(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b)
+        {
+            if (a is null)
+                throw new ArgumentNullException(nameof(a));
+            return a.Equals(b);
+        }
 
         /// <summary>
         /// Determines whether two active expressions are different
@@ -1021,6 +1032,7 @@ namespace Cogs.ActiveExpressions
     /// <typeparam name="TArg2">The type of the second argument passed to the lambda expression</typeparam>
     /// <typeparam name="TArg3">The type of the third argument passed to the lambda expression</typeparam>
     /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
+    [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
     public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TArg3, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TArg3, TResult>>
     {
         ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2, TArg3 arg3)
@@ -1115,7 +1127,12 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         /// <param name="other">The <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/> to compare with the current <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/></param>
         /// <returns><c>true</c> if the specified <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(ActiveExpression<TArg1, TArg2, TArg3, TResult> other) => activeExpression == other.activeExpression;
+        public bool Equals(ActiveExpression<TArg1, TArg2, TArg3, TResult> other)
+        {
+            if (other is null)
+                throw new ArgumentNullException(nameof(other));
+            return activeExpression == other.activeExpression;
+        }
 
         void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -1162,7 +1179,12 @@ namespace Cogs.ActiveExpressions
         /// <param name="a">The first expression to compare, or null</param>
         /// <param name="b">The second expression to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-        public static bool operator ==(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b) => a.Equals(b);
+        public static bool operator ==(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b)
+        {
+            if (a is null)
+                throw new ArgumentNullException(nameof(a));
+            return a.Equals(b);
+        }
 
         /// <summary>
         /// Determines whether two active expressions are different

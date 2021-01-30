@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -37,7 +38,7 @@ namespace Cogs.ActiveExpressions
             {
                 DisposeValueIfNecessaryAndPossible();
                 UnsubscribeFromObjectValueNotifications();
-                if (@object is { })
+                if (@object is not null)
                 {
                     @object.PropertyChanged -= ObjectPropertyChanged;
                     @object.Dispose();
@@ -96,10 +97,10 @@ namespace Cogs.ActiveExpressions
             try
             {
                 var objectFault = @object.Fault;
-                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
-                if (objectFault is { })
+                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is not null).FirstOrDefault();
+                if (objectFault is not null)
                     Fault = objectFault;
-                else if (argumentFault is { })
+                else if (argumentFault is not null)
                     Fault = argumentFault;
                 else
                 {
@@ -125,6 +126,7 @@ namespace Cogs.ActiveExpressions
 
         void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
+        [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
         void ObjectValueCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             switch (e.Action)
@@ -173,11 +175,11 @@ namespace Cogs.ActiveExpressions
             {
                 var removed = false;
                 var key = arguments[0].Value;
-                if (key is { })
+                if (key is not null)
                 {
                     removed = e.OldItems?.Any(kv => key.Equals(kv.Key)) ?? false;
                     var keyValuePair = e.NewItems?.FirstOrDefault(kv => key.Equals(kv.Key)) ?? default;
-                    if (keyValuePair.Key is { })
+                    if (keyValuePair.Key is not null)
                     {
                         removed = false;
                         Value = keyValuePair.Value;

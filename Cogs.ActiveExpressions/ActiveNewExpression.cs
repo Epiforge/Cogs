@@ -82,8 +82,8 @@ namespace Cogs.ActiveExpressions
         {
             try
             {
-                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
-                if (argumentFault is { })
+                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is not null).FirstOrDefault();
+                if (argumentFault is not null)
                     Fault = argumentFault;
                 else
                     Value = fastConstructor.Invoke(arguments.Select(argument => argument.Value).ToArray());

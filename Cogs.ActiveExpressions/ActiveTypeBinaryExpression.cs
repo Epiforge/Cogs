@@ -24,7 +24,7 @@ namespace Cogs.ActiveExpressions
             }
             catch (Exception ex)
             {
-                if (expression is { })
+                if (expression is not null)
                 {
                     expression.PropertyChanged -= ExpressionPropertyChanged;
                     expression.Dispose();

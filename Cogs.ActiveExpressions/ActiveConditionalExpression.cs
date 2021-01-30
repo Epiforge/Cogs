@@ -24,17 +24,17 @@ namespace Cogs.ActiveExpressions
             }
             catch (Exception ex)
             {
-                if (test is { })
+                if (test is not null)
                 {
                     test.PropertyChanged -= TestPropertyChanged;
                     test.Dispose();
                 }
-                if (ifTrue is { })
+                if (ifTrue is not null)
                 {
                     ifTrue.PropertyChanged -= IfTruePropertyChanged;
                     ifTrue.Dispose();
                 }
-                if (ifFalse is { })
+                if (ifFalse is not null)
                 {
                     ifFalse.PropertyChanged -= IfFalsePropertyChanged;
                     ifFalse.Dispose();
@@ -78,12 +78,12 @@ namespace Cogs.ActiveExpressions
         protected override void Evaluate()
         {
             var testFault = test.Fault;
-            if (testFault is { })
+            if (testFault is not null)
                 Fault = testFault;
             else if (test.Value is bool testBool && testBool)
             {
                 var ifTrueFault = ifTrue.Fault;
-                if (ifTrueFault is { })
+                if (ifTrueFault is not null)
                     Fault = ifTrueFault;
                 else
                     Value = ifTrue.Value;
@@ -91,7 +91,7 @@ namespace Cogs.ActiveExpressions
             else
             {
                 var ifFalseFault = ifFalse.Fault;
-                if (ifFalseFault is { })
+                if (ifFalseFault is not null)
                     Fault = ifFalseFault;
                 else
                     Value = ifFalse.Value;
@@ -131,7 +131,7 @@ namespace Cogs.ActiveExpressions
                 if (test.Value is bool testBool && testBool)
                 {
                     var ifTrueFault = ifTrue.Fault;
-                    if (ifTrueFault is { })
+                    if (ifTrueFault is not null)
                         Fault = ifTrueFault;
                     else
                         Value = ifTrue.Value;
@@ -139,7 +139,7 @@ namespace Cogs.ActiveExpressions
                 else
                 {
                     var ifFalseFault = ifFalse.Fault;
-                    if (ifFalseFault is { })
+                    if (ifFalseFault is not null)
                         Fault = ifFalseFault;
                     else
                         Value = ifFalse.Value;

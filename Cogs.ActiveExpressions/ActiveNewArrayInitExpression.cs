@@ -69,8 +69,8 @@ namespace Cogs.ActiveExpressions
 
         protected override void Evaluate()
         {
-            var initializerFault = initializers.Select(initializer => initializer.Fault).Where(fault => fault is { }).FirstOrDefault();
-            if (initializerFault is { })
+            var initializerFault = initializers.Select(initializer => initializer.Fault).Where(fault => fault is not null).FirstOrDefault();
+            if (initializerFault is not null)
                 Fault = initializerFault;
             else
             {

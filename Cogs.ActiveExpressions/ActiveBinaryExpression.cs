@@ -51,12 +51,12 @@ namespace Cogs.ActiveExpressions
             catch (Exception ex)
             {
                 DisposeValueIfNecessaryAndPossible();
-                if (left is { })
+                if (left is not null)
                 {
                     left.PropertyChanged -= LeftPropertyChanged;
                     left.Dispose();
                 }
-                if (right is { })
+                if (right is not null)
                 {
                     right.PropertyChanged -= RightPropertyChanged;
                     right.Dispose();
@@ -106,9 +106,9 @@ namespace Cogs.ActiveExpressions
             var rightValue = right.Value;
             try
             {
-                if (leftFault is { })
+                if (leftFault is not null)
                     Fault = leftFault;
-                else if (rightFault is { })
+                else if (rightFault is not null)
                     Fault = rightFault;
                 else
                     Value = @delegate?.Invoke(leftValue, rightValue);
@@ -121,7 +121,7 @@ namespace Cogs.ActiveExpressions
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveBinaryExpression), left, method, NodeType, right, options);
 
-        protected override bool GetShouldValueBeDisposed() => method is { } && ApplicableOptions.IsMethodReturnValueDisposed(method);
+        protected override bool GetShouldValueBeDisposed() => method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
 
         void LeftPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 

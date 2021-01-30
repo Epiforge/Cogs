@@ -21,7 +21,7 @@ namespace Cogs.ActiveExpressions
                 this.instancesKey = instancesKey;
                 method = methodCallExpression.Method;
                 fastMethod = FastMethodInfo.Get(method);
-                if (methodCallExpression.Object is { })
+                if (methodCallExpression.Object is not null)
                 {
                     @object = Create(methodCallExpression.Object, options, deferEvaluation);
                     @object.PropertyChanged += ObjectPropertyChanged;
@@ -38,7 +38,7 @@ namespace Cogs.ActiveExpressions
             catch (Exception ex)
             {
                 DisposeValueIfNecessaryAndPossible();
-                if (@object is { })
+                if (@object is not null)
                 {
                     @object.PropertyChanged -= ObjectPropertyChanged;
                     @object.Dispose();
@@ -74,7 +74,7 @@ namespace Cogs.ActiveExpressions
             if (result)
             {
                 DisposeValueIfNecessaryAndPossible();
-                if (@object is { })
+                if (@object is not null)
                 {
                     @object.PropertyChanged -= ObjectPropertyChanged;
                     @object.Dispose();
@@ -97,10 +97,10 @@ namespace Cogs.ActiveExpressions
             try
             {
                 var objectFault = @object?.Fault;
-                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is { }).FirstOrDefault();
-                if (objectFault is { })
+                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is not null).FirstOrDefault();
+                if (objectFault is not null)
                     Fault = objectFault;
-                else if (argumentFault is { })
+                else if (argumentFault is not null)
                     Fault = argumentFault;
                 else
                     Value = fastMethod.Invoke(@object?.Value, arguments.Select(argument => argument.Value).ToArray());

@@ -31,7 +31,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (--disposalCount > 0)
                     return false;
-                if (expressionInstancesKey is { })
+                if (expressionInstancesKey is not null)
                     expressionInstances.Remove(expressionInstancesKey);
                 else
                     instances.Remove(instancesKey!);
@@ -101,7 +101,7 @@ namespace Cogs.ActiveExpressions
         class ExpressionInstancesKeyComparer : IEqualityComparer<ExpressionInstancesKey>
         {
             public bool Equals(ExpressionInstancesKey x, ExpressionInstancesKey y) =>
-                ((x.Expression is null && y.Expression is null) || (x.Expression is { } && y.Expression is { } && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression))) && ((x.Options is null && y.Options is null) || (x.Options is { } && y.Options is { } && x.Options.Equals(y.Options)));
+                ((x.Expression is null && y.Expression is null) || (x.Expression is not null && y.Expression is not null && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression))) && ((x.Options is null && y.Options is null) || (x.Options is not null && y.Options is not null && x.Options.Equals(y.Options)));
 
             public int GetHashCode(ExpressionInstancesKey obj) =>
                 HashCode.Combine(obj.Expression is null ? 0 : ExpressionEqualityComparer.Default.GetHashCode(obj.Expression), obj.Options);

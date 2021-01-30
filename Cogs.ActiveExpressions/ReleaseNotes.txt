@@ -1,1 +1,1 @@
-We made some revisions to how we utilized new nullable reference type features in C# 9.
+We enabled Code Analysis of this package and made adjustments to comply with its recommendations.

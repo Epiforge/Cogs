@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="visit">The <see cref="Expression"/> for which to immediately reduce the elements</param>
         public ExpressionDiagramVisitor(Expression? visit = null)
         {
-            if (visit is { })
+            if (visit is not null)
                 Visit(visit);
         }
 
@@ -37,7 +38,7 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         public override Expression? Visit(Expression? node)
         {
-            if (node is { })
+            if (node is not null)
             {
                 elements.Add(node.CanReduce);
                 elements.Add(node.NodeType);
@@ -53,6 +54,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         protected override Expression VisitBinary(BinaryExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.IsLifted);
             elements.Add(node.IsLiftedToNull);
             elements.Add(node.Method);
@@ -67,6 +70,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override Expression VisitBlock(BlockExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Expressions.Count);
             elements.Add(node.Variables.Count);
             return base.VisitBlock(node);
@@ -80,6 +85,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override CatchBlock VisitCatchBlock(CatchBlock node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.GetType());
             elements.Add(node.Test);
             return base.VisitCatchBlock(node);
@@ -92,6 +99,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         protected override Expression VisitConstant(ConstantExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Value);
             return base.VisitConstant(node);
         }
@@ -104,6 +113,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override Expression VisitDebugInfo(DebugInfoExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Document);
             elements.Add(node.EndColumn);
             elements.Add(node.EndLine);
@@ -121,6 +132,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override Expression VisitDynamic(DynamicExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Binder);
             elements.Add(node.DelegateType);
             return base.VisitDynamic(node);
@@ -134,6 +147,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override ElementInit VisitElementInit(ElementInit node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.GetType());
             elements.Add(node.AddMethod);
             return base.VisitElementInit(node);
@@ -147,6 +162,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override Expression VisitGoto(GotoExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Kind);
             return base.VisitGoto(node);
         }
@@ -158,6 +175,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         protected override Expression VisitIndex(IndexExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Indexer);
             return base.VisitIndex(node);
         }
@@ -170,6 +189,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override LabelTarget VisitLabelTarget(LabelTarget node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.GetType());
             elements.Add(node.Name);
             return base.VisitLabelTarget(node);
@@ -183,6 +204,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override Expression VisitLambda<T>(Expression<T> node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.ReturnType);
             elements.Add(node.TailCall);
             ++parameterSet;
@@ -199,6 +222,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         protected override Expression VisitMember(MemberExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Member);
             return base.VisitMember(node);
         }
@@ -211,6 +236,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override MemberAssignment VisitMemberAssignment(MemberAssignment node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.GetType());
             elements.Add(node.BindingType);
             elements.Add(node.Member);
@@ -225,6 +252,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override MemberBinding VisitMemberBinding(MemberBinding node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.GetType());
             elements.Add(node.BindingType);
             elements.Add(node.Member);
@@ -239,6 +268,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override MemberListBinding VisitMemberListBinding(MemberListBinding node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.GetType());
             elements.Add(node.BindingType);
             elements.Add(node.Member);
@@ -253,6 +284,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override MemberMemberBinding VisitMemberMemberBinding(MemberMemberBinding node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.GetType());
             elements.Add(node.BindingType);
             elements.Add(node.Member);
@@ -266,6 +299,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Method);
             return base.VisitMethodCall(node);
         }
@@ -277,6 +312,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         protected override Expression VisitNew(NewExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Constructor);
             elements.AddRange(node.Members ?? Enumerable.Empty<MemberInfo>());
             return base.VisitNew(node);
@@ -303,6 +340,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override Expression VisitRuntimeVariables(RuntimeVariablesExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Variables.Count);
             return base.VisitRuntimeVariables(node);
         }
@@ -315,6 +354,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override Expression VisitSwitch(SwitchExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Cases.Count);
             elements.Add(node.Comparison);
             return base.VisitSwitch(node);
@@ -328,6 +369,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override SwitchCase VisitSwitchCase(SwitchCase node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.GetType());
             elements.Add(node.TestValues.Count);
             return base.VisitSwitchCase(node);
@@ -341,6 +384,8 @@ namespace Cogs.ActiveExpressions
         [ExcludeFromCodeCoverage]
         protected override Expression VisitTry(TryExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.Handlers.Count);
             return base.VisitTry(node);
         }
@@ -352,6 +397,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         protected override Expression VisitTypeBinary(TypeBinaryExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.TypeOperand);
             return base.VisitTypeBinary(node);
         }
@@ -363,6 +410,8 @@ namespace Cogs.ActiveExpressions
         /// <returns><paramref name="node"/></returns>
         protected override Expression VisitUnary(UnaryExpression node)
         {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
             elements.Add(node.IsLifted);
             elements.Add(node.IsLiftedToNull);
             elements.Add(node.Method);
