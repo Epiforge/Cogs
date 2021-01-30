@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace Cogs.Collections.Synchronized
     /// </summary>
     /// <typeparam name="TKey">The type of keys in the read-only dictionary</typeparam>
     /// <typeparam name="TValue">The type of values in the read-only dictionary</typeparam>
+    [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
     public class ReadOnlySynchronizedObservableRangeDictionary<TKey, TValue> : ReadOnlyObservableRangeDictionary<TKey, TValue>, ISynchronizedObservableRangeDictionary<TKey, TValue>
     {
         /// <summary>

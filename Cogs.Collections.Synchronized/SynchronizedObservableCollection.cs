@@ -177,7 +177,7 @@ namespace Cogs.Collections.Synchronized
         protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
             base.OnCollectionChanged(e);
-            OnGenericCollectionChanged((NotifyGenericCollectionChangedEventArgs<T>)e);
+            OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<T>.FromNotifyCollectionChangedEventArgs(e));
         }
 
         /// <summary>

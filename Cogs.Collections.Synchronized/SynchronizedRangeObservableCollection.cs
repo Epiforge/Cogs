@@ -106,7 +106,7 @@ namespace Cogs.Collections.Synchronized
             var removed = new List<T>();
             for (var i = 0; i < Items.Count;)
             {
-                if (await asyncPredicate(Items[i]))
+                if (await asyncPredicate(Items[i]).ConfigureAwait(false))
                     removed.Add(GetAndRemoveAt(i));
                 else
                     ++i;
@@ -238,7 +238,7 @@ namespace Cogs.Collections.Synchronized
         /// </summary>
         /// <param name="asyncPredicate">An asynchronous predicate used to determine whether to remove an object from the <see cref="SynchronizedRangeObservableCollection{T}"/></param>
         /// <returns>The number of items that were removed</returns>
-        public Task<int> RemoveAllAsync(Func<T, Task<bool>> asyncPredicate) => this.ExecuteAsync(async () => (await GetAndRemoveAllAsync(asyncPredicate)).Count);
+        public Task<int> RemoveAllAsync(Func<T, Task<bool>> asyncPredicate) => this.ExecuteAsync(async () => (await GetAndRemoveAllAsync(asyncPredicate).ConfigureAwait(false)).Count);
 
         /// <summary>
         /// Removes the specified items from the <see cref="SynchronizedRangeObservableCollection{T}"/>

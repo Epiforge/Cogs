@@ -70,6 +70,7 @@ namespace Cogs.Collections.Synchronized
             if (disposing && !IsDisposed)
             {
                 queueCancellationTokenSource.Cancel();
+                queueCancellationTokenSource.Dispose();
                 Interlocked.Exchange(ref count, 0);
                 countChanged.Set();
                 countChanged.Reset();
@@ -173,7 +174,7 @@ namespace Cogs.Collections.Synchronized
             {
                 if (Interlocked.Read(ref count) == 0)
                     return;
-                await countChanged.WaitAsync();
+                await countChanged.WaitAsync().ConfigureAwait(false);
             }
         }
 
@@ -187,7 +188,7 @@ namespace Cogs.Collections.Synchronized
             {
                 if (Interlocked.Read(ref count) == 0)
                     return;
-                await countChanged.WaitAsync(cancellationToken);
+                await countChanged.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
         }
     }

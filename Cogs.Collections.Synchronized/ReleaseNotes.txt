@@ -1,1 +1,1 @@
-This release requires Cogs.Collections 1.7.4 and Cogs.Threading 1.7.1 at minimum.
+We enabled Code Analysis of this package and made adjustments to comply with its recommendations.

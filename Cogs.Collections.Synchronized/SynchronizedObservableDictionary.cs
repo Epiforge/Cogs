@@ -445,7 +445,7 @@ namespace Cogs.Collections.Synchronized
         {
             var removing = new List<KeyValuePair<TKey, TValue>>();
             foreach (var kv in this.ToList())
-                if (await asyncPredicate(kv.Key, kv.Value))
+                if (await asyncPredicate(kv.Key, kv.Value).ConfigureAwait(false))
                     removing.Add(kv);
             var removedKeys = new HashSet<TKey>(RemoveRange(removing.Select(kv => kv.Key)));
             return (IReadOnlyList<KeyValuePair<TKey, TValue>>)removing.Where(kv => removedKeys.Contains(kv.Key)).ToImmutableArray();
