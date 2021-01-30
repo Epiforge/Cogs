@@ -3,9 +3,11 @@
     <PropertyGroup>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
         <Authors>Epiforge</Authors>
+        <CodeAnalysisRuleSet>..\.ruleset</CodeAnalysisRuleSet>
         <Company>Epiforge</Company>
         <Description>Cogs for building components. Includes PropertyChangeNotifier.</Description>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <LangVersion>latest</LangVersion>
@@ -17,15 +19,8 @@
         <Product>Components Cog</Product>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.0.6</Version>
+        <Version>1.0.7</Version>
     </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\NuGet.jpg">
-            <Pack>True</Pack>
-            <PackagePath></PackagePath>
-        </None>
-    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0">
@@ -42,5 +37,16 @@
             <PackageReleaseNotes>@(ReleaseNoteLines, '%0a')</PackageReleaseNotes>
         </PropertyGroup>
     </Target>
+
+    <ItemGroup>
+        <Compile Include="..\Common\AssemblyInfo.cs" Link="AssemblyInfo.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\NuGet.jpg">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
+    </ItemGroup>
 
 </Project>
