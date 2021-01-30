@@ -1,1 +1,1 @@
-We enabled Code Analysis of this package and made adjustments to comply with its recommendations.
+We updated this package's references to other packages.
