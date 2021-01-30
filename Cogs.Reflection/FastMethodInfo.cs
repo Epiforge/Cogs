@@ -47,12 +47,7 @@ namespace Cogs.Reflection
         /// <param name="instance">The object on which to invoke the method (if a method is static, this argument is ignored)</param>
         /// <param name="arguments">An argument list for the invoked method</param>
         /// <returns>An object containing the return value of the invoked method</returns>
-        public object? Invoke(object? instance, params object?[] arguments)
-        {
-            if (arguments is null)
-                throw new ArgumentNullException(nameof(arguments));
-            return @delegate(instance, arguments);
-        }
+        public object? Invoke(object? instance, params object?[] arguments) => @delegate(instance, arguments);
 
         /// <summary>
         /// Gets the <see cref="System.Reflection.MethodInfo"/> reflecting the method this <see cref="FastMethodInfo"/> will invoke

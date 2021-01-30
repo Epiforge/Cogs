@@ -38,12 +38,7 @@ namespace Cogs.Reflection
         /// </summary>
         /// <param name="arguments">An argument list for the invoked constructor</param>
         /// <returns>The constructed object</returns>
-        public object Invoke(params object?[] arguments)
-        {
-            if (arguments is null)
-                throw new ArgumentNullException(nameof(arguments));
-            return @delegate(arguments);
-        }
+        public object Invoke(params object?[] arguments) => @delegate(arguments);
 
         /// <summary>
         /// Gets the <see cref="System.Reflection.ConstructorInfo"/> reflecting the method this <see cref="FastConstructorInfo"/> will invoke
