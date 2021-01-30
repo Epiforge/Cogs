@@ -22,7 +22,7 @@ namespace Cogs.Collections
             if (elements is null)
                 throw new ArgumentNullException(nameof(elements));
             this.elements = elements.ToImmutableArray();
-            hashCode = HashCode.Combine(typeof(EquatableList<T>), this.elements.FirstOrDefault());
+            hashCode = HashCode.Combine(typeof(EquatableList<T>), this.elements.Count > 0 ? this.elements[0] : default);
             foreach (var element in this.elements.Skip(1))
                 hashCode = HashCode.Combine(hashCode, element);
         }
@@ -34,11 +34,13 @@ namespace Cogs.Collections
         /// <param name="equalityComparer">The equality comparer to use to determine whether elements are equal</param>
         public EquatableList(IReadOnlyList<T> elements, IEqualityComparer<T> equalityComparer)
         {
+            if (equalityComparer is null)
+                throw new ArgumentNullException(nameof(equalityComparer));
             EqualityComparer = equalityComparer;
             if (elements is null)
                 throw new ArgumentNullException(nameof(elements));
             this.elements = elements.ToImmutableArray();
-            hashCode = HashCode.Combine(typeof(EquatableList<T>), EqualityComparer.GetHashCode(this.elements.FirstOrDefault()));
+            hashCode = HashCode.Combine(typeof(EquatableList<T>), this.elements.Count > 0 ? EqualityComparer.GetHashCode(this.elements[0]) : 0);
             foreach (var element in this.elements.Skip(1))
                 hashCode = HashCode.Combine(hashCode, EqualityComparer.GetHashCode(element));
         }
@@ -77,7 +79,7 @@ namespace Cogs.Collections
         /// </summary>
         /// <param name="other">The <see cref="EquatableList{T}"/> to compare with the current <see cref="EquatableList{T}"/></param>
         /// <returns><c>true</c> if the specified <see cref="EquatableList{T}"/> is equal to the current <see cref="EquatableList{T}"/>; otherwise, <c>false</c></returns>
-        public bool Equals(EquatableList<T> other) => (EqualityComparer is { } && EqualityComparer.Equals(other.EqualityComparer) && Elements.SequenceEqual(other.Elements, EqualityComparer)) || (other.EqualityComparer is null && Elements.SequenceEqual(other.Elements));
+        public bool Equals(EquatableList<T> other) => (EqualityComparer is not null && EqualityComparer.Equals(other.EqualityComparer) && Elements.SequenceEqual(other.Elements, EqualityComparer)) || (other.EqualityComparer is null && Elements.SequenceEqual(other.Elements));
 
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="EquatableList{T}"/>

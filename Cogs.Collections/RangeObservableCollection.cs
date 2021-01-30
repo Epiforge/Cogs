@@ -52,6 +52,8 @@ namespace Cogs.Collections
         /// <returns>The items that were removed</returns>
         public IReadOnlyList<T> GetAndRemoveAll(Func<T, bool> predicate)
         {
+            if (predicate is null)
+                throw new ArgumentNullException(nameof(predicate));
             var removed = new List<T>();
             for (var i = 0; i < Items.Count;)
             {
@@ -96,6 +98,8 @@ namespace Cogs.Collections
         /// <param name="items">The objects to insert</param>
         public void InsertRange(int index, IEnumerable<T> items)
         {
+            if (items is null)
+                throw new ArgumentNullException(nameof(items));
             var originalIndex = index;
             --index;
             var list = new List<T>();
@@ -150,7 +154,7 @@ namespace Cogs.Collections
         protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
             base.OnCollectionChanged(e);
-            OnGenericCollectionChanged((NotifyGenericCollectionChangedEventArgs<T>)e);
+            OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<T>.FromNotifyCollectionChangedEventArgs(e));
         }
 
         /// <summary>
@@ -173,6 +177,8 @@ namespace Cogs.Collections
         /// <returns>The number of items that were removed</returns>
         public void RemoveRange(IEnumerable<T> items)
         {
+            if (items is null)
+                throw new ArgumentNullException(nameof(items));
             foreach (var item in items)
             {
                 var index = Items.IndexOf(item);
@@ -218,6 +224,8 @@ namespace Cogs.Collections
         /// <param name="items">The collection of replacement items</param>
         public void ReplaceAll(IEnumerable<T> items)
         {
+            if (items is null)
+                throw new ArgumentNullException(nameof(items));
             var oldItems = new T[Items.Count];
             Items.CopyTo(oldItems, 0);
             Items.Clear();
@@ -256,7 +264,7 @@ namespace Cogs.Collections
             }
             var list = new List<T>();
             index -= 1;
-            if (collection is { })
+            if (collection is not null)
                 foreach (var element in collection)
                 {
                     Items.Insert(++index, element);
@@ -286,6 +294,8 @@ namespace Cogs.Collections
         /// <param name="newCollection">The collection of items</param>
         public void Reset(IEnumerable<T> newCollection)
         {
+            if (newCollection is null)
+                throw new ArgumentNullException(nameof(newCollection));
             var previousCount = Items.Count;
             Items.Clear();
             foreach (var element in newCollection)

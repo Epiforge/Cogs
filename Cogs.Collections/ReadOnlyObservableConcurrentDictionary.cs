@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cogs.Collections
 {
@@ -12,6 +13,7 @@ namespace Cogs.Collections
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
+    [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
     public class ReadOnlyObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifier, ICollection, ICollection<KeyValuePair<TKey, TValue>>, IEnumerable, IEnumerable<KeyValuePair<TKey, TValue>>, IDictionary, IDictionary<TKey, TValue>, IHashKeys<TKey>, INotifyCollectionChanged, INotifyGenericCollectionChanged<KeyValuePair<TKey, TValue>>, INotifyDictionaryChanged, INotifyDictionaryChanged<TKey, TValue>, IReadOnlyCollection<KeyValuePair<TKey, TValue>>, IReadOnlyDictionary<TKey, TValue>
     {
         /// <summary>

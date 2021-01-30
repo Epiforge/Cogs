@@ -33,7 +33,7 @@ namespace Cogs.Collections
             switch (action)
             {
                 case NotifyCollectionChangedAction.Reset:
-                    if (changedItem is { })
+                    if (changedItem is not null)
                         throw new ArgumentException(nameof(changedItem));
                     InitializeAdd(action, null, -1);
                     break;
@@ -57,7 +57,7 @@ namespace Cogs.Collections
             switch (action)
             {
                 case NotifyCollectionChangedAction.Reset:
-                    if (changedItem is { })
+                    if (changedItem is not null)
                         throw new ArgumentException(nameof(changedItem));
                     if (index != -1)
                         throw new ArgumentOutOfRangeException(nameof(index));
@@ -82,7 +82,7 @@ namespace Cogs.Collections
             switch (action)
             {
                 case NotifyCollectionChangedAction.Reset:
-                    if (changedItems is { })
+                    if (changedItems is not null)
                         throw new ArgumentException(nameof(changedItems));
                     InitializeAdd(action, null, -1);
                     break;
@@ -108,7 +108,7 @@ namespace Cogs.Collections
             switch (action)
             {
                 case NotifyCollectionChangedAction.Reset:
-                    if (changedItems is { })
+                    if (changedItems is not null)
                         throw new ArgumentException(nameof(changedItems));
                     if (startingIndex != -1)
                         throw new ArgumentOutOfRangeException(nameof(startingIndex));
@@ -285,35 +285,36 @@ namespace Cogs.Collections
         public int OldStartingIndex { get; private set; }
 
         /// <summary>
-        /// Defines an explicit conversion of a <see cref="NotifyCollectionChangedEventArgs"/> to a <see cref="NotifyGenericCollectionChangedEventArgs{T}"/>
+        /// Converts this <see cref="NotifyGenericCollectionChangedEventArgs{T}"/> to a <see cref="NotifyCollectionChangedEventArgs"/>
         /// </summary>
-        /// <param name="e">The <see cref="NotifyCollectionChangedEventArgs"/></param>
-        public static explicit operator NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedEventArgs e)
+        public NotifyCollectionChangedEventArgs ToNotifyCollectionChangedEventArgs()
         {
-            return e.Action switch
+            return Action switch
             {
-                NotifyCollectionChangedAction.Add => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Add, e.NewItems.Cast<T>().ToImmutableArray(), e.NewStartingIndex),
-                NotifyCollectionChangedAction.Move => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Move, (e.NewItems ?? e.OldItems).Cast<T>().ToImmutableArray(), e.NewStartingIndex, e.OldStartingIndex),
-                NotifyCollectionChangedAction.Remove => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Remove, e.OldItems.Cast<T>().ToImmutableArray(), e.OldStartingIndex),
-                NotifyCollectionChangedAction.Replace => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Replace, e.NewItems.Cast<T>().ToImmutableArray(), e.OldItems.Cast<T>().ToImmutableArray(), e.NewStartingIndex),
-                NotifyCollectionChangedAction.Reset => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Reset),
+                NotifyCollectionChangedAction.Add => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, NewItems, NewStartingIndex),
+                NotifyCollectionChangedAction.Move => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, NewItems, NewStartingIndex, OldStartingIndex),
+                NotifyCollectionChangedAction.Remove => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, OldItems, OldStartingIndex),
+                NotifyCollectionChangedAction.Replace => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, NewItems, OldItems, NewStartingIndex),
+                NotifyCollectionChangedAction.Reset => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset),
                 _ => throw new NotSupportedException(),
             };
         }
 
         /// <summary>
-        /// Defines an implicit conversion of a <see cref="NotifyGenericCollectionChangedEventArgs{T}"/> to a <see cref="NotifyCollectionChangedEventArgs"/>
+        /// Converts of a <see cref="NotifyCollectionChangedEventArgs"/> to a <see cref="NotifyGenericCollectionChangedEventArgs{T}"/>
         /// </summary>
-        /// <param name="e">The <see cref="NotifyGenericCollectionChangedEventArgs{T}"/></param>
-        public static implicit operator NotifyCollectionChangedEventArgs(NotifyGenericCollectionChangedEventArgs<T> e)
+        /// <param name="notifyCollectionChangedEventArgs">The <see cref="NotifyCollectionChangedEventArgs"/></param>
+        public static NotifyGenericCollectionChangedEventArgs<T> FromNotifyCollectionChangedEventArgs(NotifyCollectionChangedEventArgs notifyCollectionChangedEventArgs)
         {
-            return e.Action switch
+            if (notifyCollectionChangedEventArgs is null)
+                throw new ArgumentNullException(nameof(notifyCollectionChangedEventArgs));
+            return notifyCollectionChangedEventArgs.Action switch
             {
-                NotifyCollectionChangedAction.Add => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, e.NewItems, e.NewStartingIndex),
-                NotifyCollectionChangedAction.Move => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, e.NewItems, e.NewStartingIndex, e.OldStartingIndex),
-                NotifyCollectionChangedAction.Remove => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, e.OldItems, e.OldStartingIndex),
-                NotifyCollectionChangedAction.Replace => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, e.NewItems, e.OldItems, e.NewStartingIndex),
-                NotifyCollectionChangedAction.Reset => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset),
+                NotifyCollectionChangedAction.Add => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Add, notifyCollectionChangedEventArgs.NewItems.Cast<T>().ToImmutableArray(), notifyCollectionChangedEventArgs.NewStartingIndex),
+                NotifyCollectionChangedAction.Move => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Move, (notifyCollectionChangedEventArgs.NewItems ?? notifyCollectionChangedEventArgs.OldItems).Cast<T>().ToImmutableArray(), notifyCollectionChangedEventArgs.NewStartingIndex, notifyCollectionChangedEventArgs.OldStartingIndex),
+                NotifyCollectionChangedAction.Remove => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Remove, notifyCollectionChangedEventArgs.OldItems.Cast<T>().ToImmutableArray(), notifyCollectionChangedEventArgs.OldStartingIndex),
+                NotifyCollectionChangedAction.Replace => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Replace, notifyCollectionChangedEventArgs.NewItems.Cast<T>().ToImmutableArray(), notifyCollectionChangedEventArgs.OldItems.Cast<T>().ToImmutableArray(), notifyCollectionChangedEventArgs.NewStartingIndex),
+                NotifyCollectionChangedAction.Reset => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Reset),
                 _ => throw new NotSupportedException(),
             };
         }

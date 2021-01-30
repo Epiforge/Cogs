@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Cogs.Collections
@@ -11,6 +12,7 @@ namespace Cogs.Collections
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
+    [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
     public class NullableKeySortedDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, ISortKeys<TKey>
     {
         /// <summary>
@@ -22,7 +24,12 @@ namespace Cogs.Collections
         /// Initializes a new instance of the <see cref="NullableKeySortedDictionary{TKey, TValue}"/> class that contains elements copied from the specified <see cref="IDictionary{TKey, TValue}"/> and uses the default <see cref="IComparer{T}"/> implementation for the key type
         /// </summary>
         /// <param name="dictionary">The <see cref="IDictionary{TKey, TValue}"/> whose elements are copied to the new <see cref="ObservableSortedDictionary{TKey, TValue}"/></param>
-        public NullableKeySortedDictionary(IDictionary<TKey, TValue> dictionary) : this() => AddRange(dictionary);
+        public NullableKeySortedDictionary(IDictionary<TKey, TValue> dictionary) : this()
+        {
+            if (dictionary is null)
+                throw new ArgumentNullException(nameof(dictionary));
+            AddRange(dictionary);
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NullableKeySortedDictionary{TKey, TValue}"/> class that is empty and uses the specified <see cref="IComparer{T}"/> implementation to compare keys
@@ -35,7 +42,12 @@ namespace Cogs.Collections
         /// </summary>
         /// <param name="dictionary">The <see cref="IDictionary{TKey, TValue}"/> whose elements are copied to the new <see cref="NullableKeySortedDictionary{TKey, TValue}"/></param>
         /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys, or <c>null</c> to use the default <see cref="Comparer{T}"/> for the type of the key</param>
-        public NullableKeySortedDictionary(IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer) : this(comparer) => AddRange(dictionary);
+        public NullableKeySortedDictionary(IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer) : this(comparer)
+        {
+            if (dictionary is null)
+                throw new ArgumentNullException(nameof(dictionary));
+            AddRange(dictionary);
+        }
 
         readonly SortedDictionary<TKey, TValue> dict;
         bool hasNullKeyedValue = false;

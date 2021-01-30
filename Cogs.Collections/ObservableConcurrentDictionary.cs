@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Cogs.Collections
@@ -15,6 +16,7 @@ namespace Cogs.Collections
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
+    [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
     public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifier, ICollection, ICollection<KeyValuePair<TKey, TValue>>, IEnumerable, IEnumerable<KeyValuePair<TKey, TValue>>, IDictionary, IDictionary<TKey, TValue>, IHashKeys<TKey>, INotifyCollectionChanged, INotifyGenericCollectionChanged<KeyValuePair<TKey, TValue>>, INotifyDictionaryChanged, INotifyDictionaryChanged<TKey, TValue>, IReadOnlyCollection<KeyValuePair<TKey, TValue>>, IReadOnlyDictionary<TKey, TValue>
     {
         /// <summary>
@@ -342,7 +344,7 @@ namespace Cogs.Collections
         public virtual void Clear()
         {
             var currentCd = cd;
-            if (comparer is { })
+            if (comparer is not null)
             {
                 if (concurrencyLevel is { } cl)
                 {
@@ -473,7 +475,9 @@ namespace Cogs.Collections
         /// <param name="e">The event arguments for <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/></param>
         protected virtual void OnChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e)
         {
-            if (CollectionChanged is { })
+            if (e is null)
+                throw new ArgumentNullException(nameof(e));
+            if (CollectionChanged is not null)
                 switch (e.Action)
                 {
                     case NotifyDictionaryChangedAction.Add:
@@ -491,7 +495,7 @@ namespace Cogs.Collections
                     default:
                         throw new NotSupportedException();
                 }
-            if (GenericCollectionChanged is { })
+            if (GenericCollectionChanged is not null)
                 switch (e.Action)
                 {
                     case NotifyDictionaryChangedAction.Add:
@@ -509,7 +513,7 @@ namespace Cogs.Collections
                     default:
                         throw new NotSupportedException();
                 }
-            if (DictionaryChangedBoxed is { })
+            if (DictionaryChangedBoxed is not null)
                 switch (e.Action)
                 {
                     case NotifyDictionaryChangedAction.Add:
@@ -572,7 +576,7 @@ namespace Cogs.Collections
         /// </summary>
         public virtual void Reset()
         {
-            if (comparer is { })
+            if (comparer is not null)
             {
                 if (concurrencyLevel is { } cl)
                 {
@@ -694,36 +698,6 @@ namespace Cogs.Collections
             catch (ValueComparisonUnequalException)
             {
                 return false;
-            }
-        }
-
-        /// <summary>
-        /// Represents when the valueFactory used by <see cref="TryUpdate(TKey, TValue, TValue)"/> finds the oldValue and comparisonValue are unequal
-        /// </summary>
-        protected class ValueComparisonUnequalException : Exception
-        {
-            /// <summary>
-            /// Initializes a new instance of the <see cref="ValueComparisonUnequalException"/> class
-            /// </summary>
-            public ValueComparisonUnequalException() : base("the oldValue and comparisonValue are unequal")
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref="ValueComparisonUnequalException"/> class
-            /// </summary>
-            /// <param name="message">The message that describes the error</param>
-            public ValueComparisonUnequalException(string message) : base(message)
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref="ValueComparisonUnequalException"/> class
-            /// </summary>
-            /// <param name="message">The message that describes the error</param>
-            /// <param name="innerException">The exception that is the cause of the current exception, or a null reference if no inner exception is specified</param>
-            public ValueComparisonUnequalException(string message, Exception innerException) : base(message, innerException)
-            {
             }
         }
     }

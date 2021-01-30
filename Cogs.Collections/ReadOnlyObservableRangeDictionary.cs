@@ -17,6 +17,8 @@ namespace Cogs.Collections
         /// <param name="observableRangeDictionary">The <see cref="IObservableRangeDictionary{TKey, TValue}"/> around which to wrap</param>
         public ReadOnlyObservableRangeDictionary(IObservableRangeDictionary<TKey, TValue> observableRangeDictionary) : base(observableRangeDictionary)
         {
+            if (observableRangeDictionary is null)
+                throw new ArgumentNullException(nameof(observableRangeDictionary));
             observableRangeDictionary.CollectionChanged += HandleCollectionChanged;
             observableRangeDictionary.GenericCollectionChanged += HandleGenericCollectionChanged;
             ((INotifyDictionaryChanged)observableRangeDictionary).DictionaryChanged += HandleDictionaryChanged;

@@ -21,6 +21,10 @@ namespace Cogs.Collections
         /// <returns>The index of the first element that satisfies the predicate; or, <c>-1</c> if none did</returns>
         public static int FindIndex<TSource>(this IEnumerable<TSource> source, Predicate<TSource> predicate)
         {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
+            if (predicate is null)
+                throw new ArgumentNullException(nameof(predicate));
             if (source is TSource[] typedArray)
                 return Array.FindIndex(typedArray, predicate);
             if (source is List<TSource> genericList)
@@ -44,6 +48,10 @@ namespace Cogs.Collections
         /// <returns>The index of the last element that satisfies the predicate; or, <c>-1</c> if none did</returns>
         public static int FindLastIndex<TSource>(this IEnumerable<TSource> source, Predicate<TSource> predicate)
         {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
+            if (predicate is null)
+                throw new ArgumentNullException(nameof(predicate));
             if (source is TSource[] typedArray)
                 return Array.FindLastIndex(typedArray, predicate);
             if (source is List<TSource> genericList)
@@ -98,6 +106,10 @@ namespace Cogs.Collections
         /// <returns>The indicies of the elements that satisfy the predicate</returns>
         public static IEnumerable<int> FindIndicies<TSource>(this IEnumerable<TSource> source, Predicate<TSource> predicate)
         {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
+            if (predicate is null)
+                throw new ArgumentNullException(nameof(predicate));
             if (source is TSource[] typedArray)
                 return FindTypedIndicies(typedArray, predicate);
             if (source is List<TSource> genericList)

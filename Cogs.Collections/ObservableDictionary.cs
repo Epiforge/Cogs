@@ -15,6 +15,7 @@ namespace Cogs.Collections
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
+    [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
     public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, ICollection, ICollection<KeyValuePair<TKey, TValue>>, IDictionary, IDictionary<TKey, TValue>, IEnumerable, IEnumerable<KeyValuePair<TKey, TValue>>, IHashKeys<TKey>, IObservableRangeDictionary<TKey, TValue>, IReadOnlyCollection<KeyValuePair<TKey, TValue>>, IReadOnlyDictionary<TKey, TValue>
     {
         /// <summary>
@@ -211,6 +212,8 @@ namespace Cogs.Collections
         /// <param name="keyValuePairs">The key-value pairs to add</param>
         public virtual void AddRange(IReadOnlyList<KeyValuePair<TKey, TValue>> keyValuePairs)
         {
+            if (keyValuePairs is null)
+                throw new ArgumentNullException(nameof(keyValuePairs));
             if (keyValuePairs.Any(kvp => kvp.Key is null || gd.ContainsKey(kvp.Key)))
                 throw new ArgumentException("One of the keys was null or already found in the dictionary", nameof(keyValuePairs));
             NotifyCountChanging();
@@ -363,7 +366,9 @@ namespace Cogs.Collections
         /// <param name="e">The event arguments for <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/></param>
         protected virtual void OnChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e)
         {
-            if (CollectionChanged is { })
+            if (e is null)
+                throw new ArgumentNullException(nameof(e));
+            if (CollectionChanged is not null)
                 switch (e.Action)
                 {
                     case NotifyDictionaryChangedAction.Add:
@@ -381,7 +386,7 @@ namespace Cogs.Collections
                     default:
                         throw new NotSupportedException();
                 }
-            if (GenericCollectionChanged is { })
+            if (GenericCollectionChanged is not null)
                 switch (e.Action)
                 {
                     case NotifyDictionaryChangedAction.Add:
@@ -399,7 +404,7 @@ namespace Cogs.Collections
                     default:
                         throw new NotSupportedException();
                 }
-            if (DictionaryChangedBoxed is { })
+            if (DictionaryChangedBoxed is not null)
                 switch (e.Action)
                 {
                     case NotifyDictionaryChangedAction.Add:
@@ -448,6 +453,7 @@ namespace Cogs.Collections
         /// <param name="key">The key of the element to remove</param>
         /// <param name="value">The value that was removed</param>
         /// <returns><c>true</c> if the element is successfully removed; otherwise, <c>false</c> (this method also returns <c>false</c> if key was not found in the original <see cref="IDictionary{TKey, TValue}"/>)</returns>
+        [SuppressMessage("Code Analysis", "CA1021: Avoid out parameters")]
         public bool Remove(TKey key, out TValue? value)
         {
             bool valueRemoved;
@@ -518,6 +524,8 @@ namespace Cogs.Collections
         /// <returns>The key-value pairs of the elements that were removed</returns>
         public virtual IReadOnlyList<KeyValuePair<TKey, TValue>> RemoveAll(Func<TKey, TValue, bool> predicate)
         {
+            if (predicate is null)
+                throw new ArgumentNullException(nameof(predicate));
             var removed = new List<KeyValuePair<TKey, TValue>>();
             foreach (var kv in gd.ToList())
                 if (predicate(kv.Key, kv.Value))
@@ -536,6 +544,8 @@ namespace Cogs.Collections
         /// <returns>The keys of the elements that were found and removed</returns>
         public virtual IReadOnlyList<TKey> RemoveRange(IEnumerable<TKey> keys)
         {
+            if (keys is null)
+                throw new ArgumentNullException(nameof(keys));
             var removingKeyValuePairs = new List<KeyValuePair<TKey, TValue>>();
             foreach (var key in keys)
                 if (gd.TryGetValue(key, out var value))
@@ -561,6 +571,8 @@ namespace Cogs.Collections
         /// <param name="keyValuePairs">The replacement key-value pairs</param>
         public virtual void ReplaceRange(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs)
         {
+            if (keyValuePairs is null)
+                throw new ArgumentNullException(nameof(keyValuePairs));
             if (keyValuePairs.Any(kvp => !gd.ContainsKey(kvp.Key)))
                 throw new ArgumentException("One of the keys was not found in the dictionary", nameof(keyValuePairs));
             var oldItems = GetRange(keyValuePairs.Select(kv => kv.Key));
@@ -577,6 +589,8 @@ namespace Cogs.Collections
         /// <returns>The keys of the elements that were found and removed</returns>
         public virtual IReadOnlyList<TKey> ReplaceRange(IEnumerable<TKey> removeKeys, IEnumerable<KeyValuePair<TKey, TValue>> newKeyValuePairs)
         {
+            if (newKeyValuePairs is null)
+                throw new ArgumentNullException(nameof(newKeyValuePairs));
             var removingKeys = removeKeys.ToImmutableHashSet();
             if (newKeyValuePairs.Where(kvp => !removingKeys.Contains(kvp.Key)).Any(kvp => kvp.Key is null || gd.ContainsKey(kvp.Key)))
                 throw new ArgumentException("One of the new keys was null or already found in the dictionary", nameof(newKeyValuePairs));

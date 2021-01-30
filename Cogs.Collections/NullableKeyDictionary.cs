@@ -12,6 +12,7 @@ namespace Cogs.Collections
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
+    [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
     public class NullableKeyDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IHashKeys<TKey>, IReadOnlyDictionary<TKey, TValue>
     {
         /// <summary>
@@ -23,7 +24,12 @@ namespace Cogs.Collections
         /// Initializes a new instance of the <see cref="NullableKeyDictionary{TKey, TValue}"/> class that contains elements copied from the specified <see cref="IDictionary{TKey, TValue}"/> and uses the default equality comparer for the key type
         /// </summary>
         /// <param name="dictionary">The <see cref="IDictionary{TKey, TValue}"/> whose elements are copied to the new <see cref="ObservableDictionary{TKey, TValue}"/></param>
-        public NullableKeyDictionary(IDictionary<TKey, TValue> dictionary) : this() => AddRange(dictionary);
+        public NullableKeyDictionary(IDictionary<TKey, TValue> dictionary) : this()
+        {
+            if (dictionary is null)
+                throw new ArgumentNullException(nameof(dictionary));
+            AddRange(dictionary);
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NullableKeyDictionary{TKey, TValue}"/> class that is empty, has the default initial capacity, and uses the specified <see cref="IEqualityComparer{T}"/>
@@ -42,7 +48,12 @@ namespace Cogs.Collections
         /// </summary>
         /// <param name="dictionary">The <see cref="IDictionary{TKey, TValue}"/> whose elements are copied to the new <see cref="ObservableDictionary{TKey, TValue}"/></param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys, or <c>null</c> to use the default <see cref="EqualityComparer{T}"/> for the type of the key</param>
-        public NullableKeyDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> comparer) : this(comparer) => AddRange(dictionary);
+        public NullableKeyDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> comparer) : this(comparer)
+        {
+            if (dictionary is null)
+                throw new ArgumentNullException(nameof(dictionary));
+            AddRange(dictionary);
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NullableKeyDictionary{TKey, TValue}"/> class that is empty, has the specified initial capacity, and uses the specified <see cref="IEqualityComparer{T}"/>
@@ -198,6 +209,7 @@ namespace Cogs.Collections
         /// <param name="key">The key of the element to remove</param>
         /// <param name="value">The value that was removed</param>
         /// <returns><c>true</c> if the element is successfully removed; otherwise, <c>false</c> (this method also returns <c>false</c> if key was not found in the original <see cref="IDictionary{TKey, TValue}"/>)</returns>
+        [SuppressMessage("Code Analysis", "CA1021: Avoid out parameters")]
         public bool Remove(TKey key, out TValue? value)
         {
             if (key is null)
