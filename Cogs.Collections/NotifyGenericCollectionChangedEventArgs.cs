@@ -34,7 +34,7 @@ namespace Cogs.Collections
             {
                 case NotifyCollectionChangedAction.Reset:
                     if (changedItem is not null)
-                        throw new ArgumentException(nameof(changedItem));
+                        throw new ArgumentException($"{nameof(changedItem)} cannot be non-null when resetting the collection", nameof(changedItem));
                     InitializeAdd(action, null, -1);
                     break;
                 case NotifyCollectionChangedAction.Add:
@@ -58,7 +58,7 @@ namespace Cogs.Collections
             {
                 case NotifyCollectionChangedAction.Reset:
                     if (changedItem is not null)
-                        throw new ArgumentException(nameof(changedItem));
+                        throw new ArgumentException($"{nameof(changedItem)} cannot be non-null when resetting the collection", nameof(changedItem));
                     if (index != -1)
                         throw new ArgumentOutOfRangeException(nameof(index));
                     InitializeAdd(action, null, -1);
@@ -83,7 +83,7 @@ namespace Cogs.Collections
             {
                 case NotifyCollectionChangedAction.Reset:
                     if (changedItems is not null)
-                        throw new ArgumentException(nameof(changedItems));
+                        throw new ArgumentException($"{nameof(changedItems)} cannot be non-null when resetting the collection", nameof(changedItems));
                     InitializeAdd(action, null, -1);
                     break;
                 case NotifyCollectionChangedAction.Add:
@@ -109,7 +109,7 @@ namespace Cogs.Collections
             {
                 case NotifyCollectionChangedAction.Reset:
                     if (changedItems is not null)
-                        throw new ArgumentException(nameof(changedItems));
+                        throw new ArgumentException($"{nameof(changedItems)} cannot be non-null when resetting the collection", nameof(changedItems));
                     if (startingIndex != -1)
                         throw new ArgumentOutOfRangeException(nameof(startingIndex));
                     InitializeAdd(action, null, -1);
