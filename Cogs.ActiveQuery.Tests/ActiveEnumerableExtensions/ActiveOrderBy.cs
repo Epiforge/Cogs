@@ -31,9 +31,9 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void SelectorImplicitConversion()
         {
             Expression<Func<TestPerson, IComparable>> selector1 = person => person.Name.Length;
-            ActiveOrderingKeySelector<TestPerson> conversion1 = selector1;
+            var conversion1 = new ActiveOrderingKeySelector<TestPerson>(selector1);
             Expression<Func<TestPerson, IComparable>> selector2 = person => person.Name;
-            ActiveOrderingKeySelector<TestPerson> conversion2 = selector2;
+            var conversion2 = new ActiveOrderingKeySelector<TestPerson>(selector2);
             var people = TestPerson.CreatePeopleCollection();
             using var query = people.ActiveOrderBy(conversion1, conversion2);
             void checkMergedNames(string against) => Assert.AreEqual(against, string.Join(string.Empty, query.Select(person => person.Name)));

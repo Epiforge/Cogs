@@ -89,13 +89,13 @@ namespace Cogs.ActiveQuery
         {
             CollectionChanged?.Invoke(this, e);
             if (!isGenericCollectionNotifier)
-                GenericCollectionChanged?.Invoke(this, (NotifyGenericCollectionChangedEventArgs<TElement>)e);
+                GenericCollectionChanged?.Invoke(this, NotifyGenericCollectionChangedEventArgs<TElement>.FromNotifyCollectionChangedEventArgs(e));
         }
 
         void GenericCollectionChangedHandler(object sender, INotifyGenericCollectionChangedEventArgs<TElement> e)
         {
             if (!isCollectionNotifier)
-                CollectionChanged?.Invoke(this, (NotifyGenericCollectionChangedEventArgs<TElement>)e);
+                CollectionChanged?.Invoke(this, e.ToNotifyCollectionChangedEventArgs());
             GenericCollectionChanged?.Invoke(this, e);
         }
 

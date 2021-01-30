@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -17,6 +18,8 @@ namespace Cogs.ActiveQuery
     /// <summary>
     /// Provides a set of <c>static</c> (<c>Shared</c> in Visual Basic) methods for actively querying objects that implement <see cref="IReadOnlyDictionary{TKey, TValue}"/>
     /// </summary>
+    [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
+    [SuppressMessage("Code Analysis", "CA1506: Avoid excessive class coupling")]
     public static class ActiveDictionaryExtensions
     {
         #region All
@@ -303,7 +306,9 @@ namespace Cogs.ActiveQuery
             }
             try
             {
-                return new ActiveValue<int>(source.Count(), elementFaultChangeNotifier: elementFaultChangeNotifier);
+                if (source is null)
+                    throw new ArgumentNullException(nameof(source));
+                return new ActiveValue<int>(source.Count, elementFaultChangeNotifier: elementFaultChangeNotifier);
             }
             catch (Exception ex)
             {
@@ -1981,6 +1986,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">A <see cref="IReadOnlyDictionary{TKey, TValue}"/></param>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
         /// <returns>An <see cref="ActiveDictionary{TKey, TValue}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
         public static IActiveDictionary<TKey, TValue> SwitchContextEventually<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> source, SynchronizationContext synchronizationContext)
         {
             var notifier = source as INotifyDictionaryChanged<TKey, TValue>;
@@ -2492,6 +2498,8 @@ namespace Cogs.ActiveQuery
             }
             try
             {
+                if (source is null)
+                    throw new ArgumentNullException(nameof(source));
                 return new ActiveValue<TValue?>(source[key], elementFaultChangeNotifier: elementFaultChangeNotifier);
             }
             catch (Exception ex)
@@ -2558,7 +2566,11 @@ namespace Cogs.ActiveQuery
                 });
             }
             else
+            {
+                if (source is null)
+                    throw new ArgumentNullException(nameof(source));
                 return new ActiveValue<TValue?>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier);
+            }
         }
 
         #endregion ValueForOrDefault

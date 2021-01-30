@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -19,6 +20,8 @@ namespace Cogs.ActiveQuery
     /// <summary>
     /// Provides a set of <c>static</c> (<c>Shared</c> in Visual Basic) methods for actively querying objects that implement <see cref="IEnumerable{T}"/>
     /// </summary>
+    [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
+    [SuppressMessage("Code Analysis", "CA1506: Avoid excessive class coupling")]
     public static class ActiveEnumerableExtensions
     {
         #region Aggregate
@@ -3456,6 +3459,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">An <see cref="IEnumerable"/></param>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
         public static IActiveEnumerable<object> SwitchContextEventually(this IEnumerable source, SynchronizationContext synchronizationContext)
         {
             var notifier = source as INotifyCollectionChanged;
@@ -3524,6 +3528,7 @@ namespace Cogs.ActiveQuery
         /// <param name="source">An <see cref="IEnumerable{T}"/></param>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
         public static IActiveEnumerable<TSource> SwitchContextEventually<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext)
         {
             var genericNotifier = source as INotifyGenericCollectionChanged<TSource>;

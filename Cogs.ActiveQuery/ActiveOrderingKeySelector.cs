@@ -11,12 +11,6 @@ namespace Cogs.ActiveQuery
     public class ActiveOrderingKeySelector<T>
     {
         /// <summary>
-        /// Allows implicit conversion of strongly typed lambda expressions with the appropriate signature to be cast to a <see cref="ActiveOrderingKeySelector{T}"/>
-        /// </summary>
-        /// <param name="expression">The lambda expression</param>
-        public static implicit operator ActiveOrderingKeySelector<T>(Expression<Func<T, IComparable>> expression) => new ActiveOrderingKeySelector<T>(expression);
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="ActiveOrderingKeySelector{T}"/> class with the specified key extraction expression for sorting in ascending order
         /// </summary>
         /// <param name="expression">An expression to extract a key from an element</param>
