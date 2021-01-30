@@ -93,6 +93,7 @@ namespace Cogs.Threading
         /// </summary>
         /// <param name="d">The <see cref="SendOrPostCallback"/> delegate to call</param>
         /// <param name="state">The object passed to the delegate</param>
+        [SuppressMessage("Code Analysis", "CA1508: Avoid dead conditional code", Justification = "The analyzer is mistaken")]
         public override void Send(SendOrPostCallback d, object state)
         {
             using var signal = new ManualResetEventSlim(false);
