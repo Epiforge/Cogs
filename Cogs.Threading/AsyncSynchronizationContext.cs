@@ -34,7 +34,7 @@ namespace Cogs.Threading
 
         readonly bool allowDisposal;
         readonly BufferBlock<(SendOrPostCallback callback, object? state, ManualResetEventSlim? signal, Exception? exception)> queuedCallbacks;
-        [SuppressMessage("Code Analysis", "CA2213: Disposable fields should be disposed", Justification = "The analyzer is mistaken")] readonly CancellationTokenSource queuedCallbacksCancellationTokenSource;
+        readonly CancellationTokenSource queuedCallbacksCancellationTokenSource;
 
         async Task ProcessCallbacks()
         {
@@ -77,7 +77,10 @@ namespace Cogs.Threading
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
+            {
                 queuedCallbacksCancellationTokenSource.Cancel();
+                queuedCallbacksCancellationTokenSource.Dispose();
+            }
         }
 
         /// <summary>
