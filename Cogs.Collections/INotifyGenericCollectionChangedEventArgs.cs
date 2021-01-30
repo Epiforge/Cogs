@@ -33,5 +33,10 @@ namespace Cogs.Collections
         /// Gets the index at which a <see cref="NotifyCollectionChangedAction.Move"/>, <see cref="NotifyCollectionChangedAction.Remove"/>, or <see cref="NotifyCollectionChangedAction.Replace"/> action occurred
         /// </summary>
         int OldStartingIndex { get; }
+
+        /// <summary>
+        /// Converts this <see cref="NotifyGenericCollectionChangedEventArgs{T}"/> to a <see cref="NotifyCollectionChangedEventArgs"/>
+        /// </summary>
+        NotifyCollectionChangedEventArgs ToNotifyCollectionChangedEventArgs();
     }
 }

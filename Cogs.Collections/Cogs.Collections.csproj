@@ -19,7 +19,7 @@
         <Product>Collections Cog</Product>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.7.5</Version>
+        <Version>1.7.6</Version>
     </PropertyGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
