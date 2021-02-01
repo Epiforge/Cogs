@@ -27,7 +27,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Wpf", "Cogs.Wpf\Cogs.W
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.ActiveExpressions.Tests", "Cogs.ActiveExpressions.Tests\Cogs.ActiveExpressions.Tests.csproj", "{15229F84-7053-42F4-BBE5-3AFB90388243}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cogs.ActiveQuery.Tests", "Cogs.ActiveQuery.Tests\Cogs.ActiveQuery.Tests.csproj", "{597DD26A-336B-4D6B-BE7A-693475A8201B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.ActiveQuery.Tests", "Cogs.ActiveQuery.Tests\Cogs.ActiveQuery.Tests.csproj", "{597DD26A-336B-4D6B-BE7A-693475A8201B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cogs.Components.Tests", "Cogs.Components.Tests\Cogs.Components.Tests.csproj", "{C3DFA4DE-457D-4961-9FEE-2CCA33A09590}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -87,6 +89,10 @@ Global
 		{597DD26A-336B-4D6B-BE7A-693475A8201B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{597DD26A-336B-4D6B-BE7A-693475A8201B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{597DD26A-336B-4D6B-BE7A-693475A8201B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3DFA4DE-457D-4961-9FEE-2CCA33A09590}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3DFA4DE-457D-4961-9FEE-2CCA33A09590}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3DFA4DE-457D-4961-9FEE-2CCA33A09590}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3DFA4DE-457D-4961-9FEE-2CCA33A09590}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

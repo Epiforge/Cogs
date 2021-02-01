@@ -78,9 +78,9 @@ namespace Cogs.Components
         /// <param name="propertyName">The name of the property</param>
         /// <returns>true if <paramref name="backingField"/> was unequal to <paramref name="value"/>; otherwise, false</returns>
         [SuppressMessage("Code Analysis", "CA1045: Do not pass types by reference", Justification = "To 'correct' this would defeat the purpose of the method")]
-        protected bool SetBackedProperty<TValue>(ref TValue? backingField, TValue? value, [CallerMemberName] string? propertyName = null)
+        protected bool SetBackedProperty<TValue>(ref TValue backingField, TValue value, [CallerMemberName] string? propertyName = null)
         {
-            if (!EqualityComparer<TValue?>.Default.Equals(backingField, value))
+            if (!EqualityComparer<TValue>.Default.Equals(backingField, value))
             {
                 OnPropertyChanging(propertyName);
                 backingField = value;
@@ -99,9 +99,9 @@ namespace Cogs.Components
         /// <param name="propertyName">The name of the property</param>
         /// <returns>true if <paramref name="backingField"/> was unequal to <paramref name="value"/>; otherwise, false</returns>
         [SuppressMessage("Code Analysis", "CA1045: Do not pass types by reference", Justification = "To 'correct' this would defeat the purpose of the method")]
-        protected bool SetBackedProperty<TValue>(ref TValue? backingField, in TValue? value, [CallerMemberName] string? propertyName = null)
+        protected bool SetBackedProperty<TValue>(ref TValue backingField, in TValue value, [CallerMemberName] string? propertyName = null)
         {
-            if (!EqualityComparer<TValue?>.Default.Equals(backingField, value))
+            if (!EqualityComparer<TValue>.Default.Equals(backingField, value))
             {
                 OnPropertyChanging(propertyName);
                 backingField = value;
