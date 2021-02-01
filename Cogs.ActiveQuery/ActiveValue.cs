@@ -92,7 +92,7 @@ namespace Cogs.ActiveQuery
         public TValue Value
         {
             get => value;
-            protected internal set => SetBackedProperty(ref this.value!, in value);
+            protected internal set => SetBackedProperty(ref this.value, in value);
         }
     }
 }

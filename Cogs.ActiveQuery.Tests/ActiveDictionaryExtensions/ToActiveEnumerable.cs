@@ -20,7 +20,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
         {
             var people = TestPerson.CreatePeopleDictionary();
             using var query = people.ToActiveEnumerable();
-            void checkSum(int against) => Assert.AreEqual(against, query.Sum(person => person.Name.Length));
+            void checkSum(int against) => Assert.AreEqual(against, query.Sum(person => person!.Name!.Length));
             Assert.AreEqual(0, query.GetElementFaults().Count);
             checkSum(74);
             people.Add(people.Count, people[0]);

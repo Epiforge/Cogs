@@ -20,7 +20,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
         [TestMethod]
         public void ExpressionlessNull()
         {
-            using var query = ((IReadOnlyDictionary<object, object>)null).ActiveAny();
+            using var query = ((IReadOnlyDictionary<object, object>)null!).ActiveAny();
             Assert.IsNotNull(query.OperationFault);
             Assert.IsFalse(query.Value);
         }

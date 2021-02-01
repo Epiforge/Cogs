@@ -14,7 +14,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
             var argumentOutOfRangeThrown = false;
             try
             {
-                ((IEnumerable)Array.Empty<object>()).ActiveSelect(obj => obj.GetHashCode(), IndexingStrategy.SelfBalancingBinarySearchTree);
+                ((IEnumerable)Array.Empty<object>()).ActiveSelect(obj => obj!.GetHashCode(), IndexingStrategy.SelfBalancingBinarySearchTree);
             }
             catch (ArgumentOutOfRangeException)
             {
@@ -27,7 +27,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void EnumerableSourceManipulation()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var expr = ((IEnumerable)people).ActiveSelect(person => (person as TestPerson).Name.Length);
+            using var expr = ((IEnumerable)people).ActiveSelect(person => (person as TestPerson)!.Name!.Length);
             void checkValues(params int[] values) => Assert.IsTrue(values.SequenceEqual(expr));
             checkValues(4, 5, 7, 4, 5, 6, 3, 5, 7, 7, 6, 5, 5, 5);
             people.Add(people.First());
@@ -52,7 +52,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void EnumerableSourceManipulationUnindexed()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var expr = ((IEnumerable)people).ActiveSelect(person => (person as TestPerson).Name.Length, IndexingStrategy.NoneOrInherit);
+            using var expr = ((IEnumerable)people).ActiveSelect(person => (person as TestPerson)!.Name!.Length, IndexingStrategy.NoneOrInherit);
             void checkValues(params int[] values) => Assert.IsTrue(values.SequenceEqual(expr));
             checkValues(4, 5, 7, 4, 5, 6, 3, 5, 7, 7, 6, 5, 5, 5);
             people.Add(people.First());
@@ -69,7 +69,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void SourceManipulation()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var expr = people.ActiveSelect(person => person.Name.Length);
+            using var expr = people.ActiveSelect(person => person.Name!.Length);
             void checkValues(params int[] values) => Assert.IsTrue(values.SequenceEqual(expr));
             checkValues(4, 5, 7, 4, 5, 6, 3, 5, 7, 7, 6, 5, 5, 5);
             people.Add(people.First());
@@ -94,7 +94,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void SourceManipulationSorted()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var expr = people.ActiveSelect(person => person.Name.Length, IndexingStrategy.SelfBalancingBinarySearchTree);
+            using var expr = people.ActiveSelect(person => person.Name!.Length, IndexingStrategy.SelfBalancingBinarySearchTree);
             void checkValues(params int[] values) => Assert.IsTrue(values.SequenceEqual(expr));
             checkValues(4, 5, 7, 4, 5, 6, 3, 5, 7, 7, 6, 5, 5, 5);
             people.Add(people.First());
@@ -119,7 +119,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void SourceManipulationUnindexed()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var expr = people.ActiveSelect(person => person.Name.Length, IndexingStrategy.NoneOrInherit);
+            using var expr = people.ActiveSelect(person => person.Name!.Length, IndexingStrategy.NoneOrInherit);
             void checkValues(params int[] values) => Assert.IsTrue(values.SequenceEqual(expr));
             checkValues(4, 5, 7, 4, 5, 6, 3, 5, 7, 7, 6, 5, 5, 5);
             people.Add(people.First());

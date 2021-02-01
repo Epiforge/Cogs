@@ -1,6 +1,7 @@
 using Cogs.Collections.Synchronized;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
 {
@@ -19,7 +20,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
         {
             var john = new TestPerson(null);
             var people = new SynchronizedObservableDictionary<string, TestPerson>();
-            using var query = people.ToActiveDictionary((key, value) => new KeyValuePair<string, TestPerson>(value.Name, value));
+            using var query = people.ToActiveDictionary((key, value) => new KeyValuePair<string, TestPerson>(value.Name!, value));
             Assert.IsNull(query.OperationFault);
             people.Add("John", john);
             Assert.IsNotNull(query.OperationFault);
@@ -32,12 +33,13 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
         }
 
         [TestMethod]
+        [SuppressMessage("Style", "IDE0057: Use range operator")]
         public void SourceManipulation()
         {
             foreach (var indexingStrategy in new IndexingStrategy[] { IndexingStrategy.HashTable, IndexingStrategy.SelfBalancingBinarySearchTree })
             {
                 var people = TestPerson.CreatePeopleDictionary();
-                using var query = people.ToActiveDictionary((key, value) => new KeyValuePair<string, string>(value.Name.Substring(0, 3), value.Name.Substring(3)));
+                using var query = people.ToActiveDictionary((key, value) => new KeyValuePair<string, string>(value.Name!.Substring(0, 3), value.Name.Substring(3)));
                 Assert.IsNull(query.OperationFault);
                 Assert.AreEqual(string.Empty, query["Ben"]);
                 people[6].Name = "Benjamin";

@@ -30,7 +30,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void SourceManipulation()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var aggregate = people.ActiveMax(p => p.Name.Length);
+            using var aggregate = people.ActiveMax(p => p.Name!.Length);
             Assert.IsNull(aggregate.OperationFault);
             Assert.AreEqual(7, aggregate.Value);
             people.Add(people[0]);

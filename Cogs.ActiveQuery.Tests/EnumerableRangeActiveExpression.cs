@@ -12,8 +12,8 @@ namespace Cogs.ActiveQuery.Tests
         public void GenericDisposalOverridden()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var queryA = people.ActiveSelect(person => 3 / person.Name.Length);
-            using var queryB = people.ActiveSelect(person => 3 / person.Name.Length);
+            using var queryA = people.ActiveSelect(person => 3 / person.Name!.Length);
+            using var queryB = people.ActiveSelect(person => 3 / person.Name!.Length);
             people.Clear();
         }
 
@@ -21,7 +21,7 @@ namespace Cogs.ActiveQuery.Tests
         public void GenericSourceFaultNotifier()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var queryA = people.ActiveSelect(person => 3 / person.Name.Length);
+            using var queryA = people.ActiveSelect(person => 3 / person.Name!.Length);
             using var queryB = queryA.ActiveSelect(num => num * -1);
             people[0].Name = string.Empty;
             people.Clear();
@@ -31,7 +31,7 @@ namespace Cogs.ActiveQuery.Tests
         public void NonGenericCount()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var query = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson).Name.Length);
+            using var query = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson)!.Name!.Length);
             Assert.AreEqual(14, query.Count);
         }
 
@@ -39,8 +39,8 @@ namespace Cogs.ActiveQuery.Tests
         public void NonGenericDisposalOverridden()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var queryA = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson).Name.Length);
-            using var queryB = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson).Name.Length);
+            using var queryA = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson)!.Name!.Length);
+            using var queryB = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson)!.Name!.Length);
             people.Clear();
         }
 
@@ -48,10 +48,10 @@ namespace Cogs.ActiveQuery.Tests
         public void NonGenericElementFaults()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var query = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson).Name.Length);
+            using var query = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson)!.Name!.Length);
             var changing = false;
 
-            void elementFaultChanging(object sender, ElementFaultChangeEventArgs e)
+            void elementFaultChanging(object? sender, ElementFaultChangeEventArgs e)
             {
                 Assert.IsFalse(changing);
                 Assert.AreSame(people[0], e.Element);
@@ -60,7 +60,7 @@ namespace Cogs.ActiveQuery.Tests
                 changing = true;
             }
 
-            void elementFaultChanged(object sender, ElementFaultChangeEventArgs e)
+            void elementFaultChanged(object? sender, ElementFaultChangeEventArgs e)
             {
                 Assert.IsTrue(changing);
                 Assert.AreSame(people[0], e.Element);
@@ -82,14 +82,14 @@ namespace Cogs.ActiveQuery.Tests
         public void NonGenericEmpty()
         {
             var people = new SynchronizedRangeObservableCollection<TestPerson>();
-            using var query = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson).Name.Length);
+            using var query = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson)!.Name!.Length);
         }
 
         [TestMethod]
         public void NonGenericReset()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var query = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson).Name.Length);
+            using var query = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson)!.Name!.Length);
             people.Clear();
         }
 
@@ -97,8 +97,8 @@ namespace Cogs.ActiveQuery.Tests
         public void NonGenericSourceFaultNotifier()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var queryA = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson).Name.Length);
-            using var queryB = ((IEnumerable)queryA).ActiveSelect(num => (int)num * -1);
+            using var queryA = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson)!.Name!.Length);
+            using var queryB = ((IEnumerable)queryA).ActiveSelect(num => (int)num! * -1);
             people[0].Name = string.Empty;
             people.Clear();
         }

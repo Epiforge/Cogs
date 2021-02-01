@@ -21,10 +21,10 @@ namespace Cogs.ActiveQuery.Tests
         public void ElementFaults()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var query = people.ToActiveDictionary(person => new KeyValuePair<string, int>(person.Name, 3 / person.Name.Length));
+            using var query = people.ToActiveDictionary(person => new KeyValuePair<string, int>(person.Name!, 3 / person.Name!.Length));
             var changing = false;
 
-            void elementFaultChanging(object sender, ElementFaultChangeEventArgs e)
+            void elementFaultChanging(object? sender, ElementFaultChangeEventArgs e)
             {
                 Assert.IsFalse(changing);
                 Assert.AreSame(people[0], e.Element);
@@ -33,7 +33,7 @@ namespace Cogs.ActiveQuery.Tests
                 changing = true;
             }
 
-            void elementFaultChanged(object sender, ElementFaultChangeEventArgs e)
+            void elementFaultChanged(object? sender, ElementFaultChangeEventArgs e)
             {
                 Assert.IsTrue(changing);
                 Assert.AreSame(people[0], e.Element);
@@ -61,7 +61,7 @@ namespace Cogs.ActiveQuery.Tests
         [TestMethod]
         public void NonGenericChangeEvents()
         {
-            static void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<object, object> e)
+            static void dictionaryChanged(object? sender, NotifyDictionaryChangedEventArgs<object?, object?> e)
             {
             }
 
@@ -84,7 +84,7 @@ namespace Cogs.ActiveQuery.Tests
         public void SynchronizationContext()
         {
             using var ad = new ActiveDictionary<Guid, string>(new SynchronizedObservableDictionary<Guid, string>());
-            ad.SynchronizationContext.ToString();
+            ad.SynchronizationContext!.ToString();
         }
 
         [TestMethod]

@@ -11,10 +11,10 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void SourceManipulation()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var groupsExpr = people.ActiveGroupBy(person => person.Name.Length);
-            using var orderedGroupMembersExpr = groupsExpr.ActiveSelect(group => Tuple.Create(group.Key, group.ActiveOrderBy(person => person.Name)));
-            using var orderedGroupsExpr = orderedGroupMembersExpr.ActiveOrderBy(group => group.Item1);
-            void checkMergedNames(string against) => Assert.AreEqual(against, string.Join(";", orderedGroupsExpr.Select(group => $"{group.Item1}:{string.Join(",", group.Item2.Select(person => person.Name))}")));
+            using var groupsExpr = people.ActiveGroupBy(person => person.Name!.Length);
+            using var orderedGroupMembersExpr = groupsExpr.ActiveSelect(group => Tuple.Create(group.Key, group.ActiveOrderBy(person => person.Name!)));
+            using var orderedGroupsExpr = orderedGroupMembersExpr.ActiveOrderBy(group => group!.Item1);
+            void checkMergedNames(string against) => Assert.AreEqual(against, string.Join(";", orderedGroupsExpr.Select(group => $"{group!.Item1}:{string.Join(",", group.Item2.Select(person => person.Name))}")));
             checkMergedNames("3:Ben;4:Erin,John;5:Bryan,Cliff,Craig,Emily,James,Steve;6:George,Hunter;7:Bridget,Charles,Nanette");
             people[0].Name = "Adam";
             checkMergedNames("3:Ben;4:Adam,Erin;5:Bryan,Cliff,Craig,Emily,James,Steve;6:George,Hunter;7:Bridget,Charles,Nanette");
@@ -32,10 +32,10 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void SourceManipulationSorted()
         {
             var people = TestPerson.CreatePeopleCollection();
-            using var groupsExpr = people.ActiveGroupBy(person => person.Name.Length, IndexingStrategy.SelfBalancingBinarySearchTree);
-            using var orderedGroupMembersExpr = groupsExpr.ActiveSelect(group => Tuple.Create(group.Key, group.ActiveOrderBy(person => person.Name)));
-            using var orderedGroupsExpr = orderedGroupMembersExpr.ActiveOrderBy(group => group.Item1);
-            void checkMergedNames(string against) => Assert.AreEqual(against, string.Join(";", orderedGroupsExpr.Select(group => $"{group.Item1}:{string.Join(",", group.Item2.Select(person => person.Name))}")));
+            using var groupsExpr = people.ActiveGroupBy(person => person.Name!.Length, IndexingStrategy.SelfBalancingBinarySearchTree);
+            using var orderedGroupMembersExpr = groupsExpr.ActiveSelect(group => Tuple.Create(group.Key, group.ActiveOrderBy(person => person.Name!)));
+            using var orderedGroupsExpr = orderedGroupMembersExpr.ActiveOrderBy(group => group!.Item1);
+            void checkMergedNames(string against) => Assert.AreEqual(against, string.Join(";", orderedGroupsExpr.Select(group => $"{group!.Item1}:{string.Join(",", group.Item2.Select(person => person.Name))}")));
             checkMergedNames("3:Ben;4:Erin,John;5:Bryan,Cliff,Craig,Emily,James,Steve;6:George,Hunter;7:Bridget,Charles,Nanette");
             people[0].Name = "Adam";
             checkMergedNames("3:Ben;4:Adam,Erin;5:Bryan,Cliff,Craig,Emily,James,Steve;6:George,Hunter;7:Bridget,Charles,Nanette");
@@ -56,7 +56,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
             var people = TestPerson.CreatePeopleCollection();
             try
             {
-                using var groupsExpr = people.ActiveGroupBy(person => person.Name.Length, IndexingStrategy.NoneOrInherit);
+                using var groupsExpr = people.ActiveGroupBy(person => person.Name!.Length, IndexingStrategy.NoneOrInherit);
             }
             catch (ArgumentOutOfRangeException)
             {

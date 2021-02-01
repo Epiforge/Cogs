@@ -20,7 +20,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         [TestMethod]
         public void ExpressionlessNull()
         {
-            using var query = ((IEnumerable<object>)null).ActiveAny();
+            using var query = ((IEnumerable<object>)null!).ActiveAny();
             Assert.IsNotNull(query.OperationFault);
             Assert.IsFalse(query.Value);
         }

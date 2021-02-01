@@ -29,7 +29,8 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         {
             var left = TestPerson.CreatePeopleCollection(new AsyncSynchronizationContext());
             var right = TestPerson.CreatePeopleCollection(new AsyncSynchronizationContext());
-            using var query = left.ActiveConcat(right, left.SynchronizationContext);
+            Assert.IsNotNull(left.SynchronizationContext);
+            using var query = left.ActiveConcat(right, left.SynchronizationContext!);
             Assert.AreEqual(0, query.GetElementFaults().Count);
             Assert.AreEqual(28, query.Count);
             left.RemoveAt(0);
@@ -55,7 +56,8 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         {
             var left = TestPerson.CreatePeopleCollection(new AsyncSynchronizationContext());
             var right = TestPerson.CreatePeopleCollection(new AsyncSynchronizationContext());
-            using var query = left.ActiveConcat(right, right.SynchronizationContext);
+            Assert.IsNotNull(right.SynchronizationContext);
+            using var query = left.ActiveConcat(right, right.SynchronizationContext!);
             Assert.AreEqual(0, query.GetElementFaults().Count);
             Assert.AreEqual(28, query.Count);
             left.RemoveAt(0);

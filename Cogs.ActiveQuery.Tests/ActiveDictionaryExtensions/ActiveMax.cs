@@ -31,8 +31,8 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
         [TestMethod]
         public void SourceManipulation()
         {
-            var people = new ObservableDictionary<string, TestPerson>(TestPerson.CreatePeopleCollection().ToDictionary(p => p.Name));
-            using var aggregate = people.ActiveMax((key, value) => value.Name.Length);
+            var people = new ObservableDictionary<string, TestPerson>(TestPerson.CreatePeopleCollection().ToDictionary(p => p.Name!));
+            using var aggregate = people.ActiveMax((key, value) => value.Name!.Length);
             Assert.IsNull(aggregate.OperationFault);
             Assert.AreEqual(7, aggregate.Value);
             people.Add("John2", people["John"]);

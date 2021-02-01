@@ -20,7 +20,7 @@ namespace Cogs.ActiveQuery.Tests
 
         class SimpleGenericCollection<T> : Collection<T>, INotifyGenericCollectionChanged<T>, ISynchronized
         {
-            public event NotifyGenericCollectionChangedEventHandler<T> GenericCollectionChanged;
+            public event NotifyGenericCollectionChangedEventHandler<T>? GenericCollectionChanged;
             protected override void InsertItem(int index, T item)
             {
                 base.InsertItem(index, item);

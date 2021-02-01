@@ -31,7 +31,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
         public void SourceManipulation()
         {
             var people = TestPerson.CreatePeopleDictionary();
-            using var aggregate = people.ActiveSum((key, value) => value.Name.Length);
+            using var aggregate = people.ActiveSum((key, value) => value.Name!.Length);
             Assert.IsNull(aggregate.OperationFault);
             Assert.AreEqual(74, aggregate.Value);
             people.Add(people.Count, people[0]);

@@ -13,7 +13,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
         {
             var people = TestPerson.CreatePeopleDictionary();
             var counts = new BlockingCollection<int>();
-            using (var query = people.ActiveWhere((key, value) => value.Name.Length == 4))
+            using (var query = people.ActiveWhere((key, value) => value.Name!.Length == 4))
             {
                 counts.Add(query.Count);
                 people[0].Name = "Johnny";
@@ -31,7 +31,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
         {
             var people = TestPerson.CreatePeopleDictionary();
             var counts = new BlockingCollection<int>();
-            using (var query = people.ActiveWhere((key, value) => value.Name.Length == 4))
+            using (var query = people.ActiveWhere((key, value) => value.Name!.Length == 4))
             {
                 counts.Add(query.Count);
                 people.Add(14, new TestPerson("Jack"));
@@ -67,7 +67,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions
         {
             var people = TestPerson.CreatePeopleDictionary();
             var counts = new BlockingCollection<int>();
-            using (var query = people.ActiveWhere((key, value) => value.Name.Length == 5))
+            using (var query = people.ActiveWhere((key, value) => value.Name!.Length == 5))
             {
                 counts.Add(query.Count);
                 people.Remove(1);

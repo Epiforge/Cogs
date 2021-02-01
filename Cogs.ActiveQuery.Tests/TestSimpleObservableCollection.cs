@@ -10,7 +10,7 @@ namespace Cogs.ActiveQuery.Tests
 {
     public class TestSimpleObservableCollection<T> : PropertyChangeNotifier, IEnumerable<T>, INotifyCollectionChanged, ISynchronized
     {
-        public TestSimpleObservableCollection(SynchronizationContext synchronizationContext, ObservableCollection<T> collection)
+        public TestSimpleObservableCollection(SynchronizationContext? synchronizationContext, ObservableCollection<T> collection)
         {
             SynchronizationContext = synchronizationContext;
             this.collection = collection;
@@ -19,7 +19,7 @@ namespace Cogs.ActiveQuery.Tests
         readonly ObservableCollection<T> collection;
         bool isSynchronized = true;
 
-        public event NotifyCollectionChangedEventHandler CollectionChanged
+        public event NotifyCollectionChangedEventHandler? CollectionChanged
         {
             add => collection.CollectionChanged += value;
             remove => collection.CollectionChanged -= value;
@@ -35,6 +35,6 @@ namespace Cogs.ActiveQuery.Tests
             set => SetBackedProperty(ref isSynchronized, in value);
         }
 
-        public SynchronizationContext SynchronizationContext { get; }
+        public SynchronizationContext? SynchronizationContext { get; }
     }
 }

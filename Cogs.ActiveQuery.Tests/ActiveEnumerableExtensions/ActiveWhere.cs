@@ -12,7 +12,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         {
             var people = TestPerson.CreatePeopleCollection();
             var counts = new BlockingCollection<int>();
-            using (var query = people.ActiveWhere(p => p.Name.Length == 4))
+            using (var query = people.ActiveWhere(p => p.Name!.Length == 4))
             {
                 counts.Add(query.Count);
                 people[0].Name = "Johnny";
@@ -30,7 +30,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         {
             var people = TestPerson.CreatePeopleCollection();
             var counts = new BlockingCollection<int>();
-            using (var query = people.ActiveWhere(p => p.Name.Length == 4))
+            using (var query = people.ActiveWhere(p => p.Name!.Length == 4))
             {
                 counts.Add(query.Count);
                 people.Add(new TestPerson("Jack"));
@@ -54,7 +54,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         {
             var people = TestPerson.CreatePeopleCollection();
             var counts = new BlockingCollection<int>();
-            using (var query = people.ActiveWhere(p => p.Name.Length == 5))
+            using (var query = people.ActiveWhere(p => p.Name!.Length == 5))
             {
                 counts.Add(query.Count);
                 people.RemoveAt(1);

@@ -42,7 +42,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
                     new TestPerson("Erin")
                 })
             };
-            using var expr = teams.ActiveSelectMany(team => team.People);
+            using var expr = teams.ActiveSelectMany(team => team.People!);
             Assert.AreEqual("EmilyCharlesErin", string.Join(string.Empty, expr.Select(person => person.Name)));
         }
 
@@ -50,21 +50,21 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void SourceManipulation()
         {
             var teams = new SynchronizedRangeObservableCollection<TestTeam>();
-            using var expr = teams.ActiveSelectMany(team => team.People);
+            using var expr = teams.ActiveSelectMany(team => team.People!);
             void checkMergedNames(string against) => Assert.AreEqual(against, string.Join(string.Empty, expr.Select(person => person.Name)));
             checkMergedNames(string.Empty);
             var management = new TestTeam();
-            management.People.Add(new TestPerson("Charles"));
+            management.People!.Add(new TestPerson("Charles"));
             teams.Add(management);
             checkMergedNames("Charles");
-            management.People.Add(new TestPerson("Michael"));
+            management.People!.Add(new TestPerson("Michael"));
             checkMergedNames("CharlesMichael");
-            management.People.RemoveAt(1);
+            management.People!.RemoveAt(1);
             checkMergedNames("Charles");
             var development = new TestTeam();
             teams.Add(development);
             checkMergedNames("Charles");
-            development.People.AddRange(new TestPerson[]
+            development.People!.AddRange(new TestPerson[]
             {
                 new TestPerson("John"),
                 new TestPerson("Emily"),
@@ -75,7 +75,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
             development.People.RemoveRange(2, 2);
             checkMergedNames("CharlesJohnEmily");
             var qa = new TestTeam();
-            qa.People.AddRange(new TestPerson[]
+            qa.People!.AddRange(new TestPerson[]
             {
                 new TestPerson("Aaron"),
                 new TestPerson("Cliff")
@@ -86,7 +86,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
             checkMergedNames("CharlesJohnEmilyErinCliff");
             var bryan = new TestPerson("Brian");
             var it = new TestTeam();
-            it.People.AddRange(new TestPerson[] { bryan, bryan });
+            it.People!.AddRange(new TestPerson[] { bryan, bryan });
             teams.Add(it);
             checkMergedNames("CharlesJohnEmilyErinCliffBrianBrian");
             bryan.Name = "Bryan";
@@ -140,11 +140,11 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
         public void SourceManipulationSorted()
         {
             var teams = new SynchronizedRangeObservableCollection<TestTeam>();
-            using var expr = teams.ActiveSelectMany(team => team.People, IndexingStrategy.SelfBalancingBinarySearchTree);
+            using var expr = teams.ActiveSelectMany(team => team.People!, IndexingStrategy.SelfBalancingBinarySearchTree);
             void checkMergedNames(string against) => Assert.AreEqual(against, string.Join(string.Empty, expr.Select(person => person.Name)));
             checkMergedNames(string.Empty);
             var management = new TestTeam();
-            management.People.Add(new TestPerson("Charles"));
+            management.People!.Add(new TestPerson("Charles"));
             teams.Add(management);
             checkMergedNames("Charles");
             management.People.Add(new TestPerson("Michael"));
@@ -154,7 +154,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
             var development = new TestTeam();
             teams.Add(development);
             checkMergedNames("Charles");
-            development.People.AddRange(new TestPerson[]
+            development.People!.AddRange(new TestPerson[]
             {
                 new TestPerson("John"),
                 new TestPerson("Emily"),
@@ -165,7 +165,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
             development.People.RemoveRange(2, 2);
             checkMergedNames("CharlesJohnEmily");
             var qa = new TestTeam();
-            qa.People.AddRange(new TestPerson[]
+            qa.People!.AddRange(new TestPerson[]
             {
                 new TestPerson("Aaron"),
                 new TestPerson("Cliff")
@@ -176,7 +176,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions
             checkMergedNames("CharlesJohnEmilyErinCliff");
             var bryan = new TestPerson("Brian");
             var it = new TestTeam();
-            it.People.AddRange(new TestPerson[] { bryan, bryan });
+            it.People!.AddRange(new TestPerson[] { bryan, bryan });
             teams.Add(it);
             checkMergedNames("CharlesJohnEmilyErinCliffBrianBrian");
             bryan.Name = "Bryan";

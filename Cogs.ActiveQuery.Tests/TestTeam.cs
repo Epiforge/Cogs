@@ -10,13 +10,13 @@ namespace Cogs.ActiveQuery.Tests
         {
         }
 
-        public TestTeam(SynchronizedRangeObservableCollection<TestPerson> people) => this.people = people;
+        public TestTeam(SynchronizedRangeObservableCollection<TestPerson>? people) => this.people = people;
 
-        SynchronizedRangeObservableCollection<TestPerson> people;
+        SynchronizedRangeObservableCollection<TestPerson>? people;
 
-        public int CompareTo(TestTeam other) => GetHashCode().CompareTo(other?.GetHashCode() ?? 0);
+        public int CompareTo(TestTeam? other) => GetHashCode().CompareTo(other?.GetHashCode() ?? 0);
 
-        public SynchronizedRangeObservableCollection<TestPerson> People
+        public SynchronizedRangeObservableCollection<TestPerson>? People
         {
             get => people;
             set => SetBackedProperty(ref people, in value);
