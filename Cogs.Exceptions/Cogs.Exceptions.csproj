@@ -1,16 +1,50 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <Authors>Epiforge</Authors>
+        <CodeAnalysisRuleSet>..\.ruleset</CodeAnalysisRuleSet>
+        <Company>Epiforge</Company>
+        <Description>Cogs for exceptions.</Description>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
+        <PackageIcon>NuGet.jpg</PackageIcon>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
+        <PackageReleaseNotes>Please write the package release notes in ReleaseNotes.txt.</PackageReleaseNotes>
+        <Product>Exceptions Cog</Product>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <RepositoryType>GitHub</RepositoryType>
+        <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
         <TargetFramework>netstandard2.1</TargetFramework>
+        <Version>1.0.0</Version>
     </PropertyGroup>
+
+    <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
+        <ReadLinesFromFile File="ReleaseNotes.txt">
+            <Output TaskParameter="Lines" ItemName="ReleaseNoteLines" />
+        </ReadLinesFromFile>
+        <PropertyGroup>
+            <PackageReleaseNotes>@(ReleaseNoteLines, '%0a')</PackageReleaseNotes>
+        </PropertyGroup>
+    </Target>
 
     <ItemGroup>
         <PackageReference Include="Ben.Demystifier" Version="0.3.0" />
         <PackageReference Include="Cogs.Reflection" Version="1.4.2" />
         <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
         <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\NuGet.jpg">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
     </ItemGroup>
 
 </Project>
