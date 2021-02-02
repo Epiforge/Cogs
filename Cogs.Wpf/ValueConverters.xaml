@@ -8,6 +8,7 @@
     <valueConversion:NotNullIsCollapsedValueConverter x:Key="NotNullIsCollapsedValueConverter" />
     <valueConversion:NotNullIsHiddenValueConverter x:Key="NotNullIsHiddenValueConverter" />
     <valueConversion:NullIsCollapsedValueConverter x:Key="NullIsCollapsedValueConverter" />
+    <valueConversion:NullIsFalseValueConverter x:Key="NullIsFalseValueConverter" />
     <valueConversion:NullIsHiddenValueConverter x:Key="NullIsHiddenValueConverter" />
     <valueConversion:TrueIsCollapsedValueConverter x:Key="TrueIsCollapsedValueConverter" />
     <valueConversion:TrueIsHiddenValueConverter x:Key="TrueIsHiddenValueConverter" />
