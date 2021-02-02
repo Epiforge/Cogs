@@ -8,8 +8,14 @@ using System.Threading;
 
 namespace Cogs.Windows
 {
-    public class Theme : SyncDisposable
+    /// <summary>
+    /// Represents the current Windows theme
+    /// </summary>
+    public sealed class Theme : SyncDisposable
     {
+        /// <summary>
+        /// Instantiates a new instance of the <see cref="Theme"/> class
+        /// </summary>
         public Theme()
         {
             synchronizationContext = SynchronizationContext.Current;
@@ -41,38 +47,47 @@ namespace Cogs.Windows
             }
         }
 
-        protected readonly RegistryKey colorHive = Registry.Users;
+        readonly RegistryKey colorHive = Registry.Users;
         private Color color;
-        protected RegistryKey colorKey;
-        protected readonly string colorKeyName = $@"{WindowsIdentity.GetCurrent().User}\Software\Microsoft\Windows\DWM";
-        protected ManagementEventWatcher? colorKeyWatcher;
-        protected readonly string colorValueName = "ColorizationColor";
-        protected readonly int defaultColorValue = unchecked((int)0xc42947cc);
-        protected readonly int defaultIsDarkValue = 1;
-        protected readonly RegistryKey isDarkHive = Registry.Users;
+        readonly RegistryKey colorKey;
+        readonly string colorKeyName = $@"{WindowsIdentity.GetCurrent().User}\Software\Microsoft\Windows\DWM";
+        readonly ManagementEventWatcher? colorKeyWatcher;
+        readonly string colorValueName = "ColorizationColor";
+        readonly int defaultColorValue = unchecked((int)0xc42947cc);
+        readonly int defaultIsDarkValue = 1;
+        readonly RegistryKey isDarkHive = Registry.Users;
         bool isDark;
-        protected RegistryKey isDarkKey;
-        protected ManagementEventWatcher? isDarkKeyWatcher;
-        protected readonly string isDarkKeyName = $@"{WindowsIdentity.GetCurrent().User}\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
-        protected readonly string isDarkValueName = "AppsUseLightTheme";
-        protected SynchronizationContext synchronizationContext;
+        readonly RegistryKey isDarkKey;
+        readonly ManagementEventWatcher? isDarkKeyWatcher;
+        readonly string isDarkKeyName = $@"{WindowsIdentity.GetCurrent().User}\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+        readonly string isDarkValueName = "AppsUseLightTheme";
+        readonly SynchronizationContext synchronizationContext;
 
-        protected static string Sanitize(string value) => value.Replace(@"\", @"\\").Replace("'", @"\'");
-
+        /// <summary>
+        /// Gets the accent color of the current Windows theme
+        /// </summary>
         public Color Color
         {
             get => color;
-            protected set => SetBackedProperty(ref color, in value);
+            set => SetBackedProperty(ref color, in value);
         }
 
+        /// <summary>
+        /// Gets whether the current Windows theme is dark
+        /// </summary>
         public bool IsDark
         {
             get => isDark;
-            protected set => SetBackedProperty(ref isDark, in value);
+            set => SetBackedProperty(ref isDark, in value);
         }
 
         void ColorKeyWatcherEventArrived(object sender, EventArrivedEventArgs e) => UsingContext(() => Color = FetchColor());
 
+        /// <summary>
+        /// Frees, releases, or resets unmanaged resources
+        /// </summary>
+        /// <param name="disposing"><c>false</c> if invoked by the finalizer because the object is being garbage collected; otherwise, <c>true</c></param>
+        /// <returns><c>true</c> if disposal completed; otherwise, <c>false</c></returns>
         protected override bool Dispose(bool disposing)
         {
             if (disposing)
@@ -83,18 +98,20 @@ namespace Cogs.Windows
             return true;
         }
 
-        protected Color FetchColor() => Color.FromArgb((int)(colorKey?.GetValue(colorValueName) ?? defaultColorValue));
+        Color FetchColor() => Color.FromArgb((int)(colorKey?.GetValue(colorValueName) ?? defaultColorValue));
 
-        protected bool FetchIsDark() => (int)(isDarkKey?.GetValue(isDarkValueName) ?? defaultIsDarkValue) == 0;
+        bool FetchIsDark() => (int)(isDarkKey?.GetValue(isDarkValueName) ?? defaultIsDarkValue) == 0;
 
         void IsDarkKeyWatcherEventArrived(object sender, EventArrivedEventArgs e) => UsingContext(() => IsDark = FetchIsDark());
 
-        protected void UsingContext(Action action)
+        void UsingContext(Action action)
         {
             if (synchronizationContext != null)
                 synchronizationContext.Post(state => action(), null);
             else
                 action();
         }
+
+        static string Sanitize(string value) => value.Replace(@"\", @"\\", StringComparison.OrdinalIgnoreCase).Replace("'", @"\'", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Cogs.Wpf.NativeInterop
 {
-    static class Methods
+    static class NativeMethods
     {
         [DllImport("user32.dll")]
         public static extern bool EnableMenuItem(IntPtr hMenu, Types.SystemCommand uIDEnableItem, MenuStatus uEnable);

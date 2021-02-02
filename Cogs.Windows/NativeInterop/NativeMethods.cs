@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Cogs.Windows.NativeInterop
 {
-    static class Methods
+    static class NativeMethods
     {
         [DllImport("kernel32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]

@@ -37,6 +37,8 @@ namespace Cogs.Exceptions
         /// <param name="format">The format in which to create the representation</param>
         public static string GetFullDetails(this Exception ex, ExceptionFullDetailsFormat? format = null)
         {
+            if (ex is null)
+                throw new ArgumentNullException(nameof(ex));
             try
             {
                 ex = ex.Demystify();
@@ -185,9 +187,9 @@ namespace Cogs.Exceptions
             {
                 var indentation = new string(' ', indent * 3);
                 if (string.IsNullOrWhiteSpace(ex.StackTrace))
-                    exceptionMessages.Add($"{indentation}{(top ? "-- " : "   ")}{ex.GetType().Name}: {ex.Message}".Replace($"{Environment.NewLine}", $"{Environment.NewLine}{indentation}"));
+                    exceptionMessages.Add($"{indentation}{(top ? "-- " : "   ")}{ex.GetType().Name}: {ex.Message}".Replace($"{Environment.NewLine}", $"{Environment.NewLine}{indentation}", StringComparison.OrdinalIgnoreCase));
                 else
-                    exceptionMessages.Add($"{indentation}{(top ? "-- " : "   ")}{ex.GetType().Name}: {ex.Message}{Environment.NewLine}{ex.StackTrace}".Replace($"{Environment.NewLine}", $"{Environment.NewLine}{indentation}"));
+                    exceptionMessages.Add($"{indentation}{(top ? "-- " : "   ")}{ex.GetType().Name}: {ex.Message}{Environment.NewLine}{ex.StackTrace}".Replace($"{Environment.NewLine}", $"{Environment.NewLine}{indentation}", StringComparison.OrdinalIgnoreCase));
                 if (ex is ReflectionTypeLoadException reflectedTypeLoad && reflectedTypeLoad.LoaderExceptions?.Length > 0)
                 {
                     foreach (var loader in reflectedTypeLoad.LoaderExceptions)

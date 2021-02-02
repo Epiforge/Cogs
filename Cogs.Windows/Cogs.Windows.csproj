@@ -41,6 +41,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Compile Include="..\Common\AssemblyInfo.cs" Link="AssemblyInfo.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
         <None Include="..\NuGet.jpg">
             <Pack>True</Pack>
             <PackagePath></PackagePath>
