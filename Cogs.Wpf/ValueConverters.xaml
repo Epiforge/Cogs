@@ -5,6 +5,8 @@
     <valueConversion:EqualToParameterIsHiddenValueConverter x:Key="EqualToParameterIsHiddenValueConverter" />
     <valueConversion:FalseIsCollapsedValueConverter x:Key="FalseIsCollapsedValueConverter" />
     <valueConversion:FalseIsHiddenValueConverter x:Key="FalseIsHiddenValueConverter" />
+    <valueConversion:NullIsCollapsedValueConverter x:Key="NullIsCollapsedValueConverter" />
+    <valueConversion:NullIsHiddenValueConverter x:Key="NullIsHiddenValueConverter" />
     <valueConversion:TrueIsCollapsedValueConverter x:Key="TrueIsCollapsedValueConverter" />
     <valueConversion:TrueIsHiddenValueConverter x:Key="TrueIsHiddenValueConverter" />
     <valueConversion:UnequalToParameterIsCollapsedValueConverter x:Key="UnequalToParameterIsCollapsedValueConverter" />
