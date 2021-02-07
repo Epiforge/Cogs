@@ -279,7 +279,7 @@ namespace Cogs.Wpf
         /// Sets the value of the IsCaption attached dependency property for the specified framework element
         /// </summary>
         /// <param name="frameworkElement">The framework element for which to set the value</param>
-        /// <param name="value">The value to se</param>
+        /// <param name="value">The value to set</param>
         public static void SetIsCaption(FrameworkElement frameworkElement, bool value)
         {
             if (frameworkElement is null)

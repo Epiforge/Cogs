@@ -5,9 +5,9 @@ using System.Windows.Data;
 namespace Cogs.Wpf.ValueConversion
 {
     /// <summary>
-    /// Compares the value to the parameter using <see cref="object.Equals(object?, object?)"/>
+    /// Compares the value to the non-null parameter using <see cref="object.Equals(object?, object?)"/>
     /// </summary>
-    public class EqualToParameterIsTrueValueConverter : IValueConverter
+    public class EqualToNonNullParameterIsTrueValueConverter : IValueConverter
     {
         /// <summary>
         /// Converts a value
@@ -28,7 +28,7 @@ namespace Cogs.Wpf.ValueConversion
         /// <param name="parameter">The converter parameter to use</param>
         /// <param name="culture">The culture to use in the converter</param>
         /// <returns>A converted value</returns>
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
-            value is bool boolean && boolean ? parameter : Binding.DoNothing;
+        public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is bool boolean && boolean ? parameter : null;
     }
 }

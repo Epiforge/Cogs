@@ -31,6 +31,6 @@ namespace Cogs.Wpf.ValueConversion
         /// <param name="culture">The culture to use in the converter</param>
         /// <returns>A converted value</returns>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
-            Binding.DoNothing;
+            value is Visibility visibility && visibility == Visibility.Hidden ? parameter : Binding.DoNothing;
     }
 }
