@@ -1,1 +1,1 @@
-We updated this package's references to other packages.
+We added support for MemberInitExpressions, in which the active expression will actually just set the values of fields and properties on already created values without creating a new one (https://youtu.be/zqTwOoElxBA). We also added support for NewExpressions that do not include an explicit Constructor property value.

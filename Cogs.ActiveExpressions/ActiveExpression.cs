@@ -234,6 +234,7 @@ namespace Cogs.ActiveExpressions
                 InvocationExpression invocationExpression => ActiveInvocationExpression.Create(invocationExpression, options, deferEvaluation),
                 IndexExpression indexExpression => ActiveIndexExpression.Create(indexExpression, options, deferEvaluation),
                 MemberExpression memberExpression => ActiveMemberExpression.Create(memberExpression, options, deferEvaluation),
+                MemberInitExpression memberInitExpression => ActiveMemberInitExpression.Create(memberInitExpression, options, deferEvaluation),
                 MethodCallExpression methodCallExpressionForPropertyGet when propertyGetMethodToProperty.GetOrAdd(methodCallExpressionForPropertyGet.Method, GetPropertyFromGetMethod) is PropertyInfo property =>
                     methodCallExpressionForPropertyGet.Arguments.Count > 0
                     ?
@@ -477,13 +478,15 @@ namespace Cogs.ActiveExpressions
                     return lambdaExpression;
                 case MemberExpression memberExpression:
                     return Expression.MakeMemberAccess(ReplaceParameters(parameterTranslation, memberExpression.Expression), memberExpression.Member);
+                case MemberInitExpression memberInitExpression:
+                    return Expression.MemberInit((NewExpression)ReplaceParameters(parameterTranslation, memberInitExpression.NewExpression)!, memberInitExpression.Bindings.Cast<MemberAssignment>().Select(memberAssignment => memberAssignment.Update(ReplaceParameters(parameterTranslation, memberAssignment.Expression))).ToArray());
                 case MethodCallExpression methodCallExpression:
                     return methodCallExpression.Object is null ? Expression.Call(methodCallExpression.Method, methodCallExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument))) : Expression.Call(ReplaceParameters(parameterTranslation, methodCallExpression.Object), methodCallExpression.Method, methodCallExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument)));
                 case NewArrayExpression newArrayInitExpression when newArrayInitExpression.NodeType == ExpressionType.NewArrayInit:
                     return Expression.NewArrayInit(newArrayInitExpression.Type.GetElementType(), newArrayInitExpression.Expressions.Select(expression => ReplaceParameters(parameterTranslation, expression)));
                 case NewExpression newExpression:
                     var newArguments = newExpression.Arguments.Select(argument => ReplaceParameters(parameterTranslation, argument));
-                    return newExpression.Members is null ? Expression.New(newExpression.Constructor, newArguments) : Expression.New(newExpression.Constructor, newArguments, newExpression.Members);
+                    return newExpression.Constructor is null ? newExpression : newExpression.Members is null ? Expression.New(newExpression.Constructor, newArguments) : Expression.New(newExpression.Constructor, newArguments, newExpression.Members);
                 case ParameterExpression parameterExpression:
                     return parameterTranslation[parameterExpression];
                 case TypeBinaryExpression typeBinaryExpression:
@@ -524,6 +527,8 @@ namespace Cogs.ActiveExpressions
                 return indexA == indexB;
             if (a is ActiveMemberExpression memberA && b is ActiveMemberExpression memberB)
                 return memberA == memberB;
+            if (a is ActiveMemberInitExpression memberInitA && b is ActiveMemberInitExpression memberInitB)
+                return memberInitA == memberInitB;
             if (a is ActiveMethodCallExpression methodCallA && b is ActiveMethodCallExpression methodCallB)
                 return methodCallA == methodCallB;
             if (a is ActiveNewArrayInitExpression newArrayInitA && b is ActiveNewArrayInitExpression newArrayInitB)

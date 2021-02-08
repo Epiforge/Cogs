@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Runtime.ExceptionServices;
 
 namespace Cogs.ActiveExpressions
@@ -19,8 +18,8 @@ namespace Cogs.ActiveExpressions
             try
             {
                 this.instancesKey = instancesKey;
-                constructor = newExpression.Constructor;
-                fastConstructor = FastConstructorInfo.Get(constructor);
+                if (newExpression.Constructor is { } constructor)
+                    fastConstructor = FastConstructorInfo.Get(constructor);
                 foreach (var newExpressionArgument in newExpression.Arguments)
                 {
                     var argument = Create(newExpressionArgument, options, deferEvaluation);
@@ -45,10 +44,9 @@ namespace Cogs.ActiveExpressions
         }
 
         readonly EquatableList<ActiveExpression> arguments;
-        readonly ConstructorInfo constructor;
         readonly EquatableList<Type> constructorParameterTypes;
         int disposalCount;
-        readonly FastConstructorInfo fastConstructor;
+        readonly FastConstructorInfo? fastConstructor;
         readonly CachedInstancesKey<NewExpression> instancesKey;
 
         void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
@@ -85,8 +83,10 @@ namespace Cogs.ActiveExpressions
                 var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is not null).FirstOrDefault();
                 if (argumentFault is not null)
                     Fault = argumentFault;
-                else
+                else if (fastConstructor is not null)
                     Value = fastConstructor.Invoke(arguments.Select(argument => argument.Value).ToArray());
+                else
+                    Value = Activator.CreateInstance(Type, arguments.Select(argument => argument.Value).ToArray());
             }
             catch (Exception ex)
             {
