@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -32,7 +33,7 @@ namespace Cogs.Wpf
             if (sender is UIElement uiElement)
             {
                 if (e.OldValue is InputBindingCollection oldValue)
-                    foreach (InputBinding inputBinding in oldValue)
+                    foreach (InputBinding inputBinding in oldValue.OfType<InputBinding>().Where(ib => ib is not null))
                         uiElement.InputBindings.Remove(inputBinding);
                 if (e.NewValue is InputBindingCollection newValue)
                     uiElement.InputBindings.AddRange(newValue);
