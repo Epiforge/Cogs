@@ -21,7 +21,7 @@
         <RepositoryType>GitHub</RepositoryType>
         <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.3.5</Version>
+        <Version>1.3.6</Version>
     </PropertyGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
@@ -34,7 +34,7 @@
     </Target>
 
     <ItemGroup>
-        <PackageReference Include="Cogs.ActiveExpressions" Version="1.10.6" />
+        <PackageReference Include="Cogs.ActiveExpressions" Version="1.11.0" />
         <PackageReference Include="Cogs.Collections" Version="1.7.7" />
         <PackageReference Include="Cogs.Collections.Synchronized" Version="1.4.5" />
         <PackageReference Include="Cogs.Components" Version="1.0.8" />
