@@ -5,7 +5,7 @@
         <Authors>Epiforge</Authors>
         <CodeAnalysisRuleSet>..\.ruleset</CodeAnalysisRuleSet>
         <Company>Epiforge</Company>
-        <Description>Cogs for WPF.</Description>
+        <Description>Cogs for WPF. Includes general-use behaviors, controls, validation rules, and value converters. Also includes ways to enhancements for Windows (such as using enabling blur-behind and binding system commands to controls) and the inclusion of input gestures in styles.</Description>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>

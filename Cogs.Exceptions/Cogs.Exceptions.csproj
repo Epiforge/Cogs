@@ -5,7 +5,7 @@
         <Authors>Epiforge</Authors>
         <CodeAnalysisRuleSet>..\.ruleset</CodeAnalysisRuleSet>
         <Company>Epiforge</Company>
-        <Description>Cogs for exceptions.</Description>
+        <Description>Cogs for exceptions. Includes extension methods for fully detailing exceptions in a variety of formats.</Description>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>

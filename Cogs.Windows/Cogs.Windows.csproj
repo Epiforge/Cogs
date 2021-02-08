@@ -5,7 +5,7 @@
         <Authors>Epiforge</Authors>
         <CodeAnalysisRuleSet>..\.ruleset</CodeAnalysisRuleSet>
         <Company>Epiforge</Company>
-        <Description>Cogs for Windows.</Description>
+        <Description>Cogs for Windows. Includes ways to get the Windows theme and create LNK short-cuts.</Description>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
