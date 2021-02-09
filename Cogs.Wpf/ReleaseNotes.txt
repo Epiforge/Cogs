@@ -1,1 +1,1 @@
-We added targetting for .NET Core 3.1 and fixed some nullability stuff.
+We added targetting for .NET Framework 4.5 and support for Source Link.

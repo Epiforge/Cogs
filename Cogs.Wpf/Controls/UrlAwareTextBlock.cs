@@ -43,7 +43,7 @@ namespace Cogs.Wpf.Controls
         {
             if (sender is UrlAwareTextBlock textBlock && value is string strValue)
             {
-                var inlines = textAndUrlPattern.Matches(strValue).SelectMany(TextAndUrlPatternMatchesSelector).ToImmutableArray();
+                var inlines = textAndUrlPattern.Matches(strValue).Cast<Match>().SelectMany(TextAndUrlPatternMatchesSelector).ToImmutableArray();
                 textBlock.Inlines.Clear();
                 textBlock.Inlines.AddRange(inlines);
             }
