@@ -7,7 +7,7 @@ Thanks you for your interest in contributing to Cogs! In this document we'll out
 
 # What contributions we accept
 
-In short, we’ll entertain anything that makes Gear better in terms of stability, quality, and capability. This may take the shape of:
+In short, we’ll entertain anything that makes Cogs better in terms of stability, quality, and capability. This may take the shape of:
 
 - Bug fixes
 - Feature implementations
