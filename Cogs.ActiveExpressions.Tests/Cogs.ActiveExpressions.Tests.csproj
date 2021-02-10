@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="Cogs.Collections" Version="1.7.7" />
-        <PackageReference Include="Cogs.Collections.Synchronized" Version="1.4.5" />
+        <PackageReference Include="Cogs.Collections.Synchronized" Version="1.4.6" />
         <PackageReference Include="Cogs.Components" Version="1.0.8" />
         <PackageReference Include="Linq.Expression.Optimizer" Version="1.0.13" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
