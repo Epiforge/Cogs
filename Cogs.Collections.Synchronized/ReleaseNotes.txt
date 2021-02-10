@@ -1,1 +1,1 @@
-We updated this package's references to other packages.
+We corrected a defect in AsyncProcessingQueue.

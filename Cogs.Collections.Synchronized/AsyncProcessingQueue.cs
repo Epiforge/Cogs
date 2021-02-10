@@ -112,7 +112,19 @@ namespace Cogs.Collections.Synchronized
         {
             while (true)
             {
-                var item = await queue.ReceiveAsync().ConfigureAwait(false);
+                T item;
+                try
+                {
+                    item = await queue.ReceiveAsync(queueCancellationTokenSource.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (InvalidOperationException)
+                {
+                    return;
+                }
                 try
                 {
                     await asyncAction(item).ConfigureAwait(false);
