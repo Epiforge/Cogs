@@ -1,1 +1,1 @@
-We added Screen, which lets you access information about connected displays in the style of Windows Forms, but using WPF framework elements and PPI awareness.
+We added Window extension methods, the first of which is SafeguardPosition, which moves the specified window the minimum amount to be completely contained within the closest working area.
