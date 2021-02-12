@@ -21,8 +21,9 @@
         <RepositoryType>GitHub</RepositoryType>
         <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
         <TargetFrameworks>net45;netcoreapp3.1;net5.0-windows</TargetFrameworks>
+        <UseWindowsForms>true</UseWindowsForms>
         <UseWPF>true</UseWPF>
-        <Version>1.0.2</Version>
+        <Version>1.1.0</Version>
     </PropertyGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
@@ -41,6 +42,10 @@
       </PackageReference>
       <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
       <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
+        <Reference Include="System.Windows.Forms" />
     </ItemGroup>
 
     <ItemGroup>

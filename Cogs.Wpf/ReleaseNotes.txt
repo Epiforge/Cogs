@@ -1,1 +1,1 @@
-We added targetting for .NET Framework 4.5 and support for Source Link.
+We added Screen, which lets you access information about connected displays in the style of Windows Forms, but using WPF framework elements and PPI awareness.
