@@ -1,1 +1,1 @@
-We added NotNullIsFalseValueConverter.
+We added InvalidCharactersValidationRule, ValidFileNameValidationRule, and ValidPathValidationRule.
