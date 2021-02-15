@@ -11,6 +11,7 @@
     <valueConversion:FalseIsHiddenValueConverter x:Key="FalseIsHiddenValueConverter" />
     <valueConversion:NegateBooleanValueConverter x:Key="NegateBooleanValueConverter" />
     <valueConversion:NotNullIsCollapsedValueConverter x:Key="NotNullIsCollapsedValueConverter" />
+    <valueConversion:NotNullIsFalseValueConverter x:Key="NotNullIsFalseValueConverter" />
     <valueConversion:NotNullIsHiddenValueConverter x:Key="NotNullIsHiddenValueConverter" />
     <valueConversion:NullIsCollapsedValueConverter x:Key="NullIsCollapsedValueConverter" />
     <valueConversion:NullIsFalseValueConverter x:Key="NullIsFalseValueConverter" />

@@ -1,1 +1,1 @@
-We added Window extension methods, the first of which is SafeguardPosition, which moves the specified window the minimum amount to be completely contained within the closest working area.
+We added NotNullIsFalseValueConverter.
