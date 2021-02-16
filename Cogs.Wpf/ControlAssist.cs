@@ -15,25 +15,26 @@ namespace Cogs.Wpf
         /// <summary>
         /// Identifies the AdditionalInputBindings attached dependency property
         /// </summary>
-        public static readonly DependencyProperty AdditionalInputBindingsProperty = DependencyProperty.RegisterAttached("AdditionalInputBindings", typeof(InputBindingCollection), typeof(ControlAssist), new PropertyMetadata(new InputBindingCollection(), AdditionalInputBindingsChanged));
+        public static readonly DependencyProperty AdditionalInputBindingsProperty = DependencyProperty.RegisterAttached("AdditionalInputBindings", typeof(InputBindingCollection), typeof(ControlAssist), new PropertyMetadata(null, OnAdditionalInputBindingsChanged));
 
         /// <summary>
         /// Gets the value of the AdditionalInputBindings attached dependency property for the specified UI element
         /// </summary>
         /// <param name="uiElement">The UI element for which to get the value</param>
-        public static bool GetAdditionalInputBindings(UIElement uiElement)
+        [AttachedPropertyBrowsableForType(typeof(UIElement))]
+        public static InputBindingCollection? GetAdditionalInputBindings(UIElement uiElement)
         {
             if (uiElement is null)
                 throw new ArgumentNullException(nameof(uiElement));
-            return (bool)uiElement.GetValue(AdditionalInputBindingsProperty);
+            return (InputBindingCollection)uiElement.GetValue(AdditionalInputBindingsProperty);
         }
 
-        static void AdditionalInputBindingsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        static void OnAdditionalInputBindingsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
             if (sender is UIElement uiElement)
             {
                 if (e.OldValue is InputBindingCollection oldValue)
-                    foreach (InputBinding inputBinding in oldValue.OfType<InputBinding>().Where(ib => ib is not null))
+                    foreach (var inputBinding in oldValue.OfType<InputBinding>().Where(ib => ib is not null))
                         uiElement.InputBindings.Remove(inputBinding);
                 if (e.NewValue is InputBindingCollection newValue)
                     uiElement.InputBindings.AddRange(newValue);
@@ -45,7 +46,7 @@ namespace Cogs.Wpf
         /// </summary>
         /// <param name="uiElement">The UI element for which to set the value</param>
         /// <param name="value">The value to set</param>
-        public static void SetAdditionalInputBindings(UIElement uiElement, bool value)
+        public static void SetAdditionalInputBindings(UIElement uiElement, InputBindingCollection? value)
         {
             if (uiElement is null)
                 throw new ArgumentNullException(nameof(uiElement));

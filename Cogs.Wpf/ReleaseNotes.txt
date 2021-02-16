@@ -1,1 +1,1 @@
-We added InvalidCharactersValidationRule, ValidFileNameValidationRule, and ValidPathValidationRule.
+We added the PasswordBindingTarget behavior and took a severe beating from the WPF Analyzer style cop (and fixed a number of potential issues with accidentally overriding data bindings by using SetValue instead of SetCurrentValue).

@@ -22,7 +22,7 @@ namespace Cogs.Wpf
         /// Identifies the AutoActivation attached dependency property
         /// </summary>
 
-        public static readonly DependencyProperty AutoActivationProperty = DependencyProperty.RegisterAttached("AutoActivation", typeof(AutoActivationMode), typeof(WindowAssist), new PropertyMetadata(AutoActivationMode.Default, AutoActivationChanged));
+        public static readonly DependencyProperty AutoActivationProperty = DependencyProperty.RegisterAttached("AutoActivation", typeof(AutoActivationMode), typeof(WindowAssist), new PropertyMetadata(AutoActivationMode.Default, OnAutoActivationChanged));
 
         static void ActivateWindowContentRenderedHandler(object? sender, EventArgs e)
         {
@@ -33,7 +33,19 @@ namespace Cogs.Wpf
             }
         }
 
-        static void AutoActivationChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        /// <summary>
+        /// Gets the value of the AutoActivation attached dependency property for the specified window
+        /// </summary>
+        /// <param name="window">The window for which to get the value</param>
+        [AttachedPropertyBrowsableForType(typeof(Window))]
+        public static AutoActivationMode GetAutoActivation(Window window)
+        {
+            if (window is null)
+                throw new ArgumentNullException(nameof(window));
+            return (AutoActivationMode)window.GetValue(AutoActivationProperty);
+        }
+
+        static void OnAutoActivationChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
             if (sender is Window window && !window.IsLoaded && e.NewValue is AutoActivationMode newValue)
             {
@@ -49,17 +61,6 @@ namespace Cogs.Wpf
                         throw new NotSupportedException();
                 }
             }
-        }
-
-        /// <summary>
-        /// Gets the value of the AutoActivation attached dependency property for the specified window
-        /// </summary>
-        /// <param name="window">The window for which to get the value</param>
-        public static AutoActivationMode GetAutoActivation(Window window)
-        {
-            if (window is null)
-                throw new ArgumentNullException(nameof(window));
-            return (AutoActivationMode)window.GetValue(AutoActivationProperty);
         }
 
         /// <summary>
@@ -82,21 +83,7 @@ namespace Cogs.Wpf
         /// <summary>
         /// Identifies the BlurBehind attached dependency property
         /// </summary>
-        public static readonly DependencyProperty BlurBehindProperty = DependencyProperty.RegisterAttached("BlurBehind", typeof(BlurBehindMode), typeof(WindowAssist), new PropertyMetadata(BlurBehindMode.Off, BlurBehindChanged));
-
-        static void BlurBehindChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (sender is Window window && e.NewValue is BlurBehindMode newValue)
-            {
-                if (window.IsLoaded)
-                    EffectBlurBehindMode(window, newValue);
-                else
-                {
-                    blurBehindPendingLoadByWindow.AddOrUpdate(window, newValue, (key, value) => newValue);
-                    window.Loaded += PendingBlurBehindWindowLoadedHandler;
-                }
-            }
-        }
+        public static readonly DependencyProperty BlurBehindProperty = DependencyProperty.RegisterAttached("BlurBehind", typeof(BlurBehindMode), typeof(WindowAssist), new PropertyMetadata(BlurBehindMode.Off, OnBlurBehindChanged));
 
         static void EffectBlurBehind(Window window, bool blurBehind)
         {
@@ -154,11 +141,26 @@ namespace Cogs.Wpf
         /// Gets the value of the BlurBehind attached dependency property for the specified window
         /// </summary>
         /// <param name="window">The window for which to get the value</param>
+        [AttachedPropertyBrowsableForType(typeof(Window))]
         public static BlurBehindMode GetBlurBehind(Window window)
         {
             if (window is null)
                 throw new ArgumentNullException(nameof(window));
             return (BlurBehindMode)window.GetValue(BlurBehindProperty);
+        }
+
+        static void OnBlurBehindChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (sender is Window window && e.NewValue is BlurBehindMode newValue)
+            {
+                if (window.IsLoaded)
+                    EffectBlurBehindMode(window, newValue);
+                else
+                {
+                    blurBehindPendingLoadByWindow.AddOrUpdate(window, newValue, (key, value) => newValue);
+                    window.Loaded += PendingBlurBehindWindowLoadedHandler;
+                }
+            }
         }
 
         static void PendingBlurBehindWindowLoadedHandler(object sender, RoutedEventArgs e)
@@ -220,6 +222,7 @@ namespace Cogs.Wpf
         /// Gets the value of the IsBlurredBehind attached dependency property for the specified window
         /// </summary>
         /// <param name="window">The window for which to get the value</param>
+        [AttachedPropertyBrowsableForType(typeof(Window))]
         public static bool GetIsBlurredBehind(Window window)
         {
             if (window is null)
@@ -234,28 +237,18 @@ namespace Cogs.Wpf
         /// <summary>
         /// Identifies the IsCaption attached dependency property
         /// </summary>
-        public static readonly DependencyProperty IsCaptionProperty = DependencyProperty.RegisterAttached("IsCaption", typeof(bool), typeof(WindowAssist), new PropertyMetadata(false, IsCaptionChanged));
+        public static readonly DependencyProperty IsCaptionProperty = DependencyProperty.RegisterAttached("IsCaption", typeof(bool), typeof(WindowAssist), new PropertyMetadata(false, OnIsCaptionChanged));
 
         /// <summary>
         /// Gets the value of the IsCaption attached dependency property for the specified framework element
         /// </summary>
         /// <param name="frameworkElement">The framework element for which to get the value</param>
+        [AttachedPropertyBrowsableForType(typeof(FrameworkElement))]
         public static bool GetIsCaption(FrameworkElement frameworkElement)
         {
             if (frameworkElement is null)
                 throw new ArgumentNullException(nameof(frameworkElement));
             return (bool)frameworkElement.GetValue(IsCaptionProperty);
-        }
-
-        static void IsCaptionChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (sender is FrameworkElement frameworkElement && e.NewValue is bool newValue)
-            {
-                if (newValue)
-                    frameworkElement.MouseLeftButtonDown += IsCaptionMouseLeftButtonDownHandler;
-                else
-                    frameworkElement.MouseLeftButtonDown -= IsCaptionMouseLeftButtonDownHandler;
-            }
         }
 
         static void IsCaptionMouseLeftButtonDownHandler(object sender, MouseButtonEventArgs e)
@@ -272,6 +265,17 @@ namespace Cogs.Wpf
                 }
                 else
                     window.DragMove();
+            }
+        }
+
+        static void OnIsCaptionChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (sender is FrameworkElement frameworkElement && e.NewValue is bool newValue)
+            {
+                if (newValue)
+                    frameworkElement.MouseLeftButtonDown += IsCaptionMouseLeftButtonDownHandler;
+                else
+                    frameworkElement.MouseLeftButtonDown -= IsCaptionMouseLeftButtonDownHandler;
             }
         }
 
@@ -294,12 +298,13 @@ namespace Cogs.Wpf
         /// <summary>
         /// Identifies the SendSystemCommand attached dependency property
         /// </summary>
-        public static readonly DependencyProperty SendSystemCommandProperty = DependencyProperty.RegisterAttached("SendSystemCommand", typeof(SystemCommand), typeof(WindowAssist), new PropertyMetadata(SystemCommand.None, SendSystemCommandChanged));
+        public static readonly DependencyProperty SendSystemCommandProperty = DependencyProperty.RegisterAttached("SendSystemCommand", typeof(SystemCommand), typeof(WindowAssist), new PropertyMetadata(SystemCommand.None, OnSendSystemCommandChanged));
 
         /// <summary>
         /// Gets the value of the SendSystemCommand attached dependency property for the specified framework element
         /// </summary>
         /// <param name="frameworkElement">The framework element for which to get the value</param>
+        [AttachedPropertyBrowsableForType(typeof(FrameworkElement))]
         public static SystemCommand GetSendSystemCommand(FrameworkElement frameworkElement)
         {
             if (frameworkElement is null)
@@ -307,7 +312,7 @@ namespace Cogs.Wpf
             return (SystemCommand)frameworkElement.GetValue(SendSystemCommandProperty);
         }
 
-        static void SendSystemCommandChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        static void OnSendSystemCommandChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
             if (e.NewValue is SystemCommand systemCommand)
             {
@@ -364,7 +369,7 @@ namespace Cogs.Wpf
         {
             if (frameworkElement is null)
                 throw new ArgumentNullException(nameof(frameworkElement));
-            frameworkElement.SetValue(ShowSystemMenuProperty, systemCommand);
+            frameworkElement.SetValue(SendSystemCommandProperty, systemCommand);
         }
 
         #endregion SendSystemCommand
@@ -375,12 +380,13 @@ namespace Cogs.Wpf
         /// <summary>
         /// Identifies the SetDefaultWindowStyleOnSystemCommands attached dependency property
         /// </summary>
-        public static readonly DependencyProperty SetDefaultWindowStyleOnSystemCommandsProperty = DependencyProperty.RegisterAttached("SetDefaultWindowStyleOnSystemCommands", typeof(bool), typeof(WindowAssist), new PropertyMetadata(false, SetDefaultWindowStyleOnSystemCommandsChanged));
+        public static readonly DependencyProperty SetDefaultWindowStyleOnSystemCommandsProperty = DependencyProperty.RegisterAttached("SetDefaultWindowStyleOnSystemCommands", typeof(bool), typeof(WindowAssist), new PropertyMetadata(false, OnSetDefaultWindowStyleOnSystemCommandsChanged));
 
         /// <summary>
         /// Gets the value of the SetDefaultWindowStyleOnSystemCommands attached dependency property for the specified window
         /// </summary>
         /// <param name="window">The window for which to get the value</param>
+        [AttachedPropertyBrowsableForType(typeof(Window))]
         public static bool GetSetDefaultWindowStyleOnSystemCommands(Window window)
         {
             if (window is null)
@@ -397,17 +403,7 @@ namespace Cogs.Wpf
                 hwndSource.RemoveHook(SetDefaultWindowStyleOnSystemCommandsHook);
         }
 
-        static void PendingSetDefaultWindowStyleOnSystemCommandsWindowLoadedHandler(object sender, RoutedEventArgs e)
-        {
-            if (sender is Window window)
-            {
-                window.Loaded -= PendingSetDefaultWindowStyleOnSystemCommandsWindowLoadedHandler;
-                if (setDefaultWindowStyleOnSystemCommandsPendingLoadByWindow.TryRemove(window, out var setDefaultWindowStyleOnSystemCommands))
-                    EffectSetDefaultWindowStyleOnSystemCommands(window, setDefaultWindowStyleOnSystemCommands);
-            }
-        }
-
-        static void SetDefaultWindowStyleOnSystemCommandsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        static void OnSetDefaultWindowStyleOnSystemCommandsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
             if (sender is Window window && e.NewValue is bool newValue)
             {
@@ -418,6 +414,16 @@ namespace Cogs.Wpf
                     setDefaultWindowStyleOnSystemCommandsPendingLoadByWindow.AddOrUpdate(window, newValue, (key, value) => newValue);
                     window.Loaded += PendingSetDefaultWindowStyleOnSystemCommandsWindowLoadedHandler;
                 }
+            }
+        }
+
+        static void PendingSetDefaultWindowStyleOnSystemCommandsWindowLoadedHandler(object sender, RoutedEventArgs e)
+        {
+            if (sender is Window window)
+            {
+                window.Loaded -= PendingSetDefaultWindowStyleOnSystemCommandsWindowLoadedHandler;
+                if (setDefaultWindowStyleOnSystemCommandsPendingLoadByWindow.TryRemove(window, out var setDefaultWindowStyleOnSystemCommands))
+                    EffectSetDefaultWindowStyleOnSystemCommands(window, setDefaultWindowStyleOnSystemCommands);
             }
         }
 
@@ -464,17 +470,45 @@ namespace Cogs.Wpf
         /// <summary>
         /// Identifies the ShowSystemMenu attached dependency property
         /// </summary>
-        public static readonly DependencyProperty ShowSystemMenuProperty = DependencyProperty.RegisterAttached("ShowSystemMenu", typeof(bool), typeof(WindowAssist), new PropertyMetadata(false, ShowSystemMenuChanged));
+        public static readonly DependencyProperty ShowSystemMenuProperty = DependencyProperty.RegisterAttached("ShowSystemMenu", typeof(bool), typeof(WindowAssist), new PropertyMetadata(false, OnShowSystemMenuChanged));
 
         /// <summary>
         /// Gets the value of the ShowSystemMenu attached dependency property for the specified framework element
         /// </summary>
         /// <param name="frameworkElement">The framework element for which to get the value</param>
+        [AttachedPropertyBrowsableForType(typeof(FrameworkElement))]
         public static bool GetShowSystemMenu(FrameworkElement frameworkElement)
         {
             if (frameworkElement is null)
                 throw new ArgumentNullException(nameof(frameworkElement));
             return (bool)frameworkElement.GetValue(ShowSystemMenuProperty);
+        }
+
+        static void OnShowSystemMenuChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (e.NewValue is bool boolean)
+            {
+                if (sender is ButtonBase buttonBase)
+                {
+                    if (boolean)
+                        buttonBase.Click += ShowSystemMenuClickHandler;
+                    else
+                        buttonBase.Click -= ShowSystemMenuClickHandler;
+                }
+                else if (sender is FrameworkElement frameworkElement)
+                {
+                    if (boolean)
+                    {
+                        frameworkElement.MouseLeftButtonDown += ShowSystemMenuMouseButtonDownHandler;
+                        frameworkElement.MouseRightButtonDown += ShowSystemMenuMouseButtonDownHandler;
+                    }
+                    else
+                    {
+                        frameworkElement.MouseLeftButtonDown -= ShowSystemMenuMouseButtonDownHandler;
+                        frameworkElement.MouseRightButtonDown -= ShowSystemMenuMouseButtonDownHandler;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -500,33 +534,6 @@ namespace Cogs.Wpf
             var command = NativeMethods.TrackPopupMenuEx(hMenu, TrackPopupMenuFlags.LEFTALIGN | TrackPopupMenuFlags.RETURNCMD, (int)frameworkElementTopLeft.X, (int)frameworkElementBottomRight.Y, hWnd, IntPtr.Zero);
             if (command != 0)
                 NativeMethods.PostMessage(hWnd, WindowMessage.SYSCOMMAND, new IntPtr(command), IntPtr.Zero);
-        }
-
-        static void ShowSystemMenuChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (e.NewValue is bool boolean)
-            {
-                if (sender is ButtonBase buttonBase)
-                {
-                    if (boolean)
-                        buttonBase.Click += ShowSystemMenuClickHandler;
-                    else
-                        buttonBase.Click -= ShowSystemMenuClickHandler;
-                }
-                else if (sender is FrameworkElement frameworkElement)
-                {
-                    if (boolean)
-                    {
-                        frameworkElement.MouseLeftButtonDown += ShowSystemMenuMouseButtonDownHandler;
-                        frameworkElement.MouseRightButtonDown += ShowSystemMenuMouseButtonDownHandler;
-                    }
-                    else
-                    {
-                        frameworkElement.MouseLeftButtonDown -= ShowSystemMenuMouseButtonDownHandler;
-                        frameworkElement.MouseRightButtonDown -= ShowSystemMenuMouseButtonDownHandler;
-                    }
-                }
-            }
         }
 
         static void ShowSystemMenuClickHandler(object sender, RoutedEventArgs e)

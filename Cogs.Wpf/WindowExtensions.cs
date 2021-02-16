@@ -17,17 +17,17 @@ namespace Cogs.Wpf
             if (closestWorkingArea == Rect.Empty)
                 return;
             if (window.Width > closestWorkingArea.Width)
-                window.Width = closestWorkingArea.Width;
+                window.SetCurrentValue(FrameworkElement.WidthProperty, closestWorkingArea.Width);
             if (window.Height > closestWorkingArea.Height)
-                window.Height = closestWorkingArea.Height;
+                window.SetCurrentValue(FrameworkElement.HeightProperty, closestWorkingArea.Height);
             if (window.Left < closestWorkingArea.Left)
-                window.Left = closestWorkingArea.Left;
+                window.SetCurrentValue(Window.LeftProperty, closestWorkingArea.Left);
             if (window.Top < closestWorkingArea.Top)
-                window.Top = closestWorkingArea.Top;
+                window.SetCurrentValue(Window.TopProperty, closestWorkingArea.Top);
             if (window.Left + window.Width > closestWorkingArea.Right)
-                window.Left = closestWorkingArea.Right - window.Width;
+                window.SetCurrentValue(Window.LeftProperty, closestWorkingArea.Right - window.Width);
             if (window.Top + window.Height > closestWorkingArea.Bottom)
-                window.Top = closestWorkingArea.Bottom - window.Height;
+                window.SetCurrentValue(Window.TopProperty, closestWorkingArea.Bottom - window.Height);
         }
     }
 }

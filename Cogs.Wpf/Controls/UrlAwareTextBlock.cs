@@ -21,11 +21,11 @@ namespace Cogs.Wpf.Controls
         /// </summary>
         public string? ParsedText
         {
-            get => (string)GetValue(ParsedTextProperty);
+            get => (string?)GetValue(ParsedTextProperty);
             set => SetValue(ParsedTextProperty, value);
         }
 
-        static UrlAwareTextBlock() => TextProperty.OverrideMetadata(typeof(UrlAwareTextBlock), new FrameworkPropertyMetadata(TextPropertyChanged));
+        static UrlAwareTextBlock() => TextProperty.OverrideMetadata(typeof(UrlAwareTextBlock), new FrameworkPropertyMetadata((sender, e) => sender.SetCurrentValue(ParsedTextProperty, e.NewValue)));
 
         /// <summary>
         /// Identifies the <see cref="ParsedText"/> dependency property
@@ -66,7 +66,5 @@ namespace Cogs.Wpf.Controls
                 }
             }
         }
-
-        static void TextPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e) => sender.SetValue(ParsedTextProperty, e.NewValue);
     }
 }
