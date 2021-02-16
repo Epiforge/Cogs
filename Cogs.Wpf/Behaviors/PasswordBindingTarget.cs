@@ -1,4 +1,5 @@
 using Microsoft.Xaml.Behaviors;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -20,6 +21,15 @@ namespace Cogs.Wpf.Behaviors
 
         bool dependencyPropertyChangeSource;
         bool passwordBoxChangeSource;
+
+        /// <summary>
+        /// Gets/sets the password
+        /// </summary>
+        public string? Password
+        {
+            get => (string?)GetValue(PasswordProperty);
+            set => SetValue(PasswordProperty, value);
+        }
 
         void PasswordBoxPasswordChanged(object sender, RoutedEventArgs e)
         {
@@ -56,7 +66,18 @@ namespace Cogs.Wpf.Behaviors
         /// <summary>
         /// Identifies the Password dependency property
         /// </summary>
-        public static readonly DependencyProperty PasswordProperty = DependencyProperty.Register("Password", typeof(string), typeof(PasswordBindingTarget), new PropertyMetadata(null, OnPasswordChanged));
+        public static readonly DependencyProperty PasswordProperty = DependencyProperty.Register(nameof(Password), typeof(string), typeof(PasswordBindingTarget), new PropertyMetadata(null, OnPasswordChanged));
+
+        /// <summary>
+        /// Gets the value of the Password dependency property for the specified password binding target
+        /// </summary>
+        /// <param name="passwordBindingTarget">The password binding target</param>
+        public static string? GetPassword(PasswordBindingTarget passwordBindingTarget)
+        {
+            if (passwordBindingTarget is null)
+                throw new ArgumentNullException(nameof(passwordBindingTarget));
+            return (string?)passwordBindingTarget.GetValue(PasswordProperty);
+        }
 
         static void OnPasswordChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
@@ -66,6 +87,18 @@ namespace Cogs.Wpf.Behaviors
                 passwordBindingTarget.AssociatedObject.Password = e.NewValue as string;
                 passwordBindingTarget.dependencyPropertyChangeSource = false;
             }
+        }
+
+        /// <summary>
+        /// Sets the value of the Password dependency property for the specified password binding target
+        /// </summary>
+        /// <param name="passwordBindingTarget">The password binding target</param>
+        /// <param name="value">The value to set</param>
+        public static void SetPassword(PasswordBindingTarget passwordBindingTarget, string? value)
+        {
+            if (passwordBindingTarget is null)
+                throw new ArgumentNullException(nameof(passwordBindingTarget));
+            passwordBindingTarget.SetValue(PasswordProperty, value);
         }
     }
 }
