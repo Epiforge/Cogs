@@ -18,12 +18,8 @@ namespace Cogs.Wpf.ValueConversion
         /// <param name="targetType">The type of the binding target property</param>
         /// <param name="parameter">The converter parameter to use</param>
         /// <param name="culture">The culture to use in the converter</param>
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (values.Any(value => value is not bool))
-                return Binding.DoNothing;
-            return values.Cast<bool>().Any(boolean => !boolean) ? Visibility.Hidden : Visibility.Visible;
-        }
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
+            values.All(obj => obj is bool boolean && boolean) ? Visibility.Visible : Visibility.Hidden;
 
         /// <summary>
         /// Converts a binding target value to the source binding values

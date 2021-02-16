@@ -7,9 +7,9 @@ using System.Windows.Data;
 namespace Cogs.Wpf.ValueConversion
 {
     /// <summary>
-    /// Converts the values to <see cref="Visibility.Collapsed"/> when any of them are <c>false</c> or not a <see cref="bool"/>; otherwise, to <see cref="Visibility.Visible"/>
+    /// Converts the values to <c>false</c> when any of them are <c>false</c> or not a <see cref="bool"/>; otherwise, to <c>true</c>
     /// </summary>
-    public class AnyFalseIsCollapsedMultiValueConverter : IMultiValueConverter
+    public class AnyFalseIsFalseMultiValueConverter : IMultiValueConverter
     {
         /// <summary>
         /// Converts source values to a value for the binding target
@@ -19,7 +19,7 @@ namespace Cogs.Wpf.ValueConversion
         /// <param name="parameter">The converter parameter to use</param>
         /// <param name="culture">The culture to use in the converter</param>
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
-            values.All(obj => obj is bool boolean && boolean) ? Visibility.Visible : Visibility.Collapsed;
+            values.All(obj => obj is bool boolean && boolean);
 
         /// <summary>
         /// Converts a binding target value to the source binding values
