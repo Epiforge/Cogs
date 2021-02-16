@@ -81,10 +81,10 @@ namespace Cogs.Wpf.Behaviors
 
         static void OnPasswordChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            if (sender is PasswordBindingTarget passwordBindingTarget && !passwordBindingTarget.passwordBoxChangeSource)
+            if (sender is PasswordBindingTarget passwordBindingTarget && passwordBindingTarget.AssociatedObject is { } passwordBox && !passwordBindingTarget.passwordBoxChangeSource)
             {
                 passwordBindingTarget.dependencyPropertyChangeSource = true;
-                passwordBindingTarget.AssociatedObject.Password = e.NewValue as string;
+                passwordBox.Password = e.NewValue as string;
                 passwordBindingTarget.dependencyPropertyChangeSource = false;
             }
         }

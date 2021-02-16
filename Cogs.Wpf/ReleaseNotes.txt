@@ -1,1 +1,1 @@
-We added AnyFalseIsFalseMultiValueConverter.
+We corrected a defect in the PasswordBindingTarget behavior.
