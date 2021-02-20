@@ -10,27 +10,98 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpression>
     {
-        protected ActiveBinaryExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, CachedInstancesKey<BinaryExpression> instancesKey, bool deferEvaluation, bool getDelegate = true, bool evaluateIfNotDeferred = true) : base(binaryExpression.Type, binaryExpression.NodeType, options, deferEvaluation)
+        protected ActiveBinaryExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation, bool getDelegate = true, bool evaluateIfNotDeferred = true) : base(instancesKey.Expression, options, deferEvaluation)
+        {
+            this.instancesKey = instancesKey;
+            this.getDelegate = getDelegate;
+            this.evaluateIfNotDeferred = evaluateIfNotDeferred;
+        }
+
+        BinaryOperationDelegate? @delegate;
+        int disposalCount;
+        readonly bool evaluateIfNotDeferred;
+        readonly bool getDelegate;
+        protected readonly CachedInstancesKey<BinaryExpression> instancesKey;
+        bool isLiftedToNull;
+        protected ActiveExpression? left;
+        MethodInfo? method;
+        protected ActiveExpression? right;
+
+        protected override bool Dispose(bool disposing)
+        {
+            var result = false;
+            lock (instanceManagementLock)
+                if (--disposalCount == 0)
+                {
+                    instances.Remove(instancesKey);
+                    result = true;
+                }
+            if (result)
+            {
+                DisposeValueIfNecessaryAndPossible();
+                if (left is not null)
+                {
+                    left.PropertyChanged -= LeftPropertyChanged;
+                    left.Dispose();
+                }
+                if (right is not null)
+                {
+                    right.PropertyChanged -= RightPropertyChanged;
+                    right.Dispose();
+                }
+            }
+            return result;
+        }
+
+        public override bool Equals(object? obj) => obj is ActiveBinaryExpression other && Equals(other);
+
+        public bool Equals(ActiveBinaryExpression other) => left == other.left && method == other.method && NodeType == other.NodeType && right == other.right && Equals(options, other.options);
+
+        protected override void Evaluate()
         {
             try
             {
-                this.instancesKey = instancesKey;
-                left = Create(binaryExpression.Left, options, deferEvaluation);
+                var leftFault = left?.Fault;
+                var leftValue = left?.Value;
+                var rightFault = right?.Fault;
+                var rightValue = right?.Value;
+                if (leftFault is not null)
+                    Fault = leftFault;
+                else if (rightFault is not null)
+                    Fault = rightFault;
+                else
+                    Value = @delegate?.Invoke(leftValue, rightValue);
+            }
+            catch (Exception ex)
+            {
+                Fault = ex;
+            }
+        }
+
+        public override int GetHashCode() => HashCode.Combine(typeof(ActiveBinaryExpression), left, method, NodeType, right, options);
+
+        protected override bool GetShouldValueBeDisposed() => method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
+
+        protected override void Initialize()
+        {
+            try
+            {
+                left = Create(instancesKey.Expression.Left, options, IsDeferringEvaluation);
                 left.PropertyChanged += LeftPropertyChanged;
-                switch (binaryExpression.NodeType)
+                switch (instancesKey.Expression.NodeType)
                 {
-                    case ExpressionType.AndAlso when binaryExpression.Type == typeof(bool):
+                    case ExpressionType.AndAlso when instancesKey.Expression.Type == typeof(bool):
                     case ExpressionType.Coalesce:
-                    case ExpressionType.OrElse when binaryExpression.Type == typeof(bool):
-                        right = Create(binaryExpression.Right, options, true);
+                    case ExpressionType.OrElse when instancesKey.Expression.Type == typeof(bool):
+                        right = Create(instancesKey.Expression.Right, options, true);
                         break;
                     default:
-                        right = Create(binaryExpression.Right, options, deferEvaluation);
+                        right = Create(instancesKey.Expression.Right, options, IsDeferringEvaluation);
                         break;
                 }
                 right.PropertyChanged += RightPropertyChanged;
-                isLiftedToNull = binaryExpression.IsLiftedToNull;
-                method = binaryExpression.Method;
+                isLiftedToNull = instancesKey.Expression.IsLiftedToNull;
+                method = instancesKey.Expression.Method;
                 if (getDelegate)
                 {
                     var implementationKey = new ImplementationsKey(NodeType, left.Type, right.Type, Type, method);
@@ -66,63 +137,6 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        readonly BinaryOperationDelegate? @delegate;
-        int disposalCount;
-        readonly CachedInstancesKey<BinaryExpression> instancesKey;
-        readonly bool isLiftedToNull;
-        protected readonly ActiveExpression left;
-        readonly MethodInfo? method;
-        protected readonly ActiveExpression right;
-
-        protected override bool Dispose(bool disposing)
-        {
-            var result = false;
-            lock (instanceManagementLock)
-                if (--disposalCount == 0)
-                {
-                    instances.Remove(instancesKey);
-                    result = true;
-                }
-            if (result)
-            {
-                DisposeValueIfNecessaryAndPossible();
-                left.PropertyChanged -= LeftPropertyChanged;
-                left.Dispose();
-                right.PropertyChanged -= RightPropertyChanged;
-                right.Dispose();
-            }
-            return result;
-        }
-
-        public override bool Equals(object? obj) => obj is ActiveBinaryExpression other && Equals(other);
-
-        public bool Equals(ActiveBinaryExpression other) => left == other.left && method == other.method && NodeType == other.NodeType && right == other.right && Equals(options, other.options);
-
-        protected override void Evaluate()
-        {
-            var leftFault = left.Fault;
-            var leftValue = left.Value;
-            var rightFault = right.Fault;
-            var rightValue = right.Value;
-            try
-            {
-                if (leftFault is not null)
-                    Fault = leftFault;
-                else if (rightFault is not null)
-                    Fault = rightFault;
-                else
-                    Value = @delegate?.Invoke(leftValue, rightValue);
-            }
-            catch (Exception ex)
-            {
-                Fault = ex;
-            }
-        }
-
-        public override int GetHashCode() => HashCode.Combine(typeof(ActiveBinaryExpression), left, method, NodeType, right, options);
-
-        protected override bool GetShouldValueBeDisposed() => method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
-
         void LeftPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
         void RightPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
@@ -142,10 +156,10 @@ namespace Cogs.ActiveExpressions
                 {
                     activeBinaryExpression = binaryExpression.NodeType switch
                     {
-                        ExpressionType.AndAlso when binaryExpression.Type == typeof(bool) => new ActiveAndAlsoExpression(binaryExpression, options, key, deferEvaluation),
-                        ExpressionType.Coalesce => new ActiveCoalesceExpression(binaryExpression, options, key, deferEvaluation),
-                        ExpressionType.OrElse when binaryExpression.Type == typeof(bool) => new ActiveOrElseExpression(binaryExpression, options, key, deferEvaluation),
-                        _ => new ActiveBinaryExpression(binaryExpression, options, key, deferEvaluation),
+                        ExpressionType.AndAlso when binaryExpression.Type == typeof(bool) => new ActiveAndAlsoExpression(key, options, deferEvaluation),
+                        ExpressionType.Coalesce => new ActiveCoalesceExpression(key, options, deferEvaluation),
+                        ExpressionType.OrElse when binaryExpression.Type == typeof(bool) => new ActiveOrElseExpression(key, options, deferEvaluation),
+                        _ => new ActiveBinaryExpression(key, options, deferEvaluation),
                     };
                     instances.Add(key, activeBinaryExpression);
                 }

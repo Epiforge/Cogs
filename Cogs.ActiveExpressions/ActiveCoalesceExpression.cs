@@ -7,9 +7,14 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveCoalesceExpression : ActiveBinaryExpression, IEquatable<ActiveCoalesceExpression>
     {
-        public ActiveCoalesceExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, CachedInstancesKey<BinaryExpression> instancesKey, bool deferEvaluation) : base(binaryExpression, options, instancesKey, deferEvaluation, false, false)
+        public ActiveCoalesceExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey, options, deferEvaluation, false, false)
         {
-            if (binaryExpression.Conversion is { } conversion)
+        }
+
+        protected override void Initialize()
+        {
+            base.Initialize();
+            if (instancesKey.Expression.Conversion is { } conversion)
             {
                 var key = new ConversionDelegatesKey(conversion.Parameters[0].Type, conversion.Body.Type);
                 lock (conversionDelegateManagementLock)
@@ -26,7 +31,7 @@ namespace Cogs.ActiveExpressions
             EvaluateIfNotDeferred();
         }
 
-        readonly UnaryOperationDelegate? conversionDelegate;
+        UnaryOperationDelegate? conversionDelegate;
 
         public override bool Equals(object? obj) => obj is ActiveCoalesceExpression other && Equals(other);
 
@@ -36,21 +41,21 @@ namespace Cogs.ActiveExpressions
         {
             try
             {
-                var leftFault = left.Fault;
+                var leftFault = left?.Fault;
                 if (leftFault is not null)
                     Fault = leftFault;
                 else
                 {
-                    var leftValue = left.Value;
+                    var leftValue = left?.Value;
                     if (leftValue is not null)
                         Value = conversionDelegate is null ? leftValue : conversionDelegate(leftValue);
                     else
                     {
-                        var rightFault = right.Fault;
+                        var rightFault = right?.Fault;
                         if (rightFault is not null)
                             Fault = rightFault;
                         else
-                            Value = right.Value;
+                            Value = right?.Value;
                     }
                 }
             }

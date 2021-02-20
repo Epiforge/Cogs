@@ -12,17 +12,19 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
     {
-        ActiveNewExpression(NewExpression newExpression, ActiveExpressionOptions? options, CachedInstancesKey<NewExpression> instancesKey, bool deferEvaluation) : base(newExpression.Type, newExpression.NodeType, options, deferEvaluation)
+        ActiveNewExpression(CachedInstancesKey<NewExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+            this.instancesKey = instancesKey;
+
+        protected override void Initialize()
         {
             var argumentsList = new List<ActiveExpression>();
             try
             {
-                this.instancesKey = instancesKey;
-                if (newExpression.Constructor is { } constructor)
+                if (instancesKey.Expression.Constructor is { } constructor)
                     fastConstructor = FastConstructorInfo.Get(constructor);
-                foreach (var newExpressionArgument in newExpression.Arguments)
+                foreach (var newExpressionArgument in instancesKey.Expression.Arguments)
                 {
-                    var argument = Create(newExpressionArgument, options, deferEvaluation);
+                    var argument = Create(newExpressionArgument, options, IsDeferringEvaluation);
                     argument.PropertyChanged += ArgumentPropertyChanged;
                     argumentsList.Add(argument);
                 }
@@ -43,10 +45,10 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        readonly EquatableList<ActiveExpression> arguments;
-        readonly EquatableList<Type> constructorParameterTypes;
+        EquatableList<ActiveExpression> arguments;
+        EquatableList<Type> constructorParameterTypes;
         int disposalCount;
-        readonly FastConstructorInfo? fastConstructor;
+        FastConstructorInfo? fastConstructor;
         readonly CachedInstancesKey<NewExpression> instancesKey;
 
         void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
@@ -110,7 +112,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!instances.TryGetValue(key, out var activeNewExpression))
                 {
-                    activeNewExpression = new ActiveNewExpression(newExpression, options, key, deferEvaluation);
+                    activeNewExpression = new ActiveNewExpression(key, options, deferEvaluation);
                     instances.Add(key, activeNewExpression);
                 }
                 ++activeNewExpression.disposalCount;

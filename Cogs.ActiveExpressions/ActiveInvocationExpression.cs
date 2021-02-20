@@ -11,53 +11,14 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocationExpression>
     {
-        ActiveInvocationExpression(InvocationExpression invocationExpression, ActiveExpressionOptions? options, CachedInstancesKey<InvocationExpression> instancesKey, bool deferEvaluation) : base(invocationExpression.Type, ExpressionType.Invoke, options, deferEvaluation)
-        {
-            var activeArgumentsList = new List<ActiveExpression>();
-            try
-            {
-                this.invocationExpression = invocationExpression;
-                this.instancesKey = instancesKey;
-                if (invocationExpression.Expression is LambdaExpression)
-                {
-                    foreach (var invocationExpressionArgument in invocationExpression.Arguments)
-                    {
-                        var activeArgument = Create(invocationExpressionArgument, options, deferEvaluation);
-                        activeArgument.PropertyChanged += ActiveArgumentPropertyChanged;
-                        activeArgumentsList.Add(activeArgument);
-                    }
-                    activeArguments = activeArgumentsList.ToImmutableArray();
-                }
-                CreateActiveExpression();
-            }
-            catch (Exception ex)
-            {
-                if (activeExpression is not null)
-                {
-                    activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
-                    activeExpression.Dispose();
-                }
-                if (activeDelegateExpression is not null)
-                {
-                    activeDelegateExpression.PropertyChanged -= ActiveDelegateExpressionPropertyChanged;
-                    activeDelegateExpression.Dispose();
-                }
-                foreach (var activeArgument in activeArgumentsList)
-                {
-                    activeArgument.PropertyChanged -= ActiveArgumentPropertyChanged;
-                    activeArgument.Dispose();
-                }
-                ExceptionDispatchInfo.Capture(ex).Throw();
-                throw;
-            }
-        }
+        ActiveInvocationExpression(CachedInstancesKey<InvocationExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression.Type, ExpressionType.Invoke, options, deferEvaluation) =>
+            this.instancesKey = instancesKey;
 
         ActiveExpression? activeExpression;
         ActiveExpression? activeDelegateExpression;
-        readonly IReadOnlyList<ActiveExpression>? activeArguments;
+        IReadOnlyList<ActiveExpression>? activeArguments;
         int disposalCount;
         readonly CachedInstancesKey<InvocationExpression> instancesKey;
-        readonly InvocationExpression invocationExpression;
 
         void ActiveArgumentPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -88,7 +49,7 @@ namespace Cogs.ActiveExpressions
 
         void CreateActiveExpression()
         {
-            switch (invocationExpression.Expression)
+            switch (instancesKey.Expression.Expression)
             {
                 case LambdaExpression lambdaExpression when activeArguments is not null:
                     activeExpression = Create(ReplaceParameters(lambdaExpression, activeArguments.Select(activeArgument => activeArgument.Value).ToArray()), options, IsDeferringEvaluation);
@@ -101,7 +62,7 @@ namespace Cogs.ActiveExpressions
                         activeDelegateExpressionCreated = true;
                     }
                     if (activeDelegateExpression.Value is Delegate @delegate)
-                        activeExpression = Create(@delegate.Target is null ? Expression.Call(@delegate.Method, invocationExpression.Arguments) : Expression.Call(Expression.Constant(@delegate.Target), @delegate.Method, invocationExpression.Arguments), options, IsDeferringEvaluation);
+                        activeExpression = Create(@delegate.Target is null ? Expression.Call(@delegate.Method, instancesKey.Expression.Arguments) : Expression.Call(Expression.Constant(@delegate.Target), @delegate.Method, instancesKey.Expression.Arguments), options, IsDeferringEvaluation);
                     if (activeDelegateExpressionCreated)
                         activeDelegateExpression.PropertyChanged += ActiveDelegateExpressionPropertyChanged;
                     break;
@@ -146,7 +107,7 @@ namespace Cogs.ActiveExpressions
 
         public override bool Equals(object? obj) => obj is ActiveInvocationExpression other && Equals(other);
 
-        public bool Equals(ActiveInvocationExpression other) => ExpressionEqualityComparer.Default.Equals(invocationExpression, other.invocationExpression) && Equals(options, other.options);
+        public bool Equals(ActiveInvocationExpression other) => ExpressionEqualityComparer.Default.Equals(instancesKey.Expression, other.instancesKey.Expression) && Equals(options, other.options);
 
         protected override void Evaluate()
         {
@@ -158,9 +119,48 @@ namespace Cogs.ActiveExpressions
                 Value = activeExpression.Value;
         }
 
-        public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), ExpressionEqualityComparer.Default.GetHashCode(invocationExpression), options);
+        public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), ExpressionEqualityComparer.Default.GetHashCode(instancesKey.Expression), options);
 
-        public override string ToString() => $"λ({(activeExpression is not null ? (object)activeExpression : invocationExpression)})";
+        protected override void Initialize()
+        {
+            var activeArgumentsList = new List<ActiveExpression>();
+            try
+            {
+                if (instancesKey.Expression.Expression is LambdaExpression)
+                {
+                    foreach (var invocationExpressionArgument in instancesKey.Expression.Arguments)
+                    {
+                        var activeArgument = Create(invocationExpressionArgument, options, IsDeferringEvaluation);
+                        activeArgument.PropertyChanged += ActiveArgumentPropertyChanged;
+                        activeArgumentsList.Add(activeArgument);
+                    }
+                    activeArguments = activeArgumentsList.ToImmutableArray();
+                }
+                CreateActiveExpression();
+            }
+            catch (Exception ex)
+            {
+                if (activeExpression is not null)
+                {
+                    activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
+                    activeExpression.Dispose();
+                }
+                if (activeDelegateExpression is not null)
+                {
+                    activeDelegateExpression.PropertyChanged -= ActiveDelegateExpressionPropertyChanged;
+                    activeDelegateExpression.Dispose();
+                }
+                foreach (var activeArgument in activeArgumentsList)
+                {
+                    activeArgument.PropertyChanged -= ActiveArgumentPropertyChanged;
+                    activeArgument.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
+        }
+
+        public override string ToString() => $"λ({(activeExpression is not null ? (object)activeExpression : instancesKey.Expression)})";
 
         static readonly object instanceManagementLock = new object();
         static readonly Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression> instances = new Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression>(new CachedInstancesKeyComparer<InvocationExpression>());
@@ -172,7 +172,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!instances.TryGetValue(key, out var activeInvocationExpression))
                 {
-                    activeInvocationExpression = new ActiveInvocationExpression(invocationExpression, options, key, deferEvaluation);
+                    activeInvocationExpression = new ActiveInvocationExpression(key, options, deferEvaluation);
                     instances.Add(key, activeInvocationExpression);
                 }
                 ++activeInvocationExpression.disposalCount;

@@ -14,20 +14,97 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression>
     {
-        ActiveIndexExpression(IndexExpression indexExpression, ActiveExpressionOptions? options, CachedInstancesKey<IndexExpression> instancesKey, bool deferEvaluation) : base(indexExpression.Type, indexExpression.NodeType, options, deferEvaluation)
+        ActiveIndexExpression(CachedInstancesKey<IndexExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+            this.instancesKey = instancesKey;
+
+        EquatableList<ActiveExpression>? arguments;
+        int disposalCount;
+        FastMethodInfo? fastGetter;
+        MethodInfo? getMethod;
+        PropertyInfo? indexer;
+        readonly CachedInstancesKey<IndexExpression> instancesKey;
+        ActiveExpression? @object;
+        object? objectValue;
+
+        void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+
+        protected override bool Dispose(bool disposing)
+        {
+            var result = false;
+            lock (instanceManagementLock)
+                if (--disposalCount == 0)
+                {
+                    instances.Remove(instancesKey);
+                    result = true;
+                }
+            if (result)
+            {
+                DisposeValueIfNecessaryAndPossible();
+                UnsubscribeFromObjectValueNotifications();
+                if (@object is not null)
+                {
+                    @object.PropertyChanged -= ObjectPropertyChanged;
+                    @object.Dispose();
+                }
+                if (arguments is not null)
+                    foreach (var argument in arguments)
+                    {
+                        argument.PropertyChanged -= ArgumentPropertyChanged;
+                        argument.Dispose();
+                    }
+            }
+            return result;
+        }
+
+        public override bool Equals(object? obj) => obj is ActiveIndexExpression other && Equals(other);
+
+        public bool Equals(ActiveIndexExpression other) => arguments == other.arguments && indexer == other.indexer && @object == other.@object && Equals(options, other.options);
+
+        protected override void Evaluate()
+        {
+            try
+            {
+                var objectFault = @object?.Fault;
+                var argumentFault = arguments?.Select(argument => argument.Fault).Where(fault => fault is not null).FirstOrDefault();
+                if (objectFault is not null)
+                    Fault = objectFault;
+                else if (argumentFault is not null)
+                    Fault = argumentFault;
+                else
+                {
+                    var newObjectValue = @object?.Value;
+                    if (newObjectValue != objectValue)
+                    {
+                        UnsubscribeFromObjectValueNotifications();
+                        objectValue = newObjectValue;
+                        SubscribeToObjectValueNotifications();
+                    }
+                    Value = fastGetter?.Invoke(objectValue, arguments?.Select(argument => argument.Value).ToArray() ?? Array.Empty<object?>());
+                }
+            }
+            catch (Exception ex)
+            {
+                Fault = ex;
+            }
+        }
+
+        public override int GetHashCode() => HashCode.Combine(typeof(ActiveIndexExpression), arguments, indexer, @object, options);
+
+        protected override bool GetShouldValueBeDisposed() => getMethod is not null && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
+
+        protected override void Initialize()
         {
             var argumentsList = new List<ActiveExpression>();
             try
             {
-                this.instancesKey = instancesKey;
-                indexer = indexExpression.Indexer;
+                indexer = instancesKey.Expression.Indexer;
                 getMethod = indexer.GetMethod;
                 fastGetter = FastMethodInfo.Get(getMethod);
-                @object = Create(indexExpression.Object, options, deferEvaluation);
+                @object = Create(instancesKey.Expression.Object, options, IsDeferringEvaluation);
                 @object.PropertyChanged += ObjectPropertyChanged;
-                foreach (var indexExpressionArgument in indexExpression.Arguments)
+                foreach (var indexExpressionArgument in instancesKey.Expression.Arguments)
                 {
-                    var argument = Create(indexExpressionArgument, options, deferEvaluation);
+                    var argument = Create(indexExpressionArgument, options, IsDeferringEvaluation);
                     argument.PropertyChanged += ArgumentPropertyChanged;
                     argumentsList.Add(argument);
                 }
@@ -53,77 +130,6 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        readonly EquatableList<ActiveExpression> arguments;
-        int disposalCount;
-        readonly FastMethodInfo fastGetter;
-        readonly MethodInfo getMethod;
-        readonly PropertyInfo indexer;
-        readonly CachedInstancesKey<IndexExpression> instancesKey;
-        readonly ActiveExpression @object;
-        object? objectValue;
-
-        void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
-
-        protected override bool Dispose(bool disposing)
-        {
-            var result = false;
-            lock (instanceManagementLock)
-                if (--disposalCount == 0)
-                {
-                    instances.Remove(instancesKey);
-                    result = true;
-                }
-            if (result)
-            {
-                DisposeValueIfNecessaryAndPossible();
-                UnsubscribeFromObjectValueNotifications();
-                @object.PropertyChanged -= ObjectPropertyChanged;
-                @object.Dispose();
-                foreach (var argument in arguments)
-                {
-                    argument.PropertyChanged -= ArgumentPropertyChanged;
-                    argument.Dispose();
-                }
-            }
-            return result;
-        }
-
-        public override bool Equals(object? obj) => obj is ActiveIndexExpression other && Equals(other);
-
-        public bool Equals(ActiveIndexExpression other) => arguments == other.arguments && indexer == other.indexer && @object == other.@object && Equals(options, other.options);
-
-        protected override void Evaluate()
-        {
-            try
-            {
-                var objectFault = @object.Fault;
-                var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is not null).FirstOrDefault();
-                if (objectFault is not null)
-                    Fault = objectFault;
-                else if (argumentFault is not null)
-                    Fault = argumentFault;
-                else
-                {
-                    var newObjectValue = @object.Value;
-                    if (newObjectValue != objectValue)
-                    {
-                        UnsubscribeFromObjectValueNotifications();
-                        objectValue = newObjectValue;
-                        SubscribeToObjectValueNotifications();
-                    }
-                    Value = fastGetter.Invoke(objectValue, arguments.Select(argument => argument.Value).ToArray());
-                }
-            }
-            catch (Exception ex)
-            {
-                Fault = ex;
-            }
-        }
-
-        public override int GetHashCode() => HashCode.Combine(typeof(ActiveIndexExpression), arguments, indexer, @object, options);
-
-        protected override bool GetShouldValueBeDisposed() => ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
-
         void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
 
         [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
@@ -133,26 +139,26 @@ namespace Cogs.ActiveExpressions
             {
                 case NotifyCollectionChangedAction.Add:
                     {
-                        if (e.NewStartingIndex >= 0 && (e.NewItems?.Count ?? 0) > 0 && arguments.Count == 1 && arguments[0].Value is int index && e.NewStartingIndex <= index)
+                        if (e.NewStartingIndex >= 0 && (e.NewItems?.Count ?? 0) > 0 && arguments?.Count == 1 && arguments?[0].Value is int index && e.NewStartingIndex <= index)
                             Evaluate();
                     }
                     break;
                 case NotifyCollectionChangedAction.Move:
                     {
                         var movingCount = Math.Max(e.OldItems?.Count ?? 0, e.NewItems?.Count ?? 0);
-                        if (e.OldStartingIndex >= 0 && e.NewStartingIndex >= 0 && movingCount > 0 && arguments.Count == 1 && arguments[0].Value is int index && ((index >= e.OldStartingIndex && index < e.OldStartingIndex + movingCount) || (index >= e.NewStartingIndex && index < e.NewStartingIndex + movingCount)))
+                        if (e.OldStartingIndex >= 0 && e.NewStartingIndex >= 0 && movingCount > 0 && arguments?.Count == 1 && arguments?[0].Value is int index && ((index >= e.OldStartingIndex && index < e.OldStartingIndex + movingCount) || (index >= e.NewStartingIndex && index < e.NewStartingIndex + movingCount)))
                             Evaluate();
                     }
                     break;
                 case NotifyCollectionChangedAction.Remove:
                     {
-                        if (e.OldStartingIndex >= 0 && (e.OldItems?.Count ?? 0) > 0 && arguments.Count == 1 && arguments[0].Value is int index && e.OldStartingIndex <= index)
+                        if (e.OldStartingIndex >= 0 && (e.OldItems?.Count ?? 0) > 0 && arguments?.Count == 1 && arguments?[0].Value is int index && e.OldStartingIndex <= index)
                             Evaluate();
                     }
                     break;
                 case NotifyCollectionChangedAction.Replace:
                     {
-                        if (arguments.Count == 1 && arguments[0].Value is int index)
+                        if (arguments?.Count == 1 && arguments?[0].Value is int index)
                         {
                             var oldCount = e.OldItems?.Count ?? 0;
                             var newCount = e.NewItems?.Count ?? 0;
@@ -171,10 +177,10 @@ namespace Cogs.ActiveExpressions
         {
             if (e.Action == NotifyDictionaryChangedAction.Reset)
                 Evaluate();
-            else if (arguments.Count == 1)
+            else if (arguments?.Count == 1)
             {
                 var removed = false;
-                var key = arguments[0].Value;
+                var key = arguments?[0].Value;
                 if (key is not null)
                 {
                     removed = e.OldItems?.Any(kv => key.Equals(kv.Key)) ?? false;
@@ -192,7 +198,7 @@ namespace Cogs.ActiveExpressions
 
         void ObjectValuePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == indexer.Name)
+            if (e.PropertyName == indexer?.Name)
                 Evaluate();
         }
 
@@ -206,7 +212,7 @@ namespace Cogs.ActiveExpressions
                 propertyChangedNotifier.PropertyChanged += ObjectValuePropertyChanged;
         }
 
-        public override string ToString() => $"{@object}{string.Join(string.Empty, arguments.Select(argument => $"[{argument}]"))} {ToStringSuffix}";
+        public override string ToString() => $"{@object}{string.Join(string.Empty, arguments?.Select(argument => $"[{argument}]"))} {ToStringSuffix}";
 
         void UnsubscribeFromObjectValueNotifications()
         {
@@ -228,7 +234,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!instances.TryGetValue(key, out var activeIndexExpression))
                 {
-                    activeIndexExpression = new ActiveIndexExpression(indexExpression, options, key, deferEvaluation);
+                    activeIndexExpression = new ActiveIndexExpression(key, options, deferEvaluation);
                     instances.Add(key, activeIndexExpression);
                 }
                 ++activeIndexExpression.disposalCount;

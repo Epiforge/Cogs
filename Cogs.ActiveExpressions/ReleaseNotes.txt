@@ -1,1 +1,1 @@
-We added support for MemberInitExpressions, in which the active expression will actually just set the values of fields and properties on already created values without creating a new one (https://youtu.be/zqTwOoElxBA). We also added support for NewExpressions that do not include an explicit Constructor property value.
+We revised the locking strategy for caching instances of active expressions to reduce the potential for deadlocks.

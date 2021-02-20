@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace Cogs.ActiveExpressions
 {
@@ -48,6 +47,11 @@ namespace Cogs.ActiveExpressions
         public bool Equals(ActiveConstantExpression other) => Type == other.Type && FastEqualityComparer.Get(Type).Equals(Value, other.Value) && Equals(options, other.options);
 
         public override int GetHashCode() => HashCode.Combine(typeof(ActiveConstantExpression), Value);
+
+        protected override void Initialize()
+        {
+            // nothing to do here
+        }
 
         public override string ToString() => $"{{C}} {ToStringSuffix}";
 

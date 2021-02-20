@@ -6,7 +6,7 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveOrElseExpression : ActiveBinaryExpression, IEquatable<ActiveOrElseExpression>
     {
-        public ActiveOrElseExpression(BinaryExpression binaryExpression, ActiveExpressionOptions? options, CachedInstancesKey<BinaryExpression> instancesKey, bool deferEvaluation) : base(binaryExpression, options, instancesKey, deferEvaluation, false)
+        public ActiveOrElseExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey, options, deferEvaluation, false)
         {
         }
 
@@ -16,18 +16,18 @@ namespace Cogs.ActiveExpressions
 
         protected override void Evaluate()
         {
-            var leftFault = left.Fault;
+            var leftFault = left?.Fault;
             if (leftFault is not null)
                 Fault = leftFault;
-            else if (left.Value is bool leftBool && leftBool)
+            else if (left?.Value is bool leftBool && leftBool)
                 Value = true;
             else
             {
-                var rightFault = right.Fault;
+                var rightFault = right?.Fault;
                 if (rightFault is not null)
                     Fault = rightFault;
                 else
-                    Value = right.Value is bool rightBool && rightBool;
+                    Value = right?.Value is bool rightBool && rightBool;
             }
         }
 

@@ -10,16 +10,18 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveNewArrayInitExpression : ActiveExpression, IEquatable<ActiveNewArrayInitExpression>
     {
-        ActiveNewArrayInitExpression(NewArrayExpression newArrayExpression, ActiveExpressionOptions? options, CachedInstancesKey<NewArrayExpression> instancesKey, bool deferEvaluation) : base(newArrayExpression.Type, newArrayExpression.NodeType, options, deferEvaluation)
+        ActiveNewArrayInitExpression(CachedInstancesKey<NewArrayExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+            this.instancesKey = instancesKey;
+
+        protected override void Initialize()
         {
             var initializersList = new List<ActiveExpression>();
             try
             {
-                this.instancesKey = instancesKey;
-                elementType = newArrayExpression.Type.GetElementType();
-                foreach (var newArrayExpressionInitializer in newArrayExpression.Expressions)
+                elementType = instancesKey.Expression.Type.GetElementType();
+                foreach (var newArrayExpressionInitializer in instancesKey.Expression.Expressions)
                 {
-                    var initializer = Create(newArrayExpressionInitializer, options, deferEvaluation);
+                    var initializer = Create(newArrayExpressionInitializer, options, IsDeferringEvaluation);
                     initializer.PropertyChanged += InitializerPropertyChanged;
                     initializersList.Add(initializer);
                 }
@@ -39,8 +41,8 @@ namespace Cogs.ActiveExpressions
         }
 
         int disposalCount;
-        readonly Type elementType;
-        readonly EquatableList<ActiveExpression> initializers;
+        Type? elementType;
+        EquatableList<ActiveExpression>? initializers;
         readonly CachedInstancesKey<NewArrayExpression> instancesKey;
 
         protected override bool Dispose(bool disposing)
@@ -52,14 +54,12 @@ namespace Cogs.ActiveExpressions
                     instances.Remove(instancesKey);
                     result = true;
                 }
-            if (result)
-            {
+            if (result && initializers is not null)
                 foreach (var initializer in initializers)
                 {
                     initializer.PropertyChanged -= InitializerPropertyChanged;
                     initializer.Dispose();
                 }
-            }
             return result;
         }
 
@@ -69,14 +69,14 @@ namespace Cogs.ActiveExpressions
 
         protected override void Evaluate()
         {
-            var initializerFault = initializers.Select(initializer => initializer.Fault).Where(fault => fault is not null).FirstOrDefault();
+            var initializerFault = initializers?.Select(initializer => initializer.Fault).Where(fault => fault is not null).FirstOrDefault();
             if (initializerFault is not null)
                 Fault = initializerFault;
             else
             {
-                var array = Array.CreateInstance(elementType, initializers.Count);
-                for (var i = 0; i < initializers.Count; ++i)
-                    array.SetValue(initializers[i].Value, i);
+                var array = Array.CreateInstance(elementType, initializers?.Count ?? 0);
+                for (var i = 0; i < (initializers?.Count ?? 0); ++i)
+                    array.SetValue(initializers?[i].Value, i);
                 Value = array;
             }
         }
@@ -85,7 +85,7 @@ namespace Cogs.ActiveExpressions
 
         void InitializerPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e) => Evaluate();
 
-        public override string ToString() => $"new {elementType.FullName}[] {{{string.Join(", ", initializers.Select(initializer => $"{initializer}"))}}} {ToStringSuffix}";
+        public override string ToString() => $"new {elementType?.FullName}[] {{{string.Join(", ", initializers?.Select(initializer => $"{initializer}"))}}} {ToStringSuffix}";
 
         static readonly object instanceManagementLock = new object();
         static readonly Dictionary<CachedInstancesKey<NewArrayExpression>, ActiveNewArrayInitExpression> instances = new Dictionary<CachedInstancesKey<NewArrayExpression>, ActiveNewArrayInitExpression>(new CachedInstancesKeyComparer<NewArrayExpression>());
@@ -97,7 +97,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!instances.TryGetValue(key, out var activenewArrayInitExpression))
                 {
-                    activenewArrayInitExpression = new ActiveNewArrayInitExpression(newArrayExpression, options, key, deferEvaluation);
+                    activenewArrayInitExpression = new ActiveNewArrayInitExpression(key, options, deferEvaluation);
                     instances.Add(key, activenewArrayInitExpression);
                 }
                 ++activenewArrayInitExpression.disposalCount;

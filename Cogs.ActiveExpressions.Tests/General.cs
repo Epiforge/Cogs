@@ -14,9 +14,13 @@ namespace Cogs.ActiveExpressions.Tests
 
         class DummyActiveExpression : ActiveExpression
         {
-            public DummyActiveExpression() : base(typeof(bool), ExpressionType.Constant, null, false) => EvaluateIfNotDeferred();
+            public DummyActiveExpression() : base(typeof(bool), ExpressionType.Constant, null, false)
+            {
+            }
 
             protected override bool Dispose(bool disposing) => false;
+
+            protected override void Initialize() => EvaluateIfNotDeferred();
         }
 
         #endregion Helper Classes

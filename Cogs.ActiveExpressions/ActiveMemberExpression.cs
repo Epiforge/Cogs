@@ -13,57 +13,18 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpression>
     {
-        ActiveMemberExpression(MemberExpression memberExpression, ActiveExpressionOptions? options, CachedInstancesKey<MemberExpression> instancesKey, bool deferEvaluation) : base(memberExpression.Type, memberExpression.NodeType, options, deferEvaluation)
-        {
-            try
-            {
-                this.instancesKey = instancesKey;
-                if (memberExpression.Expression is not null)
-                {
-                    expression = Create(memberExpression.Expression, options, deferEvaluation);
-                    expression.PropertyChanged += ExpressionPropertyChanged;
-                }
-                member = memberExpression.Member;
-                switch (member)
-                {
-                    case FieldInfo field:
-                        this.field = field;
-                        isFieldOfCompilerGeneratedType = expression?.Type.Name.StartsWith("<") ?? false;
-                        break;
-                    case PropertyInfo property:
-                        getMethod = property.GetMethod;
-                        fastGetter = FastMethodInfo.Get(getMethod);
-                        isFieldOfCompilerGeneratedType = false;
-                        break;
-                }
-                EvaluateIfNotDeferred();
-            }
-            catch (Exception ex)
-            {
-                DisposeValueIfNecessaryAndPossible();
-                if (fastGetter is not null)
-                    UnsubscribeFromExpressionValueNotifications();
-                else if (field is not null)
-                    UnsubscribeFromValueNotifications();
-                if (expression is not null)
-                {
-                    expression.PropertyChanged -= ExpressionPropertyChanged;
-                    expression.Dispose();
-                }
-                ExceptionDispatchInfo.Capture(ex).Throw();
-                throw;
-            }
-        }
+        ActiveMemberExpression(CachedInstancesKey<MemberExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+            this.instancesKey = instancesKey;
 
         int disposalCount;
-        readonly ActiveExpression? expression;
+        ActiveExpression? expression;
         object? expressionValue;
-        readonly FastMethodInfo? fastGetter;
-        readonly FieldInfo? field;
-        readonly MethodInfo? getMethod;
+        FastMethodInfo? fastGetter;
+        FieldInfo? field;
+        MethodInfo? getMethod;
         readonly CachedInstancesKey<MemberExpression> instancesKey;
-        readonly bool isFieldOfCompilerGeneratedType;
-        readonly MemberInfo member;
+        bool isFieldOfCompilerGeneratedType;
+        MemberInfo? member;
 
         protected override bool Dispose(bool disposing)
         {
@@ -132,7 +93,7 @@ namespace Cogs.ActiveExpressions
 
         void ExpressionValuePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == member.Name)
+            if (e.PropertyName == member?.Name)
                 Evaluate();
         }
 
@@ -140,7 +101,48 @@ namespace Cogs.ActiveExpressions
 
         protected override bool GetShouldValueBeDisposed() => getMethod is not null && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
 
-        public override string ToString() => $"{expression?.ToString() ?? member.DeclaringType.FullName}.{member.Name} {ToStringSuffix}";
+        protected override void Initialize()
+        {
+            try
+            {
+                if (instancesKey.Expression.Expression is not null)
+                {
+                    expression = Create(instancesKey.Expression.Expression, options, IsDeferringEvaluation);
+                    expression.PropertyChanged += ExpressionPropertyChanged;
+                }
+                member = instancesKey.Expression.Member;
+                switch (member)
+                {
+                    case FieldInfo field:
+                        this.field = field;
+                        isFieldOfCompilerGeneratedType = expression?.Type.Name.StartsWith("<") ?? false;
+                        break;
+                    case PropertyInfo property:
+                        getMethod = property.GetMethod;
+                        fastGetter = FastMethodInfo.Get(getMethod);
+                        isFieldOfCompilerGeneratedType = false;
+                        break;
+                }
+                EvaluateIfNotDeferred();
+            }
+            catch (Exception ex)
+            {
+                DisposeValueIfNecessaryAndPossible();
+                if (fastGetter is not null)
+                    UnsubscribeFromExpressionValueNotifications();
+                else if (field is not null)
+                    UnsubscribeFromValueNotifications();
+                if (expression is not null)
+                {
+                    expression.PropertyChanged -= ExpressionPropertyChanged;
+                    expression.Dispose();
+                }
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                throw;
+            }
+        }
+
+        public override string ToString() => $"{expression?.ToString() ?? member?.DeclaringType.FullName}.{member?.Name} {ToStringSuffix}";
 
         void SubscribeToExpressionValueNotifications()
         {
@@ -189,7 +191,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!instances.TryGetValue(key, out var activeMemberExpression))
                 {
-                    activeMemberExpression = new ActiveMemberExpression(memberExpression, options, key, deferEvaluation);
+                    activeMemberExpression = new ActiveMemberExpression(key, options, deferEvaluation);
                     instances.Add(key, activeMemberExpression);
                 }
                 ++activeMemberExpression.disposalCount;

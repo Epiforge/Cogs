@@ -13,22 +13,106 @@ namespace Cogs.ActiveExpressions
 {
     class ActiveMemberInitExpression : ActiveExpression, IEquatable<ActiveMemberInitExpression>
     {
-        public ActiveMemberInitExpression(MemberInitExpression memberInitExpression, ActiveExpressionOptions? options, CachedInstancesKey<MemberInitExpression> instancesKey, bool deferEvaluation) : base(memberInitExpression.Type, memberInitExpression.NodeType, options, deferEvaluation)
+        public ActiveMemberInitExpression(CachedInstancesKey<MemberInitExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation)
+        {
+            this.instancesKey = instancesKey;
+            memberInitExpression = instancesKey.Expression;
+        }
+
+        int disposalCount;
+        readonly CachedInstancesKey<MemberInitExpression> instancesKey;
+        IReadOnlyDictionary<ActiveExpression, MemberInfo>? memberAssignmentExpressions;
+        readonly MemberInitExpression memberInitExpression;
+        ActiveExpression? newExpression;
+
+        protected override bool Dispose(bool disposing)
+        {
+            var result = false;
+            lock (instanceManagementLock)
+                if (--disposalCount == 0)
+                {
+                    instances.Remove(instancesKey);
+                    result = true;
+                }
+            if (result)
+            {
+                DisposeValueIfNecessaryAndPossible();
+                if (newExpression is not null)
+                {
+                    newExpression.PropertyChanged -= NewExpressionPropertyChanged;
+                    newExpression.Dispose();
+                }
+                if (memberAssignmentExpressions is not null)
+                    foreach (var memberAssignmentExpression in memberAssignmentExpressions.Keys)
+                    {
+                        memberAssignmentExpression.PropertyChanged -= MemberAssignmentExpressionPropertyChanged;
+                        memberAssignmentExpression.Dispose();
+                    }
+            }
+            return result;
+        }
+
+        public override bool Equals(object? obj) => obj is ActiveMemberInitExpression other && Equals(other);
+
+        public bool Equals(ActiveMemberInitExpression other) => newExpression == other.newExpression && memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName).SequenceEqual(other.memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName)) && Equals(options, other.options);
+
+        protected override void Evaluate()
+        {
+            try
+            {
+                var newFault = newExpression?.Fault;
+                var memberAssignmentFault = memberAssignmentExpressions?.Keys.Select(memberAssignmentExpression => memberAssignmentExpression.Fault).Where(fault => fault is not null).FirstOrDefault();
+                if (newFault is not null)
+                    Fault = newFault;
+                else if (memberAssignmentFault is not null)
+                    Fault = memberAssignmentFault;
+                else
+                {
+                    var val = newExpression?.Value;
+                    if (memberAssignmentExpressions is not null)
+                        foreach (var kv in memberAssignmentExpressions)
+                        {
+                            if (kv.Value is FieldInfo field)
+                                field.SetValue(val, kv.Key.Value);
+                            else if (kv.Value is PropertyInfo property)
+                                FastMethodInfo.Get(property.SetMethod).Invoke(val, new object?[] { kv.Key.Value });
+                            else
+                                throw new NotSupportedException("Cannot handle member that is not a field or property");
+                        }
+                    Value = val;
+                }
+            }
+            catch (Exception ex)
+            {
+                Fault = ex;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = HashCode.Combine(typeof(ActiveMemberInitExpression), newExpression, options);
+            if (memberAssignmentExpressions is not null)
+                foreach (var memberAssignmentExpression in memberAssignmentExpressions)
+                    hashCode = HashCode.Combine(hashCode, memberAssignmentExpression.Key, memberAssignmentExpression.Value);
+            return hashCode;
+        }
+
+        protected override bool GetShouldValueBeDisposed() => ApplicableOptions.IsConstructedTypeDisposed(memberInitExpression.NewExpression.Constructor);
+
+        protected override void Initialize()
         {
             if (memberInitExpression.NewExpression.Type.IsValueType)
                 throw new NotSupportedException("Member initialization expressions of value types are not supported");
             var memberAssignmentExpressions = new Dictionary<ActiveExpression, MemberInfo>();
             try
             {
-                this.memberInitExpression = memberInitExpression;
-                this.instancesKey = instancesKey;
-                newExpression = Create(memberInitExpression.NewExpression, options, deferEvaluation);
+                newExpression = Create(memberInitExpression.NewExpression, options, IsDeferringEvaluation);
                 newExpression.PropertyChanged += NewExpressionPropertyChanged;
                 foreach (var binding in memberInitExpression.Bindings)
                 {
                     if (binding is MemberAssignment memberAssignmentBinding)
                     {
-                        var memberAssignmentExpression = Create(memberAssignmentBinding.Expression, options, deferEvaluation);
+                        var memberAssignmentExpression = Create(memberAssignmentBinding.Expression, options, IsDeferringEvaluation);
                         memberAssignmentExpressions.Add(memberAssignmentExpression, memberAssignmentBinding.Member);
                         memberAssignmentExpression.PropertyChanged += MemberAssignmentExpressionPropertyChanged;
                     }
@@ -56,83 +140,6 @@ namespace Cogs.ActiveExpressions
             }
         }
 
-        int disposalCount;
-        readonly CachedInstancesKey<MemberInitExpression> instancesKey;
-        readonly IReadOnlyDictionary<ActiveExpression, MemberInfo> memberAssignmentExpressions;
-        readonly MemberInitExpression memberInitExpression;
-        readonly ActiveExpression newExpression;
-
-        protected override bool Dispose(bool disposing)
-        {
-            var result = false;
-            lock (instanceManagementLock)
-                if (--disposalCount == 0)
-                {
-                    instances.Remove(instancesKey);
-                    result = true;
-                }
-            if (result)
-            {
-                DisposeValueIfNecessaryAndPossible();
-                if (newExpression is not null)
-                {
-                    newExpression.PropertyChanged -= NewExpressionPropertyChanged;
-                    newExpression.Dispose();
-                }
-                foreach (var memberAssignmentExpression in memberAssignmentExpressions.Keys)
-                {
-                    memberAssignmentExpression.PropertyChanged -= MemberAssignmentExpressionPropertyChanged;
-                    memberAssignmentExpression.Dispose();
-                }
-            }
-            return result;
-        }
-
-        public override bool Equals(object? obj) => obj is ActiveMemberInitExpression other && Equals(other);
-
-        public bool Equals(ActiveMemberInitExpression other) => newExpression.Equals(other.newExpression) && memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName).SequenceEqual(other.memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName)) && Equals(options, other.options);
-
-        protected override void Evaluate()
-        {
-            try
-            {
-                var newFault = newExpression.Fault;
-                var memberAssignmentFault = memberAssignmentExpressions.Keys.Select(memberAssignmentExpression => memberAssignmentExpression.Fault).Where(fault => fault is not null).FirstOrDefault();
-                if (newFault is not null)
-                    Fault = newFault;
-                else if (memberAssignmentFault is not null)
-                    Fault = memberAssignmentFault;
-                else
-                {
-                    var val = newExpression.Value;
-                    foreach (var kv in memberAssignmentExpressions)
-                    {
-                        if (kv.Value is FieldInfo field)
-                            field.SetValue(val, kv.Key.Value);
-                        else if (kv.Value is PropertyInfo property)
-                            FastMethodInfo.Get(property.SetMethod).Invoke(val, new object?[] { kv.Key.Value });
-                        else
-                            throw new NotSupportedException("Cannot handle member that is not a field or property");
-                    }
-                    Value = val;
-                }
-            }
-            catch (Exception ex)
-            {
-                Fault = ex;
-            }
-        }
-
-        public override int GetHashCode()
-        {
-            var hashCode = HashCode.Combine(typeof(ActiveMemberInitExpression), newExpression, options);
-            foreach (var memberAssignmentExpression in memberAssignmentExpressions)
-                hashCode = HashCode.Combine(hashCode, memberAssignmentExpression.Key, memberAssignmentExpression.Value);
-            return hashCode;
-        }
-
-        protected override bool GetShouldValueBeDisposed() => ApplicableOptions.IsConstructedTypeDisposed(memberInitExpression.NewExpression.Constructor);
-
         void MemberAssignmentExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(Fault))
@@ -141,7 +148,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (TryGetUndeferredValue(out var val) && val is not null && sender is ActiveExpression memberAssignmentExpression)
                 {
-                    var member = memberAssignmentExpressions[memberAssignmentExpression];
+                    var member = memberAssignmentExpressions?[memberAssignmentExpression];
                     if (member is FieldInfo field)
                         field.SetValue(val, memberAssignmentExpression.Value);
                     else if (member is PropertyInfo property)
@@ -168,7 +175,7 @@ namespace Cogs.ActiveExpressions
             {
                 if (!instances.TryGetValue(key, out var activeMemberInitExpression))
                 {
-                    activeMemberInitExpression = new ActiveMemberInitExpression(memberInitExpression, options, key, deferEvaluation);
+                    activeMemberInitExpression = new ActiveMemberInitExpression(key, options, deferEvaluation);
                     instances.Add(key, activeMemberInitExpression);
                 }
                 ++activeMemberInitExpression.disposalCount;

@@ -9,6 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 
@@ -19,6 +20,16 @@ namespace Cogs.ActiveExpressions
     /// </summary>
     public abstract class ActiveExpression : SyncDisposable
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ActiveExpression"/> class
+        /// </summary>
+        /// <param name="expression">The expression upon which the active expression is based</param>
+        /// <param name="options">The <see cref="ActiveExpressionOptions"/> instance of this node</param>
+        /// <param name="deferEvaluation"><c>true</c> if evaluation should be deferred until the <see cref="Value"/> property is accessed; otherwise, <c>false</c></param>
+        protected ActiveExpression(Expression expression, ActiveExpressionOptions? options, bool deferEvaluation) : this(expression is null ? throw new ArgumentNullException(nameof(expression)) : expression.Type, expression.NodeType, options, deferEvaluation)
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ActiveExpression"/> class
         /// </summary>
@@ -48,8 +59,11 @@ namespace Cogs.ActiveExpressions
 
         readonly object? defaultValue;
         bool deferringEvaluation;
-        readonly object deferringEvaluationLock = new object();
+        readonly object deferringEvaluationAccess = new object();
         Exception? fault;
+        readonly object initializationAccess = new object();
+        Exception? initializationException;
+        bool isInitialized = false;
         object? val;
         readonly FastEqualityComparer valueEqualityComparer;
 
@@ -82,7 +96,7 @@ namespace Cogs.ActiveExpressions
         {
             get
             {
-                lock (deferringEvaluationLock)
+                lock (deferringEvaluationAccess)
                     return deferringEvaluation;
             }
         }
@@ -159,7 +173,7 @@ namespace Cogs.ActiveExpressions
 
         void EvaluateIfDeferred()
         {
-            lock (deferringEvaluationLock)
+            lock (deferringEvaluationAccess)
             {
                 if (deferringEvaluation)
                 {
@@ -174,7 +188,7 @@ namespace Cogs.ActiveExpressions
         /// </summary>
         protected void EvaluateIfNotDeferred()
         {
-            lock (deferringEvaluationLock)
+            lock (deferringEvaluationAccess)
             {
                 if (!deferringEvaluation)
                     Evaluate();
@@ -193,13 +207,18 @@ namespace Cogs.ActiveExpressions
         protected virtual bool GetShouldValueBeDisposed() => false;
 
         /// <summary>
+        /// Called after an active expression is created in order to initialize it
+        /// </summary>
+        protected abstract void Initialize();
+
+        /// <summary>
         /// Attempts to get this node's value if its evaluation is not deferred
         /// </summary>
         /// <param name="value">The value if evaluation is not deferred</param>
         /// <returns><c>true</c> if evaluation is not deferred and <paramref name="value"/> has been set to the value; otherwise, <c>false</c></returns>
         protected bool TryGetUndeferredValue(out object? value)
         {
-            lock (deferringEvaluationLock)
+            lock (deferringEvaluationAccess)
             {
                 if (deferringEvaluation)
                 {
@@ -251,6 +270,29 @@ namespace Cogs.ActiveExpressions
                 UnaryExpression unaryExpression => ActiveUnaryExpression.Create(unaryExpression, options, deferEvaluation),
                 _ => throw new NotSupportedException()
             };
+            lock (activeExpression.initializationAccess)
+            {
+                if (activeExpression.initializationException is not null)
+                {
+                    ExceptionDispatchInfo.Capture(activeExpression.initializationException).Throw();
+                    throw activeExpression.initializationException;
+                }
+                try
+                {
+                    if (!activeExpression.isInitialized)
+                    {
+                        activeExpression.Initialize();
+                        activeExpression.isInitialized = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    activeExpression.initializationException = ex;
+                    activeExpression.Dispose();
+                    ExceptionDispatchInfo.Capture(ex).Throw();
+                    throw;
+                }
+            }
             if (!deferEvaluation)
                 activeExpression.EvaluateIfDeferred();
             return activeExpression;
@@ -263,7 +305,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="resultType">The type of the result when the expression is evaluated</param>
         /// <param name="operands">The operands (or arguments) of the expression</param>
         /// <returns>A human-readable representation of the expression</returns>
-        public static string GetOperatorExpressionSyntax(ExpressionType expressionType, Type resultType, params object[] operands)
+        public static string GetOperatorExpressionSyntax(ExpressionType expressionType, Type resultType, params object?[] operands)
         {
             if (resultType is null)
                 throw new ArgumentNullException(nameof(resultType));
@@ -507,7 +549,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="b">The second node to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
         [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
-        public static bool operator ==(ActiveExpression a, ActiveExpression b)
+        public static bool operator ==(ActiveExpression? a, ActiveExpression? b)
         {
             if (a is ActiveAndAlsoExpression andAlsoA && b is ActiveAndAlsoExpression andAlsoB)
                 return andAlsoA == andAlsoB;
@@ -549,7 +591,7 @@ namespace Cogs.ActiveExpressions
         /// <param name="b">The second node to compare, or null</param>
         /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
         [ExcludeFromCodeCoverage]
-        public static bool operator !=(ActiveExpression a, ActiveExpression b) => !(a == b);
+        public static bool operator !=(ActiveExpression? a, ActiveExpression? b) => !(a == b);
 
         /// <summary>
         /// Gets/sets the method that will be invoked during the active expression creation process to optimize expressions (default is null)
