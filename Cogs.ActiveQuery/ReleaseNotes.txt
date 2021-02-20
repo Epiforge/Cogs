@@ -1,1 +1,1 @@
-This package now requires Cogs.Collections.Synchronization 1.4.6 or later.
+This package now requires Cogs.ActiveExpressions 1.12.0 or later and Cogs.Disposal 1.1.6 or later.
