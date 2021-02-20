@@ -1,4 +1,5 @@
 using Cogs.Components;
+using Nito.AsyncEx;
 using System;
 
 namespace Cogs.Disposal
@@ -20,7 +21,7 @@ namespace Cogs.Disposal
             OnDisposed(e);
         }
 
-        readonly object disposalAccess = new object();
+        readonly AsyncLock disposalAccess = new AsyncLock();
         bool isDisposed;
 
         /// <summary>
@@ -52,7 +53,7 @@ namespace Cogs.Disposal
         /// </summary>
         public void Dispose()
         {
-            lock (disposalAccess)
+            using (disposalAccess.Lock())
                 if (!IsDisposed)
                 {
                     var e = new DisposalNotificationEventArgs(false);
