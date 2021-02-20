@@ -1,1 +1,1 @@
-We added the Activation class.
+This package now requires Cogs.Disposal 1.1.6 or later.
