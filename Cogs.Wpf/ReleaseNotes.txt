@@ -1,1 +1,1 @@
-We corrected a defect in the PasswordBindingTarget behavior.
+We added CoalesceMultiValueConverter.
