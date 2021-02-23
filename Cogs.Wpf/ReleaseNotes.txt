@@ -1,1 +1,1 @@
-We added CoalesceMultiValueConverter.
+The DelayedFocus behavior will now focus the first focusable element in the visual tree it can find in the descendants of its associated object.

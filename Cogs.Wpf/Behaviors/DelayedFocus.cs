@@ -3,6 +3,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace Cogs.Wpf.Behaviors
@@ -26,7 +27,17 @@ namespace Cogs.Wpf.Behaviors
                 await dispatcher.InvokeAsync(FocusCallback).Task.ConfigureAwait(false);
         }
 
-        void FocusCallback() => AssociatedObject.Focus();
+        void FocusCallback() => FindFocusableUIElement(AssociatedObject)?.Focus();
+
+        UIElement? FindFocusableUIElement(UIElement element)
+        {
+            if (element.Focusable)
+                return element;
+            for (int i = 0, ii = VisualTreeHelper.GetChildrenCount(element); i < ii; ++i)
+                if (VisualTreeHelper.GetChild(element, i) is UIElement childElement && FindFocusableUIElement(childElement) is { } focusableChildElement)
+                    return focusableChildElement;
+            return null;
+        }
 
         /// <summary>
         /// Called after the behavior is attached to an <see cref="Behavior{UIElement}.AssociatedObject"/>
