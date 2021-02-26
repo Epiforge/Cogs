@@ -349,7 +349,7 @@ namespace Cogs.ActiveQuery
             IActiveEnumerable<TSource> secondEnumerable;
 
             void firstCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizationContext.Execute(() =>
+                synchronizationContext.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerable.Count, first);
@@ -373,7 +373,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void secondCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizationContext.Execute(() =>
+                synchronizationContext.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection!.ReplaceRange(firstEnumerable.Count, rangeObservableCollection.Count - firstEnumerable.Count, second);
@@ -396,7 +396,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizationContext.Execute(() =>
+            return synchronizationContext.SequentialExecute(() =>
             {
                 firstEnumerable = ToActiveEnumerable(first);
                 secondEnumerable = ToActiveEnumerable(second);
@@ -436,7 +436,7 @@ namespace Cogs.ActiveQuery
             IActiveEnumerable<TSource> secondEnumerable;
 
             void firstCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizationContext.Execute(() =>
+                synchronizationContext.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerable.Count, first);
@@ -460,7 +460,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void secondCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizationContext.Execute(() =>
+                synchronizationContext.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection!.ReplaceRange(firstEnumerable.Count, rangeObservableCollection.Count - firstEnumerable.Count, second);
@@ -483,7 +483,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizationContext.Execute(() =>
+            return synchronizationContext.SequentialExecute(() =>
             {
                 firstEnumerable = ToActiveEnumerable(first);
                 secondEnumerable = ToActiveEnumerable(second);
