@@ -1,1 +1,1 @@
-We have ensured ActiveConcat is properly synchronized.
+We fixed a defect in ActiveConcat that could cause it to improperly manage its query results under certain complex conditions.

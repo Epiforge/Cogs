@@ -345,14 +345,14 @@ namespace Cogs.ActiveQuery
             var synchronizationContext = synchronizedFirst?.SynchronizationContext ?? synchronizedSecond?.SynchronizationContext;
 
             SynchronizedRangeObservableCollection<TSource>? rangeObservableCollection = null;
-            IActiveEnumerable<TSource> firstEnumerable;
-            IActiveEnumerable<TSource> secondEnumerable;
+            IActiveEnumerable<TSource> firstEnumerable, secondEnumerable;
+            int firstEnumerableCount, secondEnumerableCount;
 
             void firstCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
                 synchronizationContext.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
-                        rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerable.Count, first);
+                        rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerableCount, first);
                     else
                     {
                         if (e.OldItems is { } && e.NewItems is { } && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
@@ -370,36 +370,40 @@ namespace Cogs.ActiveQuery
                                 rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Cast<TSource>());
                         }
                     }
+                    firstEnumerableCount = firstEnumerable.Count;
                 });
 
             void secondCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
                 synchronizationContext.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
-                        rangeObservableCollection!.ReplaceRange(firstEnumerable.Count, rangeObservableCollection.Count - firstEnumerable.Count, second);
+                        rangeObservableCollection!.ReplaceRange(firstEnumerableCount, rangeObservableCollection.Count - firstEnumerableCount, second);
                     else
                     {
                         if (e.OldItems is { } && e.NewItems is { } && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
                         {
                             if (e.OldItems.Count == 1 && e.NewItems.Count == 1)
-                                rangeObservableCollection!.Replace(firstEnumerable.Count + e.OldStartingIndex, (TSource)e.NewItems[0]);
+                                rangeObservableCollection!.Replace(firstEnumerableCount + e.OldStartingIndex, (TSource)e.NewItems[0]);
                             else
-                                rangeObservableCollection!.ReplaceRange(firstEnumerable.Count + e.OldStartingIndex, e.OldItems.Count, e.NewItems.Cast<TSource>());
+                                rangeObservableCollection!.ReplaceRange(firstEnumerableCount + e.OldStartingIndex, e.OldItems.Count, e.NewItems.Cast<TSource>());
                         }
                         else
                         {
                             if (e.OldItems is { } && e.OldStartingIndex >= 0)
-                                rangeObservableCollection!.RemoveRange(firstEnumerable.Count + e.OldStartingIndex, e.OldItems.Count);
+                                rangeObservableCollection!.RemoveRange(firstEnumerableCount + e.OldStartingIndex, e.OldItems.Count);
                             if (e.NewItems is { } && e.NewStartingIndex >= 0)
-                                rangeObservableCollection!.InsertRange(firstEnumerable.Count + e.NewStartingIndex, e.NewItems.Cast<TSource>());
+                                rangeObservableCollection!.InsertRange(firstEnumerableCount + e.NewStartingIndex, e.NewItems.Cast<TSource>());
                         }
                     }
+                    secondEnumerableCount = secondEnumerable.Count;
                 });
 
             return synchronizationContext.SequentialExecute(() =>
             {
                 firstEnumerable = ToActiveEnumerable(first);
+                firstEnumerableCount = firstEnumerable.Count;
                 secondEnumerable = ToActiveEnumerable(second);
+                secondEnumerableCount = secondEnumerable.Count;
 
                 firstEnumerable.CollectionChanged += firstCollectionChanged;
                 secondEnumerable.CollectionChanged += secondCollectionChanged;
@@ -432,14 +436,14 @@ namespace Cogs.ActiveQuery
                 throw new ArgumentNullException(nameof(synchronizationContext));
 
             SynchronizedRangeObservableCollection<TSource>? rangeObservableCollection = null;
-            IActiveEnumerable<TSource> firstEnumerable;
-            IActiveEnumerable<TSource> secondEnumerable;
+            IActiveEnumerable<TSource> firstEnumerable, secondEnumerable;
+            int firstEnumerableCount, secondEnumerableCount;
 
             void firstCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
                 synchronizationContext.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
-                        rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerable.Count, first);
+                        rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerableCount, first);
                     else
                     {
                         if (e.OldItems is { } && e.NewItems is { } && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
@@ -457,36 +461,40 @@ namespace Cogs.ActiveQuery
                                 rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Cast<TSource>());
                         }
                     }
+                    firstEnumerableCount = firstEnumerable.Count;
                 });
 
             void secondCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
                 synchronizationContext.SequentialExecute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
-                        rangeObservableCollection!.ReplaceRange(firstEnumerable.Count, rangeObservableCollection.Count - firstEnumerable.Count, second);
+                        rangeObservableCollection!.ReplaceRange(firstEnumerableCount, rangeObservableCollection.Count - firstEnumerableCount, second);
                     else
                     {
                         if (e.OldItems is { } && e.NewItems is { } && e.OldStartingIndex >= 0 && e.OldStartingIndex == e.NewStartingIndex)
                         {
                             if (e.OldItems.Count == 1 && e.NewItems.Count == 1)
-                                rangeObservableCollection!.Replace(firstEnumerable.Count + e.OldStartingIndex, (TSource)e.NewItems[0]);
+                                rangeObservableCollection!.Replace(firstEnumerableCount + e.OldStartingIndex, (TSource)e.NewItems[0]);
                             else
-                                rangeObservableCollection!.ReplaceRange(firstEnumerable.Count + e.OldStartingIndex, e.OldItems.Count, e.NewItems.Cast<TSource>());
+                                rangeObservableCollection!.ReplaceRange(firstEnumerableCount + e.OldStartingIndex, e.OldItems.Count, e.NewItems.Cast<TSource>());
                         }
                         else
                         {
                             if (e.OldItems is { } && e.OldStartingIndex >= 0)
-                                rangeObservableCollection!.RemoveRange(firstEnumerable.Count + e.OldStartingIndex, e.OldItems.Count);
+                                rangeObservableCollection!.RemoveRange(firstEnumerableCount + e.OldStartingIndex, e.OldItems.Count);
                             if (e.NewItems is { } && e.NewStartingIndex >= 0)
-                                rangeObservableCollection!.InsertRange(firstEnumerable.Count + e.NewStartingIndex, e.NewItems.Cast<TSource>());
+                                rangeObservableCollection!.InsertRange(firstEnumerableCount + e.NewStartingIndex, e.NewItems.Cast<TSource>());
                         }
                     }
+                    secondEnumerableCount = secondEnumerable.Count;
                 });
 
             return synchronizationContext.SequentialExecute(() =>
             {
                 firstEnumerable = ToActiveEnumerable(first);
+                firstEnumerableCount = firstEnumerable.Count;
                 secondEnumerable = ToActiveEnumerable(second);
+                secondEnumerableCount = secondEnumerable.Count;
 
                 firstEnumerable.CollectionChanged += firstCollectionChanged;
                 secondEnumerable.CollectionChanged += secondCollectionChanged;
