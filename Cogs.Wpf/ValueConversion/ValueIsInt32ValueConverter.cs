@@ -7,6 +7,7 @@ namespace Cogs.Wpf.ValueConversion
     /// <summary>
     /// Casts the value to a <see cref="int"/>
     /// </summary>
+    [ValueConversion(typeof(int), typeof(int))]
     public class ValueIsInt32ValueConverter : IValueConverter
     {
         /// <summary>
@@ -28,5 +29,10 @@ namespace Cogs.Wpf.ValueConversion
         /// <param name="culture">The culture to use in the converter</param>
         /// <returns>A converted value</returns>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+
+        /// <summary>
+        /// Gets a shared instance of <see cref="ValueIsInt32ValueConverter"/>
+        /// </summary>
+        public static ValueIsInt32ValueConverter Default { get; } = new ValueIsInt32ValueConverter();
     }
 }

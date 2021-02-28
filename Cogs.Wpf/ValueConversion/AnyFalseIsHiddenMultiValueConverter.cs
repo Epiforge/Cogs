@@ -30,5 +30,10 @@ namespace Cogs.Wpf.ValueConversion
         /// <param name="culture">The culture to use in the converter</param>
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
             new object[] { DependencyProperty.UnsetValue };
+
+        /// <summary>
+        /// Gets a shared instance of <see cref="AnyFalseIsHiddenMultiValueConverter"/>
+        /// </summary>
+        public static AnyFalseIsHiddenMultiValueConverter Default { get; } = new AnyFalseIsHiddenMultiValueConverter();
     }
 }

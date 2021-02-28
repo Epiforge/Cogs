@@ -23,4 +23,7 @@
     <valueConversion:UnequalToParameterIsCollapsedValueConverter x:Key="UnequalToParameterIsCollapsedValueConverter" />
     <valueConversion:UnequalToParameterIsHiddenValueConverter x:Key="UnequalToParameterIsHiddenValueConverter" />
     <valueConversion:ValueIsInt32ValueConverter x:Key="ValueIsInt32ValueConverter" />
+    <valueConversion:ZeroIsCollapsedValueConverter x:Key="ZeroIsCollapsedValueConverter" />
+    <valueConversion:ZeroIsFalseValueConverter x:Key="ZeroIsFalseValueConverter" />
+    <valueConversion:ZeroIsHiddenValueConverter x:Key="ZeroIsHiddenValueConverter" />
 </ResourceDictionary>

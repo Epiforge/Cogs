@@ -7,6 +7,7 @@ namespace Cogs.Wpf.ValueConversion
     /// <summary>
     /// Converts the boolean value to its negative
     /// </summary>
+    [ValueConversion(typeof(bool), typeof(bool))]
     public class NegateBooleanValueConverter : IValueConverter
     {
         /// <summary>
@@ -30,5 +31,10 @@ namespace Cogs.Wpf.ValueConversion
         /// <returns>A converted value</returns>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
             value is bool boolean ? !boolean : Binding.DoNothing;
+
+        /// <summary>
+        /// Gets a shared instance of <see cref="NegateBooleanValueConverter"/>
+        /// </summary>
+        public static NegateBooleanValueConverter Default { get; } = new NegateBooleanValueConverter();
     }
 }

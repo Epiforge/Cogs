@@ -7,6 +7,7 @@ namespace Cogs.Wpf.ValueConversion
     /// <summary>
     /// Compares the value to the parameter using <see cref="object.Equals(object?, object?)"/>
     /// </summary>
+    [ValueConversion(typeof(object), typeof(bool))]
     public class EqualToParameterIsTrueValueConverter : IValueConverter
     {
         /// <summary>
@@ -30,5 +31,10 @@ namespace Cogs.Wpf.ValueConversion
         /// <returns>A converted value</returns>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
             value is bool boolean && boolean ? parameter : Binding.DoNothing;
+
+        /// <summary>
+        /// Gets a shared instance of <see cref="EqualToParameterIsTrueValueConverter"/>
+        /// </summary>
+        public static EqualToParameterIsTrueValueConverter Default { get; } = new EqualToParameterIsTrueValueConverter();
     }
 }

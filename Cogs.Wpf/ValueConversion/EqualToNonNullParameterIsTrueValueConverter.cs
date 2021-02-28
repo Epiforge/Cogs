@@ -7,6 +7,7 @@ namespace Cogs.Wpf.ValueConversion
     /// <summary>
     /// Compares the value to the non-null parameter using <see cref="object.Equals(object?, object?)"/>
     /// </summary>
+    [ValueConversion(typeof(object), typeof(bool))]
     public class EqualToNonNullParameterIsTrueValueConverter : IValueConverter
     {
         /// <summary>
@@ -30,5 +31,10 @@ namespace Cogs.Wpf.ValueConversion
         /// <returns>A converted value</returns>
         public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
             value is bool boolean && boolean ? parameter : null;
+
+        /// <summary>
+        /// Gets a shared instance of <see cref="EqualToNonNullParameterIsTrueValueConverter"/>
+        /// </summary>
+        public static EqualToNonNullParameterIsTrueValueConverter Default { get; } = new EqualToNonNullParameterIsTrueValueConverter();
     }
 }

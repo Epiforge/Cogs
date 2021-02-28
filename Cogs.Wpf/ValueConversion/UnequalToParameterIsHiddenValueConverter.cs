@@ -9,6 +9,7 @@ namespace Cogs.Wpf.ValueConversion
     /// Compares the value to the parameter using <see cref="object.Equals(object?, object?)"/>,
     /// converting to <see cref="Visibility.Hidden"/> when <c>false</c> and <see cref="Visibility.Visible"/> when <c>true</c>
     /// </summary>
+    [ValueConversion(typeof(object), typeof(Visibility))]
     public class UnequalToParameterIsHiddenValueConverter : IValueConverter
     {
         /// <summary>
@@ -32,5 +33,10 @@ namespace Cogs.Wpf.ValueConversion
         /// <returns>A converted value</returns>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
             Binding.DoNothing;
+
+        /// <summary>
+        /// Gets a shared instance of <see cref="UnequalToParameterIsHiddenValueConverter"/>
+        /// </summary>
+        public static UnequalToParameterIsHiddenValueConverter Default { get; } = new UnequalToParameterIsHiddenValueConverter();
     }
 }

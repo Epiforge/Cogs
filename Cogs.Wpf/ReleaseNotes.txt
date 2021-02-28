@@ -1,1 +1,1 @@
-The DelayedFocus behavior will now focus the first focusable element in the visual tree it can find in the descendants of its associated object.
+We added ZeroIsCollapsedValueConverter, ZeroIsFalseValueConverter, and ZeroIsHiddenValueConverter. We added ValueConversion attributes and Default properties for all value converters.

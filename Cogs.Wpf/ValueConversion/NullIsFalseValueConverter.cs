@@ -7,6 +7,7 @@ namespace Cogs.Wpf.ValueConversion
     /// <summary>
     /// Converts the value to <c>false</c> when <c>null</c>; otherwise, <c>true</c>
     /// </summary>
+    [ValueConversion(typeof(object), typeof(bool))]
     public class NullIsFalseValueConverter : IValueConverter
     {
         /// <summary>
@@ -29,5 +30,10 @@ namespace Cogs.Wpf.ValueConversion
         /// <returns>A converted value</returns>
         public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
             value is bool boolean && !boolean ? null : Binding.DoNothing;
+
+        /// <summary>
+        /// Gets a shared instance of <see cref="NullIsFalseValueConverter"/>
+        /// </summary>
+        public static NullIsFalseValueConverter Default { get; } = new NullIsFalseValueConverter();
     }
 }

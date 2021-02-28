@@ -8,6 +8,7 @@ namespace Cogs.Wpf.ValueConversion
     /// <summary>
     /// Converts the value to <see cref="Visibility.Collapsed"/> when <c>true</c> and <see cref="Visibility.Visible"/> when <c>false</c>
     /// </summary>
+    [ValueConversion(typeof(bool), typeof(Visibility))]
     public class TrueIsCollapsedValueConverter : IValueConverter
     {
         /// <summary>
@@ -31,5 +32,10 @@ namespace Cogs.Wpf.ValueConversion
         /// <returns>A converted value</returns>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
             value is Visibility visibility ? visibility != Visibility.Visible : Binding.DoNothing;
+
+        /// <summary>
+        /// Gets a shared instance of <see cref="TrueIsCollapsedValueConverter"/>
+        /// </summary>
+        public static TrueIsCollapsedValueConverter Default { get; } = new TrueIsCollapsedValueConverter();
     }
 }
