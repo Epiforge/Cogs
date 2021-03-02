@@ -1,5 +1,5 @@
-using Nito.AsyncEx;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,14 +13,10 @@ namespace Cogs.Threading
         /// <summary>
         /// Creates an instance of <see cref="ReentrantAsyncLock"/>
         /// </summary>
-        public ReentrantAsyncLock()
-        {
-            accessSource = new AsyncLock();
-            acquiredAccess = new AsyncLocal<IDisposable?>();
-        }
+        public ReentrantAsyncLock() =>
+            semaphore = new AsyncLocal<SemaphoreSlim>() { Value = new SemaphoreSlim(1) };
 
-        readonly AsyncLock accessSource;
-        readonly AsyncLocal<IDisposable?> acquiredAccess;
+        readonly AsyncLocal<SemaphoreSlim> semaphore;
 
         /// <summary>
         /// Execute <paramref name="action"/> synchronously, acquiring the lock synchronously if necessary (may block)
@@ -30,20 +26,20 @@ namespace Cogs.Threading
         {
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = accessSource.Lock();
+            var lockSemaphore = semaphore.Value;
+            lockSemaphore.Wait();
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 action();
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                methodSemaphore.Wait();
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -56,20 +52,21 @@ namespace Cogs.Threading
         {
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = accessSource.Lock(cancellationToken);
+            var lockSemaphore = semaphore.Value;
+            if (!lockSemaphore.Wait(0, CancellationToken.None))
+                lockSemaphore.Wait(cancellationToken);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 action();
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                methodSemaphore.Wait(CancellationToken.None);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -81,20 +78,20 @@ namespace Cogs.Threading
         {
             if (func is null)
                 throw new ArgumentNullException(nameof(func));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = accessSource.Lock();
+            var lockSemaphore = semaphore.Value;
+            lockSemaphore.Wait();
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 return func();
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                methodSemaphore.Wait();
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -107,20 +104,21 @@ namespace Cogs.Threading
         {
             if (func is null)
                 throw new ArgumentNullException(nameof(func));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = accessSource.Lock(cancellationToken);
+            var lockSemaphore = semaphore.Value;
+            if (!lockSemaphore.Wait(0, CancellationToken.None))
+                lockSemaphore.Wait(cancellationToken);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 return func();
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                methodSemaphore.Wait(CancellationToken.None);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -132,20 +130,20 @@ namespace Cogs.Threading
         {
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = await accessSource.LockAsync().ConfigureAwait(false);
+            var lockSemaphore = semaphore.Value;
+            await lockSemaphore.WaitAsync().ConfigureAwait(false);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 action();
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                await methodSemaphore.WaitAsync().ConfigureAwait(false);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -158,20 +156,21 @@ namespace Cogs.Threading
         {
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = await accessSource.LockAsync(cancellationToken).ConfigureAwait(false);
+            var lockSemaphore = semaphore.Value;
+            if (!await lockSemaphore.WaitAsync(0, CancellationToken.None).ConfigureAwait(false))
+                await lockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 action();
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                await methodSemaphore.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -183,20 +182,20 @@ namespace Cogs.Threading
         {
             if (func is null)
                 throw new ArgumentNullException(nameof(func));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = await accessSource.LockAsync().ConfigureAwait(false);
+            var lockSemaphore = semaphore.Value;
+            await lockSemaphore.WaitAsync().ConfigureAwait(false);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 return func();
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                await methodSemaphore.WaitAsync().ConfigureAwait(false);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -209,20 +208,21 @@ namespace Cogs.Threading
         {
             if (func is null)
                 throw new ArgumentNullException(nameof(func));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = await accessSource.LockAsync(cancellationToken).ConfigureAwait(false);
+            var lockSemaphore = semaphore.Value;
+            if (!await lockSemaphore.WaitAsync(0, CancellationToken.None).ConfigureAwait(false))
+                await lockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 return func();
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                await methodSemaphore.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -234,20 +234,20 @@ namespace Cogs.Threading
         {
             if (asyncAction is null)
                 throw new ArgumentNullException(nameof(asyncAction));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = await accessSource.LockAsync().ConfigureAwait(false);
+            var lockSemaphore = semaphore.Value;
+            await lockSemaphore.WaitAsync().ConfigureAwait(false);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 await asyncAction().ConfigureAwait(false);
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                await methodSemaphore.WaitAsync().ConfigureAwait(false);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -260,20 +260,21 @@ namespace Cogs.Threading
         {
             if (asyncAction is null)
                 throw new ArgumentNullException(nameof(asyncAction));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = await accessSource.LockAsync(cancellationToken).ConfigureAwait(false);
+            var lockSemaphore = semaphore.Value;
+            if (!await lockSemaphore.WaitAsync(0, CancellationToken.None).ConfigureAwait(false))
+                await lockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 await asyncAction().ConfigureAwait(false);
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                await methodSemaphore.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -285,20 +286,20 @@ namespace Cogs.Threading
         {
             if (asyncFunc is null)
                 throw new ArgumentNullException(nameof(asyncFunc));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = await accessSource.LockAsync().ConfigureAwait(false);
+            var lockSemaphore = semaphore.Value;
+            await lockSemaphore.WaitAsync().ConfigureAwait(false);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 return await asyncFunc().ConfigureAwait(false);
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                await methodSemaphore.WaitAsync().ConfigureAwait(false);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
 
@@ -311,20 +312,21 @@ namespace Cogs.Threading
         {
             if (asyncFunc is null)
                 throw new ArgumentNullException(nameof(asyncFunc));
-            bool lockAcquiredHere;
-            if (lockAcquiredHere = acquiredAccess.Value is null)
-                acquiredAccess.Value = await accessSource.LockAsync(cancellationToken).ConfigureAwait(false);
+            var lockSemaphore = semaphore.Value;
+            if (!await lockSemaphore.WaitAsync(0, CancellationToken.None).ConfigureAwait(false))
+                await lockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            using var methodSemaphore = new SemaphoreSlim(1);
+            semaphore.Value = methodSemaphore;
             try
             {
                 return await asyncFunc().ConfigureAwait(false);
             }
             finally
             {
-                if (lockAcquiredHere)
-                {
-                    acquiredAccess.Value!.Dispose();
-                    acquiredAccess.Value = null;
-                }
+                Debug.Assert(methodSemaphore == semaphore.Value);
+                await methodSemaphore.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+                semaphore.Value = lockSemaphore;
+                lockSemaphore.Release();
             }
         }
     }

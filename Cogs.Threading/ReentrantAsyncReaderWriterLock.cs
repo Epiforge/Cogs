@@ -17,10 +17,12 @@ namespace Cogs.Threading
         {
             accessSource = new AsyncReaderWriterLock();
             acquiredAccess = new AsyncLocal<(IDisposable? token, bool isWriter)>();
+            writerReentrance = new ReentrantAsyncLock();
         }
 
         readonly AsyncReaderWriterLock accessSource;
         readonly AsyncLocal<(IDisposable? token, bool isWriter)> acquiredAccess;
+        readonly ReentrantAsyncLock writerReentrance;
 
         /// <summary>
         /// Execute <paramref name="action"/> synchronously, acquiring the lock synchronously as a reader if necessary (may block)
@@ -396,7 +398,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                action();
+                writerReentrance.WithLock(action);
             }
             finally
             {
@@ -429,7 +431,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                action();
+                writerReentrance.WithLock(action, cancellationToken);
             }
             finally
             {
@@ -461,7 +463,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                return func();
+                return writerReentrance.WithLock(func);
             }
             finally
             {
@@ -494,7 +496,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                return func();
+                return writerReentrance.WithLock(func, cancellationToken);
             }
             finally
             {
@@ -526,7 +528,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                action();
+                await writerReentrance.WithLockAsync(action).ConfigureAwait(false);
             }
             finally
             {
@@ -559,7 +561,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                action();
+                await writerReentrance.WithLockAsync(action, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -591,7 +593,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                return func();
+                return await  writerReentrance.WithLockAsync(func).ConfigureAwait(false);
             }
             finally
             {
@@ -624,7 +626,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                return func();
+                return await writerReentrance.WithLockAsync(func, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -656,7 +658,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                await asyncAction().ConfigureAwait(false);
+                await writerReentrance.WithLockAsync(asyncAction).ConfigureAwait(false);
             }
             finally
             {
@@ -689,7 +691,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                await asyncAction().ConfigureAwait(false);
+                await writerReentrance.WithLockAsync(asyncAction, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -721,7 +723,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                return await asyncFunc().ConfigureAwait(false);
+                return await writerReentrance.WithLockAsync(asyncFunc).ConfigureAwait(false);
             }
             finally
             {
@@ -754,7 +756,7 @@ namespace Cogs.Threading
                 throw new LockEscalationException();
             try
             {
-                return await asyncFunc().ConfigureAwait(false);
+                return await writerReentrance.WithLockAsync(asyncFunc, cancellationToken).ConfigureAwait(false);
             }
             finally
             {

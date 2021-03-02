@@ -1,1 +1,1 @@
-Added SequentialExecute extension methods for SynchronizationContexts.
+ReentrantAsyncLock and ReentrantAsyncReaderWriterLock now properly force child execution flows re-entering them to contend among themselves.
