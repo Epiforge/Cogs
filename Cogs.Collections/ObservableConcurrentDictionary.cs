@@ -117,7 +117,7 @@ namespace Cogs.Collections
             set
             {
                 var updated = false;
-                TValue oldValue = default;
+                TValue oldValue = default!; // this is only ever forwarded if it has been set
                 var newValue = cd.AddOrUpdate(key, k => throw new KeyNotFoundException(), (k, v) =>
                 {
                     updated = true;
@@ -125,7 +125,7 @@ namespace Cogs.Collections
                     return value;
                 });
                 if (updated)
-                    OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue!));
+                    OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue));
             }
         }
 
@@ -263,7 +263,7 @@ namespace Cogs.Collections
         public virtual TValue AddOrUpdate<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, Func<TKey, TValue, TArg, TValue> updateValueFactory, TArg factoryArgument)
         {
             var updated = false;
-            TValue oldValue = default;
+            TValue oldValue = default!; // this is only ever forwarded if it has been set
             var newValue = cd.AddOrUpdate(key, addValueFactory, (k, v, a) =>
             {
                 updated = true;
@@ -271,7 +271,7 @@ namespace Cogs.Collections
                 return updateValueFactory(k, v, a);
             }, factoryArgument);
             if (updated)
-                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue!));
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue));
             else
             {
                 NotifyCountChanged();
@@ -292,7 +292,7 @@ namespace Cogs.Collections
         public virtual TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory)
         {
             var updated = false;
-            TValue oldValue = default;
+            TValue oldValue = default!; // this is only ever forwarded if it has been set
             var newValue = cd.AddOrUpdate(key, addValue, (k, v) =>
             {
                 updated = true;
@@ -300,7 +300,7 @@ namespace Cogs.Collections
                 return updateValueFactory(k, v);
             });
             if (updated)
-                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue!));
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue));
             else
             {
                 NotifyCountChanged();
@@ -321,7 +321,7 @@ namespace Cogs.Collections
         public virtual TValue AddOrUpdate(TKey key, Func<TKey, TValue> addValueFactory, Func<TKey, TValue, TValue> updateValueFactory)
         {
             var updated = false;
-            TValue oldValue = default;
+            TValue oldValue = default!; // this is only ever forwarded if it has been set
             var newValue = cd.AddOrUpdate(key, addValueFactory, (k, v) =>
             {
                 updated = true;
@@ -329,7 +329,7 @@ namespace Cogs.Collections
                 return updateValueFactory(k, v);
             });
             if (updated)
-                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue!));
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue));
             else
             {
                 NotifyCountChanged();
@@ -678,7 +678,7 @@ namespace Cogs.Collections
         {
             try
             {
-                TValue oldValue = default;
+                TValue oldValue = default!; // this is only ever forwarded if it has been set
                 cd.AddOrUpdate(key, k => throw new KeyNotFoundException(), (k, v) =>
                 {
                     if (EqualityComparer<TValue>.Default.Equals(v, comparisonValue))
@@ -688,7 +688,7 @@ namespace Cogs.Collections
                     }
                     throw new ValueComparisonUnequalException();
                 });
-                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue!));
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, key, newValue, oldValue));
                 return true;
             }
             catch (KeyNotFoundException)
