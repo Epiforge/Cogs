@@ -77,7 +77,7 @@ namespace Cogs.Threading
             var thisSynchronizationContext = SynchronizationContext.Current;
             if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
                 return func();
-            TResult result = default;
+            TResult result = default!; // we only ever assign to this and only ever return it if it has had a legitimate value assigned
             var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
             ExceptionDispatchInfo? edi = default;
             synchronizationContext.Send(state =>
@@ -100,7 +100,7 @@ namespace Cogs.Threading
                 }
             }, null);
             edi?.Throw();
-            return result!; // result cannot be unexpectedly null here because it only is if func threw, and if func threw, then edi did also
+            return result; // result cannot be unexpectedly null here because it only is if func threw, and if func threw, then edi did also
         }
 
         /// <summary>
