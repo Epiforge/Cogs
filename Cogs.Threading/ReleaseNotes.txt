@@ -1,1 +1,1 @@
-ReentrantAsyncLock and ReentrantAsyncReaderWriterLock now properly force child execution flows re-entering them to contend among themselves.
+We corrected a defect in the new implementation of ReentrantAsyncLock.

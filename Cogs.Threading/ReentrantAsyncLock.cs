@@ -13,9 +13,13 @@ namespace Cogs.Threading
         /// <summary>
         /// Creates an instance of <see cref="ReentrantAsyncLock"/>
         /// </summary>
-        public ReentrantAsyncLock() =>
-            semaphore = new AsyncLocal<SemaphoreSlim>() { Value = new SemaphoreSlim(1) };
+        public ReentrantAsyncLock()
+        {
+            rootSemaphore = new SemaphoreSlim(1);
+            semaphore = new AsyncLocal<SemaphoreSlim>();
+        }
 
+        readonly SemaphoreSlim rootSemaphore;
         readonly AsyncLocal<SemaphoreSlim> semaphore;
 
         /// <summary>
@@ -26,7 +30,7 @@ namespace Cogs.Threading
         {
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             lockSemaphore.Wait();
             using var methodSemaphore = new SemaphoreSlim(1);
             semaphore.Value = methodSemaphore;
@@ -52,7 +56,7 @@ namespace Cogs.Threading
         {
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             if (!lockSemaphore.Wait(0, CancellationToken.None))
                 lockSemaphore.Wait(cancellationToken);
             using var methodSemaphore = new SemaphoreSlim(1);
@@ -78,7 +82,7 @@ namespace Cogs.Threading
         {
             if (func is null)
                 throw new ArgumentNullException(nameof(func));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             lockSemaphore.Wait();
             using var methodSemaphore = new SemaphoreSlim(1);
             semaphore.Value = methodSemaphore;
@@ -104,7 +108,7 @@ namespace Cogs.Threading
         {
             if (func is null)
                 throw new ArgumentNullException(nameof(func));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             if (!lockSemaphore.Wait(0, CancellationToken.None))
                 lockSemaphore.Wait(cancellationToken);
             using var methodSemaphore = new SemaphoreSlim(1);
@@ -130,7 +134,7 @@ namespace Cogs.Threading
         {
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             await lockSemaphore.WaitAsync().ConfigureAwait(false);
             using var methodSemaphore = new SemaphoreSlim(1);
             semaphore.Value = methodSemaphore;
@@ -156,7 +160,7 @@ namespace Cogs.Threading
         {
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             if (!await lockSemaphore.WaitAsync(0, CancellationToken.None).ConfigureAwait(false))
                 await lockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             using var methodSemaphore = new SemaphoreSlim(1);
@@ -182,7 +186,7 @@ namespace Cogs.Threading
         {
             if (func is null)
                 throw new ArgumentNullException(nameof(func));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             await lockSemaphore.WaitAsync().ConfigureAwait(false);
             using var methodSemaphore = new SemaphoreSlim(1);
             semaphore.Value = methodSemaphore;
@@ -208,7 +212,7 @@ namespace Cogs.Threading
         {
             if (func is null)
                 throw new ArgumentNullException(nameof(func));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             if (!await lockSemaphore.WaitAsync(0, CancellationToken.None).ConfigureAwait(false))
                 await lockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             using var methodSemaphore = new SemaphoreSlim(1);
@@ -234,7 +238,7 @@ namespace Cogs.Threading
         {
             if (asyncAction is null)
                 throw new ArgumentNullException(nameof(asyncAction));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             await lockSemaphore.WaitAsync().ConfigureAwait(false);
             using var methodSemaphore = new SemaphoreSlim(1);
             semaphore.Value = methodSemaphore;
@@ -260,7 +264,7 @@ namespace Cogs.Threading
         {
             if (asyncAction is null)
                 throw new ArgumentNullException(nameof(asyncAction));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             if (!await lockSemaphore.WaitAsync(0, CancellationToken.None).ConfigureAwait(false))
                 await lockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             using var methodSemaphore = new SemaphoreSlim(1);
@@ -286,7 +290,7 @@ namespace Cogs.Threading
         {
             if (asyncFunc is null)
                 throw new ArgumentNullException(nameof(asyncFunc));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             await lockSemaphore.WaitAsync().ConfigureAwait(false);
             using var methodSemaphore = new SemaphoreSlim(1);
             semaphore.Value = methodSemaphore;
@@ -312,7 +316,7 @@ namespace Cogs.Threading
         {
             if (asyncFunc is null)
                 throw new ArgumentNullException(nameof(asyncFunc));
-            var lockSemaphore = semaphore.Value;
+            var lockSemaphore = semaphore.Value ?? rootSemaphore;
             if (!await lockSemaphore.WaitAsync(0, CancellationToken.None).ConfigureAwait(false))
                 await lockSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             using var methodSemaphore = new SemaphoreSlim(1);
