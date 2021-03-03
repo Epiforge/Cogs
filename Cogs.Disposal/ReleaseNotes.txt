@@ -1,1 +1,1 @@
-We removed all monitor locking.
+Dispose and DisposeAsync are now virtual and may be overridden.

@@ -52,7 +52,7 @@ namespace Cogs.Disposal
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources
         /// </summary>
-        public async ValueTask DisposeAsync()
+        public virtual async ValueTask DisposeAsync()
         {
             using (await disposalAccess.LockAsync().ConfigureAwait(false))
                 if (!IsDisposed)
