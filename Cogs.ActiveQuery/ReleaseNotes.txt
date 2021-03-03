@@ -1,1 +1,1 @@
-We fixed a defect in ActiveConcat that could cause it to improperly manage its query results under certain complex conditions.
+ActiveQuery extension methods now always use Execute instead of SequentialExecute. This is because SequentialExecute may supress the flow of the execution context and deadlock the caller. Callers using unsynchronized collections and dictionaries are resposible for managing synchronization on their own.

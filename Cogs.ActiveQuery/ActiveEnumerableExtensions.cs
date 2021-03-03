@@ -56,7 +56,7 @@ namespace Cogs.ActiveQuery
                 }
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 void dispose()
                 {
@@ -109,7 +109,7 @@ namespace Cogs.ActiveQuery
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count == (readOnlySource?.Count ?? source.Count());
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<bool>(where.Count == (readOnlySource?.Count ?? source.Count()), elementFaultChangeNotifier: where, onDispose: () =>
@@ -143,9 +143,9 @@ namespace Cogs.ActiveQuery
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<bool>? activeValue = null;
 
-                void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.Cast<object>().Any());
+                void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.Cast<object>().Any());
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = new ActiveValue<bool>(source.Cast<object>().Any(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changeNotifyingSource.CollectionChanged -= sourceCollectionChanged);
                     changeNotifyingSource.CollectionChanged += sourceCollectionChanged;
@@ -187,7 +187,7 @@ namespace Cogs.ActiveQuery
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count > 0;
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<bool>(where.Count > 0, elementFaultChangeNotifier: where, onDispose: () =>
@@ -247,7 +247,7 @@ namespace Cogs.ActiveQuery
             int count() => readOnlyCollection?.Count ?? source.Count();
 
             void propertyChanged(object sender, PropertyChangedEventArgs e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.PropertyName == nameof(ActiveValue<TResult>.Value))
                     {
@@ -265,7 +265,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 sum = ActiveSum(source, selector, selectorOptions);
                 var currentCount = count();
@@ -349,7 +349,7 @@ namespace Cogs.ActiveQuery
             int firstEnumerableCount, secondEnumerableCount;
 
             void firstCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizationContext.SequentialExecute(() =>
+                synchronizationContext.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerableCount, first);
@@ -374,7 +374,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void secondCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizationContext.SequentialExecute(() =>
+                synchronizationContext.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection!.ReplaceRange(firstEnumerableCount, rangeObservableCollection.Count - firstEnumerableCount, second);
@@ -398,7 +398,7 @@ namespace Cogs.ActiveQuery
                     secondEnumerableCount = secondEnumerable.Count;
                 });
 
-            return synchronizationContext.SequentialExecute(() =>
+            return synchronizationContext.Execute(() =>
             {
                 firstEnumerable = ToActiveEnumerable(first);
                 firstEnumerableCount = firstEnumerable.Count;
@@ -440,7 +440,7 @@ namespace Cogs.ActiveQuery
             int firstEnumerableCount, secondEnumerableCount;
 
             void firstCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizationContext.SequentialExecute(() =>
+                synchronizationContext.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection!.ReplaceRange(0, rangeObservableCollection.Count - secondEnumerableCount, first);
@@ -465,7 +465,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void secondCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizationContext.SequentialExecute(() =>
+                synchronizationContext.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection!.ReplaceRange(firstEnumerableCount, rangeObservableCollection.Count - firstEnumerableCount, second);
@@ -489,7 +489,7 @@ namespace Cogs.ActiveQuery
                     secondEnumerableCount = secondEnumerable.Count;
                 });
 
-            return synchronizationContext.SequentialExecute(() =>
+            return synchronizationContext.Execute(() =>
             {
                 firstEnumerable = ToActiveEnumerable(first);
                 firstEnumerableCount = firstEnumerable.Count;
@@ -530,9 +530,9 @@ namespace Cogs.ActiveQuery
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<int>? activeValue = null;
 
-                void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.Cast<object>().Count());
+                void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.Cast<object>().Count());
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = new ActiveValue<int>(source.Cast<object>().Count(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changeNotifyingSource.CollectionChanged -= sourceCollectionChanged);
                     changeNotifyingSource.CollectionChanged += sourceCollectionChanged;
@@ -562,9 +562,9 @@ namespace Cogs.ActiveQuery
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<int>? activeValue = null;
 
-                void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.Count());
+                void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.Count());
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = new ActiveValue<int>(source.Count(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changeNotifyingSource.CollectionChanged -= sourceCollectionChanged);
                     changeNotifyingSource.CollectionChanged += sourceCollectionChanged;
@@ -608,7 +608,7 @@ namespace Cogs.ActiveQuery
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count;
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<int>(where.Count, elementFaultChangeNotifier: where, onDispose: () =>
@@ -653,7 +653,7 @@ namespace Cogs.ActiveQuery
             Dictionary<TSource, int>? distinctCounts = null;
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                     {
@@ -706,7 +706,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>();
 
@@ -753,7 +753,7 @@ namespace Cogs.ActiveQuery
                 ActiveValue<TSource?>? activeValue = null;
 
                 void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         try
                         {
@@ -768,7 +768,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -822,7 +822,7 @@ namespace Cogs.ActiveQuery
                 activeValue!.Value = index >= 0 && index < activeEnumerable.Count ? activeEnumerable[index] : default;
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 activeEnumerable = ToActiveEnumerable(source);
                 indexOutOfRange = index < 0 || index >= activeEnumerable.Count;
@@ -855,9 +855,9 @@ namespace Cogs.ActiveQuery
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<TSource>? activeValue = null;
 
-                void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.ElementAtOrDefault(index));
+                void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.ElementAtOrDefault(index));
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = new ActiveValue<TSource>(source.ElementAtOrDefault(index), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changingSource.CollectionChanged -= collectionChanged);
                     changingSource.CollectionChanged += collectionChanged;
@@ -881,7 +881,7 @@ namespace Cogs.ActiveQuery
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = index >= 0 && index < activeEnumerable.Count ? activeEnumerable[index] : default;
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 activeEnumerable = ToActiveEnumerable(source);
                 activeValue = new ActiveValue<TSource?>(index >= 0 && index < activeEnumerable.Count ? activeEnumerable[index] : default, elementFaultChangeNotifier: activeEnumerable, onDispose: () =>
@@ -913,7 +913,7 @@ namespace Cogs.ActiveQuery
                 ActiveValue<TSource?>? activeValue = null;
 
                 void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         try
                         {
@@ -928,7 +928,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -993,7 +993,7 @@ namespace Cogs.ActiveQuery
                 activeValue!.Value = where.Count > 0 ? where[0] : default;
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 none = where.Count == 0;
@@ -1025,9 +1025,9 @@ namespace Cogs.ActiveQuery
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<TSource>? activeValue = null;
 
-                void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.FirstOrDefault());
+                void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.FirstOrDefault());
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = new ActiveValue<TSource>(source.FirstOrDefault(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changingSource.CollectionChanged -= collectionChanged);
                     changingSource.CollectionChanged += collectionChanged;
@@ -1062,7 +1062,7 @@ namespace Cogs.ActiveQuery
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count > 0 ? where[0] : default;
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<TSource?>(where.Count > 0 ? where[0] : default, elementFaultChangeNotifier: where, onDispose: () =>
@@ -1207,12 +1207,12 @@ namespace Cogs.ActiveQuery
                 groupingObservableCollection.AddRange(element.Repeat(count));
             }
 
-            void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) => synchronizedSource.SequentialExecute(() => addElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count));
+            void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) => synchronizedSource.Execute(() => addElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count));
 
-            void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) => synchronizedSource.SequentialExecute(() => removeElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count));
+            void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) => synchronizedSource.Execute(() => removeElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count));
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TKey? key)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                     {
@@ -1250,7 +1250,7 @@ namespace Cogs.ActiveQuery
                 }
             }
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, keySelector, keySelectorOptions);
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<ActiveGrouping<TKey?, TSource>>(synchronizedSource?.SynchronizationContext);
@@ -1289,7 +1289,7 @@ namespace Cogs.ActiveQuery
                 ActiveValue<TSource?>? activeValue = null;
 
                 void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         try
                         {
@@ -1304,7 +1304,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -1369,7 +1369,7 @@ namespace Cogs.ActiveQuery
                 activeValue!.Value = where.Count > 0 ? where[where.Count - 1] : default;
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 none = where.Count == 0;
@@ -1401,9 +1401,9 @@ namespace Cogs.ActiveQuery
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<TSource>? activeValue = null;
 
-                void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.LastOrDefault());
+                void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.LastOrDefault());
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = new ActiveValue<TSource>(source.LastOrDefault(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changingSource.CollectionChanged -= collectionChanged);
                     changingSource.CollectionChanged += collectionChanged;
@@ -1438,7 +1438,7 @@ namespace Cogs.ActiveQuery
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count > 0 ? where[where.Count - 1] : default;
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<TSource?>(where.Count > 0 ? where[where.Count - 1] : default, elementFaultChangeNotifier: where, onDispose: () =>
@@ -1501,7 +1501,7 @@ namespace Cogs.ActiveQuery
             }
 
             void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var activeValueValue = activeValue!.Value;
                     var comparison = 0;
@@ -1518,7 +1518,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TResult? result)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                     {
@@ -1566,7 +1566,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 try
@@ -1636,7 +1636,7 @@ namespace Cogs.ActiveQuery
             }
 
             void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var activeValueValue = activeValue!.Value;
                     var comparison = 0;
@@ -1653,7 +1653,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TResult? result)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                     {
@@ -1701,7 +1701,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 try
@@ -1738,7 +1738,7 @@ namespace Cogs.ActiveQuery
             SynchronizedRangeObservableCollection<TResult> rangeObservableCollection;
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection.Reset(source.OfType<TResult>());
@@ -1751,7 +1751,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult>(synchronizedSource?.SynchronizationContext, source.OfType<TResult>());
 
@@ -1978,10 +1978,10 @@ namespace Cogs.ActiveQuery
                 }
             }
 
-            void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, IComparable?> e) => synchronizedSource.SequentialExecute(() => repositionElement(e.Element! /* this could be null, but it won't matter if it is */));
+            void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, IComparable?> e) => synchronizedSource.Execute(() => repositionElement(e.Element! /* this could be null, but it won't matter if it is */));
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, IComparable? comparable)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                     {
@@ -2072,7 +2072,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 var keySelections = keySelectors.Select(selector => (rangeActiveExpression: EnumerableRangeActiveExpression<TSource, IComparable>.Create(source, selector.Expression, selector.ExpressionOptions), isDescending: selector.IsDescending)).ToList();
                 comparer = new ActiveOrderingComparer<TSource>(keySelections.Select(selection => (selection.rangeActiveExpression, selection.isDescending)).ToList(), indexingStrategy);
@@ -2163,7 +2163,7 @@ namespace Cogs.ActiveQuery
             SynchronizedRangeObservableCollection<TResult?>? rangeObservableCollection = null;
 
             void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<object?, TResult?> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var sourceElement = e.Element;
                     var newResultElement = e.Result;
@@ -2174,7 +2174,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     switch (e.Action)
                     {
@@ -2302,7 +2302,7 @@ namespace Cogs.ActiveQuery
                 return result;
             }
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 rangeActiveExpression.ElementResultChanged += elementResultChanged;
@@ -2380,7 +2380,7 @@ namespace Cogs.ActiveQuery
             SynchronizedRangeObservableCollection<TResult?>? rangeObservableCollection = null;
 
             void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var sourceElement = e.Element;
                     var newResultElement = e.Result;
@@ -2391,7 +2391,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TResult? result)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     switch (e.Action)
                     {
@@ -2517,7 +2517,7 @@ namespace Cogs.ActiveQuery
                 return result;
             }
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult?>(synchronizedSource?.SynchronizationContext, indexingStrategy != IndexingStrategy.NoneOrInherit ? rangeActiveExpression.GetResults().Select(indexedInitializer) : rangeActiveExpression.GetResults().Select(er => er.result));
@@ -2612,7 +2612,7 @@ namespace Cogs.ActiveQuery
             SynchronizedRangeObservableCollection<TResult>? rangeObservableCollection = null;
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var oldItems = e.OldItems is { } ? e.OldItems.Cast<TResult>() : Enumerable.Empty<TResult>();
                     var oldItemsCount = e.OldItems is { } ? e.OldItems.Count : 0;
@@ -2674,7 +2674,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, IEnumerable<TResult>?> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var element = e.Element;
                     if (sourceToChangingResult.TryGetValue(element, out var previousChangingResult))
@@ -2722,7 +2722,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, IEnumerable<TResult>? results)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     switch (e.Action)
                     {
@@ -2919,7 +2919,7 @@ namespace Cogs.ActiveQuery
                 return result;
             }
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().SelectMany(initializer));
@@ -2955,7 +2955,7 @@ namespace Cogs.ActiveQuery
                 ActiveValue<TSource?>? activeValue = null;
 
                 void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         try
                         {
@@ -2970,7 +2970,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -3048,7 +3048,7 @@ namespace Cogs.ActiveQuery
                 activeValue!.Value = where.Count == 1 ? where[0] : default;
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 Exception? operationFault = null;
@@ -3085,7 +3085,7 @@ namespace Cogs.ActiveQuery
                 ActiveValue<TSource?>? activeValue = null;
 
                 void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         try
                         {
@@ -3100,7 +3100,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -3165,7 +3165,7 @@ namespace Cogs.ActiveQuery
                 activeValue!.Value = where.Count == 1 ? where[0] : default;
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 var operationFault = (moreThanOne = where.Count > 1) ? ExceptionHelper.SequenceContainsMoreThanOneElement : null;
@@ -3223,7 +3223,7 @@ namespace Cogs.ActiveQuery
             var resultsChanging = new NullableKeyDictionary<TSource, (TResult? result, int instances)>();
 
             void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var (result, instances) = resultsChanging![e.Element];
                     resultsChanging.Remove(e.Element);
@@ -3231,10 +3231,10 @@ namespace Cogs.ActiveQuery
                         activeValue!.Value = operations.Add(activeValue!.Value, difference.Repeat(instances).Aggregate(operations.Add!));
                 });
 
-            void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) => synchronizedSource.SequentialExecute(() => resultsChanging!.Add(e.Element! /* this could be null, but it won't matter if it is */, (e.Result, e.Count)));
+            void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) => synchronizedSource.Execute(() => resultsChanging!.Add(e.Element! /* this could be null, but it won't matter if it is */, (e.Result, e.Count)));
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TResult? result)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                     {
@@ -3258,7 +3258,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
 
@@ -3317,7 +3317,7 @@ namespace Cogs.ActiveQuery
                 IReadOnlyList<object>? resetValues = null;
                 if (e.Action == NotifyCollectionChangedAction.Reset)
                     resetValues = source.Cast<object>().ToImmutableArray();
-                await rangeObservableCollection.SequentialExecuteAsync(() =>
+                await rangeObservableCollection.ExecuteAsync(() =>
                 {
                     switch (e.Action)
                     {
@@ -3340,7 +3340,7 @@ namespace Cogs.ActiveQuery
                 }).ConfigureAwait(false);
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 var notifier = source as INotifyCollectionChanged;
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<object>(synchronizationContext, source.Cast<object>());
@@ -3379,7 +3379,7 @@ namespace Cogs.ActiveQuery
                 IReadOnlyList<TSource>? resetValues = null;
                 if (e.Action == NotifyCollectionChangedAction.Reset)
                     resetValues = source.ToImmutableArray();
-                await rangeObservableCollection.SequentialExecuteAsync(() =>
+                await rangeObservableCollection.ExecuteAsync(() =>
                 {
                     switch (e.Action)
                     {
@@ -3407,7 +3407,7 @@ namespace Cogs.ActiveQuery
                 IReadOnlyList<TSource>? resetValues = null;
                 if (e.Action == NotifyCollectionChangedAction.Reset)
                     resetValues = source.ToImmutableArray();
-                await rangeObservableCollection.SequentialExecuteAsync(() =>
+                await rangeObservableCollection.ExecuteAsync(() =>
                 {
                     switch (e.Action)
                     {
@@ -3430,7 +3430,7 @@ namespace Cogs.ActiveQuery
                 }).ConfigureAwait(false);
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 var notifier = source as INotifyCollectionChanged;
                 var genericNotifier = source as INotifyGenericCollectionChanged<TSource>;
@@ -3500,7 +3500,7 @@ namespace Cogs.ActiveQuery
                         queue.Enqueue(() => rangeObservableCollection.ReplaceRangeAsync(oldStartingIndex, oldItems.Length, newItems));
                         break;
                     case NotifyCollectionChangedAction.Reset:
-                        var resetItems = (source as ISynchronized).SequentialExecute(() => source.Cast<object>().ToImmutableArray());
+                        var resetItems = (source as ISynchronized).Execute(() => source.Cast<object>().ToImmutableArray());
                         queue.Enqueue(() => rangeObservableCollection.ResetAsync(resetItems));
                         break;
                 }
@@ -3572,7 +3572,7 @@ namespace Cogs.ActiveQuery
                     case NotifyCollectionChangedAction.Reset:
                         queue.Enqueue(async () =>
                         {
-                            var resetItems = await (source as ISynchronized).SequentialExecuteAsync(() => source.ToImmutableArray()).ConfigureAwait(false);
+                            var resetItems = await (source as ISynchronized).ExecuteAsync(() => source.ToImmutableArray()).ConfigureAwait(false);
                             await rangeObservableCollection.ResetAsync(resetItems).ConfigureAwait(false);
                         });
                         break;
@@ -3602,7 +3602,7 @@ namespace Cogs.ActiveQuery
                     case NotifyCollectionChangedAction.Reset:
                         queue.Enqueue(async () =>
                         {
-                            var resetItems = await (source as ISynchronized).SequentialExecuteAsync(() => source.ToImmutableArray()).ConfigureAwait(false);
+                            var resetItems = await (source as ISynchronized).ExecuteAsync(() => source.ToImmutableArray()).ConfigureAwait(false);
                             await rangeObservableCollection.ResetAsync(resetItems).ConfigureAwait(false);
                         });
                         break;
@@ -3647,7 +3647,7 @@ namespace Cogs.ActiveQuery
             SynchronizedRangeObservableCollection<TSource>? rangeObservableCollection = null;
 
             void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var oldItems = e.OldItems is { } ? e.OldItems.Cast<TSource>() : Enumerable.Empty<TSource>();
                     var oldItemsCount = e.OldItems is { } ? e.OldItems.Count : 0;
@@ -3670,7 +3670,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizedSource?.SynchronizationContext, source);
                 if (changingSource is { })
@@ -3835,7 +3835,7 @@ namespace Cogs.ActiveQuery
             }
 
             void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, KeyValuePair<TKey, TValue>> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var result = e.Result;
                     var key = result.Key;
@@ -3859,7 +3859,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, KeyValuePair<TKey, TValue>> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var key = e.Result.Key;
                     var count = e.Count;
@@ -3878,7 +3878,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, KeyValuePair<TKey, TValue> keyValuePair)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                     {
@@ -3946,7 +3946,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 switch (indexingStategy)
                 {
@@ -4013,7 +4013,7 @@ namespace Cogs.ActiveQuery
             SynchronizedRangeObservableCollection<TSource>? rangeObservableCollection = null;
 
             void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, bool> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Result)
                         rangeObservableCollection!.AddRange(e.Element!.Repeat(e.Count));
@@ -4025,7 +4025,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, bool included)> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyCollectionChangedAction.Reset)
                         rangeObservableCollection!.Reset(rangeActiveExpression.GetResults().Where(er => er.result).Select(er => er.element));
@@ -4038,7 +4038,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, predicate, predicateOptions);
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().Where(er => er.result).Select(er => er.element));

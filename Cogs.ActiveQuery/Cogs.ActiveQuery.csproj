@@ -21,7 +21,7 @@
         <RepositoryType>GitHub</RepositoryType>
         <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.3.10</Version>
+        <Version>1.3.11</Version>
     </PropertyGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">

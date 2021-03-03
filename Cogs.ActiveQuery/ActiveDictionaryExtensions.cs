@@ -52,7 +52,7 @@ namespace Cogs.ActiveQuery
 
             void dictionaryChanged(object sender, EventArgs e) => activeValue!.Value = where.Count == source.Count;
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<bool>(where.Count == source.Count, elementFaultChangeNotifier: where, onDispose: () =>
@@ -88,9 +88,9 @@ namespace Cogs.ActiveQuery
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<bool>? activeValue = null;
 
-                void sourceChanged(object sender, EventArgs e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.Count > 0);
+                void sourceChanged(object sender, EventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.Count > 0);
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = new ActiveValue<bool>(source.Any(), elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changeNotifyingSource.DictionaryChanged -= sourceChanged);
                     changeNotifyingSource.DictionaryChanged += sourceChanged;
@@ -135,7 +135,7 @@ namespace Cogs.ActiveQuery
 
             void dictionaryChanged(object sender, EventArgs e) => activeValue!.Value = where.Count > 0;
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<bool>(where.Count > 0, elementFaultChangeNotifier: where, onDispose: () =>
@@ -195,7 +195,7 @@ namespace Cogs.ActiveQuery
             ActiveValue<TResult?>? activeValue = null;
 
             void propertyChanged(object sender, PropertyChangedEventArgs e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.PropertyName == nameof(ActiveValue<TResult>.Value))
                     {
@@ -213,7 +213,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 sum = ActiveSum(source, selector, selectorOptions);
                 var currentCount = source.Count;
@@ -263,7 +263,7 @@ namespace Cogs.ActiveQuery
                 }
             }
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 dict = new ObservableConcurrentDictionary<TKey, TValue>(source.ToImmutableArray());
                 if (notifyingSource is { })
@@ -295,9 +295,9 @@ namespace Cogs.ActiveQuery
                 var synchronizedSource = source as ISynchronized;
                 ActiveValue<int>? activeValue = null;
 
-                void sourceDictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => synchronizedSource.SequentialExecute(() => activeValue!.Value = source.Count);
+                void sourceDictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => synchronizedSource.Execute(() => activeValue!.Value = source.Count);
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = new ActiveValue<int>(source.Count, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: () => changeNotifyingSource.DictionaryChanged -= sourceDictionaryChanged);
                     changeNotifyingSource.DictionaryChanged += sourceDictionaryChanged;
@@ -345,7 +345,7 @@ namespace Cogs.ActiveQuery
 
             void dictionaryChanged(object sender, EventArgs e) => activeValue!.Value = where.Count;
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<int>(where.Count, elementFaultChangeNotifier: where, onDispose: () =>
@@ -395,7 +395,7 @@ namespace Cogs.ActiveQuery
                 void dispose() => changingSource.DictionaryChanged -= sourceChanged;
 
                 void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         if (e.Action == NotifyDictionaryChangedAction.Reset)
                         {
@@ -436,7 +436,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -528,7 +528,7 @@ namespace Cogs.ActiveQuery
                 activeValue!.Value = where.OrderBy(kv => kv.Key, keyComparer).FirstOrDefault();
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 none = where.Count == 0;
@@ -576,7 +576,7 @@ namespace Cogs.ActiveQuery
                 void dispose() => changingSource.DictionaryChanged += sourceChanged;
 
                 void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         if (e.Action == NotifyDictionaryChangedAction.Reset)
                         {
@@ -614,7 +614,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -686,7 +686,7 @@ namespace Cogs.ActiveQuery
 
             void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => activeValue!.Value = where.OrderBy(kv => kv.Key, keyComparer).FirstOrDefault();
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(where.OrderBy(kv => kv.Key, keyComparer).FirstOrDefault(), elementFaultChangeNotifier: where, onDispose: () =>
@@ -732,7 +732,7 @@ namespace Cogs.ActiveQuery
                 void dispose() => changingSource.DictionaryChanged += sourceChanged;
 
                 void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         if (e.Action == NotifyDictionaryChangedAction.Reset)
                         {
@@ -772,7 +772,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -864,7 +864,7 @@ namespace Cogs.ActiveQuery
                 activeValue!.Value = where.OrderByDescending(kv => kv.Key, keyComparer).FirstOrDefault();
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 none = where.Count == 0;
@@ -912,7 +912,7 @@ namespace Cogs.ActiveQuery
                 void dispose() => changingSource.DictionaryChanged += sourceChanged;
 
                 void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         if (e.Action == NotifyDictionaryChangedAction.Reset)
                         {
@@ -953,7 +953,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -1025,7 +1025,7 @@ namespace Cogs.ActiveQuery
 
             void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => activeValue!.Value = where.OrderByDescending(kv => kv.Key, keyComparer).FirstOrDefault();
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 activeValue = new ActiveValue<KeyValuePair<TKey, TValue>>(where.Count > 0 ? source.OrderByDescending(kv => kv.Key, keyComparer).First() : default, elementFaultChangeNotifier: where, onDispose: () =>
@@ -1091,7 +1091,7 @@ namespace Cogs.ActiveQuery
             }
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
@@ -1140,7 +1140,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var activeValueValue = activeValue!.Value;
                     var comparison = 0;
@@ -1156,7 +1156,7 @@ namespace Cogs.ActiveQuery
                         activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Max(er => er.result);
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 try
@@ -1229,7 +1229,7 @@ namespace Cogs.ActiveQuery
             }
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
@@ -1278,7 +1278,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var activeValueValue = activeValue!.Value;
                     var comparison = 0;
@@ -1294,7 +1294,7 @@ namespace Cogs.ActiveQuery
                         activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Select(er => er.result).Min();
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 try
@@ -1336,7 +1336,7 @@ namespace Cogs.ActiveQuery
             ISynchronizedObservableRangeDictionary<TKey, TResult> rangeObservableDictionary;
 
             void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     switch (e.Action)
                     {
@@ -1357,7 +1357,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeObservableDictionary = source.GetIndexingStrategy() == IndexingStrategy.SelfBalancingBinarySearchTree ? (ISynchronizedObservableRangeDictionary<TKey, TResult>)(source.GetKeyComparer() is IComparer<TKey> comparer ? new SynchronizedObservableSortedDictionary<TKey, TResult>(synchronizedSource?.SynchronizationContext, comparer) : new SynchronizedObservableSortedDictionary<TKey, TResult>(synchronizedSource?.SynchronizationContext)) : (source.GetKeyEqualityComparer() is IEqualityComparer<TKey> equalityComparer ? new SynchronizedObservableDictionary<TKey, TResult>(synchronizedSource?.SynchronizationContext, equalityComparer) : new SynchronizedObservableDictionary<TKey, TResult>(synchronizedSource?.SynchronizationContext));
                 rangeObservableDictionary.AddRange(OfType<TKey, TValue, TResult>(source));
@@ -1409,7 +1409,7 @@ namespace Cogs.ActiveQuery
             SynchronizedRangeObservableCollection<TResult?>? rangeObservableCollection = null;
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
@@ -1472,9 +1472,9 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => rangeObservableCollection!.Replace(keyToIndex![e.Element], e.Result));
+            void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.Execute(() => rangeObservableCollection!.Replace(keyToIndex![e.Element], e.Result));
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult?>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().Select(((TKey key, TResult? result) er, int index) =>
@@ -1516,7 +1516,7 @@ namespace Cogs.ActiveQuery
                 void dispose() => changingSource.DictionaryChanged -= sourceChanged;
 
                 void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         if (source.Count == 1)
                         {
@@ -1543,7 +1543,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     switch (source.Count)
                     {
@@ -1627,7 +1627,7 @@ namespace Cogs.ActiveQuery
                 activeValue!.Value = where.Count == 1 ? where.First() : default;
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 Exception? operationFault = null;
@@ -1667,7 +1667,7 @@ namespace Cogs.ActiveQuery
                 void dispose() => changingSource.DictionaryChanged += sourceChanged;
 
                 void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         switch (source.Count)
                         {
@@ -1687,7 +1687,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = source.Count switch
                     {
@@ -1750,7 +1750,7 @@ namespace Cogs.ActiveQuery
                 activeValue!.Value = where.Count == 1 ? where.First() : default;
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 where = ActiveWhere(source, predicate, predicateOptions);
                 var operationFault = (moreThanOne = where.Count > 1) ? ExceptionHelper.SequenceContainsMoreThanOneElement : null;
@@ -1811,7 +1811,7 @@ namespace Cogs.ActiveQuery
             var valuesChanging = new NullableKeyDictionary<TKey, TResult?>();
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
                         activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations!.Add!);
@@ -1827,16 +1827,16 @@ namespace Cogs.ActiveQuery
                 });
 
             void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var key = e.Element;
                     activeValue!.Value = operations!.Add(activeValue!.Value, operations.Subtract(e.Result, valuesChanging![key]));
                     valuesChanging.Remove(key);
                 });
 
-            void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.SequentialExecute(() => valuesChanging!.Add(e.Element, e.Result));
+            void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.Execute(() => valuesChanging!.Add(e.Element, e.Result));
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
 
@@ -1912,7 +1912,7 @@ namespace Cogs.ActiveQuery
                     foreach (var kv in source)
                         resetDictionary.Add(kv);
                 }
-                await rangeObservableDictionary.SequentialExecuteAsync(() =>
+                await rangeObservableDictionary.ExecuteAsync(() =>
                 {
                     switch (e.Action)
                     {
@@ -1932,7 +1932,7 @@ namespace Cogs.ActiveQuery
                 }).ConfigureAwait(false);
             }
 
-            return (source as ISynchronized).SequentialExecute(() =>
+            return (source as ISynchronized).Execute(() =>
             {
                 var notifier = source as INotifyDictionaryChanged<TKey, TValue>;
                 if (notifier is { })
@@ -2038,7 +2038,7 @@ namespace Cogs.ActiveQuery
                                     resetDictionary = keyEqualityComparer is { } ? new NullableKeyDictionary<TKey, TValue>(keyEqualityComparer) : new NullableKeyDictionary<TKey, TValue>();
                                     break;
                             }
-                            await (source as ISynchronized).SequentialExecuteAsync(() =>
+                            await (source as ISynchronized).ExecuteAsync(() =>
                             {
                                 foreach (var kv in source)
                                     resetDictionary.Add(kv);
@@ -2257,7 +2257,7 @@ namespace Cogs.ActiveQuery
             }
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TSourceKey, KeyValuePair<TResultKey, TResultValue>> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
@@ -2328,7 +2328,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSourceKey, KeyValuePair<TResultKey, TResultValue>> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var resultKv = e.Result;
                     var key = resultKv.Key;
@@ -2347,7 +2347,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSourceKey, KeyValuePair<TResultKey, TResultValue>> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     var key = e.Result.Key;
                     if (key is null)
@@ -2364,7 +2364,7 @@ namespace Cogs.ActiveQuery
                     checkOperationFault();
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 switch (indexingStrategy)
                 {
@@ -2447,7 +2447,7 @@ namespace Cogs.ActiveQuery
                 void dispose() => changingSource.DictionaryChanged -= sourceChanged;
 
                 void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         if (e.Action == NotifyDictionaryChangedAction.Reset)
                         {
@@ -2480,7 +2480,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     try
                     {
@@ -2541,7 +2541,7 @@ namespace Cogs.ActiveQuery
                 void dispose() => changingSource.DictionaryChanged -= sourceChanged;
 
                 void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
-                    synchronizedSource.SequentialExecute(() =>
+                    synchronizedSource.Execute(() =>
                     {
                         if (e.Action == NotifyDictionaryChangedAction.Reset)
                             activeValue!.Value = source.TryGetValue(key, out var value) ? value : default;
@@ -2558,7 +2558,7 @@ namespace Cogs.ActiveQuery
                         }
                     });
 
-                return synchronizedSource.SequentialExecute(() =>
+                return synchronizedSource.Execute(() =>
                 {
                     activeValue = new ActiveValue<TValue?>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier, onDispose: dispose);
                     changingSource.DictionaryChanged += sourceChanged;
@@ -2606,7 +2606,7 @@ namespace Cogs.ActiveQuery
             ISynchronizedObservableRangeDictionary<TKey, TValue>? rangeObservableDictionary = null;
 
             void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, bool> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
@@ -2629,7 +2629,7 @@ namespace Cogs.ActiveQuery
                 });
 
             void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, bool> e) =>
-                synchronizedSource.SequentialExecute(() =>
+                synchronizedSource.Execute(() =>
                 {
                     if (e.Element is TKey key)
                     {
@@ -2640,7 +2640,7 @@ namespace Cogs.ActiveQuery
                     }
                 });
 
-            return synchronizedSource.SequentialExecute(() =>
+            return synchronizedSource.Execute(() =>
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, predicate, predicateOptions);
                 rangeObservableDictionary = source.CreateSimilarSynchronizedObservableDictionary(synchronizedSource?.SynchronizationContext);
