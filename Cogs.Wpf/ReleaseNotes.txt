@@ -1,1 +1,1 @@
-We added ZeroIsCollapsedValueConverter, ZeroIsFalseValueConverter, and ZeroIsHiddenValueConverter. We added ValueConversion attributes and Default properties for all value converters.
+We added DoubleIsStringValueConverter.
