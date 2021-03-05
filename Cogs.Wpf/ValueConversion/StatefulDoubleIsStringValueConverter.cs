@@ -5,7 +5,7 @@ using System.Windows.Data;
 namespace Cogs.Wpf.ValueConversion
 {
     /// <summary>
-    /// Converts the value to a <see cref="string"/> when it is a <see cref="double"/>, optionally accepting a <see cref="NumberStyles"/> value as a parameter
+    /// Converts the value to a <see cref="string"/> when it is a <see cref="double"/>, optionally accepting a <see cref="NumberStyles"/> value as a parameter and retaining the results of the last successful call to <see cref="ConvertBack(object, Type, object, CultureInfo)"/> which prevents two-way bindings from overriding decimals when the user is typing
     /// </summary>
     [ValueConversion(typeof(double), typeof(string))]
     public class StatefulDoubleIsStringValueConverter : IValueConverter
