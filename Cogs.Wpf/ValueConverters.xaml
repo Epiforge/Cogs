@@ -17,6 +17,8 @@
     <valueConversion:NotNullIsCollapsedValueConverter x:Key="NotNullIsCollapsedValueConverter" />
     <valueConversion:NotNullIsFalseValueConverter x:Key="NotNullIsFalseValueConverter" />
     <valueConversion:NotNullIsHiddenValueConverter x:Key="NotNullIsHiddenValueConverter" />
+    <valueConversion:NullableDoubleIsStringValueConverter x:Key="NullableDoubleIsStringValueConverter" />
+    <valueConversion:NullableGuidIsStringValueConverter x:Key="NullableGuidIsStringValueConverter" />
     <valueConversion:NullIsCollapsedValueConverter x:Key="NullIsCollapsedValueConverter" />
     <valueConversion:NullIsFalseValueConverter x:Key="NullIsFalseValueConverter" />
     <valueConversion:NullIsHiddenValueConverter x:Key="NullIsHiddenValueConverter" />
