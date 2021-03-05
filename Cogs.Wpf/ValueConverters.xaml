@@ -12,6 +12,7 @@
     <valueConversion:EqualToParameterIsTrueValueConverter x:Key="EqualToParameterIsTrueValueConverter" />
     <valueConversion:FalseIsCollapsedValueConverter x:Key="FalseIsCollapsedValueConverter" />
     <valueConversion:FalseIsHiddenValueConverter x:Key="FalseIsHiddenValueConverter" />
+    <valueConversion:GuidIsStringValueConverter x:Key="GuidIsStringValueConverter" />
     <valueConversion:NegateBooleanValueConverter x:Key="NegateBooleanValueConverter" />
     <valueConversion:NotNullIsCollapsedValueConverter x:Key="NotNullIsCollapsedValueConverter" />
     <valueConversion:NotNullIsFalseValueConverter x:Key="NotNullIsFalseValueConverter" />

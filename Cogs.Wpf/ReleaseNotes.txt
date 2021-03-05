@@ -1,1 +1,1 @@
-We added DoubleIsStringValueConverter.
+We added GuidIsStringValueConverter and StatefulDoubleIsStringValueConverter.
