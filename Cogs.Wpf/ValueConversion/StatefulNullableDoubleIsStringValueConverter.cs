@@ -10,7 +10,7 @@ namespace Cogs.Wpf.ValueConversion
     [ValueConversion(typeof(double), typeof(string))]
     public class StatefulNullableDoubleIsStringValueConverter : IValueConverter
     {
-        (string str, double dbl)? lastSuccessfulConvertBack;
+        (string? str, double? dbl)? lastSuccessfulConvertBack;
 
         /// <summary>
         /// Converts a value
@@ -24,9 +24,9 @@ namespace Cogs.Wpf.ValueConversion
         {
             if (value is double dbl)
             {
-                if (lastSuccessfulConvertBack is not null)
+                if (lastSuccessfulConvertBack is { } last)
                 {
-                    var (lastStr, lastDbl) = lastSuccessfulConvertBack.Value;
+                    var (lastStr, lastDbl) = last;
                     if (lastDbl == dbl)
                         return lastStr;
                 }
@@ -45,6 +45,12 @@ namespace Cogs.Wpf.ValueConversion
                         _ => throw new NotSupportedException()
                     };
             }
+            if (value is null && lastSuccessfulConvertBack is { } nullLast)
+            {
+                var (lastStr, lastDbl) = nullLast;
+                if (lastDbl is null)
+                    return lastStr;
+            }
             return null;
         }
 
@@ -58,10 +64,14 @@ namespace Cogs.Wpf.ValueConversion
         /// <returns>A converted value</returns>
         public object? ConvertBack(object? value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string str && double.TryParse(str, parameter is NumberStyles numberStyles ? numberStyles : NumberStyles.Any, culture, out var dbl))
+            if (value is string str)
             {
-                lastSuccessfulConvertBack = (str, dbl);
-                return dbl;
+                if (double.TryParse(str, parameter is NumberStyles numberStyles ? numberStyles : NumberStyles.Any, culture, out var dbl))
+                {
+                    lastSuccessfulConvertBack = (str, dbl);
+                    return dbl;
+                }
+                lastSuccessfulConvertBack = (str, null);
             }
             return null;
         }

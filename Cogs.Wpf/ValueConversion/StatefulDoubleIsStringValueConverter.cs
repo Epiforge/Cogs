@@ -24,9 +24,9 @@ namespace Cogs.Wpf.ValueConversion
         {
             if (value is double dbl)
             {
-                if (lastSuccessfulConvertBack is not null)
+                if (lastSuccessfulConvertBack is { } last)
                 {
-                    var (lastStr, lastDbl) = lastSuccessfulConvertBack.Value;
+                    var (lastStr, lastDbl) = last;
                     if (lastDbl == dbl)
                         return lastStr;
                 }

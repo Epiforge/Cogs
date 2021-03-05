@@ -1,1 +1,1 @@
-We added NullableDoubleIsStringValueConverter, NullableGuidIsStringValueConverter, and StatefulNullableDoubleIsStringValueConverter. We also improved the documentation for StatefulDoubleIsStringValueConverter.
+We added StatefulGuidIsStringValueConverter and StatefulNullableGuidIsStringValueConverter.
