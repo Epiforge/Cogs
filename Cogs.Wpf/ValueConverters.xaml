@@ -4,6 +4,9 @@
     <valueConversion:AnyFalseIsCollapsedMultiValueConverter x:Key="AnyFalseIsCollapsedMultiValueConverter" />
     <valueConversion:AnyFalseIsFalseMultiValueConverter x:Key="AnyFalseIsFalseMultiValueConverter" />
     <valueConversion:AnyFalseIsHiddenMultiValueConverter x:Key="AnyFalseIsHiddenMultiValueConverter" />
+    <valueConversion:AnyTrueIsCollapsedMultiValueConverter x:Key="AnyTrueIsCollapsedMultiValueConverter" />
+    <valueConversion:AnyTrueIsFalseMultiValueConverter x:Key="AnyTrueIsFalseMultiValueConverter" />
+    <valueConversion:AnyTrueIsHiddenMultiValueConverter x:Key="AnyTrueIsHiddenMultiValueConverter" />
     <valueConversion:CoalesceMultiValueConverter x:Key="CoalesceMultiValueConverter" />
     <valueConversion:DoubleIsStringValueConverter x:Key="DoubleIsStringValueConverter" />
     <valueConversion:EqualToNonNullParameterIsTrueValueConverter x:Key="EqualToNonNullParameterIsTrueValueConverter" />

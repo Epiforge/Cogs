@@ -1,1 +1,1 @@
-We added UnequalToParameterIsTrueValueConverter.
+We added AnyTrueIsCollapsedMultiValueConverter, AnyTrueIsFalseMultiValueConverter, and AnyTrueIsHiddenMultiValueConverter.

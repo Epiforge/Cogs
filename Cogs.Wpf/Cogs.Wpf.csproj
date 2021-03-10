@@ -23,7 +23,7 @@
         <TargetFrameworks>net45;netcoreapp3.1;net5.0-windows</TargetFrameworks>
         <UseWindowsForms>true</UseWindowsForms>
         <UseWPF>true</UseWPF>
-        <Version>1.13.0</Version>
+        <Version>1.14.0</Version>
     </PropertyGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
