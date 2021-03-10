@@ -75,5 +75,10 @@ namespace Cogs.Wpf.ValueConversion
             }
             return null;
         }
+
+        /// <summary>
+        /// Gets a new instance of <see cref="StatefulNullableDoubleIsStringValueConverter"/>
+        /// </summary>
+        public static StatefulNullableDoubleIsStringValueConverter Default => new();
     }
 }

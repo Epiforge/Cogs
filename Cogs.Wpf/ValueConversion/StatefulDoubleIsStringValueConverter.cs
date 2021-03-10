@@ -65,5 +65,10 @@ namespace Cogs.Wpf.ValueConversion
             }
             return Binding.DoNothing;
         }
+
+        /// <summary>
+        /// Gets a new instance of <see cref="StatefulDoubleIsStringValueConverter"/>
+        /// </summary>
+        public static StatefulDoubleIsStringValueConverter Default => new();
     }
 }

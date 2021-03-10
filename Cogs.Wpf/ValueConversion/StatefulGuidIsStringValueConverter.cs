@@ -52,5 +52,10 @@ namespace Cogs.Wpf.ValueConversion
             }
             return Binding.DoNothing;
         }
+
+        /// <summary>
+        /// Gets a new instance of <see cref="StatefulGuidIsStringValueConverter"/>
+        /// </summary>
+        public static StatefulGuidIsStringValueConverter Default => new();
     }
 }

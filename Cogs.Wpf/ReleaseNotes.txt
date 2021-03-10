@@ -1,1 +1,1 @@
-We added AnyTrueIsCollapsedMultiValueConverter, AnyTrueIsFalseMultiValueConverter, and AnyTrueIsHiddenMultiValueConverter.
+We added Default properties to the stateful value converters which create new instances each time they are accessed.
