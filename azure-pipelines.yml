@@ -28,12 +28,6 @@ steps:
     command: 'test'
     arguments: '--configuration $(buildConfiguration) --no-build --collect "Code coverage"'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Pack NuGets'
-  inputs:
-    command: 'pack'
-    arguments: '--configuration $(buildConfiguration) --no-build'
-
 - task: CopyFiles@2
   displayName: 'Copy artifacts to staging'
   inputs:
