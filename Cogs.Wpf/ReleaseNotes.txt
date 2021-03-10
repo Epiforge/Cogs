@@ -1,1 +1,1 @@
-We added StatefulGuidIsStringValueConverter and StatefulNullableGuidIsStringValueConverter.
+We added UnequalToParameterIsTrueValueConverter.

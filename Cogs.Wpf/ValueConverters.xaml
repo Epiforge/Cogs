@@ -25,6 +25,7 @@
     <valueConversion:TrueIsCollapsedValueConverter x:Key="TrueIsCollapsedValueConverter" />
     <valueConversion:TrueIsHiddenValueConverter x:Key="TrueIsHiddenValueConverter" />
     <valueConversion:UnequalToParameterIsCollapsedValueConverter x:Key="UnequalToParameterIsCollapsedValueConverter" />
+    <valueConversion:UnequalToParameterIsTrueValueConverter x:Key="UnequalToParameterIsTrueValueConverter" />
     <valueConversion:UnequalToParameterIsHiddenValueConverter x:Key="UnequalToParameterIsHiddenValueConverter" />
     <valueConversion:ValueIsInt32ValueConverter x:Key="ValueIsInt32ValueConverter" />
     <valueConversion:ZeroIsCollapsedValueConverter x:Key="ZeroIsCollapsedValueConverter" />
