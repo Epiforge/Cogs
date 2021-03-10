@@ -16,9 +16,9 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 5.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore --source https://api.nuget.org/v3/index.json
     - name: Build
       run: dotnet build --no-restore
     - name: Test
