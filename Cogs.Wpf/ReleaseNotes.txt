@@ -1,1 +1,1 @@
-We added ObjectIsTypeValueConverter.
+We added OpenNavigateUri.
