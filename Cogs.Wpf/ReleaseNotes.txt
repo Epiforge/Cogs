@@ -1,1 +1,1 @@
-We added OpenNavigateUri.
+We added the AllFalseIsCollapsedMultiValueConverter, AllFalseIsFalseMultiValueConverter, and AllFalseIsHiddenMultiValueConverter value converters.

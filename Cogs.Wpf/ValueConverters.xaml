@@ -1,6 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:valueConversion="clr-namespace:Cogs.Wpf.ValueConversion">
+    <valueConversion:AllFalseIsCollapsedMultiValueConverter x:Key="AllFalseIsCollapsedMultiValueConverter" />
+    <valueConversion:AllFalseIsFalseMultiValueConverter x:Key="AllFalseIsFalseMultiValueConverter" />
+    <valueConversion:AllFalseIsHiddenMultiValueConverter x:Key="AllFalseIsHiddenMultiValueConverter" />
     <valueConversion:AnyFalseIsCollapsedMultiValueConverter x:Key="AnyFalseIsCollapsedMultiValueConverter" />
     <valueConversion:AnyFalseIsFalseMultiValueConverter x:Key="AnyFalseIsFalseMultiValueConverter" />
     <valueConversion:AnyFalseIsHiddenMultiValueConverter x:Key="AnyFalseIsHiddenMultiValueConverter" />
