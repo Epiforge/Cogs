@@ -1,1 +1,1 @@
-We added the AllFalseIsCollapsedMultiValueConverter, AllFalseIsFalseMultiValueConverter, and AllFalseIsHiddenMultiValueConverter value converters.
+We added the MouseWheelDownGesture and MouseWheelUpGesture classes
