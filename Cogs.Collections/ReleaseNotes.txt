@@ -1,1 +1,1 @@
-We added DictionaryExtensions.
+We added the ability to force RangeObservableCollection to raise individual INotifyCollectionChanged.CollectionChanged events for each element operated upon by range methods.
