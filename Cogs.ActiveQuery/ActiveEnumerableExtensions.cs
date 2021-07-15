@@ -1185,21 +1185,21 @@ namespace Cogs.ActiveQuery
             EnumerableRangeActiveExpression<TSource, TKey> rangeActiveExpression;
             SynchronizedRangeObservableCollection<ActiveGrouping<TKey?, TSource>>? rangeObservableCollection = null;
 
-            var collectionAndGroupingDictionary = (IDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>)(indexingStrategy switch
+            var collectionAndGroupingDictionary = (IDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>)(indexingStrategy switch
             {
-                IndexingStrategy.HashTable => equalityComparer is null ? new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(equalityComparer),
-                IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(comparer),
+                IndexingStrategy.HashTable => equalityComparer is null ? new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>(equalityComparer),
+                IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>(comparer),
                 _ => throw new ArgumentOutOfRangeException(nameof(indexingStrategy), $"{nameof(indexingStrategy)} must be {IndexingStrategy.HashTable} or {IndexingStrategy.SelfBalancingBinarySearchTree}"),
             });
 
             void addElement(TSource element, TKey? key, int count = 1)
             {
                 SynchronizedRangeObservableCollection<TSource> groupingObservableCollection;
-                if (!collectionAndGroupingDictionary!.TryGetValue(key, out var collectionAndGrouping))
+                if (!collectionAndGroupingDictionary!.TryGetValue(key! /* This is okay, it's always a nullable key dictionary */, out var collectionAndGrouping))
                 {
                     groupingObservableCollection = new SynchronizedRangeObservableCollection<TSource>();
                     var grouping = new ActiveGrouping<TKey?, TSource>(key, groupingObservableCollection);
-                    collectionAndGroupingDictionary.Add(key, (groupingObservableCollection, grouping));
+                    collectionAndGroupingDictionary.Add(key! /* This is okay, it's always a nullable key dictionary */, (groupingObservableCollection, grouping));
                     rangeObservableCollection!.Add(grouping);
                 }
                 else
@@ -1218,8 +1218,8 @@ namespace Cogs.ActiveQuery
                     {
                         collectionAndGroupingDictionary = indexingStrategy switch
                         {
-                            IndexingStrategy.HashTable => equalityComparer is null ? new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(equalityComparer),
-                            IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>() : new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey, TSource> grouping)>(comparer),
+                            IndexingStrategy.HashTable => equalityComparer is null ? new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>(equalityComparer),
+                            IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>(comparer),
                             _ => throw new ArgumentOutOfRangeException(nameof(indexingStrategy), $"{nameof(indexingStrategy)} must be {IndexingStrategy.HashTable} or {IndexingStrategy.SelfBalancingBinarySearchTree}"),
                         };
                         rangeObservableCollection!.Clear();
@@ -1239,14 +1239,14 @@ namespace Cogs.ActiveQuery
 
             void removeElement(TSource element, TKey? key, int count = 1)
             {
-                var (groupingObservableCollection, grouping) = collectionAndGroupingDictionary![key];
+                var (groupingObservableCollection, grouping) = collectionAndGroupingDictionary![key! /* This is okay, it's always a nullable key dictionary */];
                 while (--count >= 0)
                     groupingObservableCollection.Remove(element);
                 if (groupingObservableCollection.Count == 0)
                 {
                     rangeObservableCollection!.Remove(grouping);
                     grouping.Dispose();
-                    collectionAndGroupingDictionary.Remove(key);
+                    collectionAndGroupingDictionary.Remove(key! /* This is okay, it's always a nullable key dictionary */);
                 }
             }
 
@@ -1882,7 +1882,7 @@ namespace Cogs.ActiveQuery
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> whose elements are sorted according to keys</returns>
         public static IActiveEnumerable<TSource> ActiveOrderBy<TSource>(this IEnumerable<TSource> source, IndexingStrategy indexingStrategy, params ActiveOrderingKeySelector<TSource>[] keySelectors)
         {
-            if (keySelectors.Length == 0)
+            if ((keySelectors?.Length ?? 0) == 0)
                 return ToActiveEnumerable(source);
 
             keySelectors = keySelectors.Select(s => new ActiveOrderingKeySelector<TSource>(ActiveQueryOptions.Optimize(s.Expression), s.ExpressionOptions, s.IsDescending)).ToArray();
@@ -2368,7 +2368,7 @@ namespace Cogs.ActiveQuery
         {
             ActiveQueryOptions.Optimize(ref selector);
 
-            var sourceToIndicies = (IDictionary<TSource, List<int>>)(indexingStrategy switch
+            var sourceToIndicies = (IDictionary<TSource, List<int>>?)(indexingStrategy switch
             {
                 IndexingStrategy.NoneOrInherit => null,
                 IndexingStrategy.SelfBalancingBinarySearchTree => new NullableKeySortedDictionary<TSource, List<int>>(),
@@ -3308,7 +3308,26 @@ namespace Cogs.ActiveQuery
         /// <param name="source">An <see cref="IEnumerable"/></param>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is kept consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
-        public static IActiveEnumerable<object> SwitchContext(this IEnumerable source, SynchronizationContext synchronizationContext)
+        public static IActiveEnumerable<object> SwitchContext(this IEnumerable source, SynchronizationContext synchronizationContext) =>
+            SwitchContext(source, synchronizationContext, false);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> (use <see cref="SwitchContextEventually(IEnumerable)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <param name="source">An <see cref="IEnumerable"/></param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon in batch</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is kept consistent with <paramref name="source"/> on the current thread's <see cref="SynchronizationContext"/></returns>
+        public static IActiveEnumerable<object> SwitchContext(this IEnumerable source, bool raiseCollectionChangedEventsForIndividualElements) =>
+            SwitchContext(source, SynchronizationContext.Current, raiseCollectionChangedEventsForIndividualElements);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> (use <see cref="SwitchContextEventually(IEnumerable, SynchronizationContext)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <param name="source">An <see cref="IEnumerable"/></param>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon in batch</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is kept consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        public static IActiveEnumerable<object> SwitchContext(this IEnumerable source, SynchronizationContext synchronizationContext, bool raiseCollectionChangedEventsForIndividualElements)
         {
             SynchronizedRangeObservableCollection<object>? rangeObservableCollection = null;
 
@@ -3343,7 +3362,7 @@ namespace Cogs.ActiveQuery
             return (source as ISynchronized).Execute(() =>
             {
                 var notifier = source as INotifyCollectionChanged;
-                rangeObservableCollection = new SynchronizedRangeObservableCollection<object>(synchronizationContext, source.Cast<object>());
+                rangeObservableCollection = new SynchronizedRangeObservableCollection<object>(synchronizationContext, source.Cast<object>(), raiseCollectionChangedEventsForIndividualElements);
                 if (notifier is { })
                     notifier.CollectionChanged += collectionChanged;
                 return new ActiveEnumerable<object>(rangeObservableCollection, source as INotifyElementFaultChanges, () =>
@@ -3370,7 +3389,28 @@ namespace Cogs.ActiveQuery
         /// <param name="source">An <see cref="IEnumerable{T}"/></param>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is kept consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
-        public static IActiveEnumerable<TSource> SwitchContext<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext)
+        public static IActiveEnumerable<TSource> SwitchContext<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext) =>
+            SwitchContext(source, synchronizationContext, false);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource})"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/></param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon in batch</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is kept consistent with <paramref name="source"/> on the current thread's <see cref="SynchronizationContext"/></returns>
+        public static IActiveEnumerable<TSource> SwitchContext<TSource>(this IEnumerable<TSource> source, bool raiseCollectionChangedEventsForIndividualElements) =>
+            SwitchContext(source, SynchronizationContext.Current, raiseCollectionChangedEventsForIndividualElements);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/></param>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon in batch</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is kept consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        public static IActiveEnumerable<TSource> SwitchContext<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext, bool raiseCollectionChangedEventsForIndividualElements)
         {
             SynchronizedRangeObservableCollection<TSource>? rangeObservableCollection = null;
 
@@ -3434,7 +3474,7 @@ namespace Cogs.ActiveQuery
             {
                 var notifier = source as INotifyCollectionChanged;
                 var genericNotifier = source as INotifyGenericCollectionChanged<TSource>;
-                rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizationContext, source);
+                rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizationContext, source, raiseCollectionChangedEventsForIndividualElements);
                 if (genericNotifier is { })
                     genericNotifier.GenericCollectionChanged += genericCollectionChanged;
                 else if (notifier is { })
@@ -3468,11 +3508,31 @@ namespace Cogs.ActiveQuery
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
         [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
-        public static IActiveEnumerable<object> SwitchContextEventually(this IEnumerable source, SynchronizationContext synchronizationContext)
+        public static IActiveEnumerable<object> SwitchContextEventually(this IEnumerable source, SynchronizationContext synchronizationContext) =>
+            SwitchContextEventually(source, synchronizationContext, false);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> (use this method instead of <see cref="SwitchContext(IEnumerable)"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <param name="source">An <see cref="IEnumerable"/></param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon in batch</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on the current thread's <see cref="SynchronizationContext"/></returns>
+        public static IActiveEnumerable<object> SwitchContextEventually(this IEnumerable source, bool raiseCollectionChangedEventsForIndividualElements) =>
+            SwitchContextEventually(source, SynchronizationContext.Current, raiseCollectionChangedEventsForIndividualElements);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable"/> that implements <see cref="INotifyCollectionChanged"/> (use this method instead of <see cref="SwitchContext(IEnumerable, SynchronizationContext)"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <param name="source">An <see cref="IEnumerable"/></param>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon in batch</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
+        public static IActiveEnumerable<object> SwitchContextEventually(this IEnumerable source, SynchronizationContext synchronizationContext, bool raiseCollectionChangedEventsForIndividualElements)
         {
             var notifier = source as INotifyCollectionChanged;
             var queue = new AsyncProcessingQueue<Func<Task>>(async asyncAction => await asyncAction().ConfigureAwait(false));
-            var rangeObservableCollection = new SynchronizedRangeObservableCollection<object>(synchronizationContext);
+            var rangeObservableCollection = new SynchronizedRangeObservableCollection<object>(synchronizationContext, raiseCollectionChangedEventsForIndividualElements);
 
             void unhandledException(object sender, ProcessingQueueUnhandledExceptionEventArgs<Func<Task>> e) =>
                 collectionChanged(source, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
@@ -3537,12 +3597,34 @@ namespace Cogs.ActiveQuery
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
         /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
         [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
-        public static IActiveEnumerable<TSource> SwitchContextEventually<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext)
+        public static IActiveEnumerable<TSource> SwitchContextEventually<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext) =>
+            SwitchContextEventually(source, synchronizationContext, false);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource})"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/></param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon in batch</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on the current thread's <see cref="SynchronizationContext"/></returns>
+        public static IActiveEnumerable<TSource> SwitchContextEventually<TSource>(this IEnumerable<TSource> source, bool raiseCollectionChangedEventsForIndividualElements) =>
+            SwitchContextEventually(source, SynchronizationContext.Current, raiseCollectionChangedEventsForIndividualElements);
+
+        /// <summary>
+        /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> when the same may produce a deadlock and/or only eventual consistency is required)
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/></param>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon in batch</param>
+        /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
+        [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
+        public static IActiveEnumerable<TSource> SwitchContextEventually<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext, bool raiseCollectionChangedEventsForIndividualElements)
         {
             var genericNotifier = source as INotifyGenericCollectionChanged<TSource>;
             var notifier = source as INotifyCollectionChanged;
             var queue = new AsyncProcessingQueue<Func<Task>>(async asyncAction => await asyncAction().ConfigureAwait(false));
-            var rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizationContext);
+            var rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizationContext, raiseCollectionChangedEventsForIndividualElements);
 
             void unhandledException(object sender, ProcessingQueueUnhandledExceptionEventArgs<Func<Task>> e) =>
                 genericCollectionChanged(source, new NotifyGenericCollectionChangedEventArgs<TSource>(NotifyCollectionChangedAction.Reset));

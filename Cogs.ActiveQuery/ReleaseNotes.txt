@@ -1,1 +1,1 @@
-ActiveQuery extension methods now always use Execute instead of SequentialExecute. This is because SequentialExecute may supress the flow of the execution context and deadlock the caller. Callers using unsynchronized collections and dictionaries are resposible for managing synchronization on their own.
+We added the ability to force SwitchContext and SwitchContextEventually to raise individual INotifyCollectionChanged.CollectionChanged events for each element operated upon in batch.
