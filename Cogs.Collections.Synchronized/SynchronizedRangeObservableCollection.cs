@@ -23,12 +23,25 @@ namespace Cogs.Collections.Synchronized
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="SynchronizedRangeObservableCollection{T}"/> class using <see cref="SynchronizationContext.Current"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>)
+        /// </summary>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon by range methods</param>
+        public SynchronizedRangeObservableCollection(bool raiseCollectionChangedEventsForIndividualElements) : base() => RaiseCollectionChangedEventsForIndividualElements = raiseCollectionChangedEventsForIndividualElements;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SynchronizedRangeObservableCollection{T}"/> class that contains elements copied from the specified collection and using <see cref="SynchronizationContext.Current"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>)
         /// </summary>
         /// <param name="collection">The collection from which the elements are copied</param>
         public SynchronizedRangeObservableCollection(IEnumerable<T> collection) : base(collection)
         {
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SynchronizedRangeObservableCollection{T}"/> class that contains elements copied from the specified collection and using <see cref="SynchronizationContext.Current"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>)
+        /// </summary>
+        /// <param name="collection">The collection from which the elements are copied</param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon by range methods</param>
+        public SynchronizedRangeObservableCollection(IEnumerable<T> collection, bool raiseCollectionChangedEventsForIndividualElements) : base(collection) => RaiseCollectionChangedEventsForIndividualElements = raiseCollectionChangedEventsForIndividualElements;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SynchronizedRangeObservableCollection{T}"/> class using the specified <see cref="System.Threading.SynchronizationContext"/>
@@ -39,6 +52,13 @@ namespace Cogs.Collections.Synchronized
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="SynchronizedRangeObservableCollection{T}"/> class using the specified <see cref="System.Threading.SynchronizationContext"/>
+        /// </summary>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform all operations</param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon by range methods</param>
+        public SynchronizedRangeObservableCollection(SynchronizationContext? synchronizationContext, bool raiseCollectionChangedEventsForIndividualElements) : base(synchronizationContext) => RaiseCollectionChangedEventsForIndividualElements = raiseCollectionChangedEventsForIndividualElements;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SynchronizedRangeObservableCollection{T}"/> class that contains elements copied from the specified collection and using the specified <see cref="System.Threading.SynchronizationContext"/>
         /// </summary>
         /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform all operations</param>
@@ -46,6 +66,19 @@ namespace Cogs.Collections.Synchronized
         public SynchronizedRangeObservableCollection(SynchronizationContext? synchronizationContext, IEnumerable<T> collection) : base(synchronizationContext, collection)
         {
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SynchronizedRangeObservableCollection{T}"/> class that contains elements copied from the specified collection and using the specified <see cref="System.Threading.SynchronizationContext"/>
+        /// </summary>
+        /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform all operations</param>
+        /// <param name="collection">The collection from which the elements are copied</param>
+        /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon by range methods</param>
+        public SynchronizedRangeObservableCollection(SynchronizationContext? synchronizationContext, IEnumerable<T> collection, bool raiseCollectionChangedEventsForIndividualElements) : base(synchronizationContext, collection) => RaiseCollectionChangedEventsForIndividualElements = raiseCollectionChangedEventsForIndividualElements;
+
+        /// <summary>
+        /// Gets whether this <see cref="SynchronizedRangeObservableCollection{T}"/> will raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon by range methods
+        /// </summary>
+        public bool RaiseCollectionChangedEventsForIndividualElements { get; }
 
         /// <summary>
         /// Adds objects to the end of the <see cref="SynchronizedRangeObservableCollection{T}"/>
@@ -152,16 +185,22 @@ namespace Cogs.Collections.Synchronized
         {
             var originalIndex = index;
             --index;
-            var list = new List<T>();
-            foreach (var item in items)
+            if (RaiseCollectionChangedEventsForIndividualElements)
+                foreach (var item in items)
+                    InsertItem(++index, item);
+            else
             {
-                Items.Insert(++index, item);
-                list.Add(item);
-            }
-            if (list.Count > 0)
-            {
-                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, list, originalIndex));
-                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                var list = new List<T>();
+                foreach (var item in items)
+                {
+                    Items.Insert(++index, item);
+                    list.Add(item);
+                }
+                if (list.Count > 0)
+                {
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, list, originalIndex));
+                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                }
             }
         });
 
@@ -196,18 +235,29 @@ namespace Cogs.Collections.Synchronized
         {
             if (oldStartIndex != newStartIndex && count > 0)
             {
-                var movedItems = new List<T>();
-                for (var i = 0; i < count; ++i)
-                {
-                    var item = Items[oldStartIndex];
-                    Items.RemoveAt(oldStartIndex);
-                    movedItems.Add(item);
-                }
+                var extractionIndex = oldStartIndex;
                 var insertionIndex = newStartIndex - 1;
-                foreach (var item in movedItems)
-                    Items.Insert(++insertionIndex, item);
-                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, movedItems, newStartIndex, oldStartIndex));
-                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                if (RaiseCollectionChangedEventsForIndividualElements)
+                    for (var i = 0; i < count; ++i)
+                    {
+                        Move(extractionIndex, ++insertionIndex);
+                        if (oldStartIndex > newStartIndex)
+                            ++extractionIndex;
+                    }
+                else
+                {
+                    var movedItems = new List<T>();
+                    for (var i = 0; i < count; ++i)
+                    {
+                        var item = Items[extractionIndex];
+                        Items.RemoveAt(extractionIndex);
+                        movedItems.Add(item);
+                    }
+                    foreach (var item in movedItems)
+                        Items.Insert(++insertionIndex, item);
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, movedItems, newStartIndex, oldStartIndex));
+                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                }
             }
         });
 
@@ -275,14 +325,20 @@ namespace Cogs.Collections.Synchronized
         {
             if (count > 0)
             {
-                var removedItems = new T[count];
-                for (var removalIndex = 0; removalIndex < count; ++removalIndex)
+                if (RaiseCollectionChangedEventsForIndividualElements)
+                    for (var i = 0; i < count; ++i)
+                        RemoveAt(index);
+                else
                 {
-                    removedItems[removalIndex] = Items[index];
-                    Items.RemoveAt(index);
+                    var removedItems = new T[count];
+                    for (var removalIndex = 0; removalIndex < count; ++removalIndex)
+                    {
+                        removedItems[removalIndex] = Items[index];
+                        Items.RemoveAt(index);
+                    }
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, removedItems, index));
+                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
                 }
-                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, removedItems, index));
-                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
             }
         });
 
@@ -311,21 +367,34 @@ namespace Cogs.Collections.Synchronized
         /// Replace all items in the <see cref="SynchronizedRangeObservableCollection{T}"/> with the items in the specified collection
         /// </summary>
         /// <param name="items">The collection of replacement items</param>
-        public void ReplaceAll(IEnumerable<T> items) => this.Execute(() =>
+        public void ReplaceAll(IEnumerable<T> items)
         {
-            var oldItems = new T[Items.Count];
-            Items.CopyTo(oldItems, 0);
-            Items.Clear();
-            var list = new List<T>();
-            foreach (var element in items)
+            if (items is null)
+                throw new ArgumentNullException(nameof(items));
+            this.Execute(() =>
             {
-                Items.Add(element);
-                list.Add(element);
-            }
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, list, oldItems, 0));
-            if (oldItems.Length != list.Count)
-                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
-        });
+                if (RaiseCollectionChangedEventsForIndividualElements)
+                {
+                    Clear();
+                    AddRange(items);
+                }
+                else
+                {
+                    var oldItems = new T[Items.Count];
+                    Items.CopyTo(oldItems, 0);
+                    Items.Clear();
+                    var list = new List<T>();
+                    foreach (var element in items)
+                    {
+                        Items.Add(element);
+                        list.Add(element);
+                    }
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, list, oldItems, 0));
+                    if (oldItems.Length != list.Count)
+                        OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                }
+            });
+        }
 
         /// <summary>
         /// Replace all items in the <see cref="SynchronizedRangeObservableCollection{T}"/> with the items in the specified collection
@@ -354,28 +423,39 @@ namespace Cogs.Collections.Synchronized
         /// <returns>The items that were replaced</returns>
         public IReadOnlyList<T> ReplaceRange(int index, int count, IEnumerable<T>? collection = null) => this.Execute(() =>
         {
-            var originalIndex = index;
-            var oldItems = new T[count];
-            for (var i = 0; i < count; ++i)
+            if (RaiseCollectionChangedEventsForIndividualElements)
             {
-                oldItems[i] = Items[index];
-                Items.RemoveAt(index);
+                var oldItems = GetRange(index, count);
+                RemoveRange(index, count);
+                if (collection is not null)
+                    InsertRange(index, collection);
+                return oldItems;
             }
-            var list = new List<T>();
-            index -= 1;
-            if (collection is not null)
-                foreach (var element in collection)
-                {
-                    Items.Insert(++index, element);
-                    list.Add(element);
-                }
-            if (list.Count > 0)
-                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, list, oldItems, originalIndex));
             else
-                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, oldItems, originalIndex));
-            if (oldItems.Length != list.Count)
-                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
-            return oldItems.ToImmutableArray();
+            {
+                var originalIndex = index;
+                var oldItems = new T[count];
+                for (var i = 0; i < count; ++i)
+                {
+                    oldItems[i] = Items[index];
+                    Items.RemoveAt(index);
+                }
+                var list = new List<T>();
+                index -= 1;
+                if (collection is not null)
+                    foreach (var element in collection)
+                    {
+                        Items.Insert(++index, element);
+                        list.Add(element);
+                    }
+                if (list.Count > 0)
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, list, oldItems, originalIndex));
+                else
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, oldItems, originalIndex));
+                if (oldItems.Length != list.Count)
+                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                return oldItems.ToImmutableArray();
+            }
         });
 
         /// <summary>
