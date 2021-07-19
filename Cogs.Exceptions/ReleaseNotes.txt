@@ -1,1 +1,1 @@
-We added support for Source Link.
+We updates NuGet references to avoid a conflict.
