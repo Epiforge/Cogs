@@ -8,7 +8,8 @@ steps:
 - task: UseDotNet@2
   displayName: 'Use .NET'
   inputs:
-    version: '6.0.x'
+    packageType: sdk
+    version: '6.x'
 
 - task: DotNetCoreCLI@2
   displayName: 'Restore referenced NuGet packages'
