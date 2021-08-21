@@ -1,8 +1,7 @@
-namespace Cogs.Windows
+namespace Cogs.Windows;
+
+enum DigitalProductIdVersion
 {
-    enum DigitalProductIdVersion
-    {
-        UpToWindows7,
-        Windows8AndUp
-    }
+    UpToWindows7,
+    Windows8AndUp
 }

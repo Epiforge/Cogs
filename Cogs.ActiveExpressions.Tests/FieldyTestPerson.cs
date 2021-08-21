@@ -1,9 +1,8 @@
-namespace Cogs.ActiveExpressions.Tests
-{
-    class FieldyTestPerson
-    {
-        public string? Name;
+namespace Cogs.ActiveExpressions.Tests;
 
-        public override string ToString() => $"{{{Name}}}";
-    }
+class FieldyTestPerson
+{
+    public string? Name;
+
+    public override string ToString() => $"{{{Name}}}";
 }

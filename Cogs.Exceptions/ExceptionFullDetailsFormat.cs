@@ -1,23 +1,22 @@
-namespace Cogs.Exceptions
+namespace Cogs.Exceptions;
+
+/// <summary>
+/// Specifies the format of the full details of an exception
+/// </summary>
+public enum ExceptionFullDetailsFormat
 {
     /// <summary>
-    /// Specifies the format of the full details of an exception
+    /// Plain text
     /// </summary>
-    public enum ExceptionFullDetailsFormat
-    {
-        /// <summary>
-        /// Plain text
-        /// </summary>
-        PlainText,
+    PlainText,
 
-        /// <summary>
-        /// XML
-        /// </summary>
-        Xml,
+    /// <summary>
+    /// XML
+    /// </summary>
+    Xml,
 
-        /// <summary>
-        /// JSON
-        /// </summary>
-        Json
-    }
+    /// <summary>
+    /// JSON
+    /// </summary>
+    Json
 }

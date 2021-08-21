@@ -1,13 +1,10 @@
-using System.Runtime.InteropServices;
+namespace Cogs.Wpf.NativeInterop.Types;
 
-namespace Cogs.Wpf.NativeInterop.Types
+[StructLayout(LayoutKind.Sequential)]
+struct AccentPolicy
 {
-    [StructLayout(LayoutKind.Sequential)]
-    struct AccentPolicy
-    {
-        public AccentState AccentState;
-        public AccentFlags AccentFlags;
-        public int GradientColor;
-        public int AnimationId;
-    }
+    public AccentState AccentState;
+    public AccentFlags AccentFlags;
+    public int GradientColor;
+    public int AnimationId;
 }

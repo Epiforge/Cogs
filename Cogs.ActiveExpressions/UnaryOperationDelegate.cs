@@ -1,4 +1,3 @@
-namespace Cogs.ActiveExpressions
-{
-    delegate object? UnaryOperationDelegate(object? operand);
-}
+namespace Cogs.ActiveExpressions;
+
+delegate object? UnaryOperationDelegate(object? operand);

@@ -1,4 +1,3 @@
-namespace Cogs.ActiveExpressions
-{
-    delegate bool TypeIsDelegate(object? obj);
-}
+namespace Cogs.ActiveExpressions;
+
+delegate bool TypeIsDelegate(object? obj);

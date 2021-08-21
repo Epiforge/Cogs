@@ -1,82 +1,76 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
+namespace Cogs.ActiveExpressions;
 
-namespace Cogs.ActiveExpressions
+class ActiveCoalesceExpression : ActiveBinaryExpression, IEquatable<ActiveCoalesceExpression>
 {
-    class ActiveCoalesceExpression : ActiveBinaryExpression, IEquatable<ActiveCoalesceExpression>
+    public ActiveCoalesceExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey, options, deferEvaluation, false, false)
     {
-        public ActiveCoalesceExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey, options, deferEvaluation, false, false)
-        {
-        }
+    }
 
-        protected override void Initialize()
+    protected override void Initialize()
+    {
+        base.Initialize();
+        if (instancesKey.Expression.Conversion is { } conversion)
         {
-            base.Initialize();
-            if (instancesKey.Expression.Conversion is { } conversion)
+            var key = new ConversionDelegatesKey(conversion.Parameters[0].Type, conversion.Body.Type);
+            lock (conversionDelegateManagementLock)
             {
-                var key = new ConversionDelegatesKey(conversion.Parameters[0].Type, conversion.Body.Type);
-                lock (conversionDelegateManagementLock)
+                if (!conversionDelegates.TryGetValue(key, out var conversionDelegate))
                 {
-                    if (!conversionDelegates.TryGetValue(key, out var conversionDelegate))
-                    {
-                        var parameter = Expression.Parameter(typeof(object));
-                        conversionDelegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(Expression.Invoke(conversion, Expression.Convert(parameter, key.ConvertFrom)), typeof(object)), parameter).Compile();
-                        conversionDelegates.Add(key, conversionDelegate);
-                    }
-                    this.conversionDelegate = conversionDelegate;
+                    var parameter = Expression.Parameter(typeof(object));
+                    conversionDelegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(Expression.Invoke(conversion, Expression.Convert(parameter, key.ConvertFrom)), typeof(object)), parameter).Compile();
+                    conversionDelegates.Add(key, conversionDelegate);
                 }
+                this.conversionDelegate = conversionDelegate;
             }
-            EvaluateIfNotDeferred();
         }
+        EvaluateIfNotDeferred();
+    }
 
-        UnaryOperationDelegate? conversionDelegate;
+    UnaryOperationDelegate? conversionDelegate;
 
-        public override bool Equals(object? obj) => obj is ActiveCoalesceExpression other && Equals(other);
+    public override bool Equals(object? obj) => obj is ActiveCoalesceExpression other && Equals(other);
 
-        public bool Equals(ActiveCoalesceExpression other) => left == other.left && right == other.right && Equals(options, other.options);
+    public bool Equals(ActiveCoalesceExpression other) => left == other.left && right == other.right && Equals(options, other.options);
 
-        protected override void Evaluate()
+    protected override void Evaluate()
+    {
+        try
         {
-            try
+            var leftFault = left?.Fault;
+            if (leftFault is not null)
+                Fault = leftFault;
+            else
             {
-                var leftFault = left?.Fault;
-                if (leftFault is not null)
-                    Fault = leftFault;
+                var leftValue = left?.Value;
+                if (leftValue is not null)
+                    Value = conversionDelegate is null ? leftValue : conversionDelegate(leftValue);
                 else
                 {
-                    var leftValue = left?.Value;
-                    if (leftValue is not null)
-                        Value = conversionDelegate is null ? leftValue : conversionDelegate(leftValue);
+                    var rightFault = right?.Fault;
+                    if (rightFault is not null)
+                        Fault = rightFault;
                     else
-                    {
-                        var rightFault = right?.Fault;
-                        if (rightFault is not null)
-                            Fault = rightFault;
-                        else
-                            Value = right?.Value;
-                    }
+                        Value = right?.Value;
                 }
             }
-            catch (Exception ex)
-            {
-                Fault = ex;
-            }
         }
-
-        public override int GetHashCode() => HashCode.Combine(typeof(ActiveCoalesceExpression), left, right, options);
-
-        public override string ToString() => $"({left} ?? {right}) {ToStringSuffix}";
-
-        static readonly object conversionDelegateManagementLock = new object();
-        static readonly Dictionary<ConversionDelegatesKey, UnaryOperationDelegate> conversionDelegates = new Dictionary<ConversionDelegatesKey, UnaryOperationDelegate>();
-
-        public static bool operator ==(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => a.Equals(b);
-
-        [ExcludeFromCodeCoverage]
-        public static bool operator !=(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => !(a == b);
-
-        record ConversionDelegatesKey(Type ConvertFrom, Type ConvertTo);
+        catch (Exception ex)
+        {
+            Fault = ex;
+        }
     }
+
+    public override int GetHashCode() => HashCode.Combine(typeof(ActiveCoalesceExpression), left, right, options);
+
+    public override string ToString() => $"({left} ?? {right}) {ToStringSuffix}";
+
+    static readonly object conversionDelegateManagementLock = new object();
+    static readonly Dictionary<ConversionDelegatesKey, UnaryOperationDelegate> conversionDelegates = new Dictionary<ConversionDelegatesKey, UnaryOperationDelegate>();
+
+    public static bool operator ==(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => a.Equals(b);
+
+    [ExcludeFromCodeCoverage]
+    public static bool operator !=(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => !(a == b);
+
+    record ConversionDelegatesKey(Type ConvertFrom, Type ConvertTo);
 }

@@ -1,11 +1,10 @@
-namespace Cogs.ActiveExpressions.Tests
+namespace Cogs.ActiveExpressions.Tests;
+
+struct StructyTestPerson
 {
-    struct StructyTestPerson
-    {
-        public StructyTestPerson(string? name) => Name = name;
+    public StructyTestPerson(string? name) => Name = name;
 
-        public string? Name;
+    public string? Name;
 
-        public override string ToString() => $"{{{Name}}}";
-    }
+    public override string ToString() => $"{{{Name}}}";
 }

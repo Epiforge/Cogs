@@ -1,98 +1,91 @@
-using Cogs.Disposal;
-using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
+namespace Cogs.ActiveQuery;
 
-namespace Cogs.ActiveQuery
+/// <summary>
+/// Represents the scalar result of an active query
+/// </summary>
+/// <typeparam name="TValue">The type of the scalar result</typeparam>
+public class ActiveValue<TValue> : SyncDisposable, IActiveValue<TValue>
 {
     /// <summary>
-    /// Represents the scalar result of an active query
+    /// Initializes a new instance of the <see cref="ActiveValue{TValue}"/> class
     /// </summary>
-    /// <typeparam name="TValue">The type of the scalar result</typeparam>
-    public class ActiveValue<TValue> : SyncDisposable, IActiveValue<TValue>
+    /// <param name="value">The current value</param>
+    /// <param name="operationFault">The current operation fault</param>
+    /// <param name="elementFaultChangeNotifier">The <see cref="INotifyElementFaultChanges"/> for the underlying data from which the value is aggregated</param>
+    /// <param name="onDispose">The action to take when the <see cref="ActiveValue{TValue}"/> is disposed</param>
+    public ActiveValue(TValue value, Exception? operationFault = null, INotifyElementFaultChanges? elementFaultChangeNotifier = null, Action? onDispose = null)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ActiveValue{TValue}"/> class
-        /// </summary>
-        /// <param name="value">The current value</param>
-        /// <param name="operationFault">The current operation fault</param>
-        /// <param name="elementFaultChangeNotifier">The <see cref="INotifyElementFaultChanges"/> for the underlying data from which the value is aggregated</param>
-        /// <param name="onDispose">The action to take when the <see cref="ActiveValue{TValue}"/> is disposed</param>
-        public ActiveValue(TValue value, Exception? operationFault = null, INotifyElementFaultChanges? elementFaultChangeNotifier = null, Action? onDispose = null)
+        this.value = value;
+        this.operationFault = operationFault;
+        this.elementFaultChangeNotifier = elementFaultChangeNotifier;
+        InitializeFaultNotification();
+        this.onDispose = onDispose;
+    }
+
+    readonly INotifyElementFaultChanges? elementFaultChangeNotifier;
+    readonly Action? onDispose;
+    Exception? operationFault;
+    TValue value;
+
+    /// <summary>
+    /// Occurs when the fault for an element has changed
+    /// </summary>
+    public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
+
+    /// <summary>
+    /// Occurs when the fault for an element is changing
+    /// </summary>
+    public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
+
+    /// <summary>
+    /// Frees, releases, or resets unmanaged resources
+    /// </summary>
+    /// <param name="disposing"><c>false</c> if invoked by the finalizer because the object is being garbage collected; otherwise, <c>true</c></param>
+    protected override bool Dispose(bool disposing)
+    {
+        onDispose?.Invoke();
+        if (elementFaultChangeNotifier is { })
         {
-            this.value = value;
-            this.operationFault = operationFault;
-            this.elementFaultChangeNotifier = elementFaultChangeNotifier;
-            InitializeFaultNotification();
-            this.onDispose = onDispose;
+            elementFaultChangeNotifier.ElementFaultChanged -= ElementFaultChangeNotifierElementFaultChanged;
+            elementFaultChangeNotifier.ElementFaultChanging -= ElementFaultChangeNotifierElementFaultChanging;
         }
+        return true;
+    }
 
-        readonly INotifyElementFaultChanges? elementFaultChangeNotifier;
-        readonly Action? onDispose;
-        Exception? operationFault;
-        TValue value;
+    void ElementFaultChangeNotifierElementFaultChanged(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanged?.Invoke(this, e);
 
-        /// <summary>
-        /// Occurs when the fault for an element has changed
-        /// </summary>
-        public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
+    void ElementFaultChangeNotifierElementFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(this, e);
 
-        /// <summary>
-        /// Occurs when the fault for an element is changing
-        /// </summary>
-        public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
+    /// <summary>
+    /// Gets a list of all faulted elements
+    /// </summary>
+    /// <returns>The list</returns>
+    public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() => elementFaultChangeNotifier?.GetElementFaults() ?? Enumerable.Empty<(object? element, Exception? fault)>().ToImmutableArray();
 
-        /// <summary>
-        /// Frees, releases, or resets unmanaged resources
-        /// </summary>
-        /// <param name="disposing"><c>false</c> if invoked by the finalizer because the object is being garbage collected; otherwise, <c>true</c></param>
-        protected override bool Dispose(bool disposing)
+    void InitializeFaultNotification()
+    {
+        if (elementFaultChangeNotifier is { })
         {
-            onDispose?.Invoke();
-            if (elementFaultChangeNotifier is { })
-            {
-                elementFaultChangeNotifier.ElementFaultChanged -= ElementFaultChangeNotifierElementFaultChanged;
-                elementFaultChangeNotifier.ElementFaultChanging -= ElementFaultChangeNotifierElementFaultChanging;
-            }
-            return true;
+            elementFaultChangeNotifier.ElementFaultChanged += ElementFaultChangeNotifierElementFaultChanged;
+            elementFaultChangeNotifier.ElementFaultChanging += ElementFaultChangeNotifierElementFaultChanging;
         }
+    }
 
-        void ElementFaultChangeNotifierElementFaultChanged(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanged?.Invoke(this, e);
+    /// <summary>
+    /// Gets the exception that occured the most recent time the query updated
+    /// </summary>
+    public Exception? OperationFault
+    {
+        get => operationFault;
+        protected internal set => SetBackedProperty(ref operationFault, in value);
+    }
 
-        void ElementFaultChangeNotifierElementFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(this, e);
-
-        /// <summary>
-        /// Gets a list of all faulted elements
-        /// </summary>
-        /// <returns>The list</returns>
-        public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() => elementFaultChangeNotifier?.GetElementFaults() ?? Enumerable.Empty<(object? element, Exception? fault)>().ToImmutableArray();
-
-        void InitializeFaultNotification()
-        {
-            if (elementFaultChangeNotifier is { })
-            {
-                elementFaultChangeNotifier.ElementFaultChanged += ElementFaultChangeNotifierElementFaultChanged;
-                elementFaultChangeNotifier.ElementFaultChanging += ElementFaultChangeNotifierElementFaultChanging;
-            }
-        }
-
-        /// <summary>
-        /// Gets the exception that occured the most recent time the query updated
-        /// </summary>
-        public Exception? OperationFault
-        {
-            get => operationFault;
-            protected internal set => SetBackedProperty(ref operationFault, in value);
-        }
-
-        /// <summary>
-        /// Gets the value from the most recent time the query updated
-        /// </summary>
-        public TValue Value
-        {
-            get => value;
-            protected internal set => SetBackedProperty(ref this.value, in value);
-        }
+    /// <summary>
+    /// Gets the value from the most recent time the query updated
+    /// </summary>
+    public TValue Value
+    {
+        get => value;
+        protected internal set => SetBackedProperty(ref this.value, in value);
     }
 }

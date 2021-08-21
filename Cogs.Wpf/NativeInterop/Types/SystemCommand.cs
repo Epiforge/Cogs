@@ -1,9 +1,8 @@
-namespace Cogs.Wpf.NativeInterop.Types
+namespace Cogs.Wpf.NativeInterop.Types;
+
+enum SystemCommand : uint
 {
-    enum SystemCommand : uint
-    {
-        MAXIMIZE = 0xF030,
-        MINIMIZE = 0xF020,
-        RESTORE = 0xF120
-    }
+    MAXIMIZE = 0xF030,
+    MINIMIZE = 0xF020,
+    RESTORE = 0xF120
 }

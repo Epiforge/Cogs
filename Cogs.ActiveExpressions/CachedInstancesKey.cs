@@ -1,6 +1,3 @@
-using System.Linq.Expressions;
+namespace Cogs.ActiveExpressions;
 
-namespace Cogs.ActiveExpressions
-{
-    record CachedInstancesKey<TExpression>(TExpression Expression, ActiveExpressionOptions? Options) where TExpression : Expression;
-}
+record CachedInstancesKey<TExpression>(TExpression Expression, ActiveExpressionOptions? Options) where TExpression : Expression;

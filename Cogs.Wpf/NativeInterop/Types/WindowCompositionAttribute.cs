@@ -1,7 +1,6 @@
-namespace Cogs.Wpf.NativeInterop.Types
+namespace Cogs.Wpf.NativeInterop.Types;
+
+enum WindowCompositionAttribute
 {
-    enum WindowCompositionAttribute
-    {
-        WCA_ACCENT_POLICY = 19
-    }
+    WCA_ACCENT_POLICY = 19
 }

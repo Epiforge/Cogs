@@ -1,0 +1,12 @@
+global using Cogs.ActiveExpressions;
+global using Cogs.Collections;
+global using Cogs.Collections.Synchronized;
+global using Cogs.Components;
+global using Cogs.Threading;
+global using Microsoft.VisualStudio.TestTools.UnitTesting;
+global using System.Collections;
+global using System.Collections.Concurrent;
+global using System.Collections.ObjectModel;
+global using System.Collections.Specialized;
+global using System.Diagnostics.CodeAnalysis;
+global using System.Linq.Expressions;

@@ -1,10 +1,9 @@
-namespace Cogs.Reflection
+namespace Cogs.Reflection;
+
+enum BinaryOperation
 {
-    enum BinaryOperation
-    {
-        Add,
-        Subtract,
-        Multiply,
-        Divide
-    }
+    Add,
+    Subtract,
+    Multiply,
+    Divide
 }

@@ -1,18 +1,17 @@
-namespace Cogs.Wpf
+namespace Cogs.Wpf;
+
+/// <summary>
+/// Modes for auto activation
+/// </summary>
+public enum AutoActivationMode
 {
     /// <summary>
-    /// Modes for auto activation
+    /// No auto activation
     /// </summary>
-    public enum AutoActivationMode
-    {
-        /// <summary>
-        /// No auto activation
-        /// </summary>
-        Default,
+    Default,
 
-        /// <summary>
-        /// Auto activate when content is rendered
-        /// </summary>
-        OnContentRendered
-    }
+    /// <summary>
+    /// Auto activate when content is rendered
+    /// </summary>
+    OnContentRendered
 }

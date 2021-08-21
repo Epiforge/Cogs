@@ -1,56 +1,48 @@
-using Cogs.Collections.Synchronized;
-using Cogs.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
+namespace Cogs.ActiveQuery.Tests;
 
-namespace Cogs.ActiveQuery.Tests
+class TestPerson : PropertyChangeNotifier, IComparable<TestPerson>
 {
-    class TestPerson : PropertyChangeNotifier, IComparable<TestPerson>
+    public static SynchronizedRangeObservableCollection<TestPerson> CreatePeopleCollection(SynchronizationContext? synchronizationContext = null) =>
+        new SynchronizedRangeObservableCollection<TestPerson>(synchronizationContext, MakePeople());
+
+    public static SynchronizedObservableDictionary<int, TestPerson> CreatePeopleDictionary(SynchronizationContext? synchronizationContext = null) =>
+        new SynchronizedObservableDictionary<int, TestPerson>(synchronizationContext, MakePeople().Select((person, index) => (person, index)).ToDictionary(pi => pi.index, pi => pi.person));
+
+    public static IEnumerable<TestPerson> MakePeople() => new TestPerson[]
     {
-        public static SynchronizedRangeObservableCollection<TestPerson> CreatePeopleCollection(SynchronizationContext? synchronizationContext = null) =>
-            new SynchronizedRangeObservableCollection<TestPerson>(synchronizationContext, MakePeople());
+        new TestPerson("John"),
+        new TestPerson("Emily"),
+        new TestPerson("Charles"),
+        new TestPerson("Erin"),
+        new TestPerson("Cliff"),
+        new TestPerson("Hunter"),
+        new TestPerson("Ben"),
+        new TestPerson("Craig"),
+        new TestPerson("Bridget"),
+        new TestPerson("Nanette"),
+        new TestPerson("George"),
+        new TestPerson("Bryan"),
+        new TestPerson("James"),
+        new TestPerson("Steve")
+    };
 
-        public static SynchronizedObservableDictionary<int, TestPerson> CreatePeopleDictionary(SynchronizationContext? synchronizationContext = null) =>
-            new SynchronizedObservableDictionary<int, TestPerson>(synchronizationContext, MakePeople().Select((person, index) => (person, index)).ToDictionary(pi => pi.index, pi => pi.person));
+    public static TestPerson operator +(TestPerson a, TestPerson b) => new TestPerson { name = $"{a.name} {b.name}" };
 
-        public static IEnumerable<TestPerson> MakePeople() => new TestPerson[]
-        {
-            new TestPerson("John"),
-            new TestPerson("Emily"),
-            new TestPerson("Charles"),
-            new TestPerson("Erin"),
-            new TestPerson("Cliff"),
-            new TestPerson("Hunter"),
-            new TestPerson("Ben"),
-            new TestPerson("Craig"),
-            new TestPerson("Bridget"),
-            new TestPerson("Nanette"),
-            new TestPerson("George"),
-            new TestPerson("Bryan"),
-            new TestPerson("James"),
-            new TestPerson("Steve")
-        };
+    public static TestPerson operator -(TestPerson testPerson) => new TestPerson { name = new string(testPerson.name?.Reverse().ToArray()) };
 
-        public static TestPerson operator +(TestPerson a, TestPerson b) => new TestPerson { name = $"{a.name} {b.name}" };
+    public TestPerson()
+    {
+    }
 
-        public static TestPerson operator -(TestPerson testPerson) => new TestPerson { name = new string(testPerson.name?.Reverse().ToArray()) };
+    public TestPerson(string? name) => this.name = name;
 
-        public TestPerson()
-        {
-        }
+    string? name;
 
-        public TestPerson(string? name) => this.name = name;
+    public int CompareTo(TestPerson? other) => GetHashCode().CompareTo(other?.GetHashCode() ?? 0);
 
-        string? name;
-
-        public int CompareTo(TestPerson? other) => GetHashCode().CompareTo(other?.GetHashCode() ?? 0);
-
-        public string? Name
-        {
-            get => name;
-            set => SetBackedProperty(ref name, in value);
-        }
+    public string? Name
+    {
+        get => name;
+        set => SetBackedProperty(ref name, in value);
     }
 }

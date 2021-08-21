@@ -1,13 +1,12 @@
-namespace Cogs.Disposal
+namespace Cogs.Disposal;
+
+/// <summary>
+/// Provides the disposal status of an object
+/// </summary>
+public interface IDisposalStatus
 {
     /// <summary>
-    /// Provides the disposal status of an object
+    /// Gets whether this object has been disposed
     /// </summary>
-    public interface IDisposalStatus
-    {
-        /// <summary>
-        /// Gets whether this object has been disposed
-        /// </summary>
-        bool IsDisposed { get; }
-    }
+    bool IsDisposed { get; }
 }

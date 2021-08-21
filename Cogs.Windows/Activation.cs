@@ -1,17 +1,14 @@
-using System;
+namespace Cogs.Windows;
 
-namespace Cogs.Windows
+/// <summary>
+/// Provides information relating to Windows Activation
+/// </summary>
+public static class Activation
 {
-    /// <summary>
-    /// Provides information relating to Windows Activation
-    /// </summary>
-    public static class Activation
-    {
-        static readonly Lazy<string> lazyProductKey = new Lazy<string>(ProductKeyDecoder.GetWindowsProductKeyFromRegistry);
+    static readonly Lazy<string> lazyProductKey = new Lazy<string>(ProductKeyDecoder.GetWindowsProductKeyFromRegistry);
 
-        /// <summary>
-        /// Gets the Windows product key
-        /// </summary>
-        public static string ProductKey => lazyProductKey.Value;
-    }
+    /// <summary>
+    /// Gets the Windows product key
+    /// </summary>
+    public static string ProductKey => lazyProductKey.Value;
 }

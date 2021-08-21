@@ -1,4 +1,3 @@
-namespace Cogs.ActiveExpressions
-{
-    delegate object? BinaryOperationDelegate(object? left, object? right);
-}
+namespace Cogs.ActiveExpressions;
+
+delegate object? BinaryOperationDelegate(object? left, object? right);

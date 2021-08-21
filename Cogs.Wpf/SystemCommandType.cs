@@ -1,28 +1,27 @@
-namespace Cogs.Wpf
+namespace Cogs.Wpf;
+
+/// <summary>
+/// Types of system commands
+/// </summary>
+public enum SystemCommand
 {
     /// <summary>
-    /// Types of system commands
+    /// None
     /// </summary>
-    public enum SystemCommand
-    {
-        /// <summary>
-        /// None
-        /// </summary>
-        None,
+    None,
 
-        /// <summary>
-        /// Maximize the window
-        /// </summary>
-        Maximize,
+    /// <summary>
+    /// Maximize the window
+    /// </summary>
+    Maximize,
 
-        /// <summary>
-        /// Minimize the window
-        /// </summary>
-        Minimize,
+    /// <summary>
+    /// Minimize the window
+    /// </summary>
+    Minimize,
 
-        /// <summary>
-        /// Restore the window
-        /// </summary>
-        Restore
-    }
+    /// <summary>
+    /// Restore the window
+    /// </summary>
+    Restore
 }
