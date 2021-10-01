@@ -34,3 +34,4 @@ packages/
 *.nupkg
 .axocover/
 *.ncrunchsolution
+*.ncrunchproject
