@@ -36,7 +36,10 @@
     </Target>
 
     <ItemGroup>
-      <None Remove="Cogs.Wpf.v3.ncrunchproject" />
+        <None Remove="Cogs.Wpf.v3.ncrunchproject" />
+        <None Remove="Cogs.Wpf.net45.v3.ncrunchproject" />
+        <None Remove="Cogs.Wpf.net5.0-windows.v3.ncrunchproject" />
+        <None Remove="Cogs.Wpf.netcoreapp3.1.v3.ncrunchproject" />
     </ItemGroup>
 
     <ItemGroup>
