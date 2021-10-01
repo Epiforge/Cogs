@@ -7,5 +7,5 @@ enum AccentFlags : uint
     DrawTopBorder = 0x40,
     DrawRightBorder = 0x80,
     DrawBottomBorder = 0x100,
-    DrawAllBorders = (DrawLeftBorder | DrawTopBorder | DrawRightBorder | DrawBottomBorder)
+    DrawAllBorders = DrawLeftBorder | DrawTopBorder | DrawRightBorder | DrawBottomBorder
 }

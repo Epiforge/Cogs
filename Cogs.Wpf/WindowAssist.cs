@@ -166,7 +166,7 @@ public static class WindowAssist
         var accent = new AccentPolicy
         {
             AccentState = accentState,
-            GradientColor = (0U << 24) | (0x990000 & 0xFFFFFF)
+            GradientColor = (0U << 24) | (0x990000U & 0xFFFFFF)
         };
         var accentStructSize = Marshal.SizeOf(accent);
         var accentPtr = Marshal.AllocHGlobal(accentStructSize);
@@ -416,7 +416,7 @@ public static class WindowAssist
     static IntPtr SetDefaultWindowStyleOnSystemCommandsHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         var message = (WindowMessage)msg;
-        if (HwndSource.FromHwnd(hwnd).RootVisual is Window window && message == WindowMessage.SYSCOMMAND)
+        if (HwndSource.FromHwnd(hwnd).RootVisual is Window window && !window.AllowsTransparency && message == WindowMessage.SYSCOMMAND)
         {
             var systemCommand = (NativeInterop.Types.SystemCommand)wParam.ToInt32();
             if (new NativeInterop.Types.SystemCommand[] { NativeInterop.Types.SystemCommand.MAXIMIZE, NativeInterop.Types.SystemCommand.MINIMIZE, NativeInterop.Types.SystemCommand.RESTORE }.Contains(systemCommand))
