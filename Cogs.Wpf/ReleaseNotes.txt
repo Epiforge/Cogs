@@ -1,1 +1,1 @@
-We added the MouseWheelDownGesture and MouseWheelUpGesture classes
+WindowAssist's BlurBehind functionality now use Fluent Design's acrylic feature available in Windows 10 and later.

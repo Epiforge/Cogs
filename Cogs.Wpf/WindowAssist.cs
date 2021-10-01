@@ -78,7 +78,7 @@ public static class WindowAssist
     {
         if (blurBehind && !SystemParameters.HighContrast)
         {
-            window.SetValue(isBlurredBehindKey, SetAccentPolicy(window, AccentState.ACCENT_ENABLE_BLURBEHIND));
+            window.SetValue(isBlurredBehindKey, SetAccentPolicy(window, AccentState.ACCENT_ENABLE_ACRYLICBLURBEHIND));
             return;
         }
         SetAccentPolicy(window, AccentState.ACCENT_DISABLED);
@@ -124,8 +124,6 @@ public static class WindowAssist
             EffectBlurBehind(window, true);
     }
 
-    static AccentFlags GetAccentFlagsForTaskbarPosition() => AccentFlags.DrawAllBorders;
-
     /// <summary>
     /// Gets the value of the BlurBehind attached dependency property for the specified window
     /// </summary>
@@ -168,8 +166,7 @@ public static class WindowAssist
         var accent = new AccentPolicy
         {
             AccentState = accentState,
-            AccentFlags = GetAccentFlagsForTaskbarPosition(),
-            AnimationId = 3
+            GradientColor = (0U << 24) | (0x990000 & 0xFFFFFF)
         };
         var accentStructSize = Marshal.SizeOf(accent);
         var accentPtr = Marshal.AllocHGlobal(accentStructSize);

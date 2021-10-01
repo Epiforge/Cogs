@@ -5,6 +5,6 @@ struct AccentPolicy
 {
     public AccentState AccentState;
     public AccentFlags AccentFlags;
-    public int GradientColor;
-    public int AnimationId;
+    public uint GradientColor;
+    public uint AnimationId;
 }

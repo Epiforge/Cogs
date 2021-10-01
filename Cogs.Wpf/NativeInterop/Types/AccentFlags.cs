@@ -1,7 +1,7 @@
 namespace Cogs.Wpf.NativeInterop.Types;
 
 [Flags]
-enum AccentFlags
+enum AccentFlags : uint
 {
     DrawLeftBorder = 0x20,
     DrawTopBorder = 0x40,
