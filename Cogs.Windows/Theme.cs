@@ -22,7 +22,11 @@ public sealed class Theme : SyncDisposable
         }
         catch (ManagementException)
         {
-            // Oh, I see how it is
+            colorKeyPollTimer = new Timer(ColorKeyPollTimerTick, null, pollingInterval, pollingInterval);
+        }
+        catch (TypeInitializationException)
+        {
+            colorKeyPollTimer = new Timer(ColorKeyPollTimerTick, null, pollingInterval, pollingInterval);
         }
 
         isDarkKey = isDarkHive.OpenSubKey(isDarkKeyName) ?? throw new PlatformNotSupportedException($"The Personalize key (\"{isDarkKeyName}\") could not be found");
@@ -35,7 +39,11 @@ public sealed class Theme : SyncDisposable
         }
         catch (ManagementException)
         {
-            // Fine then
+            isDarkKeyPollTimer = new Timer(IsDarkKeyPollTimerTick, null, pollingInterval, pollingInterval);
+        }
+        catch (TypeInitializationException)
+        {
+            isDarkKeyPollTimer = new Timer(IsDarkKeyPollTimerTick, null, pollingInterval, pollingInterval);
         }
     }
 
@@ -44,12 +52,14 @@ public sealed class Theme : SyncDisposable
     readonly RegistryKey colorKey;
     readonly string colorKeyName = $@"{WindowsIdentity.GetCurrent().User}\Software\Microsoft\Windows\DWM";
     readonly ManagementEventWatcher? colorKeyWatcher;
+    readonly Timer? colorKeyPollTimer;
     readonly string colorValueName = "ColorizationColor";
     readonly int defaultColorValue = unchecked((int)0xc42947cc);
     readonly int defaultIsDarkValue = 1;
     readonly RegistryKey isDarkHive = Registry.Users;
     bool isDark;
     readonly RegistryKey isDarkKey;
+    readonly Timer? isDarkKeyPollTimer;
     readonly ManagementEventWatcher? isDarkKeyWatcher;
     readonly string isDarkKeyName = $@"{WindowsIdentity.GetCurrent().User}\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     readonly string isDarkValueName = "AppsUseLightTheme";
@@ -73,7 +83,29 @@ public sealed class Theme : SyncDisposable
         set => SetBackedProperty(ref isDark, in value);
     }
 
-    void ColorKeyWatcherEventArrived(object sender, EventArrivedEventArgs e) => UsingContext(() => Color = FetchColor());
+    void ColorKeyPollTimerTick(object state) => UsingContext(() =>
+    {
+        try
+        {
+            Color = FetchColor();
+        }
+        catch (ObjectDisposedException)
+        {
+            // do nothing
+        }
+    });
+
+    void ColorKeyWatcherEventArrived(object sender, EventArrivedEventArgs e) => UsingContext(() =>
+    {
+        try
+        {
+            Color = FetchColor();
+        }
+        catch (ObjectDisposedException)
+        {
+            // do nothing
+        }
+    });
 
     /// <summary>
     /// Frees, releases, or resets unmanaged resources
@@ -84,6 +116,10 @@ public sealed class Theme : SyncDisposable
     {
         if (disposing)
         {
+            colorKeyPollTimer?.Dispose();
+            isDarkKeyPollTimer?.Dispose();
+            colorKeyWatcher?.Dispose();
+            isDarkKeyWatcher?.Dispose();
             colorKey?.Dispose();
             isDarkKey?.Dispose();
         }
@@ -94,7 +130,29 @@ public sealed class Theme : SyncDisposable
 
     bool FetchIsDark() => (int)(isDarkKey?.GetValue(isDarkValueName) ?? defaultIsDarkValue) == 0;
 
-    void IsDarkKeyWatcherEventArrived(object sender, EventArrivedEventArgs e) => UsingContext(() => IsDark = FetchIsDark());
+    void IsDarkKeyPollTimerTick(object state) => UsingContext(() =>
+    {
+        try
+        {
+            IsDark = FetchIsDark();
+        }
+        catch (ObjectDisposedException)
+        {
+            // do nothing
+        }
+    });
+
+    void IsDarkKeyWatcherEventArrived(object sender, EventArrivedEventArgs e) => UsingContext(() =>
+    {
+        try
+        {
+            IsDark = FetchIsDark();
+        }
+        catch (ObjectDisposedException)
+        {
+            // do nothing
+        }
+    });
 
     void UsingContext(Action action)
     {
@@ -103,6 +161,8 @@ public sealed class Theme : SyncDisposable
         else
             action();
     }
+
+    static readonly TimeSpan pollingInterval = TimeSpan.FromSeconds(5);
 
     static string Sanitize(string value) => value.Replace(@"\", @"\\", StringComparison.OrdinalIgnoreCase).Replace("'", @"\'", StringComparison.OrdinalIgnoreCase);
 }

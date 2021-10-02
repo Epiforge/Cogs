@@ -1,1 +1,1 @@
-This package now requires Cogs.Disposal 1.1.6 or later.
+We added a workaround for a defect in System.Management for ARM64-based Windows 11 systems.
