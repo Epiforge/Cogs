@@ -1,1 +1,1 @@
-We fixed a bug in which the SetDefaultWindowStyleOnSystemCommands feature attempted to change a window's style when it was illegal to do so.
+We added the IsInSafePosition extension method for windows.
