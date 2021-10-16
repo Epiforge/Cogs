@@ -176,11 +176,14 @@ namespace Cogs.Collections
                 throw new ArgumentNullException(nameof(keyValuePairs));
             if (keyValuePairs.Any(kvp => kvp.Key is null || gsd.ContainsKey(kvp.Key)))
                 throw new ArgumentException("One of the keys was null or already found in the dictionary", nameof(keyValuePairs));
-            NotifyCountChanging();
-            foreach (var keyValuePair in keyValuePairs)
-                gsd.Add(keyValuePair.Key, keyValuePair.Value);
-            OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Add, keyValuePairs));
-            NotifyCountChanged();
+            if (keyValuePairs.Count > 0)
+            {
+                NotifyCountChanging();
+                foreach (var keyValuePair in keyValuePairs)
+                    gsd.Add(keyValuePair.Key, keyValuePair.Value);
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Add, keyValuePairs));
+                NotifyCountChanged();
+            }
         }
 
         void CastAndNotifyReset()
@@ -467,10 +470,16 @@ namespace Cogs.Collections
             foreach (var kv in gsd.ToList())
                 if (predicate(kv.Key, kv.Value))
                 {
+                    if (removed.Count == 0)
+                        NotifyCountChanging();
                     gsd.Remove(kv.Key);
                     removed.Add(kv);
                 }
-            OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Remove, removed));
+            if (removed.Count > 0)
+            {
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Remove, removed));
+                NotifyCountChanged();
+            }
             return removed.ToImmutableArray();
         }
 
@@ -557,8 +566,13 @@ namespace Cogs.Collections
         /// </summary>
         public virtual void Reset()
         {
+            var countChanging = gsd.Count > 0;
+            if (countChanging)
+                NotifyCountChanging();
             gsd = new SortedDictionary<TKey, TValue>(gsd.Comparer);
             CastAndNotifyReset();
+            if (countChanging)
+                NotifyCountChanged();
         }
 
         /// <summary>
@@ -567,8 +581,13 @@ namespace Cogs.Collections
         /// <param name="dictionary">The dictionary from which to retrieve the initial elements</param>
         public virtual void Reset(IDictionary<TKey, TValue> dictionary)
         {
+            var countChanging = gsd.Count > 0;
+            if (countChanging)
+                NotifyCountChanging();
             gsd = new SortedDictionary<TKey, TValue>(dictionary, gsd.Comparer);
             CastAndNotifyReset();
+            if (countChanging)
+                NotifyCountChanged();
         }
 
         /// <summary>

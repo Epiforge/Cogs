@@ -138,7 +138,7 @@ namespace Cogs.Collections
                 if (list.Count > 0)
                 {
                     OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, list, originalIndex));
-                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                    NotifyCountChanged();
                 }
             }
         }
@@ -181,10 +181,12 @@ namespace Cogs.Collections
                     foreach (var item in movedItems)
                         Items.Insert(++insertionIndex, item);
                     OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, movedItems, newStartIndex, oldStartIndex));
-                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                    NotifyCountChanged();
                 }
             }
         }
+
+        void NotifyCountChanged() => OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
 
         /// <summary>
         /// Raises the <see cref="INotifyCollectionChanged.CollectionChanged"/> event with the provided arguments
@@ -225,7 +227,7 @@ namespace Cogs.Collections
                 {
                     Items.RemoveAt(index);
                     OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, index));
-                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                    NotifyCountChanged();
                 }
             }
         }
@@ -258,7 +260,7 @@ namespace Cogs.Collections
                         Items.RemoveAt(index);
                     }
                     OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, removedItems, index));
-                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                    NotifyCountChanged();
                 }
             }
         }
@@ -289,7 +291,7 @@ namespace Cogs.Collections
                 }
                 OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, list, oldItems, 0));
                 if (oldItems.Length != list.Count)
-                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                    NotifyCountChanged();
             }
         }
 
@@ -338,7 +340,7 @@ namespace Cogs.Collections
                 else
                     OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, oldItems, originalIndex));
                 if (oldItems.Length != list.Count)
-                    OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                    NotifyCountChanged();
                 return oldItems.ToImmutableArray();
             }
         }
@@ -366,7 +368,7 @@ namespace Cogs.Collections
                 Items.Add(element);
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             if (previousCount != Items.Count)
-                OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+                NotifyCountChanged();
         }
     }
 }

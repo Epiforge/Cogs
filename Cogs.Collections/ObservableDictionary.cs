@@ -191,7 +191,7 @@ namespace Cogs.Collections
         protected virtual void Add(KeyValuePair<TKey, TValue> item)
         {
             if (item.Key is null)
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(item));
             if (!gd.ContainsKey(item.Key))
                 NotifyCountChanging();
             gci.Add(item);
@@ -216,11 +216,14 @@ namespace Cogs.Collections
                 throw new ArgumentNullException(nameof(keyValuePairs));
             if (keyValuePairs.Any(kvp => kvp.Key is null || gd.ContainsKey(kvp.Key)))
                 throw new ArgumentException("One of the keys was null or already found in the dictionary", nameof(keyValuePairs));
-            NotifyCountChanging();
-            foreach (var keyValuePair in keyValuePairs)
-                gd.Add(keyValuePair.Key, keyValuePair.Value);
-            OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Add, keyValuePairs));
-            NotifyCountChanged();
+            if (keyValuePairs.Count > 0)
+            {
+                NotifyCountChanging();
+                foreach (var keyValuePair in keyValuePairs)
+                    gd.Add(keyValuePair.Key, keyValuePair.Value);
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Add, keyValuePairs));
+                NotifyCountChanged();
+            }
         }
 
         void CastAndNotifyReset()
@@ -530,10 +533,16 @@ namespace Cogs.Collections
             foreach (var kv in gd.ToList())
                 if (predicate(kv.Key, kv.Value))
                 {
+                    if (removed.Count == 0)
+                        NotifyCountChanging();
                     gd.Remove(kv.Key);
                     removed.Add(kv);
                 }
-            OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Remove, removed));
+            if (removed.Count > 0)
+            {
+                OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Remove, removed));
+                NotifyCountChanged();
+            }
             return removed.ToImmutableArray();
         }
 
@@ -620,11 +629,16 @@ namespace Cogs.Collections
         /// </summary>
         public virtual void Reset()
         {
+            var countChanging = gd.Count > 0;
+            if (countChanging)
+                NotifyCountChanging();
             if (comparer is null)
                 gd = new Dictionary<TKey, TValue>();
             else
                 gd = new Dictionary<TKey, TValue>(comparer);
             CastAndNotifyReset();
+            if (countChanging)
+                NotifyCountChanged();
         }
 
         /// <summary>
@@ -633,11 +647,18 @@ namespace Cogs.Collections
         /// <param name="dictionary">The dictionary from which to retrieve the initial elements</param>
         public virtual void Reset(IDictionary<TKey, TValue> dictionary)
         {
+            if (dictionary is null)
+                throw new ArgumentNullException(nameof(dictionary));
+            var countChanging = gd.Count != dictionary.Count;
+            if (countChanging)
+                NotifyCountChanging();
             if (comparer is null)
                 gd = new Dictionary<TKey, TValue>(dictionary);
             else
                 gd = new Dictionary<TKey, TValue>(dictionary, comparer);
             CastAndNotifyReset();
+            if (countChanging)
+                NotifyCountChanged();
         }
 
         /// <summary>
