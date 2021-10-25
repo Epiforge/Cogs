@@ -3723,6 +3723,9 @@ public static class ActiveEnumerableExtensions
                     case NotifyCollectionChangedAction.Reset:
                         rangeObservableCollection!.Reset(source);
                         break;
+                    case NotifyCollectionChangedAction.Move when oldItemsCount > 0:
+                        rangeObservableCollection.MoveRange(e.OldStartingIndex, e.NewStartingIndex, oldItemsCount);
+                        break;
                     case NotifyCollectionChangedAction.Replace:
                         rangeObservableCollection!.ReplaceRange(e.OldStartingIndex, oldItemsCount, newItems);
                         break;

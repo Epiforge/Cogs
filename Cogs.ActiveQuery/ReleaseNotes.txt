@@ -1,1 +1,1 @@
-We added the ability to force SwitchContext and SwitchContextEventually to raise individual INotifyCollectionChanged.CollectionChanged events for each element operated upon in batch.
+We corrected an imprecise handler for collection changes to Enumerable ToActiveEnumerable.
