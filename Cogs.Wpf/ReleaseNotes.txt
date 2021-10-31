@@ -1,1 +1,1 @@
-We added the IsInSafePosition extension method for windows.
+We added extensions for visuals and a behavior that deselects all items in a list view when empty space within it is clicked.
