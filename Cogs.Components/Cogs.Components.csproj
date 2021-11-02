@@ -15,6 +15,7 @@
         <PackageIcon>NuGet.jpg</PackageIcon>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageReleaseNotes>Please write the package release notes in ReleaseNotes.txt.</PackageReleaseNotes>
         <Product>Components Cog</Product>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
