@@ -294,6 +294,8 @@ public abstract class ActiveExpression : SyncDisposable
     {
         if (resultType is null)
             throw new ArgumentNullException(nameof(resultType));
+        if (operands is null)
+            throw new ArgumentNullException(nameof(operands));
         return expressionType switch
         {
             ExpressionType.Add => $"({operands[0]} + {operands[1]})",
