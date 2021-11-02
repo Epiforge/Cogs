@@ -1,1 +1,1 @@
-Dispose and DisposeAsync are now virtual and may be overridden.
+We upgraded some NuGet references. SyncDisposable no longer declares an AsyncLock object since it doesn't need to.
