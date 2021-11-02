@@ -17,7 +17,7 @@ public abstract class AsyncDisposable : PropertyChangeNotifier, IAsyncDisposable
         OnDisposed(e);
     }
 
-    readonly AsyncLock disposalAccess = new AsyncLock();
+    readonly AsyncLock disposalAccess = new();
     bool isDisposed;
 
     /// <summary>

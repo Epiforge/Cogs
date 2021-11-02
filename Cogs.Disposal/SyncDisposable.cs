@@ -17,7 +17,7 @@ public abstract class SyncDisposable : PropertyChangeNotifier, IDisposable, INot
         OnDisposed(e);
     }
 
-    readonly AsyncLock disposalAccess = new AsyncLock();
+    readonly object disposalAccess = new();
     bool isDisposed;
 
     /// <summary>
@@ -49,7 +49,7 @@ public abstract class SyncDisposable : PropertyChangeNotifier, IDisposable, INot
     /// </summary>
     public virtual void Dispose()
     {
-        using (disposalAccess.Lock())
+        lock (disposalAccess)
             if (!IsDisposed)
             {
                 var e = new DisposalNotificationEventArgs(false);
