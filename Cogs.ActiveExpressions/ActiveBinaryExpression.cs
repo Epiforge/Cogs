@@ -135,9 +135,9 @@ class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpressi
 
     public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, left, right)} {ToStringSuffix}";
 
-    static readonly Dictionary<ImplementationsKey, BinaryOperationDelegate> implementations = new Dictionary<ImplementationsKey, BinaryOperationDelegate>();
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<BinaryExpression>, ActiveBinaryExpression> instances = new Dictionary<CachedInstancesKey<BinaryExpression>, ActiveBinaryExpression>(new CachedInstancesKeyComparer<BinaryExpression>());
+    static readonly Dictionary<ImplementationsKey, BinaryOperationDelegate> implementations = new();
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<BinaryExpression>, ActiveBinaryExpression> instances = new(new CachedInstancesKeyComparer<BinaryExpression>());
 
     public static ActiveBinaryExpression Create(BinaryExpression binaryExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

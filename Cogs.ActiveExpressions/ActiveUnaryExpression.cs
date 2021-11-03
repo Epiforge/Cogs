@@ -91,9 +91,9 @@ class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression
 
     public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, operand)} {ToStringSuffix}";
 
-    static readonly Dictionary<ImplementationsKey, UnaryOperationDelegate> implementations = new Dictionary<ImplementationsKey, UnaryOperationDelegate>();
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<UnaryExpression>, ActiveUnaryExpression> instances = new Dictionary<CachedInstancesKey<UnaryExpression>, ActiveUnaryExpression>(new CachedInstancesKeyComparer<UnaryExpression>());
+    static readonly Dictionary<ImplementationsKey, UnaryOperationDelegate> implementations = new();
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<UnaryExpression>, ActiveUnaryExpression> instances = new(new CachedInstancesKeyComparer<UnaryExpression>());
 
     public static ActiveUnaryExpression Create(UnaryExpression unaryExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

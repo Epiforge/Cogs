@@ -70,9 +70,9 @@ class ActiveTypeBinaryExpression : ActiveExpression, IEquatable<ActiveTypeBinary
 
     public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, expression, typeOperand)} {ToStringSuffix}";
 
-    static readonly ConcurrentDictionary<Type, TypeIsDelegate> delegates = new ConcurrentDictionary<Type, TypeIsDelegate>();
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<TypeBinaryExpression>, ActiveTypeBinaryExpression> instances = new Dictionary<CachedInstancesKey<TypeBinaryExpression>, ActiveTypeBinaryExpression>(new CachedInstancesKeyComparer<TypeBinaryExpression>());
+    static readonly ConcurrentDictionary<Type, TypeIsDelegate> delegates = new();
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<TypeBinaryExpression>, ActiveTypeBinaryExpression> instances = new(new CachedInstancesKeyComparer<TypeBinaryExpression>());
 
     public static ActiveTypeBinaryExpression Create(TypeBinaryExpression typeBinaryExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

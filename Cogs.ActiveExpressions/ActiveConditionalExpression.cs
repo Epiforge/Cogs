@@ -153,8 +153,8 @@ class ActiveConditionalExpression : ActiveExpression, IEquatable<ActiveCondition
 
     public override string ToString() => $"({test} ? {ifTrue} : {ifFalse}) {ToStringSuffix}";
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<ConditionalExpression>, ActiveConditionalExpression> instances = new Dictionary<CachedInstancesKey<ConditionalExpression>, ActiveConditionalExpression>(new CachedInstancesKeyComparer<ConditionalExpression>());
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<ConditionalExpression>, ActiveConditionalExpression> instances = new(new CachedInstancesKeyComparer<ConditionalExpression>());
 
     public static ActiveConditionalExpression Create(ConditionalExpression conditionalExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

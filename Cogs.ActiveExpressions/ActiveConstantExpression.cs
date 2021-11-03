@@ -49,9 +49,9 @@ class ActiveConstantExpression : ActiveExpression, IEquatable<ActiveConstantExpr
 
     void ValueChanged(object sender, EventArgs e) => OnPropertyChanged(nameof(Value));
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<ExpressionInstancesKey, ActiveConstantExpression> expressionInstances = new Dictionary<ExpressionInstancesKey, ActiveConstantExpression>(new ExpressionInstancesKeyComparer());
-    static readonly Dictionary<InstancesKey, ActiveConstantExpression> instances = new Dictionary<InstancesKey, ActiveConstantExpression>();
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<ExpressionInstancesKey, ActiveConstantExpression> expressionInstances = new(new ExpressionInstancesKeyComparer());
+    static readonly Dictionary<InstancesKey, ActiveConstantExpression> instances = new();
 
     public static ActiveConstantExpression Create(ConstantExpression constantExpression, ActiveExpressionOptions? options)
     {

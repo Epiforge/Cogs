@@ -79,8 +79,8 @@ class ActiveNewArrayInitExpression : ActiveExpression, IEquatable<ActiveNewArray
 
     public override string ToString() => $"new {elementType?.FullName}[] {{{string.Join(", ", initializers?.Select(initializer => $"{initializer}"))}}} {ToStringSuffix}";
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<NewArrayExpression>, ActiveNewArrayInitExpression> instances = new Dictionary<CachedInstancesKey<NewArrayExpression>, ActiveNewArrayInitExpression>(new CachedInstancesKeyComparer<NewArrayExpression>());
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<NewArrayExpression>, ActiveNewArrayInitExpression> instances = new(new CachedInstancesKeyComparer<NewArrayExpression>());
 
     public static ActiveNewArrayInitExpression Create(NewArrayExpression newArrayExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

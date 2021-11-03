@@ -62,9 +62,9 @@ public class ActiveTypeBinaryExpression
     public void FaultPropagation()
     {
         var john = TestPerson.CreateJohn();
-#pragma warning disable CS0183, CS8602 // 'is' expression's given expression is always of the provided type, Dereference of a possibly null reference.
+#pragma warning disable CS0183, CS8602, IDE0150 // 'is' expression's given expression is always of the provided type, Dereference of a possibly null reference, Prefer 'null' check over type check.
         using var expr = ActiveExpression.Create(p1 => p1.Name!.Length is int, john);
-#pragma warning restore CS0183, CS8602 // 'is' expression's given expression is always of the provided type, Dereference of a possibly null reference.
+#pragma warning restore CS0183, CS8602, IDE0150 // 'is' expression's given expression is always of the provided type, Dereference of a possibly null reference, Prefer 'null' check over type check.
         Assert.IsNull(expr.Fault);
         john.Name = null;
         Assert.IsNotNull(expr.Fault);

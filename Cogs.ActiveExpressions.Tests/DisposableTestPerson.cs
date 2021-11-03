@@ -27,20 +27,20 @@ public class DisposableTestPerson : Disposable
 
     protected override bool Dispose(bool disposing) => true;
 
-    protected override ValueTask<bool> DisposeAsync(bool disposing) => new ValueTask<bool>(true);
+    protected override ValueTask<bool> DisposeAsync(bool disposing) => new(true);
 
     public override string ToString() => $"{{{name}}}";
 
-    public static DisposableTestPerson CreateEmily() => new DisposableTestPerson { name = "Emily" };
+    public static DisposableTestPerson CreateEmily() => new() { name = "Emily" };
 
-    public static DisposableTestPerson CreateJohn() => new DisposableTestPerson { name = "John" };
+    public static DisposableTestPerson CreateJohn() => new() { name = "John" };
 
-    public static DisposableTestPerson operator +(DisposableTestPerson a, DisposableTestPerson b) => new DisposableTestPerson
+    public static DisposableTestPerson operator +(DisposableTestPerson a, DisposableTestPerson b) => new()
     {
         name = $"{a.name} {b.name}",
     };
 
-    public static DisposableTestPerson operator -(DisposableTestPerson disposableTestPerson) => new DisposableTestPerson
+    public static DisposableTestPerson operator -(DisposableTestPerson disposableTestPerson) => new()
     {
         name = new string(disposableTestPerson.name?.Reverse().ToArray()),
     };

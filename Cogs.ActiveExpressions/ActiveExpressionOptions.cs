@@ -23,8 +23,8 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
     bool constantExpressionsListenForCollectionChanged;
     bool constantExpressionsListenForDictionaryChanged;
     bool disposeConstructedObjects;
-    readonly ConcurrentDictionary<(Type type, EquatableList<Type> constuctorParameterTypes), bool> disposeConstructedTypes = new ConcurrentDictionary<(Type type, EquatableList<Type> constuctorParameterTypes), bool>();
-    readonly ConcurrentDictionary<MethodInfo, bool> disposeMethodReturnValues = new ConcurrentDictionary<MethodInfo, bool>();
+    readonly ConcurrentDictionary<(Type type, EquatableList<Type> constuctorParameterTypes), bool> disposeConstructedTypes = new();
+    readonly ConcurrentDictionary<MethodInfo, bool> disposeMethodReturnValues = new();
     bool disposeStaticMethodReturnValues;
     bool isFrozen;
     bool memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged;
@@ -447,8 +447,8 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
 
     static ActiveExpressionOptions() => Default = new ActiveExpressionOptions();
 
-    static readonly ConcurrentDictionary<MethodInfo, MethodInfo> genericMethodToGenericMethodDefinition = new ConcurrentDictionary<MethodInfo, MethodInfo>();
-    static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyGetMethodToProperty = new ConcurrentDictionary<MethodInfo, PropertyInfo>();
+    static readonly ConcurrentDictionary<MethodInfo, MethodInfo> genericMethodToGenericMethodDefinition = new();
+    static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyGetMethodToProperty = new();
 
     /// <summary>
     /// Gets the default active expression options, which are used in lieu of specified options when an active expression is created

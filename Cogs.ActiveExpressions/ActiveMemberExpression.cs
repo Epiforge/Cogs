@@ -6,6 +6,7 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
         this.instancesKey = instancesKey;
 
     int disposalCount;
+    bool doNotListenForPropertyChanges;
     ActiveExpression? expression;
     object? expressionValue;
     FastMethodInfo? fastGetter;
@@ -107,6 +108,7 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
                     isFieldOfCompilerGeneratedType = expression?.Type.Name.StartsWith("<") ?? false;
                     break;
                 case PropertyInfo property:
+                    doNotListenForPropertyChanges = property.GetCustomAttribute<DoNotListenForPropertyChangesAttribute>() is not null;
                     getMethod = property.GetMethod;
                     fastGetter = FastMethodInfo.Get(getMethod);
                     isFieldOfCompilerGeneratedType = false;
@@ -135,6 +137,8 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
 
     void SubscribeToExpressionValueNotifications()
     {
+        if (doNotListenForPropertyChanges)
+            return;
         if (expressionValue is INotifyPropertyChanged propertyChangedNotifier)
             propertyChangedNotifier.PropertyChanged += ExpressionValuePropertyChanged;
     }
@@ -152,6 +156,8 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
 
     void UnsubscribeFromExpressionValueNotifications()
     {
+        if (doNotListenForPropertyChanges)
+            return;
         if (expressionValue is INotifyPropertyChanged propertyChangedNotifier)
             propertyChangedNotifier.PropertyChanged -= ExpressionValuePropertyChanged;
     }
@@ -170,8 +176,8 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
     void ValueChanged(object sender, EventArgs e) => OnPropertyChanged(nameof(Value));
 
     static readonly object[] emptyArray = Array.Empty<object>();
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<MemberExpression>, ActiveMemberExpression> instances = new Dictionary<CachedInstancesKey<MemberExpression>, ActiveMemberExpression>(new CachedInstancesKeyComparer<MemberExpression>());
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<MemberExpression>, ActiveMemberExpression> instances = new(new CachedInstancesKeyComparer<MemberExpression>());
 
     public static ActiveMemberExpression Create(MemberExpression memberExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

@@ -153,8 +153,8 @@ class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocation
 
     public override string ToString() => $"λ({(activeExpression is not null ? (object)activeExpression : instancesKey.Expression)})";
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression> instances = new Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression>(new CachedInstancesKeyComparer<InvocationExpression>());
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression> instances = new(new CachedInstancesKeyComparer<InvocationExpression>());
 
     public static ActiveInvocationExpression Create(InvocationExpression invocationExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

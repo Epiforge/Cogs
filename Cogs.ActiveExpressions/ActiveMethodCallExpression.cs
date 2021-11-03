@@ -111,8 +111,8 @@ class ActiveMethodCallExpression : ActiveExpression, IEquatable<ActiveMethodCall
 
     public override string ToString() => $"{@object?.ToString() ?? method?.DeclaringType.FullName}.{method?.Name}({string.Join(", ", arguments?.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<MethodCallExpression>, ActiveMethodCallExpression> instances = new Dictionary<CachedInstancesKey<MethodCallExpression>, ActiveMethodCallExpression>(new CachedInstancesKeyComparer<MethodCallExpression>());
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<MethodCallExpression>, ActiveMethodCallExpression> instances = new(new CachedInstancesKeyComparer<MethodCallExpression>());
 
     public static ActiveMethodCallExpression Create(MethodCallExpression methodCallExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

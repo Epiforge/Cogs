@@ -64,8 +64,8 @@ class ActiveCoalesceExpression : ActiveBinaryExpression, IEquatable<ActiveCoales
 
     public override string ToString() => $"({left} ?? {right}) {ToStringSuffix}";
 
-    static readonly object conversionDelegateManagementLock = new object();
-    static readonly Dictionary<ConversionDelegatesKey, UnaryOperationDelegate> conversionDelegates = new Dictionary<ConversionDelegatesKey, UnaryOperationDelegate>();
+    static readonly object conversionDelegateManagementLock = new();
+    static readonly Dictionary<ConversionDelegatesKey, UnaryOperationDelegate> conversionDelegates = new();
 
     public static bool operator ==(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => a.Equals(b);
 

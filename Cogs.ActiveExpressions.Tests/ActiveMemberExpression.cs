@@ -9,6 +9,7 @@ public class ActiveMemberExpression
     {
         AsyncDisposableTestPerson? asyncDisposable;
         SyncDisposableTestPerson? syncDisposable;
+        bool unheard;
 
         public AsyncDisposableTestPerson? AsyncDisposable
         {
@@ -20,6 +21,13 @@ public class ActiveMemberExpression
         {
             get => syncDisposable;
             set => SetBackedProperty(ref syncDisposable, in value);
+        }
+
+        [DoNotListenForPropertyChanges]
+        public bool Unheard
+        {
+            get => unheard;
+            set => SetBackedProperty(ref unheard, in value);
         }
     }
 
@@ -47,6 +55,16 @@ public class ActiveMemberExpression
         using (var expr = ActiveExpression.Create(p1 => p1.Name, john))
             hashCode2 = expr.GetHashCode();
         Assert.IsTrue(hashCode1 == hashCode2);
+    }
+
+    [TestMethod]
+    public void DoNotListen()
+    {
+        var test = new TestObject { Unheard = true };
+        using var expr = ActiveExpression.Create(p1 => p1.Unheard, test);
+        Assert.IsTrue(expr.Value);
+        test.Unheard = false;
+        Assert.IsTrue(expr.Value);
     }
 
     [TestMethod]

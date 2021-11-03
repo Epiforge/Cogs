@@ -212,8 +212,8 @@ class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression
             propertyChangedNotifier.PropertyChanged -= ObjectValuePropertyChanged;
     }
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<IndexExpression>, ActiveIndexExpression> instances = new Dictionary<CachedInstancesKey<IndexExpression>, ActiveIndexExpression>(new CachedInstancesKeyComparer<IndexExpression>());
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<IndexExpression>, ActiveIndexExpression> instances = new(new CachedInstancesKeyComparer<IndexExpression>());
 
     public static ActiveIndexExpression Create(IndexExpression indexExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

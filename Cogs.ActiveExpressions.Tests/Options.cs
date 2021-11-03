@@ -25,7 +25,7 @@ public class Options
         }
 
         [SuppressMessage("Performance", "CA1822:Mark members as static")]
-        public SyncDisposableTestPerson GetPersonNamedAfterType(Type type) => new SyncDisposableTestPerson(type.Name);
+        public SyncDisposableTestPerson GetPersonNamedAfterType(Type type) => new(type.Name);
 
         public SyncDisposableTestPerson GetPersonNamedAfterType<T>() => GetPersonNamedAfterType(typeof(T));
     }

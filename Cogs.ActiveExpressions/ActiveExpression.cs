@@ -44,9 +44,9 @@ public abstract class ActiveExpression : SyncDisposable
 
     readonly object? defaultValue;
     bool deferringEvaluation;
-    readonly object deferringEvaluationAccess = new object();
+    readonly object deferringEvaluationAccess = new();
     Exception? fault;
-    readonly object initializationAccess = new object();
+    readonly object initializationAccess = new();
     Exception? initializationException;
     bool isInitialized = false;
     object? val;
@@ -225,7 +225,7 @@ public abstract class ActiveExpression : SyncDisposable
     /// </summary>
     protected string ToStringSuffix => $"/* {GetValueString(fault, !TryGetUndeferredValue(out var value), value)} */";
 
-    static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyGetMethodToProperty = new ConcurrentDictionary<MethodInfo, PropertyInfo>(); // NCrunch: no coverage
+    static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyGetMethodToProperty = new(); // NCrunch: no coverage
 
     [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope", Justification = "True, but it will be disposed elsewhere")]
     internal static ActiveExpression Create(Expression? expression, ActiveExpressionOptions? options, bool deferEvaluation)
@@ -693,8 +693,8 @@ public class ActiveExpression<TResult> : SyncDisposable, IActiveExpression<TResu
     /// <returns>A string that represents this active expression</returns>
     public override string ToString() => activeExpression.ToString();
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<InstancesKey, ActiveExpression<TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TResult>>();
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<InstancesKey, ActiveExpression<TResult>> instances = new();
 
     internal static ActiveExpression<TResult> Create(LambdaExpression expression, ActiveExpressionOptions? options, params object?[] args)
     {
@@ -851,8 +851,8 @@ public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression
     /// <returns>A string that represents this active expression</returns>
     public override string ToString() => activeExpression.ToString();
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<InstancesKey, ActiveExpression<TArg, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg, TResult>>();
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<InstancesKey, ActiveExpression<TArg, TResult>> instances = new();
 
     internal static ActiveExpression<TArg, TResult> Create(LambdaExpression expression, TArg arg, ActiveExpressionOptions? options = null)
     {
@@ -1016,8 +1016,8 @@ public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveEx
     /// <returns>A string that represents this active expression</returns>
     public override string ToString() => activeExpression.ToString();
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TResult>>();
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TResult>> instances = new();
 
     internal static ActiveExpression<TArg1, TArg2, TResult> Create(LambdaExpression expression, TArg1 arg1, TArg2 arg2, ActiveExpressionOptions? options = null)
     {
@@ -1188,8 +1188,8 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IA
     /// <returns>A string that represents this active expression</returns>
     public override string ToString() => activeExpression.ToString();
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TArg3, TResult>> instances = new Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TArg3, TResult>>();
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TArg3, TResult>> instances = new();
 
     internal static ActiveExpression<TArg1, TArg2, TArg3, TResult> Create(LambdaExpression expression, TArg1 arg1, TArg2 arg2, TArg3 arg3, ActiveExpressionOptions? options = null)
     {

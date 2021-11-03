@@ -92,8 +92,8 @@ class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
 
     public override string ToString() => $"new {Type.FullName}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
-    static readonly Dictionary<CachedInstancesKey<NewExpression>, ActiveNewExpression> instances = new Dictionary<CachedInstancesKey<NewExpression>, ActiveNewExpression>(new CachedInstancesKeyComparer<NewExpression>());
-    static readonly object instanceManagementLock = new object();
+    static readonly Dictionary<CachedInstancesKey<NewExpression>, ActiveNewExpression> instances = new(new CachedInstancesKeyComparer<NewExpression>());
+    static readonly object instanceManagementLock = new();
 
     public static ActiveNewExpression Create(NewExpression newExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {

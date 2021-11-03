@@ -11,7 +11,7 @@ class AsyncDisposableTestPerson : AsyncDisposable
     string? name;
     long nameGets;
 
-    protected override ValueTask<bool> DisposeAsync(bool disposing) => new ValueTask<bool>(true);
+    protected override ValueTask<bool> DisposeAsync(bool disposing) => new(true);
 
     public override string ToString() => $"{{{name}}}";
 
@@ -29,11 +29,11 @@ class AsyncDisposableTestPerson : AsyncDisposable
 
     public long NameGets => Interlocked.Read(ref nameGets);
 
-    public static AsyncDisposableTestPerson CreateEmily() => new AsyncDisposableTestPerson { name = "Emily" };
+    public static AsyncDisposableTestPerson CreateEmily() => new() { name = "Emily" };
 
-    public static AsyncDisposableTestPerson CreateJohn() => new AsyncDisposableTestPerson { name = "John" };
+    public static AsyncDisposableTestPerson CreateJohn() => new() { name = "John" };
 
-    public static AsyncDisposableTestPerson operator +(AsyncDisposableTestPerson a, AsyncDisposableTestPerson b) => new AsyncDisposableTestPerson { name = $"{a.name} {b.name}" };
+    public static AsyncDisposableTestPerson operator +(AsyncDisposableTestPerson a, AsyncDisposableTestPerson b) => new() { name = $"{a.name} {b.name}" };
 
-    public static AsyncDisposableTestPerson operator -(AsyncDisposableTestPerson asyncDisposableTestPerson) => new AsyncDisposableTestPerson { name = new string(asyncDisposableTestPerson.name?.Reverse().ToArray()) };
+    public static AsyncDisposableTestPerson operator -(AsyncDisposableTestPerson asyncDisposableTestPerson) => new() { name = new string(asyncDisposableTestPerson.name?.Reverse().ToArray()) };
 }

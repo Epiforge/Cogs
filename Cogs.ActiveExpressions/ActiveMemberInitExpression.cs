@@ -154,8 +154,8 @@ class ActiveMemberInitExpression : ActiveExpression, IEquatable<ActiveMemberInit
 
     public override string ToString() => $"{newExpression} {{ {string.Join(", ", memberAssignmentExpressions.Select(kv => $"{kv.Value.Name} = {kv.Key}"))} }} {ToStringSuffix}";
 
-    static readonly object instanceManagementLock = new object();
-    static readonly Dictionary<CachedInstancesKey<MemberInitExpression>, ActiveMemberInitExpression> instances = new Dictionary<CachedInstancesKey<MemberInitExpression>, ActiveMemberInitExpression>(new CachedInstancesKeyComparer<MemberInitExpression>());
+    static readonly object instanceManagementLock = new();
+    static readonly Dictionary<CachedInstancesKey<MemberInitExpression>, ActiveMemberInitExpression> instances = new(new CachedInstancesKeyComparer<MemberInitExpression>());
 
     public static ActiveMemberInitExpression Create(MemberInitExpression memberInitExpression, ActiveExpressionOptions? options, bool deferEvaluation)
     {
