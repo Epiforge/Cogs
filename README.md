@@ -278,6 +278,9 @@ To address this, this library offers the following classes:
 All of the above classes use reflection to initialize utilities for types at runtime, however they create delegates to perform at much better speeds and cache instances of themselves to avoid having to perform the same reflection twice.
 And yes, the caching is thread-safe.
 
+Also includes extension methods for `Type` which search for implementations of events, methods, and properties.
+Also includes `GenericOperations` which provides methods for adding, dividing, multiplying, and/or subtracting objects.
+
 ## Synchronized Collections
 
 [![Cogs.Collections.Synchronized Nuget](https://img.shields.io/nuget/v/Cogs.Collections.Synchronized.svg)](https://www.nuget.org/packages/Cogs.Collections.Synchronized)
