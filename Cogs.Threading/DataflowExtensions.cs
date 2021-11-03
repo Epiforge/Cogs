@@ -5,9 +5,9 @@ namespace Cogs.Threading;
 /// </summary>
 public static class DataflowExtensions
 {
-    static readonly ExecutionDataflowBlockOptions cpuBoundBlock = new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
-    static readonly DataflowLinkOptions propagateLink = new DataflowLinkOptions { PropagateCompletion = true };
-    static readonly ExecutionDataflowBlockOptions singleThreadBlock = new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 };
+    static readonly ExecutionDataflowBlockOptions cpuBoundBlock = new() { MaxDegreeOfParallelism = Environment.ProcessorCount };
+    static readonly DataflowLinkOptions propagateLink = new() { PropagateCompletion = true };
+    static readonly ExecutionDataflowBlockOptions singleThreadBlock = new() { MaxDegreeOfParallelism = 1 };
 
     /// <summary>
     /// Performs a specified action for each element of a sequence in parallel utilizing all hardware threads

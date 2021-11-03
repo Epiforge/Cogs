@@ -5,7 +5,7 @@ namespace Cogs.Threading;
 /// </summary>
 public static class Synchronization
 {
-    static readonly AsyncSynchronizationContext asyncSynchronizationContext = new AsyncSynchronizationContext(false);
+    static readonly AsyncSynchronizationContext asyncSynchronizationContext = new(false);
 
     /// <summary>
     /// Gets the synchronization context that is used by methods in this library that require one when <see cref="SynchronizationContext.Current"/> is <c>null</c>

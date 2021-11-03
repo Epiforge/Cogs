@@ -5,7 +5,7 @@ namespace Cogs.Threading;
 /// </summary>
 public static class SynchronizedExtensions
 {
-    static readonly ThreadLocal<Stack<SynchronizationContext?>> threadLocalSynchronizationContextStack = new ThreadLocal<Stack<SynchronizationContext?>>(ThreadLocalSynchronizationContextStackValueFactory);
+    static readonly ThreadLocal<Stack<SynchronizationContext?>> threadLocalSynchronizationContextStack = new(ThreadLocalSynchronizationContextStackValueFactory);
 
     /// <summary>
     /// Executes the specified <paramref name="action"/> on the specified <paramref name="synchronizationContext"/>
@@ -346,5 +346,5 @@ public static class SynchronizedExtensions
     /// <returns>The result of <paramref name="asyncFunc"/></returns>
     public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) => SequentialExecuteAsync(synchronizable?.SynchronizationContext, asyncFunc);
 
-    static Stack<SynchronizationContext?> ThreadLocalSynchronizationContextStackValueFactory() => new Stack<SynchronizationContext?>();
+    static Stack<SynchronizationContext?> ThreadLocalSynchronizationContextStackValueFactory() => new();
 }
