@@ -1,28 +1,27 @@
-namespace Cogs.Collections
+namespace Cogs.Collections;
+
+/// <summary>
+/// Describes the action that caused a <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/> event
+/// </summary>
+public enum NotifyDictionaryChangedAction
 {
     /// <summary>
-    /// Describes the action that caused a <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/> event
+    /// An item was added to the dictionary
     /// </summary>
-    public enum NotifyDictionaryChangedAction
-    {
-        /// <summary>
-        /// An item was added to the dictionary
-        /// </summary>
-        Add,
+    Add,
 
-        /// <summary>
-        /// An item was removed from the dictionary
-        /// </summary>
-        Remove,
+    /// <summary>
+    /// An item was removed from the dictionary
+    /// </summary>
+    Remove,
 
-        /// <summary>
-        /// An item was replaced in the dictionary
-        /// </summary>
-        Replace,
+    /// <summary>
+    /// An item was replaced in the dictionary
+    /// </summary>
+    Replace,
 
-        /// <summary>
-        /// The content of the dictionary was cleared
-        /// </summary>
-        Reset
-    }
+    /// <summary>
+    /// The content of the dictionary was cleared
+    /// </summary>
+    Reset
 }
