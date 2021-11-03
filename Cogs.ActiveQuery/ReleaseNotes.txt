@@ -1,1 +1,1 @@
-We corrected an imprecise handler for collection changes to Enumerable ToActiveEnumerable.
+We corrected a defect in ActiveGroupBy in which the synchronization context of the source was not respected when creating the grouping collections.

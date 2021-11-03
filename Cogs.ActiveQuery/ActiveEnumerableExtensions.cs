@@ -1180,7 +1180,7 @@ public static class ActiveEnumerableExtensions
             SynchronizedRangeObservableCollection<TSource> groupingObservableCollection;
             if (!collectionAndGroupingDictionary!.TryGetValue(key! /* This is okay, it's always a nullable key dictionary */, out var collectionAndGrouping))
             {
-                groupingObservableCollection = new SynchronizedRangeObservableCollection<TSource>();
+                groupingObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizedSource?.SynchronizationContext);
                 var grouping = new ActiveGrouping<TKey?, TSource>(key, groupingObservableCollection);
                 collectionAndGroupingDictionary.Add(key! /* This is okay, it's always a nullable key dictionary */, (groupingObservableCollection, grouping));
                 rangeObservableCollection!.Add(grouping);
