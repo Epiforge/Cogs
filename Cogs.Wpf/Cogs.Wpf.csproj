@@ -15,6 +15,7 @@
         <PackageIcon>NuGet.jpg</PackageIcon>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/Epiforge/Cogs</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageReleaseNotes>Please write the package release notes in ReleaseNotes.txt.</PackageReleaseNotes>
         <Product>WPF Cogs</Product>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -23,7 +24,7 @@
         <TargetFrameworks>net48;netcoreapp3.1;net5.0-windows</TargetFrameworks>
         <UseWindowsForms>true</UseWindowsForms>
         <UseWPF>true</UseWPF>
-        <Version>1.22.0</Version>
+        <Version>1.22.1</Version>
     </PropertyGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
@@ -47,7 +48,7 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
+      <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.37" />
       <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
       <PackageReference Include="System.ValueTuple" Version="4.5.0" />
       <PackageReference Include="WpfAnalyzers" Version="3.5.4">
@@ -65,10 +66,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\NuGet.jpg">
-            <Pack>True</Pack>
-            <PackagePath></PackagePath>
-        </None>
+        <None Include="README.md" Pack="True" PackagePath="" />
+        <None Include="..\NuGet.jpg" Pack="True" PackagePath="" />
     </ItemGroup>
 
 </Project>

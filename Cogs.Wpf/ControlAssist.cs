@@ -1,7 +1,7 @@
 namespace Cogs.Wpf;
 
 /// <summary>
-/// Provides attached dependency properties to enhance the functionality of windows
+/// Provides attached dependency properties to enhance the functionality of controls
 /// </summary>
 public static class ControlAssist
 {
