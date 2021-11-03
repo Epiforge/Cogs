@@ -5,9 +5,9 @@ namespace Cogs.Exceptions;
 /// </summary>
 public static class ExceptionExtensions
 {
-    static readonly ConcurrentDictionary<Type, IReadOnlyList<(string name, FastMethodInfo getter)>> fastPropertyGetters = new ConcurrentDictionary<Type, IReadOnlyList<(string name, FastMethodInfo getter)>>();
-    static readonly HashSet<Type> getExceptionDetailsIgnoredAdditionalPropertyDeclaringTypes = new HashSet<Type>(new Type[] { typeof(Exception), typeof(ReflectionTypeLoadException), typeof(AggregateException) });
-    static readonly HashSet<string> getExceptionDetailsIgnoredAdditionalPropertyNames = new HashSet<string>(new string[] { nameof(Exception.Data), nameof(Exception.HelpLink), nameof(Exception.Message), nameof(Exception.Source), nameof(Exception.StackTrace) });
+    static readonly ConcurrentDictionary<Type, IReadOnlyList<(string name, FastMethodInfo getter)>> fastPropertyGetters = new();
+    static readonly HashSet<Type> getExceptionDetailsIgnoredAdditionalPropertyDeclaringTypes = new(new Type[] { typeof(Exception), typeof(ReflectionTypeLoadException), typeof(AggregateException) });
+    static readonly HashSet<string> getExceptionDetailsIgnoredAdditionalPropertyNames = new(new string[] { nameof(Exception.Data), nameof(Exception.HelpLink), nameof(Exception.Message), nameof(Exception.Source), nameof(Exception.StackTrace) });
 
     static IReadOnlyList<(string name, FastMethodInfo getter)> CreateFastPropertyGetters(Type type) =>
         type.GetRuntimeProperties()

@@ -17,6 +17,7 @@ Supports `netstandard2.1`.
   - [Collections](#collections)
   - [Components](#components)
   - [Disposal](#disposal)
+  - [Exceptions](#exceptions)
   - [Reflection](#reflection)
   - [Synchronized Collections](#synchronized-collections)
   - [Threading](#threading)
@@ -260,6 +261,14 @@ Lastly, it provides the `INotifyDisposing`, `INotifyDisposed`, and `INotifyDispo
 If you're using the base classes in this library, you don't need to worry about unregistering handlers.
 The base classes drop all the references in the events' invocation lists on their own.
 We're not trying to *create* leaks here!
+
+## Exceptions
+
+[![Cogs.Exceptions Nuget](https://img.shields.io/nuget/v/Cogs.Exceptions.svg)](https://www.nuget.org/packages/Cogs.Exceptions)
+
+This library provides extension methods for dealing with exceptions:
+
+* `GetFullDetails` - creates a representation of an exception and all of its inner exceptions, including exception types, messages, and stack traces, and traversing multiple inner exceptions in the case of `AggregateException`
 
 ## Reflection
 
