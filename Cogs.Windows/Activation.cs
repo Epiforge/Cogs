@@ -5,7 +5,7 @@ namespace Cogs.Windows;
 /// </summary>
 public static class Activation
 {
-    static readonly Lazy<string> lazyProductKey = new Lazy<string>(ProductKeyDecoder.GetWindowsProductKeyFromRegistry);
+    static readonly Lazy<string> lazyProductKey = new(ProductKeyDecoder.GetWindowsProductKeyFromRegistry);
 
     /// <summary>
     /// Gets the Windows product key
