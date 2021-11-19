@@ -1,1 +1,1 @@
-We added extensions for visuals and a behavior that deselects all items in a list view when empty space within it is clicked.
+We added the NotZeroIsCollapsedValueConverter, NotZeroIsFalseValueConverter, and NotZeroIsHiddenValueConverter value converters.
