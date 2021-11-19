@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29403.142
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31825.309
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Components", "Cogs.Components\Cogs.Components.csproj", "{95880004-DF5B-404B-BB32-08D4ABE2DA2F}"
 EndProject
@@ -29,7 +29,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.ActiveExpressions.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.ActiveQuery.Tests", "Cogs.ActiveQuery.Tests\Cogs.ActiveQuery.Tests.csproj", "{597DD26A-336B-4D6B-BE7A-693475A8201B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cogs.Components.Tests", "Cogs.Components.Tests\Cogs.Components.Tests.csproj", "{C3DFA4DE-457D-4961-9FEE-2CCA33A09590}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cogs.Components.Tests", "Cogs.Components.Tests\Cogs.Components.Tests.csproj", "{C3DFA4DE-457D-4961-9FEE-2CCA33A09590}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
