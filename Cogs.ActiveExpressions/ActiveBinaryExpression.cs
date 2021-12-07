@@ -95,19 +95,7 @@ class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpressi
             isLiftedToNull = instancesKey.Expression.IsLiftedToNull;
             method = instancesKey.Expression.Method;
             if (getDelegate)
-            {
-                var implementationKey = new ImplementationsKey(NodeType, left.Type, right.Type, Type, method);
-                if (!implementations.TryGetValue(implementationKey, out var @delegate))
-                {
-                    var leftParameter = Expression.Parameter(typeof(object));
-                    var rightParameter = Expression.Parameter(typeof(object));
-                    var leftConversion = Expression.Convert(leftParameter, left.Type);
-                    var rightConversion = Expression.Convert(rightParameter, right.Type);
-                    @delegate = Expression.Lambda<BinaryOperationDelegate>(Expression.Convert(method is null ? Expression.MakeBinary(NodeType, leftConversion, rightConversion) : Expression.MakeBinary(NodeType, leftConversion, rightConversion, isLiftedToNull, method), typeof(object)), leftParameter, rightParameter).Compile();
-                    implementations.Add(implementationKey, @delegate);
-                }
-                this.@delegate = @delegate;
-            }
+                @delegate = implementations.GetOrAdd(new ImplementationsKey(NodeType, left.Type, right.Type, Type, isLiftedToNull, method), ImplementationsValueFactory);
             if (evaluateIfNotDeferred)
                 EvaluateIfNotDeferred();
         }
@@ -135,7 +123,7 @@ class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpressi
 
     public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, left, right)} {ToStringSuffix}";
 
-    static readonly Dictionary<ImplementationsKey, BinaryOperationDelegate> implementations = new();
+    static readonly ConcurrentDictionary<ImplementationsKey, BinaryOperationDelegate> implementations = new();
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<CachedInstancesKey<BinaryExpression>, ActiveBinaryExpression> instances = new(new CachedInstancesKeyComparer<BinaryExpression>());
 
@@ -160,10 +148,19 @@ class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpressi
         }
     }
 
+    static BinaryOperationDelegate ImplementationsValueFactory(ImplementationsKey key)
+    {
+        var leftParameter = Expression.Parameter(typeof(object));
+        var rightParameter = Expression.Parameter(typeof(object));
+        var leftConversion = Expression.Convert(leftParameter, key.LeftType);
+        var rightConversion = Expression.Convert(rightParameter, key.RightType);
+        return Expression.Lambda<BinaryOperationDelegate>(Expression.Convert(key.Method is null ? Expression.MakeBinary(key.NodeType, leftConversion, rightConversion) : Expression.MakeBinary(key.NodeType, leftConversion, rightConversion, key.IsLiftedToNull, key.Method), typeof(object)), leftParameter, rightParameter).Compile();
+    }
+
     public static bool operator ==(ActiveBinaryExpression a, ActiveBinaryExpression b) => a.Equals(b);
 
     [ExcludeFromCodeCoverage]
     public static bool operator !=(ActiveBinaryExpression a, ActiveBinaryExpression b) => !(a == b);
 
-    record ImplementationsKey(ExpressionType NodeType, Type LeftType, Type RightType, Type ReturnValueType, MethodInfo? Method);
+    record ImplementationsKey(ExpressionType NodeType, Type LeftType, Type RightType, Type ReturnValueType, bool IsLiftedToNull, MethodInfo? Method);
 }

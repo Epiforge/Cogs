@@ -1,1 +1,1 @@
-We revised the locking strategy for caching instances of active expressions to reduce the potential for deadlocks.
+We fixed a defect in ActiveUnaryExpression and ActiveBinaryExpression that permitted a caching race condition.

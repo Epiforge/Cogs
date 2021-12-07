@@ -63,15 +63,7 @@ class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression
             operand = Create(instancesKey.Expression.Operand, options, IsDeferringEvaluation);
             operand.PropertyChanged += OperandPropertyChanged;
             method = instancesKey.Expression.Method;
-            var implementationKey = new ImplementationsKey(NodeType, operand.Type, Type, method);
-            if (!implementations.TryGetValue(implementationKey, out var @delegate))
-            {
-                var operandParameter = Expression.Parameter(typeof(object));
-                var operandConversion = Expression.Convert(operandParameter, operand.Type);
-                @delegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(method is null ? Expression.MakeUnary(NodeType, operandConversion, Type) : Expression.MakeUnary(NodeType, operandConversion, Type, method), typeof(object)), operandParameter).Compile();
-                implementations.Add(implementationKey, @delegate);
-            }
-            this.@delegate = @delegate;
+            @delegate = implementations.GetOrAdd(new ImplementationsKey(NodeType, operand.Type, Type, method), ImplementationsValueFactory).Value;
             EvaluateIfNotDeferred();
         }
         catch (Exception ex)
@@ -91,7 +83,7 @@ class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression
 
     public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, operand)} {ToStringSuffix}";
 
-    static readonly Dictionary<ImplementationsKey, UnaryOperationDelegate> implementations = new();
+    static readonly ConcurrentDictionary<ImplementationsKey, Lazy<UnaryOperationDelegate>> implementations = new();
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<CachedInstancesKey<UnaryExpression>, ActiveUnaryExpression> instances = new(new CachedInstancesKeyComparer<UnaryExpression>());
 
@@ -109,6 +101,13 @@ class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression
             return activeUnaryExpression;
         }
     }
+
+    static Lazy<UnaryOperationDelegate> ImplementationsValueFactory(ImplementationsKey key) => new(() =>
+    {
+        var operandParameter = Expression.Parameter(typeof(object));
+        var operandConversion = Expression.Convert(operandParameter, key.OperandType);
+        return Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(key.Method is null ? Expression.MakeUnary(key.NodeType, operandConversion, key.ReturnValueType) : Expression.MakeUnary(key.NodeType, operandConversion, key.ReturnValueType, key.Method), typeof(object)), operandParameter).Compile();
+    }, LazyThreadSafetyMode.ExecutionAndPublication);
 
     public static bool operator ==(ActiveUnaryExpression a, ActiveUnaryExpression b) => a.Equals(b);
 
