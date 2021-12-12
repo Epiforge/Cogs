@@ -35,7 +35,8 @@ public static class ActiveDictionaryExtensions
         IActiveDictionary<TKey, TValue> where;
         ActiveValue<bool>? activeValue = null;
 
-        void dictionaryChanged(object sender, EventArgs e) => activeValue!.Value = where.Count == source.Count;
+        void dictionaryChanged(object sender, EventArgs e) =>
+            activeValue!.Value = where.Count == source.Count;
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -73,7 +74,8 @@ public static class ActiveDictionaryExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<bool>? activeValue = null;
 
-            void sourceChanged(object sender, EventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.Count > 0);
+            void sourceChanged(object sender, EventArgs e) =>
+                synchronizedSource.Execute(() => activeValue!.Value = source.Count > 0);
 
             return synchronizedSource.Execute(() =>
             {
@@ -118,7 +120,8 @@ public static class ActiveDictionaryExtensions
         IActiveDictionary<TKey, TValue> where;
         ActiveValue<bool>? activeValue = null;
 
-        void dictionaryChanged(object sender, EventArgs e) => activeValue!.Value = where.Count > 0;
+        void dictionaryChanged(object sender, EventArgs e) =>
+            activeValue!.Value = where.Count > 0;
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -280,7 +283,8 @@ public static class ActiveDictionaryExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<int>? activeValue = null;
 
-            void sourceDictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => synchronizedSource.Execute(() => activeValue!.Value = source.Count);
+            void sourceDictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
+                synchronizedSource.Execute(() => activeValue!.Value = source.Count);
 
             return synchronizedSource.Execute(() =>
             {
@@ -328,7 +332,8 @@ public static class ActiveDictionaryExtensions
         IActiveDictionary<TKey, TValue> where;
         ActiveValue<int>? activeValue = null;
 
-        void dictionaryChanged(object sender, EventArgs e) => activeValue!.Value = where.Count;
+        void dictionaryChanged(object sender, EventArgs e) =>
+            activeValue!.Value = where.Count;
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -377,7 +382,8 @@ public static class ActiveDictionaryExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
 
-            void dispose() => changingSource.DictionaryChanged -= sourceChanged;
+            void dispose() =>
+                changingSource.DictionaryChanged -= sourceChanged;
 
             void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
                 synchronizedSource.Execute(() =>
@@ -558,7 +564,8 @@ public static class ActiveDictionaryExtensions
             ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
             var defaulted = false;
 
-            void dispose() => changingSource.DictionaryChanged += sourceChanged;
+            void dispose() =>
+                changingSource.DictionaryChanged -= sourceChanged;
 
             void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
                 synchronizedSource.Execute(() =>
@@ -669,7 +676,8 @@ public static class ActiveDictionaryExtensions
         IActiveDictionary<TKey, TValue> where;
         ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
 
-        void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => activeValue!.Value = where.OrderBy(kv => kv.Key, keyComparer).FirstOrDefault();
+        void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
+            activeValue!.Value = where.OrderBy(kv => kv.Key, keyComparer).FirstOrDefault();
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -714,7 +722,8 @@ public static class ActiveDictionaryExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
 
-            void dispose() => changingSource.DictionaryChanged += sourceChanged;
+            void dispose() =>
+                changingSource.DictionaryChanged -= sourceChanged;
 
             void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
                 synchronizedSource.Execute(() =>
@@ -894,7 +903,8 @@ public static class ActiveDictionaryExtensions
             ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
             var defaulted = false;
 
-            void dispose() => changingSource.DictionaryChanged += sourceChanged;
+            void dispose() =>
+                changingSource.DictionaryChanged -= sourceChanged;
 
             void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
                 synchronizedSource.Execute(() =>
@@ -1008,7 +1018,8 @@ public static class ActiveDictionaryExtensions
         IActiveDictionary<TKey, TValue> where;
         ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
 
-        void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) => activeValue!.Value = where.OrderByDescending(kv => kv.Key, keyComparer).FirstOrDefault();
+        void dictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
+            activeValue!.Value = where.OrderByDescending(kv => kv.Key, keyComparer).FirstOrDefault();
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -1457,7 +1468,8 @@ public static class ActiveDictionaryExtensions
                 }
             });
 
-        void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.Execute(() => rangeObservableCollection!.Replace(keyToIndex![e.Element], e.Result));
+        void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
+            synchronizedSource.Execute(() => rangeObservableCollection!.Replace(keyToIndex![e.Element], e.Result));
 
         return synchronizedSource.Execute(() =>
         {
@@ -1498,7 +1510,8 @@ public static class ActiveDictionaryExtensions
             ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
             bool none = false, moreThanOne = false;
 
-            void dispose() => changingSource.DictionaryChanged -= sourceChanged;
+            void dispose() =>
+                changingSource.DictionaryChanged -= sourceChanged;
 
             void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
                 synchronizedSource.Execute(() =>
@@ -1649,7 +1662,8 @@ public static class ActiveDictionaryExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<KeyValuePair<TKey, TValue>>? activeValue = null;
 
-            void dispose() => changingSource.DictionaryChanged += sourceChanged;
+            void dispose() =>
+                changingSource.DictionaryChanged -= sourceChanged;
 
             void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
                 synchronizedSource.Execute(() =>
@@ -1819,7 +1833,8 @@ public static class ActiveDictionaryExtensions
                 valuesChanging.Remove(key);
             });
 
-        void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) => synchronizedSource.Execute(() => valuesChanging!.Add(e.Element, e.Result));
+        void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
+            synchronizedSource.Execute(() => valuesChanging!.Add(e.Element, e.Result));
 
         return synchronizedSource.Execute(() =>
         {
@@ -2429,7 +2444,8 @@ public static class ActiveDictionaryExtensions
                 equalsKey = otherKey => keyEqualityComparer.Equals(otherKey, key);
             }
 
-            void dispose() => changingSource.DictionaryChanged -= sourceChanged;
+            void dispose() =>
+                changingSource.DictionaryChanged -= sourceChanged;
 
             void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
                 synchronizedSource.Execute(() =>
@@ -2523,7 +2539,8 @@ public static class ActiveDictionaryExtensions
                 equalsKey = otherKey => keyEqualityComparer.Equals(otherKey, key);
             }
 
-            void dispose() => changingSource.DictionaryChanged -= sourceChanged;
+            void dispose() =>
+                changingSource.DictionaryChanged -= sourceChanged;
 
             void sourceChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
                 synchronizedSource.Execute(() =>

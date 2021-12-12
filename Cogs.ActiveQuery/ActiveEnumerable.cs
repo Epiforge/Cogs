@@ -4,7 +4,9 @@ namespace Cogs.ActiveQuery;
 /// Represents a read-only collection of elements that is the result of an active query
 /// </summary>
 /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
-public class ActiveEnumerable<TElement> : SyncDisposable, IActiveEnumerable<TElement>
+public class ActiveEnumerable<TElement> :
+    SyncDisposable,
+    IActiveEnumerable<TElement>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ActiveEnumerable{TElement}"/> class
@@ -110,38 +112,46 @@ public class ActiveEnumerable<TElement> : SyncDisposable, IActiveEnumerable<TEle
         return true;
     }
 
-    void FaultNotifierElementFaultChanged(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanged?.Invoke(this, e);
+    void FaultNotifierElementFaultChanged(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanged?.Invoke(this, e);
 
-    void FaultNotifierElementFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(this, e);
+    void FaultNotifierElementFaultChanging(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanging?.Invoke(this, e);
 
-    IEnumerator IEnumerable.GetEnumerator() => readOnlyList.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() =>
+        readOnlyList.GetEnumerator();
 
     /// <summary>
     /// Returns an enumerator that iterates through the collection
     /// </summary>
     /// <returns>An enumerator that can be used to iterate through the collection</returns>
-    public IEnumerator<TElement> GetEnumerator() => readOnlyList.GetEnumerator();
+    public IEnumerator<TElement> GetEnumerator() =>
+        readOnlyList.GetEnumerator();
 
     /// <summary>
     /// Gets a list of all faulted elements
     /// </summary>
     /// <returns>The list</returns>
-    public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() => faultNotifier?.GetElementFaults() ?? Enumerable.Empty<(object? element, Exception? fault)>().ToImmutableArray();
+    public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
+        faultNotifier?.GetElementFaults() ?? Enumerable.Empty<(object? element, Exception? fault)>().ToImmutableArray();
 
     /// <summary>
     /// Gets the element at the specified index in the read-only list
     /// </summary>
     /// <param name="index">The zero-based index of the element to get</param>
     /// <returns>The element at the specified index in the read-only list</returns>
-    public TElement this[int index] => readOnlyList[index];
+    public TElement this[int index] =>
+        readOnlyList[index];
 
     /// <summary>
     /// Gets the number of elements in the collection
     /// </summary>
-    public int Count => readOnlyList.Count;
+    public int Count =>
+        readOnlyList.Count;
 
     /// <summary>
     /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
     /// </summary>
-    public SynchronizationContext? SynchronizationContext => synchronized?.SynchronizationContext;
+    public SynchronizationContext? SynchronizationContext =>
+        synchronized?.SynchronizationContext;
 }

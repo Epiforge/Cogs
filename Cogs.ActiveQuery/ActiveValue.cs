@@ -4,7 +4,9 @@ namespace Cogs.ActiveQuery;
 /// Represents the scalar result of an active query
 /// </summary>
 /// <typeparam name="TValue">The type of the scalar result</typeparam>
-public class ActiveValue<TValue> : SyncDisposable, IActiveValue<TValue>
+public class ActiveValue<TValue> :
+    SyncDisposable,
+    IActiveValue<TValue>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ActiveValue{TValue}"/> class

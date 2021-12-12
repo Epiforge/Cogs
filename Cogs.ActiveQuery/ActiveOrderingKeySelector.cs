@@ -10,7 +10,8 @@ public class ActiveOrderingKeySelector<T>
     /// Initializes a new instance of the <see cref="ActiveOrderingKeySelector{T}"/> class with the specified key extraction expression for sorting in ascending order
     /// </summary>
     /// <param name="expression">An expression to extract a key from an element</param>
-    public ActiveOrderingKeySelector(Expression<Func<T, IComparable>> expression) : this(expression, false)
+    public ActiveOrderingKeySelector(Expression<Func<T, IComparable>> expression) :
+        this(expression, false)
     {
     }
 
@@ -19,7 +20,8 @@ public class ActiveOrderingKeySelector<T>
     /// </summary>
     /// <param name="expression">An expression to extract a key from am element</param>
     /// <param name="isDescending"><c>true</c> to sort in descending order; otherwise, sort in ascending order</param>
-    public ActiveOrderingKeySelector(Expression<Func<T, IComparable>> expression, bool isDescending) : this(expression, null, isDescending)
+    public ActiveOrderingKeySelector(Expression<Func<T, IComparable>> expression, bool isDescending) :
+        this(expression, null, isDescending)
     {
     }
 
@@ -28,7 +30,8 @@ public class ActiveOrderingKeySelector<T>
     /// </summary>
     /// <param name="expression">An expression to extract a key from an element</param>
     /// <param name="expressionOptions">Options governing the behavior of active expressions created using <paramref name="expression"/></param>
-    public ActiveOrderingKeySelector(Expression<Func<T, IComparable>> expression, ActiveExpressionOptions? expressionOptions) : this(expression, expressionOptions, false)
+    public ActiveOrderingKeySelector(Expression<Func<T, IComparable>> expression, ActiveExpressionOptions? expressionOptions) :
+        this(expression, expressionOptions, false)
     {
     }
 

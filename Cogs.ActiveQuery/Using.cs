@@ -4,6 +4,7 @@ global using Cogs.Collections.Synchronized;
 global using Cogs.Disposal;
 global using Cogs.Reflection;
 global using Cogs.Threading;
+global using Nito.AsyncEx;
 global using System;
 global using System.Collections;
 global using System.Collections.Concurrent;

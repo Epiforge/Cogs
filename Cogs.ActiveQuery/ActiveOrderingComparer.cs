@@ -1,6 +1,8 @@
 namespace Cogs.ActiveQuery;
 
-class ActiveOrderingComparer<TElement> : SyncDisposable, IComparer<TElement>
+class ActiveOrderingComparer<TElement> :
+    SyncDisposable,
+    IComparer<TElement>
 {
     static readonly EqualityComparer<TElement> equalityComparer = EqualityComparer<TElement>.Default;
 
@@ -29,7 +31,7 @@ class ActiveOrderingComparer<TElement> : SyncDisposable, IComparer<TElement>
                     rangeActiveExpression.ElementResultChanged += RangeActiveExpressionElementResultChanged;
                     rangeActiveExpression.GenericCollectionChanged += RangeActiveExpressionGenericCollectionChanged;
                 }
-                lastSelector = this.selectors.Last();
+                lastSelector = this.selectors[this.selectors.Count - 1];
                 rangeActiveExpressionIndicies = new Dictionary<EnumerableRangeActiveExpression<TElement, IComparable>, int>();
                 var index = -1;
                 foreach (var (rangeActiveExpression, isDescending) in this.selectors.Take(1))
@@ -55,7 +57,7 @@ class ActiveOrderingComparer<TElement> : SyncDisposable, IComparer<TElement>
     }
 
     IDictionary<TElement, List<IComparable?>>? comparables;
-    readonly object comparablesAccess = new object();
+    readonly object comparablesAccess = new();
     IDictionary<TElement, int>? counts;
     readonly IndexingStrategy indexingStrategy;
     readonly (EnumerableRangeActiveExpression<TElement, IComparable> rangeActiveExpression, bool isDescending) lastSelector;

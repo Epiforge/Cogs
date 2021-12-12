@@ -90,7 +90,8 @@ public static class ActiveEnumerableExtensions
         IActiveEnumerable<TSource> where;
         ActiveValue<bool>? activeValue = null;
 
-        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count == (readOnlySource?.Count ?? source.Count());
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+            activeValue!.Value = where.Count == (readOnlySource?.Count ?? source.Count());
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -126,7 +127,8 @@ public static class ActiveEnumerableExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<bool>? activeValue = null;
 
-            void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.Cast<object>().Any());
+            void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+                synchronizedSource.Execute(() => activeValue!.Value = source.Cast<object>().Any());
 
             return synchronizedSource.Execute(() =>
             {
@@ -168,7 +170,8 @@ public static class ActiveEnumerableExtensions
         IActiveEnumerable<TSource> where;
         ActiveValue<bool>? activeValue = null;
 
-        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count > 0;
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+            activeValue!.Value = where.Count > 0;
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -227,7 +230,8 @@ public static class ActiveEnumerableExtensions
         IActiveValue<TResult?> sum;
         ActiveValue<TResult?>? activeValue = null;
 
-        int count() => readOnlyCollection?.Count ?? source.Count();
+        int count() =>
+            readOnlyCollection?.Count ?? source.Count();
 
         void propertyChanged(object sender, PropertyChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
@@ -513,7 +517,8 @@ public static class ActiveEnumerableExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<int>? activeValue = null;
 
-            void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.Cast<object>().Count());
+            void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+                synchronizedSource.Execute(() => activeValue!.Value = source.Cast<object>().Count());
 
             return synchronizedSource.Execute(() =>
             {
@@ -545,7 +550,8 @@ public static class ActiveEnumerableExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<int>? activeValue = null;
 
-            void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.Count());
+            void sourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+                synchronizedSource.Execute(() => activeValue!.Value = source.Count());
 
             return synchronizedSource.Execute(() =>
             {
@@ -589,7 +595,8 @@ public static class ActiveEnumerableExtensions
         IActiveEnumerable<TSource> where;
         ActiveValue<int>? activeValue = null;
 
-        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count;
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+            activeValue!.Value = where.Count;
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -838,7 +845,8 @@ public static class ActiveEnumerableExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<TSource>? activeValue = null;
 
-            void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.ElementAtOrDefault(index));
+            void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+                synchronizedSource.Execute(() => activeValue!.Value = source.ElementAtOrDefault(index));
 
             return synchronizedSource.Execute(() =>
             {
@@ -862,7 +870,8 @@ public static class ActiveEnumerableExtensions
         IActiveEnumerable<TSource> activeEnumerable;
         ActiveValue<TSource?>? activeValue = null;
 
-        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = index >= 0 && index < activeEnumerable.Count ? activeEnumerable[index] : default;
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+            activeValue!.Value = index >= 0 && index < activeEnumerable.Count ? activeEnumerable[index] : default;
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -1008,7 +1017,8 @@ public static class ActiveEnumerableExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<TSource>? activeValue = null;
 
-            void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.FirstOrDefault());
+            void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+                synchronizedSource.Execute(() => activeValue!.Value = source.FirstOrDefault());
 
             return synchronizedSource.Execute(() =>
             {
@@ -1043,7 +1053,8 @@ public static class ActiveEnumerableExtensions
         IActiveEnumerable<TSource> where;
         ActiveValue<TSource?>? activeValue = null;
 
-        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count > 0 ? where[0] : default;
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+            activeValue!.Value = where.Count > 0 ? where[0] : default;
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -1190,9 +1201,11 @@ public static class ActiveEnumerableExtensions
             groupingObservableCollection.AddRange(element.Repeat(count));
         }
 
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) => synchronizedSource.Execute(() => addElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count));
+        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) =>
+            synchronizedSource.Execute(() => addElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count));
 
-        void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) => synchronizedSource.Execute(() => removeElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count));
+        void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) =>
+            synchronizedSource.Execute(() => removeElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count));
 
         void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TKey? key)> e) =>
             synchronizedSource.Execute(() =>
@@ -1384,7 +1397,8 @@ public static class ActiveEnumerableExtensions
             var synchronizedSource = source as ISynchronized;
             ActiveValue<TSource>? activeValue = null;
 
-            void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => synchronizedSource.Execute(() => activeValue!.Value = source.LastOrDefault());
+            void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+                synchronizedSource.Execute(() => activeValue!.Value = source.LastOrDefault());
 
             return synchronizedSource.Execute(() =>
             {
@@ -1419,7 +1433,8 @@ public static class ActiveEnumerableExtensions
         IActiveEnumerable<TSource> where;
         ActiveValue<TSource?>? activeValue = null;
 
-        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) => activeValue!.Value = where.Count > 0 ? where[where.Count - 1] : default;
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+            activeValue!.Value = where.Count > 0 ? where[where.Count - 1] : default;
 
         return (source as ISynchronized).Execute(() =>
         {
@@ -1961,7 +1976,8 @@ public static class ActiveEnumerableExtensions
             }
         }
 
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, IComparable?> e) => synchronizedSource.Execute(() => repositionElement(e.Element! /* this could be null, but it won't matter if it is */));
+        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, IComparable?> e) =>
+            synchronizedSource.Execute(() => repositionElement(e.Element! /* this could be null, but it won't matter if it is */));
 
         void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, IComparable? comparable)> e) =>
             synchronizedSource.Execute(() =>
@@ -2510,7 +2526,6 @@ public static class ActiveEnumerableExtensions
             {
                 rangeActiveExpression.ElementResultChanged -= elementResultChanged;
                 rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
-
                 rangeActiveExpression.Dispose();
             });
         });
@@ -3214,7 +3229,8 @@ public static class ActiveEnumerableExtensions
                     activeValue!.Value = operations.Add(activeValue!.Value, difference.Repeat(instances).Aggregate(operations.Add!));
             });
 
-        void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) => synchronizedSource.Execute(() => resultsChanging!.Add(e.Element! /* this could be null, but it won't matter if it is */, (e.Result, e.Count)));
+        void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
+            synchronizedSource.Execute(() => resultsChanging!.Add(e.Element! /* this could be null, but it won't matter if it is */, (e.Result, e.Count)));
 
         void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TResult? result)> e) =>
             synchronizedSource.Execute(() =>
@@ -3490,7 +3506,6 @@ public static class ActiveEnumerableExtensions
     /// <param name="source">An <see cref="IEnumerable"/></param>
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
-    [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
     public static IActiveEnumerable<object> SwitchContextEventually(this IEnumerable source, SynchronizationContext synchronizationContext) =>
         SwitchContextEventually(source, synchronizationContext, false);
 
@@ -3579,7 +3594,6 @@ public static class ActiveEnumerableExtensions
     /// <param name="source">An <see cref="IEnumerable{T}"/></param>
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/> on which to perform consistency operations</param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent with <paramref name="source"/> on <paramref name="synchronizationContext"/></returns>
-    [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
     public static IActiveEnumerable<TSource> SwitchContextEventually<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext) =>
         SwitchContextEventually(source, synchronizationContext, false);
 

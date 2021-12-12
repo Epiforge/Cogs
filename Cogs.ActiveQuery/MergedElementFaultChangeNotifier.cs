@@ -1,6 +1,8 @@
 namespace Cogs.ActiveQuery;
 
-class MergedElementFaultChangeNotifier : SyncDisposable, INotifyElementFaultChanges
+class MergedElementFaultChangeNotifier :
+    SyncDisposable,
+    INotifyElementFaultChanges
 {
     public MergedElementFaultChangeNotifier(IEnumerable<INotifyElementFaultChanges> elementFaultChangeNotifiers)
     {
@@ -12,7 +14,8 @@ class MergedElementFaultChangeNotifier : SyncDisposable, INotifyElementFaultChan
         }
     }
 
-    public MergedElementFaultChangeNotifier(params INotifyElementFaultChanges[] elementFaultChangeNotifiers) : this((IEnumerable<INotifyElementFaultChanges>)elementFaultChangeNotifiers)
+    public MergedElementFaultChangeNotifier(params INotifyElementFaultChanges[] elementFaultChangeNotifiers) :
+        this((IEnumerable<INotifyElementFaultChanges>)elementFaultChangeNotifiers)
     {
     }
 
@@ -31,9 +34,11 @@ class MergedElementFaultChangeNotifier : SyncDisposable, INotifyElementFaultChan
         return true;
     }
 
-    void ElementFaultChangeNotifierElementFaultChanged(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanged?.Invoke(sender, e);
+    void ElementFaultChangeNotifierElementFaultChanged(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanged?.Invoke(sender, e);
 
-    void ElementFaultChangeNotifierElementFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(sender, e);
+    void ElementFaultChangeNotifierElementFaultChanging(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanging?.Invoke(sender, e);
 
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         elementFaultChangeNotifiers.SelectMany(elementFaultChangeNotifier => elementFaultChangeNotifier?.GetElementFaults() ?? Enumerable.Empty<(object? element, Exception? fault)>()).ToImmutableArray();

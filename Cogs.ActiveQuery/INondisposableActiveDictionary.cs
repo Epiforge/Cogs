@@ -5,7 +5,15 @@ namespace Cogs.ActiveQuery;
 /// </summary>
 /// <typeparam name="TKey">The type of keys</typeparam>
 /// <typeparam name="TValue">The type of values</typeparam>
-public interface INondisposableActiveDictionary<TKey, TValue> : IDisposalStatus, INotifyDictionaryChanged, INotifyDictionaryChanged<TKey, TValue>, INotifyDisposed, INotifyDisposing, INotifyElementFaultChanges, IReadOnlyDictionary<TKey, TValue>, ISynchronized
+public interface INondisposableActiveDictionary<TKey, TValue> :
+    IDisposalStatus,
+    INotifyDictionaryChanged,
+    INotifyDictionaryChanged<TKey, TValue>,
+    INotifyDisposed,
+    INotifyDisposing,
+    INotifyElementFaultChanges,
+    IReadOnlyDictionary<TKey, TValue>,
+    ISynchronized
 {
     /// <summary>
     /// Occurs when the dictionary changes

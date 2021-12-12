@@ -3,7 +3,8 @@ namespace Cogs.ActiveQuery;
 /// <summary>
 /// Provides data for the <see cref="INotifyElementFaultChanges.ElementFaultChanged"/> and <see cref="INotifyElementFaultChanges.ElementFaultChanging"/> events
 /// </summary>
-public class ElementFaultChangeEventArgs : EventArgs
+public class ElementFaultChangeEventArgs :
+    EventArgs
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ElementFaultChangeEventArgs"/> class

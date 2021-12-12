@@ -2,7 +2,7 @@ namespace Cogs.ActiveQuery;
 
 internal static class CountConversion
 {
-    static readonly ConcurrentDictionary<Type, CountConversionDelegate> converters = new ConcurrentDictionary<Type, CountConversionDelegate>();
+    static readonly ConcurrentDictionary<Type, CountConversionDelegate> converters = new();
 
     static CountConversionDelegate CreateConverter(Type type)
     {
@@ -10,5 +10,6 @@ internal static class CountConversion
         return Expression.Lambda<CountConversionDelegate>(Expression.Convert(Expression.Convert(countParameter, type), typeof(object)), countParameter).Compile();
     }
 
-    public static CountConversionDelegate GetConverter(Type type) => converters.GetOrAdd(type, CreateConverter);
+    public static CountConversionDelegate GetConverter(Type type) =>
+        converters.GetOrAdd(type, CreateConverter);
 }

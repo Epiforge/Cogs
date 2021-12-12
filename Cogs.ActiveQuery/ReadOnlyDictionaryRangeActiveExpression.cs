@@ -6,7 +6,10 @@ namespace Cogs.ActiveQuery;
 /// <typeparam name="TKey">The type of the keys</typeparam>
 /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
 /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
-class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDisposable, INotifyDictionaryChanged<TKey, TResult>, INotifyElementFaultChanges
+class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> :
+    SyncDisposable,
+    INotifyDictionaryChanged<TKey, TResult>,
+    INotifyElementFaultChanges
 {
     ReadOnlyDictionaryRangeActiveExpression(IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> expression, ActiveExpressionOptions? options, RangeActiveExpressionsKey rangeActiveExpressionsKey)
     {
@@ -18,7 +21,7 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDispo
     }
 
     readonly IDictionary<TKey, IActiveExpression<TKey, TValue, TResult>> activeExpressions;
-    readonly ReaderWriterLockSlim activeExpressionsAccess = new ReaderWriterLockSlim();
+    readonly AsyncReaderWriterLock activeExpressionsAccess = new();
     int disposalCount;
     readonly Expression<Func<TKey, TValue, TResult>> expression;
     readonly RangeActiveExpressionsKey rangeActiveExpressionsKey;
@@ -35,27 +38,13 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDispo
         var activeExpression = (IActiveExpression<TKey, TValue, TResult>)sender;
         if (e.PropertyName == nameof(IActiveExpression<TKey, TValue, TResult>.Fault))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementFaultChanged(activeExpression.Arg1, activeExpression.Fault);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
         else if (e.PropertyName == nameof(IActiveExpression<TKey, TValue, TResult>.Value))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnValueResultChanged(activeExpression.Arg1, activeExpression.Value);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
     }
 
@@ -64,27 +53,13 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDispo
         var activeExpression = (IActiveExpression<TKey, TValue, TResult>)sender;
         if (e.PropertyName == nameof(IActiveExpression<TKey, TValue, TResult>.Fault))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementFaultChanging(activeExpression.Arg1, activeExpression.Fault);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
         else if (e.PropertyName == nameof(IActiveExpression<TKey, TValue, TResult>.Value))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnValueResultChanging(activeExpression.Arg1, activeExpression.Value);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
     }
 
@@ -93,21 +68,14 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDispo
         if (keyValuePairs.Any())
         {
             List<IActiveExpression<TKey, TValue, TResult>> addedActiveExpressions;
-            activeExpressionsAccess.EnterWriteLock();
-            try
-            {
+            using (activeExpressionsAccess.WriterLock())
                 addedActiveExpressions = AddActiveExpressionsUnderLock(keyValuePairs);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitWriteLock();
-            }
             return addedActiveExpressions.Select(ae => new KeyValuePair<TKey, TResult>(ae.Arg1! /* this could be null, but it won't matter if it is */, ae.Value! /* this could be null, but it won't matter if it is */)).ToImmutableArray();
         }
         return Enumerable.Empty<KeyValuePair<TKey, TResult>>().ToImmutableArray();
     }
 
-    private List<IActiveExpression<TKey, TValue, TResult>> AddActiveExpressionsUnderLock(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs)
+    List<IActiveExpression<TKey, TValue, TResult>> AddActiveExpressionsUnderLock(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs)
     {
         var addedActiveExpressions = new List<IActiveExpression<TKey, TValue, TResult>>();
         foreach (var keyValuePair in keyValuePairs)
@@ -142,48 +110,30 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDispo
 
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults()
     {
-        activeExpressionsAccess.EnterReadLock();
-        try
-        {
+        using (activeExpressionsAccess.ReaderLock())
             return GetElementFaultsUnderLock();
-        }
-        finally
-        {
-            activeExpressionsAccess.ExitReadLock();
-        }
     }
 
-    internal IReadOnlyList<(object? element, Exception? fault)> GetElementFaultsUnderLock() => activeExpressions.Select(ae => (element: (object?)ae.Key, fault: ae.Value.Fault)).Where(ef => ef.fault is { }).ToImmutableArray();
+    internal IReadOnlyList<(object? element, Exception? fault)> GetElementFaultsUnderLock() =>
+        activeExpressions.Select(ae => (element: (object?)ae.Key, fault: ae.Value.Fault)).Where(ef => ef.fault is { }).ToImmutableArray();
 
     public IReadOnlyList<(TKey key, TResult? result)> GetResults()
     {
-        activeExpressionsAccess.EnterReadLock();
-        try
-        {
+        using (activeExpressionsAccess.ReaderLock())
             return GetResultsUnderLock();
-        }
-        finally
-        {
-            activeExpressionsAccess.ExitReadLock();
-        }
     }
 
-    internal IReadOnlyList<(TKey key, TResult? result)> GetResultsUnderLock() => activeExpressions.Select(ae => (ae.Key, ae.Value.Value)).ToImmutableArray();
+    internal IReadOnlyList<(TKey key, TResult? result)> GetResultsUnderLock() =>
+        activeExpressions.Select(ae => (ae.Key, ae.Value.Value)).ToImmutableArray();
 
     public IReadOnlyList<(TKey key, TResult? result, Exception fault)> GetResultsAndFaults()
     {
-        activeExpressionsAccess.EnterReadLock();
-        try
-        {
+        using (activeExpressionsAccess.ReaderLock())
             return GetResultsAndFaultsUnderLock();
-        }
-        finally
-        {
-            activeExpressionsAccess.ExitReadLock();
-        }
     }
 
-    internal IReadOnlyList<(TKey key, TResult? result, Exception fault)> GetResultsAndFaultsUnderLock() => activeExpressions.Select(ae => (ae.Key, ae.Value.Value, ae.Value.Fault)).ToImmutableArray();
+    internal IReadOnlyList<(TKey key, TResult? result, Exception fault)> GetResultsAndFaultsUnderLock() =>
+        activeExpressions.Select(ae => (ae.Key, ae.Value.Value, ae.Value.Fault)).ToImmutableArray();
 
     void Initialize()
     {
@@ -229,15 +179,8 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDispo
         List<KeyValuePair<TKey, TResult>>? result = null;
         if ((keys?.Count ?? 0) > 0)
         {
-            activeExpressionsAccess.EnterWriteLock();
-            try
-            {
+            using (activeExpressionsAccess.WriterLock())
                 result = RemoveActiveExpressionsUnderLock(keys!);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitWriteLock();
-            }
         }
         return (result ?? Enumerable.Empty<KeyValuePair<TKey, TResult>>()).ToImmutableArray();
     }
@@ -269,28 +212,18 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDispo
                 break;
             case NotifyDictionaryChangedAction.Replace:
                 IReadOnlyList<KeyValuePair<TKey, TResult>> removed, added;
-                activeExpressionsAccess.EnterWriteLock();
-                try
+                using (activeExpressionsAccess.WriterLock())
                 {
                     removed = RemoveActiveExpressionsUnderLock(e.OldItems.Select(oldItem => oldItem.Key).ToImmutableArray());
                     added = AddActiveExpressionsUnderLock(e.NewItems).Select(ae => new KeyValuePair<TKey, TResult>(ae.Arg1! /* this could be null, but it won't matter if it is */, ae.Value! /* this could be null, but it won't matter if it is */)).ToImmutableArray();
                 }
-                finally
-                {
-                    activeExpressionsAccess.ExitWriteLock();
-                }
                 OnDictionaryChanged(new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Replace, added, removed));
                 break;
             default:
-                activeExpressionsAccess.EnterWriteLock();
-                try
+                using (activeExpressionsAccess.WriterLock())
                 {
                     RemoveActiveExpressionsUnderLock(activeExpressions.Keys.ToImmutableArray());
                     AddActiveExpressionsUnderLock(source);
-                }
-                finally
-                {
-                    activeExpressionsAccess.ExitWriteLock();
                 }
                 OnDictionaryChanged(new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Reset));
                 break;
@@ -303,8 +236,8 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> : SyncDispo
 
     public ActiveExpressionOptions? Options { get; }
 
-    static readonly object rangeActiveExpressionsAccess = new object();
-    static readonly Dictionary<RangeActiveExpressionsKey, ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult>> rangeActiveExpressions = new Dictionary<RangeActiveExpressionsKey, ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult>>(new RangeActiveExpressionsKeyEqualityComparer());
+    static readonly object rangeActiveExpressionsAccess = new();
+    static readonly Dictionary<RangeActiveExpressionsKey, ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult>> rangeActiveExpressions = new(new RangeActiveExpressionsKeyEqualityComparer());
 
     public static ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> Create(IReadOnlyDictionary<TKey, TValue> source, Expression<Func<TKey, TValue, TResult>> expression, ActiveExpressionOptions? options = null)
     {

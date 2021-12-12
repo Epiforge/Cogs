@@ -1,10 +1,14 @@
+
 namespace Cogs.ActiveQuery;
 
 /// <summary>
 /// Represents the sequence of results derived from creating an active expression for each element in a sequence
 /// </summary>
 /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
-class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementFaultChanges, INotifyGenericCollectionChanged<(object? element, TResult? result)>
+class EnumerableRangeActiveExpression<TResult> :
+    SyncDisposable,
+    INotifyElementFaultChanges,
+    INotifyGenericCollectionChanged<(object? element, TResult? result)>
 {
     EnumerableRangeActiveExpression(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options, RangeActiveExpressionsKey rangeActiveExpressionsKey)
     {
@@ -14,9 +18,9 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
         this.rangeActiveExpressionsKey = rangeActiveExpressionsKey;
     }
 
-    readonly Dictionary<IActiveExpression<object?, TResult>, int> activeExpressionCounts = new Dictionary<IActiveExpression<object?, TResult>, int>();
-    readonly List<(object? element, IActiveExpression<object?, TResult> activeExpression)> activeExpressions = new List<(object? element, IActiveExpression<object?, TResult> activeExpression)>();
-    readonly ReaderWriterLockSlim activeExpressionsAccess = new ReaderWriterLockSlim();
+    readonly Dictionary<IActiveExpression<object?, TResult>, int> activeExpressionCounts = new();
+    readonly List<(object? element, IActiveExpression<object?, TResult> activeExpression)> activeExpressions = new();
+    readonly AsyncReaderWriterLock activeExpressionsAccess = new();
     int disposalCount;
     readonly Expression<Func<object?, TResult>> expression;
     readonly RangeActiveExpressionsKey rangeActiveExpressionsKey;
@@ -33,27 +37,13 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
         var activeExpression = (IActiveExpression<object, TResult>)sender;
         if (e.PropertyName == nameof(IActiveExpression<object, TResult>.Fault))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementFaultChanged(activeExpression.Arg, activeExpression.Fault, activeExpressionCounts[activeExpression]);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
         else if (e.PropertyName == nameof(IActiveExpression<object, TResult>.Value))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementResultChanged(activeExpression.Arg, activeExpression.Value, activeExpressionCounts[activeExpression]);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
     }
 
@@ -62,27 +52,13 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
         var activeExpression = (IActiveExpression<object, TResult>)sender;
         if (e.PropertyName == nameof(IActiveExpression<object, TResult>.Fault))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementFaultChanging(activeExpression.Arg, activeExpression.Fault, activeExpressionCounts[activeExpression]);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
         else if (e.PropertyName == nameof(IActiveExpression<object, TResult>.Value))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementResultChanging(activeExpression.Arg, activeExpression.Value, activeExpressionCounts[activeExpression]);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
     }
 
@@ -91,15 +67,8 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
         if (elements.Any())
         {
             List<IActiveExpression<object?, TResult>> addedActiveExpressions;
-            activeExpressionsAccess.EnterWriteLock();
-            try
-            {
+            using (activeExpressionsAccess.WriterLock())
                 addedActiveExpressions = AddActiveExpressionsUnderLock(index, elements);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitWriteLock();
-            }
             return addedActiveExpressions.Select(ae => (ae.Arg, ae.Value)).ToImmutableArray();
         }
         return null;
@@ -133,17 +102,12 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressions(e.NewStartingIndex, e.NewItems.Cast<object?>()), e.NewStartingIndex));
                 break;
             case NotifyCollectionChangedAction.Move:
-                activeExpressionsAccess.EnterWriteLock();
                 List<(object? element, IActiveExpression<object?, TResult> activeExpression)> moving;
-                try
+                using (activeExpressionsAccess.WriterLock())
                 {
                     moving = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
                     activeExpressions.RemoveRange(e.OldStartingIndex, moving.Count);
                     activeExpressions.InsertRange(e.NewStartingIndex, moving);
-                }
-                finally
-                {
-                    activeExpressionsAccess.ExitWriteLock();
                 }
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)), e.NewStartingIndex, e.OldStartingIndex));
                 break;
@@ -151,29 +115,19 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressions(e.OldStartingIndex, e.OldItems.Count), e.OldStartingIndex));
                 break;
             case NotifyCollectionChangedAction.Replace:
-                activeExpressionsAccess.EnterWriteLock();
                 IEnumerable<(object? element, TResult? result)> removed, added;
-                try
+                using (activeExpressionsAccess.WriterLock())
                 {
                     removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count);
                     added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>()).Select(ae => ((object?)ae.Arg, ae.Value));
                 }
-                finally
-                {
-                    activeExpressionsAccess.ExitWriteLock();
-                }
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex));
                 break;
             default:
-                activeExpressionsAccess.EnterWriteLock();
-                try
+                using (activeExpressionsAccess.WriterLock())
                 {
                     RemoveActiveExpressionsUnderLock(0, activeExpressions.Count);
                     AddActiveExpressionsUnderLock(0, source.Cast<object>());
-                }
-                finally
-                {
-                    activeExpressionsAccess.ExitWriteLock();
                 }
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Reset));
                 break;
@@ -201,33 +155,21 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
 
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults()
     {
-        activeExpressionsAccess.EnterReadLock();
-        try
-        {
+        using (activeExpressionsAccess.ReaderLock())
             return GetElementFaultsUnderLock();
-        }
-        finally
-        {
-            activeExpressionsAccess.ExitReadLock();
-        }
     }
 
-    internal IReadOnlyList<(object? element, Exception? fault)> GetElementFaultsUnderLock() => activeExpressions.Select(eae => (eae.element, fault: eae.activeExpression.Fault)).Where(ef => ef.fault is { }).ToImmutableArray();
+    internal IReadOnlyList<(object? element, Exception? fault)> GetElementFaultsUnderLock() =>
+        activeExpressions.Select(eae => (eae.element, fault: eae.activeExpression.Fault)).Where(ef => ef.fault is { }).ToImmutableArray();
 
     public IReadOnlyList<(object element, TResult? result)> GetResults()
     {
-        activeExpressionsAccess.EnterReadLock();
-        try
-        {
+        using (activeExpressionsAccess.ReaderLock())
             return GetResultsUnderLock();
-        }
-        finally
-        {
-            activeExpressionsAccess.ExitReadLock();
-        }
     }
 
-    internal IReadOnlyList<(object element, TResult? result)> GetResultsUnderLock() => activeExpressions.Select(eae => (eae.element, eae.activeExpression.Value)).ToImmutableArray();
+    internal IReadOnlyList<(object element, TResult? result)> GetResultsUnderLock() =>
+        activeExpressions.Select(eae => (eae.element, eae.activeExpression.Value)).ToImmutableArray();
 
     void Initialize()
     {
@@ -273,15 +215,8 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
         List<(object? element, TResult? result)>? result = null;
         if (count > 0)
         {
-            activeExpressionsAccess.EnterWriteLock();
-            try
-            {
+            using (activeExpressionsAccess.WriterLock())
                 result = RemoveActiveExpressionsUnderLock(index, count);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitWriteLock();
-            }
         }
         return (result ?? Enumerable.Empty<(object? element, TResult? result)>()).ToImmutableArray();
     }
@@ -307,14 +242,16 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
         return result;
     }
 
-    void SourceElementFaultChanged(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanged?.Invoke(sender, e);
+    void SourceElementFaultChanged(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanged?.Invoke(sender, e);
 
-    void SourceElementFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(sender, e);
+    void SourceElementFaultChanging(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanging?.Invoke(sender, e);
 
     public ActiveExpressionOptions? Options { get; }
 
-    static readonly object rangeActiveExpressionsAccess = new object();
-    static readonly Dictionary<RangeActiveExpressionsKey, EnumerableRangeActiveExpression<TResult>> rangeActiveExpressions = new Dictionary<RangeActiveExpressionsKey, EnumerableRangeActiveExpression<TResult>>(new RangeActiveExpressionsKeyEqualityComparer());
+    static readonly object rangeActiveExpressionsAccess = new();
+    static readonly Dictionary<RangeActiveExpressionsKey, EnumerableRangeActiveExpression<TResult>> rangeActiveExpressions = new(new RangeActiveExpressionsKeyEqualityComparer());
 
     public static EnumerableRangeActiveExpression<TResult> Create(IEnumerable source, Expression<Func<object?, TResult>> expression, ActiveExpressionOptions? options = null)
     {
@@ -337,7 +274,8 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
 
     record RangeActiveExpressionsKey(IEnumerable Source, Expression<Func<object?, TResult>> Expression, ActiveExpressionOptions? Options);
 
-    class RangeActiveExpressionsKeyEqualityComparer : IEqualityComparer<RangeActiveExpressionsKey>
+    class RangeActiveExpressionsKeyEqualityComparer :
+        IEqualityComparer<RangeActiveExpressionsKey>
     {
         public bool Equals(RangeActiveExpressionsKey x, RangeActiveExpressionsKey y) =>
             ReferenceEquals(x.Source, y.Source) && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression) && Equals(x.Options, y.Options);
@@ -352,7 +290,10 @@ class EnumerableRangeActiveExpression<TResult> : SyncDisposable, INotifyElementF
 /// </summary>
 /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
 /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
-class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INotifyElementFaultChanges, INotifyGenericCollectionChanged<(TElement element, TResult? result)>
+class EnumerableRangeActiveExpression<TElement, TResult> :
+    SyncDisposable,
+    INotifyElementFaultChanges,
+    INotifyGenericCollectionChanged<(TElement element, TResult? result)>
 {
     EnumerableRangeActiveExpression(IEnumerable<TElement> source, Expression<Func<TElement, TResult>> expression, ActiveExpressionOptions? options, RangeActiveExpressionKey rangeActiveExpressionKey)
     {
@@ -362,9 +303,9 @@ class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INoti
         this.rangeActiveExpressionKey = rangeActiveExpressionKey;
     }
 
-    readonly Dictionary<IActiveExpression<TElement, TResult>, int> activeExpressionCounts = new Dictionary<IActiveExpression<TElement, TResult>, int>();
-    readonly List<(TElement element, IActiveExpression<TElement, TResult> activeExpression)> activeExpressions = new List<(TElement element, IActiveExpression<TElement, TResult> activeExpression)>();
-    readonly ReaderWriterLockSlim activeExpressionsAccess = new ReaderWriterLockSlim();
+    readonly Dictionary<IActiveExpression<TElement, TResult>, int> activeExpressionCounts = new();
+    readonly List<(TElement element, IActiveExpression<TElement, TResult> activeExpression)> activeExpressions = new();
+    readonly AsyncReaderWriterLock activeExpressionsAccess = new();
     int disposalCount;
     readonly Expression<Func<TElement, TResult>> expression;
     readonly RangeActiveExpressionKey rangeActiveExpressionKey;
@@ -381,27 +322,13 @@ class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INoti
         var activeExpression = (IActiveExpression<TElement, TResult>)sender;
         if (e.PropertyName == nameof(IActiveExpression<TElement, TResult>.Fault))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementFaultChanged(activeExpression.Arg, activeExpression.Fault, activeExpressionCounts[activeExpression]);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
         else if (e.PropertyName == nameof(IActiveExpression<TElement, TResult>.Value))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementResultChanged(activeExpression.Arg, activeExpression.Value, activeExpressionCounts[activeExpression]);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
     }
 
@@ -410,27 +337,13 @@ class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INoti
         var activeExpression = (IActiveExpression<TElement, TResult>)sender;
         if (e.PropertyName == nameof(IActiveExpression<TElement, TResult>.Fault))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementFaultChanging(activeExpression.Arg, activeExpression.Fault, activeExpressionCounts[activeExpression]);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
         else if (e.PropertyName == nameof(IActiveExpression<TElement, TResult>.Value))
         {
-            activeExpressionsAccess.EnterReadLock();
-            try
-            {
+            using (activeExpressionsAccess.ReaderLock())
                 OnElementResultChanging(activeExpression.Arg, activeExpression.Value, activeExpressionCounts[activeExpression]);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitReadLock();
-            }
         }
     }
 
@@ -439,15 +352,8 @@ class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INoti
         if (elements.Any())
         {
             List<IActiveExpression<TElement, TResult>> addedActiveExpressions;
-            activeExpressionsAccess.EnterWriteLock();
-            try
-            {
+            using (activeExpressionsAccess.WriterLock())
                 addedActiveExpressions = AddActiveExpressionsUnderLock(index, elements);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitWriteLock();
-            }
             return addedActiveExpressions.Select(ae => (ae.Arg, ae.Value)).ToImmutableArray();
         }
         return null;
@@ -481,17 +387,12 @@ class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INoti
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressions(e.NewStartingIndex, e.NewItems.Cast<TElement>()), e.NewStartingIndex));
                 break;
             case NotifyCollectionChangedAction.Move:
-                activeExpressionsAccess.EnterWriteLock();
                 List<(TElement element, IActiveExpression<TElement, TResult> activeExpression)> moving;
-                try
+                using (activeExpressionsAccess.WriterLock())
                 {
                     moving = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
                     activeExpressions.RemoveRange(e.OldStartingIndex, moving.Count);
                     activeExpressions.InsertRange(e.NewStartingIndex, moving);
-                }
-                finally
-                {
-                    activeExpressionsAccess.ExitWriteLock();
                 }
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)), e.NewStartingIndex, e.OldStartingIndex));
                 break;
@@ -499,29 +400,19 @@ class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INoti
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressions(e.OldStartingIndex, e.OldItems.Count), e.OldStartingIndex));
                 break;
             case NotifyCollectionChangedAction.Replace:
-                activeExpressionsAccess.EnterWriteLock();
                 IEnumerable<(TElement element, TResult? result)> removed, added;
-                try
+                using (activeExpressionsAccess.WriterLock())
                 {
                     removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count);
                     added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<TElement>()).Select(ae => (ae.Arg, ae.Value));
                 }
-                finally
-                {
-                    activeExpressionsAccess.ExitWriteLock();
-                }
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex));
                 break;
             default:
-                activeExpressionsAccess.EnterWriteLock();
-                try
+                using (activeExpressionsAccess.WriterLock())
                 {
                     RemoveActiveExpressionsUnderLock(0, activeExpressions.Count);
                     AddActiveExpressionsUnderLock(0, source.Cast<TElement>());
-                }
-                finally
-                {
-                    activeExpressionsAccess.ExitWriteLock();
                 }
                 OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Reset));
                 break;
@@ -549,48 +440,30 @@ class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INoti
 
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults()
     {
-        activeExpressionsAccess.EnterReadLock();
-        try
-        {
+        using (activeExpressionsAccess.ReaderLock())
             return GetElementFaultsUnderLock();
-        }
-        finally
-        {
-            activeExpressionsAccess.ExitReadLock();
-        }
     }
 
-    internal IReadOnlyList<(object? element, Exception? fault)> GetElementFaultsUnderLock() => activeExpressions.Select(ae => (element: (object?)ae.element, fault: ae.activeExpression.Fault)).Where(ef => ef.fault is { }).ToImmutableArray();
+    internal IReadOnlyList<(object? element, Exception? fault)> GetElementFaultsUnderLock() =>
+        activeExpressions.Select(ae => (element: (object?)ae.element, fault: ae.activeExpression.Fault)).Where(ef => ef.fault is { }).ToImmutableArray();
 
     public IReadOnlyList<(TElement element, TResult? result)> GetResults()
     {
-        activeExpressionsAccess.EnterReadLock();
-        try
-        {
+        using (activeExpressionsAccess.ReaderLock())
             return GetResultsUnderLock();
-        }
-        finally
-        {
-            activeExpressionsAccess.ExitReadLock();
-        }
     }
 
-    internal IReadOnlyList<(TElement element, TResult? result)> GetResultsUnderLock() => activeExpressions.Select(ae => (ae.element, ae.activeExpression.Value)).ToImmutableArray();
+    internal IReadOnlyList<(TElement element, TResult? result)> GetResultsUnderLock() =>
+        activeExpressions.Select(ae => (ae.element, ae.activeExpression.Value)).ToImmutableArray();
 
     public IReadOnlyList<(TElement element, TResult result, Exception fault, int count)> GetResultsFaultsAndCounts()
     {
-        activeExpressionsAccess.EnterReadLock();
-        try
-        {
+        using (activeExpressionsAccess.ReaderLock())
             return GetResultsFaultsAndCountsUnderLock();
-        }
-        finally
-        {
-            activeExpressionsAccess.ExitReadLock();
-        }
     }
 
-    internal IReadOnlyList<(TElement element, TResult result, Exception fault, int count)> GetResultsFaultsAndCountsUnderLock() => activeExpressions.Select(ae => (ae.element, ae.activeExpression.Value, ae.activeExpression.Fault, activeExpressionCounts[ae.activeExpression])).ToImmutableArray();
+    internal IReadOnlyList<(TElement element, TResult result, Exception fault, int count)> GetResultsFaultsAndCountsUnderLock() =>
+        activeExpressions.Select(ae => (ae.element, ae.activeExpression.Value, ae.activeExpression.Fault, activeExpressionCounts[ae.activeExpression])).ToImmutableArray();
 
     void Initialize()
     {
@@ -636,15 +509,8 @@ class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INoti
         List<(TElement element, TResult? result)>? result = null;
         if (count > 0)
         {
-            activeExpressionsAccess.EnterWriteLock();
-            try
-            {
+            using (activeExpressionsAccess.WriterLock())
                 result = RemoveActiveExpressionsUnderLock(index, count);
-            }
-            finally
-            {
-                activeExpressionsAccess.ExitWriteLock();
-            }
         }
         return (result ?? Enumerable.Empty<(TElement element, TResult? result)>()).ToImmutableArray();
     }
@@ -670,14 +536,16 @@ class EnumerableRangeActiveExpression<TElement, TResult> : SyncDisposable, INoti
         return result;
     }
 
-    void SourceElementFaultChanged(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanged?.Invoke(sender, e);
+    void SourceElementFaultChanged(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanged?.Invoke(sender, e);
 
-    void SourceElementFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(sender, e);
+    void SourceElementFaultChanging(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanging?.Invoke(sender, e);
 
     public ActiveExpressionOptions? Options { get; }
 
-    static readonly object rangeActiveExpressionsAccess = new object();
-    static readonly Dictionary<RangeActiveExpressionKey, EnumerableRangeActiveExpression<TElement, TResult>> rangeActiveExpressions = new Dictionary<RangeActiveExpressionKey, EnumerableRangeActiveExpression<TElement, TResult>>(new RangeActiveExpressionKeyEqualityComparer());
+    static readonly object rangeActiveExpressionsAccess = new();
+    static readonly Dictionary<RangeActiveExpressionKey, EnumerableRangeActiveExpression<TElement, TResult>> rangeActiveExpressions = new(new RangeActiveExpressionKeyEqualityComparer());
 
     public static EnumerableRangeActiveExpression<TElement, TResult> Create(IEnumerable<TElement> source, Expression<Func<TElement, TResult>> expression, ActiveExpressionOptions? options = null)
     {
