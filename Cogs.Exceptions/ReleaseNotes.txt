@@ -1,1 +1,1 @@
-We updates NuGet references to avoid a conflict.
+We upgraded some NuGet references. We enabled NuGet symbol packages.
