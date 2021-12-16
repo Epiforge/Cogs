@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
         <Authors>Epiforge</Authors>
         <CodeAnalysisRuleSet>..\.ruleset</CodeAnalysisRuleSet>
         <Company>Epiforge</Company>
@@ -10,6 +9,7 @@
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IncludeSymbols>true</IncludeSymbols>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <PackageIcon>NuGet.jpg</PackageIcon>
@@ -21,8 +21,9 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <RepositoryType>GitHub</RepositoryType>
         <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.0.10</Version>
+        <Version>1.0.11</Version>
     </PropertyGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
