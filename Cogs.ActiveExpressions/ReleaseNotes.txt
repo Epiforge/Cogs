@@ -1,1 +1,1 @@
-We fixed a defect in ActiveUnaryExpression and ActiveBinaryExpression that permitted a caching race condition.
+We upgraded some NuGet references. We enabled NuGet symbol packages.
