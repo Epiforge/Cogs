@@ -33,7 +33,9 @@ steps:
   displayName: 'Copy artifacts to staging'
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)'
-    contents: '**/$(buildConfiguration)/**/?(*.nupkg)'
+    contents: |
+      **/$(buildConfiguration)/**/?(*.nupkg)
+      **/$(buildConfiguration)/**/?(*.snupkg)
     targetFolder: '$(Build.ArtifactStagingDirectory)'
     flattenFolders: true
     
