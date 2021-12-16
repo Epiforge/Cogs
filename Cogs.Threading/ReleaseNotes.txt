@@ -1,1 +1,1 @@
-We corrected a defect in the new implementation of ReentrantAsyncLock.
+We upgraded some NuGet references. We enabled NuGet symbol packages.
