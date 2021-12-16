@@ -1,1 +1,1 @@
-We added the Cursor class to wrap Win32 cursor API functions.
+We upgraded some NuGet references. We enabled NuGet symbol packages.
