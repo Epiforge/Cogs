@@ -1,1 +1,1 @@
-We added the NotZeroIsCollapsedValueConverter, NotZeroIsFalseValueConverter, and NotZeroIsHiddenValueConverter value converters.
+We upgraded some NuGet references. We enabled NuGet symbol packages.
