@@ -1,1 +1,1 @@
-We added the ability to force SynchronizedRangeObservableCollection to raise individual INotifyCollectionChanged.CollectionChanged events for each element operated upon by range methods.
+We upgraded some NuGet references. We enabled NuGet symbol packages.
