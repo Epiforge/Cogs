@@ -1,1 +1,1 @@
-We corrected defects in ActiveFirstOrDefault, ActiveLast, ActiveLastOrDefault, and ActiveSingleOrDefault for dictionaries which could cause a memory leak by not properly removing an event handler from source dictionary change events. We also corrected a concurrency issue in which the underlying synchronization of query results in which the queue for writer locks was not guaranteed to be first-in-first-out.
+We upgraded some NuGet references. We enabled NuGet symbol packages.
