@@ -57,9 +57,6 @@ public abstract class SyncDisposable : PropertyChangeNotifier, IDisposable, INot
                 if (IsDisposed = Dispose(true))
                 {
                     OnDisposed(e);
-                    Disposing = null;
-                    DisposalOverridden = null;
-                    Disposed = null;
                     GC.SuppressFinalize(this);
                 }
                 else

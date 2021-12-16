@@ -57,9 +57,6 @@ public abstract class AsyncDisposable : PropertyChangeNotifier, IAsyncDisposable
                 if (IsDisposed = await DisposeAsync(true).ConfigureAwait(false))
                 {
                     OnDisposed(e);
-                    Disposing = null;
-                    DisposalOverridden = null;
-                    Disposed = null;
                     GC.SuppressFinalize(this);
                 }
                 else

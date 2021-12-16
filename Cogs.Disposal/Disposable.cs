@@ -57,9 +57,6 @@ public abstract class Disposable : PropertyChangeNotifier, IAsyncDisposable, IDi
                 if (IsDisposed = Dispose(true))
                 {
                     OnDisposed(e);
-                    Disposing = null;
-                    DisposalOverridden = null;
-                    Disposed = null;
                     GC.SuppressFinalize(this);
                 }
                 else
@@ -87,9 +84,6 @@ public abstract class Disposable : PropertyChangeNotifier, IAsyncDisposable, IDi
                 if (IsDisposed = await DisposeAsync(true).ConfigureAwait(false))
                 {
                     OnDisposed(e);
-                    Disposing = null;
-                    DisposalOverridden = null;
-                    Disposed = null;
                     GC.SuppressFinalize(this);
                 }
                 else

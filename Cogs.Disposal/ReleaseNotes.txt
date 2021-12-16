@@ -1,1 +1,1 @@
-We upgraded some NuGet references. SyncDisposable no longer declares an AsyncLock object since it doesn't need to.
+SyncDisposable, AsyncDisposable, and Disposable no longer remove all event handlers when being disposed. We upgraded some NuGet references. We enabled NuGet symbol packages.
