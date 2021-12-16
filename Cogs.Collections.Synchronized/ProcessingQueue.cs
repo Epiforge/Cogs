@@ -4,7 +4,8 @@ namespace Cogs.Collections.Synchronized;
 /// A queue that will perform an action on each item enqueued in serial
 /// </summary>
 /// <typeparam name="T">The type of items in the queue</typeparam>
-public class ProcessingQueue<T> : IDisposable
+public class ProcessingQueue<T> :
+    IDisposable
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ProcessingQueue{T}"/> class
@@ -16,14 +17,18 @@ public class ProcessingQueue<T> : IDisposable
         count = 0;
         countChanged = new AsyncManualResetEvent();
         queueCancellationTokenSource = new CancellationTokenSource();
-        queue = new BufferBlock<T>(new DataflowBlockOptions { CancellationToken = queueCancellationTokenSource.Token });
+        queue = new BufferBlock<T>(new DataflowBlockOptions
+        {
+            CancellationToken = queueCancellationTokenSource.Token
+        });
         Task.Run(ProcessQueueAsync);
     }
 
     /// <summary>
     /// Finalizes this object
     /// </summary>
-    ~ProcessingQueue() => Dispose(false);
+    ~ProcessingQueue() =>
+        Dispose(false);
 
     readonly Action<T> action;
     long count;
@@ -34,7 +39,8 @@ public class ProcessingQueue<T> : IDisposable
     /// <summary>
     /// Gets the number of items currently in the queue or being processed
     /// </summary>
-    public long Count => Interlocked.Read(ref count);
+    public long Count =>
+        Interlocked.Read(ref count);
 
     /// <summary>
     /// Gets whether the queue has been disposed, and is no longer accepting or processing items
@@ -93,14 +99,16 @@ public class ProcessingQueue<T> : IDisposable
     /// Raises the <see cref="UnhandledException"/> event
     /// </summary>
     /// <param name="e">The event data</param>
-    protected virtual void OnUnhandledException(ProcessingQueueUnhandledExceptionEventArgs<T> e) => UnhandledException?.Invoke(this, e);
+    protected virtual void OnUnhandledException(ProcessingQueueUnhandledExceptionEventArgs<T> e) =>
+        UnhandledException?.Invoke(this, e);
 
     /// <summary>
     /// Creates event data for the <see cref="UnhandledException"/> event and calls <see cref="OnUnhandledException(ProcessingQueueUnhandledExceptionEventArgs{T})"/>
     /// </summary>
     /// <param name="item">The item the processing of which threw the unhandled exception</param>
     /// <param name="exception">The unhandled exception that was thrown by the processing queue action</param>
-    protected void OnUnhandledException(T item, Exception exception) => OnUnhandledException(new ProcessingQueueUnhandledExceptionEventArgs<T>(item, exception));
+    protected void OnUnhandledException(T item, Exception exception) =>
+        OnUnhandledException(new ProcessingQueueUnhandledExceptionEventArgs<T>(item, exception));
 
     async Task ProcessQueueAsync()
     {

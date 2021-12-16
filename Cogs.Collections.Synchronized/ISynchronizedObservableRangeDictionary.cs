@@ -5,7 +5,9 @@ namespace Cogs.Collections.Synchronized;
 /// </summary>
 /// <typeparam name="TKey">The type of keys in the dictionary</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary</typeparam>
-public interface ISynchronizedObservableRangeDictionary<TKey, TValue> : IObservableRangeDictionary<TKey, TValue>, ISynchronized
+public interface ISynchronizedObservableRangeDictionary<TKey, TValue> :
+    IObservableRangeDictionary<TKey, TValue>,
+    ISynchronized
 {
     /// <summary>
     /// Adds an element with the provided key and value to the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/>

@@ -1,1 +1,1 @@
-We upgraded some NuGet references. We enabled NuGet symbol packages.
+We fixed a possible race condition that could arise when adding a range of items to a SynchronizedRangeObservableCollection.
