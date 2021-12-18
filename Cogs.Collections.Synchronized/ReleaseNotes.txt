@@ -1,1 +1,1 @@
-We fixed a possible race condition that could arise when adding a range of items to a SynchronizedRangeObservableCollection.
+We made ProcessingQueue and AsyncProcessingQueue support the IWaitUntilIdle interface.

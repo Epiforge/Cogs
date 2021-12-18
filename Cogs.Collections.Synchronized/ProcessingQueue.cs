@@ -5,7 +5,8 @@ namespace Cogs.Collections.Synchronized;
 /// </summary>
 /// <typeparam name="T">The type of items in the queue</typeparam>
 public class ProcessingQueue<T> :
-    IDisposable
+    IDisposable,
+    IWaitUntilIdle
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ProcessingQueue{T}"/> class
