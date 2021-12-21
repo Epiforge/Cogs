@@ -1,1 +1,1 @@
-We made ProcessingQueue and AsyncProcessingQueue support the IWaitUntilIdle interface.
+We upgraded NuGet references.
