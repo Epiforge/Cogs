@@ -1,1 +1,1 @@
-We enabled NuGet symbol packages.
+We added the ability to pass cached event arguments to SetBackedProperty.
