@@ -1,1 +1,1 @@
-We added the IWaitUntilIdle interface.
+We fixed a defect in some synchronized extension methods.

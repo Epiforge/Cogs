@@ -27,6 +27,7 @@ public static class SynchronizedExtensions
         ExceptionDispatchInfo? edi = default;
         synchronizationContext.Send(state =>
         {
+            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
@@ -40,7 +41,7 @@ public static class SynchronizedExtensions
             }
             finally
             {
-                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+                while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
                     threadLocalSynchronizationContextStack.Value.Pop();
             }
         }, null);
@@ -74,6 +75,7 @@ public static class SynchronizedExtensions
         ExceptionDispatchInfo? edi = default;
         synchronizationContext.Send(state =>
         {
+            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
@@ -87,7 +89,7 @@ public static class SynchronizedExtensions
             }
             finally
             {
-                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+                while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
                     threadLocalSynchronizationContextStack.Value.Pop();
             }
         }, null);
@@ -123,11 +125,12 @@ public static class SynchronizedExtensions
         var completion = new TaskCompletionSource<object>();
         synchronizationContext.Post(state =>
         {
+            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
             completion.AttemptSetResult(action);
-            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+            while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
                 threadLocalSynchronizationContextStack.Value.Pop();
         }, null);
         return completion.Task;
@@ -158,11 +161,12 @@ public static class SynchronizedExtensions
         var completion = new TaskCompletionSource<TResult>();
         synchronizationContext.Post(state =>
         {
+            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
             completion.AttemptSetResult(func);
-            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+            while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
                 threadLocalSynchronizationContextStack.Value.Pop();
         }, null);
         return completion.Task;
@@ -196,11 +200,12 @@ public static class SynchronizedExtensions
         var completion = new TaskCompletionSource<object>();
         synchronizationContext.Post(async state =>
         {
+            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
             await completion.AttemptSetResultAsync(asyncAction).ConfigureAwait(false);
-            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+            while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
                 threadLocalSynchronizationContextStack.Value.Pop();
         }, null);
         await completion.Task.ConfigureAwait(false);
@@ -231,11 +236,12 @@ public static class SynchronizedExtensions
         var completion = new TaskCompletionSource<TResult>();
         synchronizationContext.Post(async state =>
         {
+            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
             await completion.AttemptSetResultAsync(asyncFunc).ConfigureAwait(false);
-            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
+            while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
                 threadLocalSynchronizationContextStack.Value.Pop();
         }, null);
         return await completion.Task.ConfigureAwait(false);
