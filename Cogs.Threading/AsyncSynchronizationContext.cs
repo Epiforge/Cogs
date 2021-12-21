@@ -3,12 +3,15 @@ namespace Cogs.Threading;
 /// <summary>
 /// Provides a synchronization context for the Task Parallel Library
 /// </summary>
-public class AsyncSynchronizationContext : SynchronizationContext, IDisposable
+public class AsyncSynchronizationContext :
+    SynchronizationContext,
+    IDisposable
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="AsyncSynchronizationContext"/> class
     /// </summary>
-    public AsyncSynchronizationContext() : this(true)
+    public AsyncSynchronizationContext() :
+        this(true)
     {
     }
 
@@ -23,7 +26,8 @@ public class AsyncSynchronizationContext : SynchronizationContext, IDisposable
     /// <summary>
     /// Finalizes this object
     /// </summary>
-    ~AsyncSynchronizationContext() => Dispose(false);
+    ~AsyncSynchronizationContext() =>
+        Dispose(false);
 
     readonly bool allowDisposal;
     readonly BufferBlock<(SendOrPostCallback callback, object? state, ManualResetEventSlim? signal, Exception? exception)> queuedCallbacks;

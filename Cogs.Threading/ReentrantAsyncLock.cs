@@ -10,8 +10,8 @@ public class ReentrantAsyncLock
     /// </summary>
     public ReentrantAsyncLock()
     {
-        rootSemaphore = new SemaphoreSlim(1);
-        semaphore = new AsyncLocal<SemaphoreSlim>();
+        rootSemaphore = new(1);
+        semaphore = new();
     }
 
     readonly SemaphoreSlim rootSemaphore;

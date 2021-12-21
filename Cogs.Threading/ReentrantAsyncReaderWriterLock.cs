@@ -10,9 +10,9 @@ public class ReentrantAsyncReaderWriterLock
     /// </summary>
     public ReentrantAsyncReaderWriterLock()
     {
-        accessSource = new AsyncReaderWriterLock();
-        acquiredAccess = new AsyncLocal<(IDisposable? token, bool isWriter)>();
-        writerReentrance = new ReentrantAsyncLock();
+        accessSource = new();
+        acquiredAccess = new();
+        writerReentrance = new();
     }
 
     readonly AsyncReaderWriterLock accessSource;

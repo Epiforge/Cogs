@@ -5,10 +5,8 @@ namespace Cogs.Threading;
 /// </summary>
 public static class SynchronizedExtensions
 {
-    static readonly ThreadLocal<Stack<SynchronizationContext?>> threadLocalSynchronizationContextStack = new(ThreadLocalSynchronizationContextStackValueFactory);
-
     /// <summary>
-    /// Executes the specified <paramref name="action"/> on the specified <paramref name="synchronizationContext"/>
+    /// Executes the specified <paramref name="action"/> on the specified <paramref name="synchronizationContext"/> (this method being called in a chain can result in a deadlock)
     /// </summary>
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="action">The <see cref="Action"/></param>
@@ -17,19 +15,14 @@ public static class SynchronizedExtensions
     {
         if (action is null)
             throw new ArgumentNullException(nameof(action));
-        var thisSynchronizationContext = SynchronizationContext.Current;
-        if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
+        if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
         {
             action();
             return;
         }
-        var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
         ExceptionDispatchInfo? edi = default;
         synchronizationContext.Send(state =>
         {
-            foreach (var synchronizationContext in thisSynchronizationContextStack)
-                threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
-            threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
             try
             {
                 action();
@@ -37,11 +30,6 @@ public static class SynchronizedExtensions
             catch (Exception ex)
             {
                 edi = ExceptionDispatchInfo.Capture(ex);
-            }
-            finally
-            {
-                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
-                    threadLocalSynchronizationContextStack.Value.Pop();
             }
         }, null);
         edi?.Throw();
@@ -55,7 +43,7 @@ public static class SynchronizedExtensions
     public static void Execute(this ISynchronized? synchronizable, Action action) => Execute(synchronizable?.SynchronizationContext, action);
 
     /// <summary>
-    /// Executes the specified <paramref name="func"/> on the <paramref name="synchronizationContext"/> and returns the result
+    /// Executes the specified <paramref name="func"/> on the <paramref name="synchronizationContext"/> and returns the result (this method being called in a chain can result in a deadlock)
     /// </summary>
     /// <typeparam name="TResult">The return type of <paramref name="func"/></typeparam>
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
@@ -66,17 +54,12 @@ public static class SynchronizedExtensions
     {
         if (func is null)
             throw new ArgumentNullException(nameof(func));
-        var thisSynchronizationContext = SynchronizationContext.Current;
-        if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
+        if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
             return func();
         TResult result = default!; // we only ever assign to this and only ever return it if it has had a legitimate value assigned
-        var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
         ExceptionDispatchInfo? edi = default;
         synchronizationContext.Send(state =>
         {
-            foreach (var synchronizationContext in thisSynchronizationContextStack)
-                threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
-            threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
             try
             {
                 result = func();
@@ -84,11 +67,6 @@ public static class SynchronizedExtensions
             catch (Exception ex)
             {
                 edi = ExceptionDispatchInfo.Capture(ex);
-            }
-            finally
-            {
-                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
-                    threadLocalSynchronizationContextStack.Value.Pop();
             }
         }, null);
         edi?.Throw();
@@ -113,23 +91,13 @@ public static class SynchronizedExtensions
     {
         if (action is null)
             throw new ArgumentNullException(nameof(action));
-        var thisSynchronizationContext = SynchronizationContext.Current;
-        if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
+        if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
         {
             action();
             return Task.CompletedTask;
         }
-        var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
         var completion = new TaskCompletionSource<object>();
-        synchronizationContext.Post(state =>
-        {
-            foreach (var synchronizationContext in thisSynchronizationContextStack)
-                threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
-            threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
-            completion.AttemptSetResult(action);
-            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
-                threadLocalSynchronizationContextStack.Value.Pop();
-        }, null);
+        synchronizationContext.Post(state => completion.AttemptSetResult(action), null);
         return completion.Task;
     }
 
@@ -151,20 +119,10 @@ public static class SynchronizedExtensions
     {
         if (func is null)
             throw new ArgumentNullException(nameof(func));
-        var thisSynchronizationContext = SynchronizationContext.Current;
-        if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
+        if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
             return Task.FromResult(func());
-        var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
         var completion = new TaskCompletionSource<TResult>();
-        synchronizationContext.Post(state =>
-        {
-            foreach (var synchronizationContext in thisSynchronizationContextStack)
-                threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
-            threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
-            completion.AttemptSetResult(func);
-            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
-                threadLocalSynchronizationContextStack.Value.Pop();
-        }, null);
+        synchronizationContext.Post(state => completion.AttemptSetResult(func), null);
         return completion.Task;
     }
 
@@ -182,28 +140,17 @@ public static class SynchronizedExtensions
     /// </summary>
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="asyncAction">The <see cref="Func{Task}"/></param>
-    [SuppressMessage("Reliability", "CA2007: Consider calling ConfigureAwait on the awaited task", Justification = "If a different worker pool thread continues from the awaited call the thread local stack will not be the same")]
     public static async Task ExecuteAsync(this SynchronizationContext? synchronizationContext, Func<Task> asyncAction)
     {
         if (asyncAction is null)
             throw new ArgumentNullException(nameof(asyncAction));
-        var thisSynchronizationContext = SynchronizationContext.Current;
-        if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
+        if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
         {
             await asyncAction().ConfigureAwait(false);
             return;
         }
-        var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
         var completion = new TaskCompletionSource<object>();
-        synchronizationContext.Post(async state =>
-        {
-            foreach (var synchronizationContext in thisSynchronizationContextStack)
-                threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
-            threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
-            await completion.AttemptSetResultAsync(asyncAction);
-            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
-                threadLocalSynchronizationContextStack.Value.Pop();
-        }, null);
+        synchronizationContext.Post(async state => await completion.AttemptSetResultAsync(asyncAction).ConfigureAwait(false), null);
         await completion.Task.ConfigureAwait(false);
     }
 
@@ -222,25 +169,14 @@ public static class SynchronizedExtensions
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="asyncFunc">The <see cref="Func{Task}"/> that returns a value</param>
     /// <returns>The result of <paramref name="asyncFunc"/></returns>
-    [SuppressMessage("Reliability", "CA2007: Consider calling ConfigureAwait on the awaited task", Justification = "If a different worker pool thread continues from the awaited call the thread local stack will not be the same")]
     public static async Task<TResult> ExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<Task<TResult>> asyncFunc)
     {
         if (asyncFunc is null)
             throw new ArgumentNullException(nameof(asyncFunc));
-        var thisSynchronizationContext = SynchronizationContext.Current;
-        if (synchronizationContext is null || thisSynchronizationContext == synchronizationContext || threadLocalSynchronizationContextStack.Value.Contains(thisSynchronizationContext))
+        if (synchronizationContext is null || SynchronizationContext.Current == synchronizationContext)
             return await asyncFunc().ConfigureAwait(false);
-        var thisSynchronizationContextStack = threadLocalSynchronizationContextStack.Value.ToImmutableList();
         var completion = new TaskCompletionSource<TResult>();
-        synchronizationContext.Post(async state =>
-        {
-            foreach (var synchronizationContext in thisSynchronizationContextStack)
-                threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
-            threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
-            await completion.AttemptSetResultAsync(asyncFunc);
-            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
-                threadLocalSynchronizationContextStack.Value.Pop();
-        }, null);
+        synchronizationContext.Post(async state => await completion.AttemptSetResultAsync(asyncFunc).ConfigureAwait(false), null);
         return await completion.Task.ConfigureAwait(false);
     }
 
@@ -348,6 +284,4 @@ public static class SynchronizedExtensions
     /// <param name="asyncFunc">The <see cref="Func{Task}"/> that returns a value</param>
     /// <returns>The result of <paramref name="asyncFunc"/></returns>
     public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) => SequentialExecuteAsync(synchronizable?.SynchronizationContext, asyncFunc);
-
-    static Stack<SynchronizationContext?> ThreadLocalSynchronizationContextStackValueFactory() => new();
 }

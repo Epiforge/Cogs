@@ -10,14 +10,15 @@ public static class AsyncExtensions
     /// <summary>
     /// Gets the value passed to the results of <see cref="TaskCompletionSource{TResult}"/> against which void methods are invoked
     /// </summary>
-    public static object AttemptSetResultDefaultObject { get; } = new object();
+    public static object AttemptSetResultDefaultObject { get; } = new();
 
     /// <summary>
     /// Invokes a void method and then <see cref="TaskCompletionSource{TResult}.SetResult(TResult)"/> with the value of <see cref="AttemptSetResultDefaultObject"/> if it succeeds; otherwise invokes <see cref="TaskCompletionSource{TResult}.SetException(Exception)"/> with the exception thrown by the method
     /// </summary>
     /// <param name="taskCompletionSource">The task completion source</param>
     /// <param name="action">The void method to invoke</param>
-    public static void AttemptSetResult(this TaskCompletionSource<object> taskCompletionSource, Action action) => AttemptSetResult(taskCompletionSource, action, AttemptSetResultDefaultObject);
+    public static void AttemptSetResult(this TaskCompletionSource<object> taskCompletionSource, Action action) =>
+        AttemptSetResult(taskCompletionSource, action, AttemptSetResultDefaultObject);
 
     /// <summary>
     /// Invokes a void method and then <see cref="TaskCompletionSource{TResult}.SetResult(TResult)"/> with the default value of <typeparamref name="TResult"/> if it succeeds; otherwise invokes <see cref="TaskCompletionSource{TResult}.SetException(Exception)"/> with the exception thrown by the method
@@ -93,7 +94,8 @@ public static class AsyncExtensions
     /// </summary>
     /// <param name="taskCompletionSource">The task completion source</param>
     /// <param name="asyncAction">The void async method to invoke</param>
-    public static Task AttemptSetResultAsync(this TaskCompletionSource<object> taskCompletionSource, Func<Task> asyncAction) => AttemptSetResultAsync(taskCompletionSource, asyncAction, AttemptSetResultDefaultObject);
+    public static Task AttemptSetResultAsync(this TaskCompletionSource<object> taskCompletionSource, Func<Task> asyncAction) =>
+        AttemptSetResultAsync(taskCompletionSource, asyncAction, AttemptSetResultDefaultObject);
 
     /// <summary>
     /// Invokes a void async method and then <see cref="TaskCompletionSource{TResult}.SetResult(TResult)"/> with the default value of <typeparamref name="TResult"/> if it succeeds; otherwise invokes <see cref="TaskCompletionSource{TResult}.SetException(Exception)"/> with the exception thrown by the method
@@ -170,7 +172,8 @@ public static class AsyncExtensions
     /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
     /// <param name="taskCompletionSource">The task completion source</param>
     /// <param name="action">The void method to invoke</param>
-    public static bool AttemptTrySetResult<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Action action) where TResult : class
+    public static bool AttemptTrySetResult<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Action action)
+        where TResult : class
     {
         if (taskCompletionSource is null)
             throw new ArgumentNullException(nameof(taskCompletionSource));
@@ -215,7 +218,8 @@ public static class AsyncExtensions
     /// <typeparam name="TResult">The generic type argument of the task completion source</typeparam>
     /// <param name="taskCompletionSource">The task completion source</param>
     /// <param name="asyncAction">The void async method to invoke</param>
-    public static async Task<bool> AttemptTrySetResultAsync<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Func<Task> asyncAction) where TResult : class
+    public static async Task<bool> AttemptTrySetResultAsync<TResult>(this TaskCompletionSource<TResult?> taskCompletionSource, Func<Task> asyncAction)
+        where TResult : class
     {
         if (taskCompletionSource is null)
             throw new ArgumentNullException(nameof(taskCompletionSource));

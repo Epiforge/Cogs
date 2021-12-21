@@ -15,7 +15,8 @@ public static class DataflowExtensions
     /// <typeparam name="TSource">The type of the elements in the sequence</typeparam>
     /// <param name="source">The sequence</param>
     /// <param name="action">The action</param>
-    public static Task DataflowForAllAsync<TSource>(this IEnumerable<TSource> source, Action<TSource> action) => DataflowForAllAsync(source, action, cpuBoundBlock);
+    public static Task DataflowForAllAsync<TSource>(this IEnumerable<TSource> source, Action<TSource> action) =>
+        DataflowForAllAsync(source, action, cpuBoundBlock);
 
     /// <summary>
     /// Performs a specified asynchronous action for each element of a sequence in parallel utilizing all hardware threads
@@ -23,7 +24,8 @@ public static class DataflowExtensions
     /// <typeparam name="TSource">The type of the elements in the sequence</typeparam>
     /// <param name="source">The sequence</param>
     /// <param name="asyncAction">The asynchronous action</param>
-    public static Task DataflowForAllAsync<TSource>(this IEnumerable<TSource> source, Func<TSource, Task> asyncAction) => DataflowForAllAsync(source, asyncAction, cpuBoundBlock);
+    public static Task DataflowForAllAsync<TSource>(this IEnumerable<TSource> source, Func<TSource, Task> asyncAction) =>
+        DataflowForAllAsync(source, asyncAction, cpuBoundBlock);
 
     /// <summary>
     /// Performs a specified action for each element of a sequence in parallel
@@ -69,7 +71,8 @@ public static class DataflowExtensions
     /// <param name="source">The sequence</param>
     /// <param name="selector">The transform</param>
     /// <returns>The results of the transform on each element in no particular order</returns>
-    public static Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) => DataflowSelectAsync(source, selector, cpuBoundBlock);
+    public static Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) =>
+        DataflowSelectAsync(source, selector, cpuBoundBlock);
 
     /// <summary>
     /// Performs a specified asynchronous transform on each element of a sequence in parallel utilizing all hardware threads
@@ -79,7 +82,8 @@ public static class DataflowExtensions
     /// <param name="source">The sequence</param>
     /// <param name="asyncSelector">The asynchronous transform</param>
     /// <returns>The results of the asynchronous transform on each element in no particular order</returns>
-    public static Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> asyncSelector) => DataflowSelectAsync(source, asyncSelector, cpuBoundBlock);
+    public static Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> asyncSelector) =>
+        DataflowSelectAsync(source, asyncSelector, cpuBoundBlock);
 
     /// <summary>
     /// Performs a specified transform on each element of a sequence in parallel
