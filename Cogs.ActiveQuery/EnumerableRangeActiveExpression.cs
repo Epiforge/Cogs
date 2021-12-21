@@ -32,6 +32,8 @@ class EnumerableRangeActiveExpression<TResult> :
     public event EventHandler<RangeActiveExpressionResultChangeEventArgs<object?, TResult?>>? ElementResultChanging;
     public event NotifyGenericCollectionChangedEventHandler<(object? element, TResult? result)>? GenericCollectionChanged;
 
+    public ActiveExpressionOptions? Options { get; }
+
     void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         var activeExpression = (IActiveExpression<object, TResult>)sender;
@@ -94,46 +96,6 @@ class EnumerableRangeActiveExpression<TResult> :
         return addedActiveExpressions;
     }
 
-    void CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-    {
-        switch (e.Action)
-        {
-            case NotifyCollectionChangedAction.Add:
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressions(e.NewStartingIndex, e.NewItems.Cast<object?>()), e.NewStartingIndex));
-                break;
-            case NotifyCollectionChangedAction.Move:
-                List<(object? element, IActiveExpression<object?, TResult> activeExpression)> moving;
-                using (activeExpressionsAccess.WriterLock())
-                {
-                    moving = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
-                    activeExpressions.RemoveRange(e.OldStartingIndex, moving.Count);
-                    activeExpressions.InsertRange(e.NewStartingIndex, moving);
-                }
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)), e.NewStartingIndex, e.OldStartingIndex));
-                break;
-            case NotifyCollectionChangedAction.Remove:
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressions(e.OldStartingIndex, e.OldItems.Count), e.OldStartingIndex));
-                break;
-            case NotifyCollectionChangedAction.Replace:
-                IEnumerable<(object? element, TResult? result)> removed, added;
-                using (activeExpressionsAccess.WriterLock())
-                {
-                    removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count);
-                    added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>()).Select(ae => ((object?)ae.Arg, ae.Value));
-                }
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex));
-                break;
-            default:
-                using (activeExpressionsAccess.WriterLock())
-                {
-                    RemoveActiveExpressionsUnderLock(0, activeExpressions.Count);
-                    AddActiveExpressionsUnderLock(0, source.Cast<object>());
-                }
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Reset));
-                break;
-        }
-    }
-
     protected override bool Dispose(bool disposing)
     {
         lock (rangeActiveExpressionsAccess)
@@ -144,7 +106,7 @@ class EnumerableRangeActiveExpression<TResult> :
         }
         RemoveActiveExpressions(0, activeExpressions.Count);
         if (source is INotifyCollectionChanged collectionChangedNotifier)
-            collectionChangedNotifier.CollectionChanged -= CollectionChanged;
+            collectionChangedNotifier.CollectionChanged -= SourceCollectionChanged;
         if (source is INotifyElementFaultChanges faultNotifier)
         {
             faultNotifier.ElementFaultChanged -= SourceElementFaultChanged;
@@ -175,7 +137,7 @@ class EnumerableRangeActiveExpression<TResult> :
     {
         AddActiveExpressions(0, source.Cast<object>());
         if (source is INotifyCollectionChanged collectionChangedNotifier)
-            collectionChangedNotifier.CollectionChanged += CollectionChanged;
+            collectionChangedNotifier.CollectionChanged += SourceCollectionChanged;
         if (source is INotifyElementFaultChanges faultNotifier)
         {
             faultNotifier.ElementFaultChanged += SourceElementFaultChanged;
@@ -242,13 +204,45 @@ class EnumerableRangeActiveExpression<TResult> :
         return result;
     }
 
+    void SourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    {
+        NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>? eventArgs = null;
+        using (activeExpressionsAccess.WriterLock())
+        {
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add when e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count:
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>()).Select(ae => ((object?)ae.Arg, ae.Value)).ToImmutableArray(), e.NewStartingIndex);
+                    break;
+                case NotifyCollectionChangedAction.Move when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1) && e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1):
+                    var moving = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                    activeExpressions.RemoveRange(e.OldStartingIndex, moving.Count);
+                    activeExpressions.InsertRange(e.NewStartingIndex, moving);
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)).ToImmutableArray(), e.NewStartingIndex, e.OldStartingIndex);
+                    break;
+                case NotifyCollectionChangedAction.Remove when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1):
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count).ToImmutableArray(), e.OldStartingIndex);
+                    break;
+                case NotifyCollectionChangedAction.Replace when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1) && e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count - (e.NewItems.Count - 1):
+                    var removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count).ToImmutableArray();
+                    var added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>()).Select(ae => ((object?)ae.Arg, ae.Value)).ToImmutableArray();
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex);
+                    break;
+                default:
+                    RemoveActiveExpressionsUnderLock(0, activeExpressions.Count);
+                    AddActiveExpressionsUnderLock(0, source.Cast<object>());
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Reset);
+                    break;
+            }
+        }
+        OnGenericCollectionChanged(eventArgs);
+    }
+
     void SourceElementFaultChanged(object sender, ElementFaultChangeEventArgs e) =>
         ElementFaultChanged?.Invoke(sender, e);
 
     void SourceElementFaultChanging(object sender, ElementFaultChangeEventArgs e) =>
         ElementFaultChanging?.Invoke(sender, e);
-
-    public ActiveExpressionOptions? Options { get; }
 
     static readonly object rangeActiveExpressionsAccess = new();
     static readonly Dictionary<RangeActiveExpressionsKey, EnumerableRangeActiveExpression<TResult>> rangeActiveExpressions = new(new RangeActiveExpressionsKeyEqualityComparer());
@@ -317,6 +311,8 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
     public event EventHandler<RangeActiveExpressionResultChangeEventArgs<TElement, TResult?>>? ElementResultChanging;
     public event NotifyGenericCollectionChangedEventHandler<(TElement element, TResult? result)>? GenericCollectionChanged;
 
+    public ActiveExpressionOptions? Options { get; }
+
     void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         var activeExpression = (IActiveExpression<TElement, TResult>)sender;
@@ -379,46 +375,6 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
         return addedActiveExpressions;
     }
 
-    void CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-    {
-        switch (e.Action)
-        {
-            case NotifyCollectionChangedAction.Add:
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressions(e.NewStartingIndex, e.NewItems.Cast<TElement>()), e.NewStartingIndex));
-                break;
-            case NotifyCollectionChangedAction.Move:
-                List<(TElement element, IActiveExpression<TElement, TResult> activeExpression)> moving;
-                using (activeExpressionsAccess.WriterLock())
-                {
-                    moving = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
-                    activeExpressions.RemoveRange(e.OldStartingIndex, moving.Count);
-                    activeExpressions.InsertRange(e.NewStartingIndex, moving);
-                }
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)), e.NewStartingIndex, e.OldStartingIndex));
-                break;
-            case NotifyCollectionChangedAction.Remove:
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressions(e.OldStartingIndex, e.OldItems.Count), e.OldStartingIndex));
-                break;
-            case NotifyCollectionChangedAction.Replace:
-                IEnumerable<(TElement element, TResult? result)> removed, added;
-                using (activeExpressionsAccess.WriterLock())
-                {
-                    removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count);
-                    added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<TElement>()).Select(ae => (ae.Arg, ae.Value));
-                }
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex));
-                break;
-            default:
-                using (activeExpressionsAccess.WriterLock())
-                {
-                    RemoveActiveExpressionsUnderLock(0, activeExpressions.Count);
-                    AddActiveExpressionsUnderLock(0, source.Cast<TElement>());
-                }
-                OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Reset));
-                break;
-        }
-    }
-
     protected override bool Dispose(bool disposing)
     {
         lock (rangeActiveExpressionsAccess)
@@ -429,7 +385,7 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
         }
         RemoveActiveExpressions(0, activeExpressions.Count);
         if (source is INotifyCollectionChanged collectionChangedNotifier)
-            collectionChangedNotifier.CollectionChanged -= CollectionChanged;
+            collectionChangedNotifier.CollectionChanged -= SourceCollectionChanged;
         if (source is INotifyElementFaultChanges faultNotifier)
         {
             faultNotifier.ElementFaultChanged -= SourceElementFaultChanged;
@@ -469,7 +425,7 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
     {
         AddActiveExpressions(0, source);
         if (source is INotifyCollectionChanged collectionChangedNotifier)
-            collectionChangedNotifier.CollectionChanged += CollectionChanged;
+            collectionChangedNotifier.CollectionChanged += SourceCollectionChanged;
         if (source is INotifyElementFaultChanges faultNotifier)
         {
             faultNotifier.ElementFaultChanged += SourceElementFaultChanged;
@@ -542,7 +498,39 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
     void SourceElementFaultChanging(object sender, ElementFaultChangeEventArgs e) =>
         ElementFaultChanging?.Invoke(sender, e);
 
-    public ActiveExpressionOptions? Options { get; }
+    void SourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    {
+        NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>? eventArgs = null;
+        using (activeExpressionsAccess.WriterLock())
+        {
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add when e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count:
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<TElement>()).Select(ae => (ae.Arg, ae.Value)).ToImmutableArray(), e.NewStartingIndex);
+                    break;
+                case NotifyCollectionChangedAction.Move when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1) && e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1):
+                    var moving = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                    activeExpressions.RemoveRange(e.OldStartingIndex, moving.Count);
+                    activeExpressions.InsertRange(e.NewStartingIndex, moving);
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Move, moving.Select(eae => (eae.element, eae.activeExpression.Value)).ToImmutableArray(), e.NewStartingIndex, e.OldStartingIndex);
+                    break;
+                case NotifyCollectionChangedAction.Remove when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1):
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Remove, RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count).ToImmutableArray(), e.OldStartingIndex);
+                    break;
+                case NotifyCollectionChangedAction.Replace when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1) && e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count - (e.NewItems.Count - 1):
+                    var removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count).ToImmutableArray();
+                    var added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<TElement>()).Select(ae => (ae.Arg, ae.Value)).ToImmutableArray();
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex);
+                    break;
+                default:
+                    RemoveActiveExpressionsUnderLock(0, activeExpressions.Count);
+                    AddActiveExpressionsUnderLock(0, source.Cast<TElement>());
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Reset);
+                    break;
+            }
+        }
+        OnGenericCollectionChanged(eventArgs);
+    }
 
     static readonly object rangeActiveExpressionsAccess = new();
     static readonly Dictionary<RangeActiveExpressionKey, EnumerableRangeActiveExpression<TElement, TResult>> rangeActiveExpressions = new(new RangeActiveExpressionKeyEqualityComparer());
