@@ -1,1 +1,1 @@
-We made enumerable queries more resillient to invalid collection change notification events.
+We upgraded NuGet references.
