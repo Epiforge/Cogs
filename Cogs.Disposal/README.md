@@ -8,4 +8,4 @@ Much like the Components library, this library features base classes that handle
 
 This library provides the `IDisposalStatus` interface, which defines the `IsDisposed` property and all the base classes implement it.
 
-Lastly, it provides the `INotifyDisposing`, `INotifyDisposed`, and `INotifyDisposalOverridden` interfaces, which add events that notify of these occurrences. If you're using the base classes in this library, you don't need to worry about unregistering handlers. The base classes drop all the references in the events' invocation lists on their own. We're not trying to *create* leaks here!
+Lastly, it provides the `INotifyDisposing`, `INotifyDisposed`, and `INotifyDisposalOverridden` interfaces, which add events that notify of these occurrences.
