@@ -9,7 +9,6 @@ Supports `netstandard2.1`.
 ![Azure Pipelines](https://dev.azure.com/epiforge/cogs/_apis/build/status/2)
 ![Build](https://img.shields.io/azure-devops/build/epiforge/cogs/2.svg?logo=microsoft&logoColor=white)
 ![Tests](https://img.shields.io/azure-devops/tests/epiforge/cogs/2.svg?compact_message=&logo=microsoft&logoColor=white)
-![Coverage](https://img.shields.io/azure-devops/coverage/epiforge/cogs/2.svg?logo=microsoft&logoColor=white)
 
 - [Libraries](#libraries)
   - [Active Expressions](#active-expressions)
