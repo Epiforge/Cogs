@@ -69,8 +69,8 @@ public abstract class ActiveExpression : SyncDisposable
         }
         protected set
         {
-            SetBackedProperty(ref val, in defaultValue, nameof(Value));
-            SetBackedProperty(ref fault, in value);
+            SetBackedProperty(ref val, in defaultValue, valueChangingEventArgs, valueChangedEventArgs);
+            SetBackedProperty(ref fault, in value, faultChangingEventArgs, faultChangedEventArgs);
         }
     }
 
@@ -108,13 +108,13 @@ public abstract class ActiveExpression : SyncDisposable
         }
         protected set
         {
-            SetBackedProperty(ref fault, null, nameof(Fault));
+            SetBackedProperty(ref fault, null, faultChangingEventArgs, faultChangedEventArgs);
             if (!valueEqualityComparer.Equals(value, val))
             {
                 var previousValue = val;
-                OnPropertyChanging();
+                OnPropertyChanging(valueChangingEventArgs);
                 val = value;
-                OnPropertyChanged();
+                OnPropertyChanged(valueChangedEventArgs);
                 DisposeIfNecessaryAndPossible(previousValue);
             }
         }
@@ -224,6 +224,26 @@ public abstract class ActiveExpression : SyncDisposable
     /// Gets the suffix of the string representation of this node
     /// </summary>
     protected string ToStringSuffix => $"/* {GetValueString(fault, !TryGetUndeferredValue(out var value), value)} */";
+
+    /// <summary>
+    /// Cached <see cref="PropertyChangedEventArgs"/> instance for <see cref="Fault"/> value changes
+    /// </summary>
+    static readonly PropertyChangedEventArgs faultChangedEventArgs = new(nameof(Fault));
+
+    /// <summary>
+    /// Cached <see cref="PropertyChangingEventArgs"/> instance for <see cref="Fault"/> value changes
+    /// </summary>
+    static readonly PropertyChangingEventArgs faultChangingEventArgs = new(nameof(Fault));
+
+    /// <summary>
+    /// Cached <see cref="PropertyChangedEventArgs"/> instance for <see cref="Fault"/> value changes
+    /// </summary>
+    static readonly PropertyChangedEventArgs valueChangedEventArgs = new(nameof(Value));
+
+    /// <summary>
+    /// Cached <see cref="PropertyChangingEventArgs"/> instance for <see cref="Fault"/> value changes
+    /// </summary>
+    static readonly PropertyChangingEventArgs valueChangingEventArgs = new(nameof(Value));
 
     static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyGetMethodToProperty = new(); // NCrunch: no coverage
 

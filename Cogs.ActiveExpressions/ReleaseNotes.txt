@@ -1,1 +1,1 @@
-We upgraded some NuGet references. We enabled NuGet symbol packages.
+Active expression property change events now use cached arguments (significant performance increase).
