@@ -27,7 +27,6 @@ public static class SynchronizedExtensions
         ExceptionDispatchInfo? edi = default;
         synchronizationContext.Send(state =>
         {
-            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
@@ -41,7 +40,7 @@ public static class SynchronizedExtensions
             }
             finally
             {
-                while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
+                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
                     threadLocalSynchronizationContextStack.Value.Pop();
             }
         }, null);
@@ -75,7 +74,6 @@ public static class SynchronizedExtensions
         ExceptionDispatchInfo? edi = default;
         synchronizationContext.Send(state =>
         {
-            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
@@ -89,7 +87,7 @@ public static class SynchronizedExtensions
             }
             finally
             {
-                while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
+                for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
                     threadLocalSynchronizationContextStack.Value.Pop();
             }
         }, null);
@@ -125,12 +123,11 @@ public static class SynchronizedExtensions
         var completion = new TaskCompletionSource<object>();
         synchronizationContext.Post(state =>
         {
-            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
             completion.AttemptSetResult(action);
-            while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
+            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
                 threadLocalSynchronizationContextStack.Value.Pop();
         }, null);
         return completion.Task;
@@ -161,12 +158,11 @@ public static class SynchronizedExtensions
         var completion = new TaskCompletionSource<TResult>();
         synchronizationContext.Post(state =>
         {
-            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
             completion.AttemptSetResult(func);
-            while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
+            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
                 threadLocalSynchronizationContextStack.Value.Pop();
         }, null);
         return completion.Task;
@@ -186,6 +182,7 @@ public static class SynchronizedExtensions
     /// </summary>
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="asyncAction">The <see cref="Func{Task}"/></param>
+    [SuppressMessage("Reliability", "CA2007: Consider calling ConfigureAwait on the awaited task", Justification = "If a different worker pool thread continues from the awaited call the thread local stack will not be the same")]
     public static async Task ExecuteAsync(this SynchronizationContext? synchronizationContext, Func<Task> asyncAction)
     {
         if (asyncAction is null)
@@ -200,12 +197,11 @@ public static class SynchronizedExtensions
         var completion = new TaskCompletionSource<object>();
         synchronizationContext.Post(async state =>
         {
-            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
-            await completion.AttemptSetResultAsync(asyncAction).ConfigureAwait(false);
-            while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
+            await completion.AttemptSetResultAsync(asyncAction);
+            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
                 threadLocalSynchronizationContextStack.Value.Pop();
         }, null);
         await completion.Task.ConfigureAwait(false);
@@ -218,6 +214,7 @@ public static class SynchronizedExtensions
     /// <param name="asyncAction">The <see cref="Func{Task}"/></param>
     public static Task ExecuteAsync(this ISynchronized? synchronizable, Func<Task> asyncAction) => ExecuteAsync(synchronizable?.SynchronizationContext, asyncAction);
 
+
     /// <summary>
     /// Executes the specified <paramref name="asyncFunc"/> on the specified <paramref name="synchronizationContext"/> and returns the result
     /// </summary>
@@ -225,6 +222,7 @@ public static class SynchronizedExtensions
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="asyncFunc">The <see cref="Func{Task}"/> that returns a value</param>
     /// <returns>The result of <paramref name="asyncFunc"/></returns>
+    [SuppressMessage("Reliability", "CA2007: Consider calling ConfigureAwait on the awaited task", Justification = "If a different worker pool thread continues from the awaited call the thread local stack will not be the same")]
     public static async Task<TResult> ExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<Task<TResult>> asyncFunc)
     {
         if (asyncFunc is null)
@@ -236,12 +234,11 @@ public static class SynchronizedExtensions
         var completion = new TaskCompletionSource<TResult>();
         synchronizationContext.Post(async state =>
         {
-            var threadLocalSynchronizationContextStackOriginalCount = threadLocalSynchronizationContextStack.Value.Count;
             foreach (var synchronizationContext in thisSynchronizationContextStack)
                 threadLocalSynchronizationContextStack.Value.Push(synchronizationContext);
             threadLocalSynchronizationContextStack.Value.Push(thisSynchronizationContext);
-            await completion.AttemptSetResultAsync(asyncFunc).ConfigureAwait(false);
-            while (threadLocalSynchronizationContextStack.Value.Count > threadLocalSynchronizationContextStackOriginalCount)
+            await completion.AttemptSetResultAsync(asyncFunc);
+            for (var i = 0; i <= thisSynchronizationContextStack.Count; ++i)
                 threadLocalSynchronizationContextStack.Value.Pop();
         }, null);
         return await completion.Task.ConfigureAwait(false);
