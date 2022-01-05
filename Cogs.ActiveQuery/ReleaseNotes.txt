@@ -1,1 +1,1 @@
-We upgraded NuGet references.
+ActiveConcat now no longer makes shallow copies of sequences being concatenated (potentially large performance increase and memory consumption decrease).
