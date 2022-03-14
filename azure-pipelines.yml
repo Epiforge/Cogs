@@ -9,7 +9,7 @@ steps:
   displayName: 'Use .NET'
   inputs:
     version: '6.x'
-    includePreviewVersions: true
+    #includePreviewVersions: true
 
 - task: DotNetCoreCLI@2
   displayName: 'Restore referenced NuGet packages'
