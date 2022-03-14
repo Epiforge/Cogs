@@ -2530,7 +2530,7 @@ public static class ActiveEnumerableExtensions
                     {
                         var adjustingElement = adjustingStartingIndiciesKv.Key;
                         var adjustingStartingIndicies = adjustingStartingIndiciesKv.Value;
-                        if ((element is null && adjustingElement is null) || (element is { } && adjustingElement is { } && sourceEqualityComparer!.Equals(element, adjustingElement)))
+                        if (element is null && adjustingElement is null || element is { } && adjustingElement is { } && sourceEqualityComparer!.Equals(element, adjustingElement))
                             for (int j = 0, jj = adjustingStartingIndicies.Count; j < jj; ++j)
                             {
                                 var adjustingStartingIndex = adjustingStartingIndicies[j];
@@ -3553,7 +3553,7 @@ public static class ActiveEnumerableExtensions
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> equivalent to <paramref name="source"/> (and mutates with it so long as <paramref name="source"/> implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/>)</returns>
     public static IActiveEnumerable<TSource> ToActiveEnumerable<TSource>(this IEnumerable<TSource> source)
     {
-        if (source is IReadOnlyList<TSource> readOnlyList && source is ISynchronized)
+        if (source is IReadOnlyList<TSource> readOnlyList and ISynchronized)
             return new ActiveEnumerable<TSource>(readOnlyList);
 
         var changingSource = source as INotifyCollectionChanged;
@@ -3937,7 +3937,7 @@ public static class ActiveEnumerableExtensions
                 else
                 {
                     var equalityComparer = EqualityComparer<TSource>.Default;
-                    rangeObservableCollection!.RemoveAll(element => (element is null && e.Element is null) || (element is { } && e.Element is { } && equalityComparer.Equals(element, e.Element)));
+                    rangeObservableCollection!.RemoveAll(element => element is null && e.Element is null || element is { } && e.Element is { } && equalityComparer.Equals(element, e.Element));
                 }
             });
 

@@ -3,7 +3,13 @@ namespace Cogs.Disposal;
 /// <summary>
 /// Provides an overridable mechanism for releasing unmanaged resources synchronously
 /// </summary>
-public abstract class SyncDisposable : PropertyChangeNotifier, IDisposable, INotifyDisposalOverridden, IDisposalStatus, INotifyDisposed, INotifyDisposing
+public abstract class SyncDisposable :
+    PropertyChangeNotifier,
+    IDisposable,
+    INotifyDisposalOverridden,
+    IDisposalStatus,
+    INotifyDisposed,
+    INotifyDisposing
 {
     /// <summary>
     /// Finalizes this object

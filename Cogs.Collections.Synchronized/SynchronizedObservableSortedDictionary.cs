@@ -207,7 +207,6 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     public override void Add(TKey key, TValue value) =>
         this.Execute(() => base.Add(key, value));
 
-
     /// <summary>
     /// Adds an element with the provided key and value to the <see cref="IDictionary"/> object
     /// </summary>
@@ -485,7 +484,6 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// <returns>The keys of the elements that were found and removed</returns>
     public virtual Task<IReadOnlyList<TKey>> RemoveRangeAsync(IEnumerable<TKey> keys) =>
         this.ExecuteAsync(() => base.RemoveRange(keys));
-
 
     /// <summary>
     /// Replaces elements in the <see cref="IRangeDictionary{TKey, TValue}"/> with specified elements

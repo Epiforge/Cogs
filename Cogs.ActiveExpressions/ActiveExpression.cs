@@ -3,7 +3,8 @@ namespace Cogs.ActiveExpressions;
 /// <summary>
 /// Provides the base class from which the classes that represent active expression tree nodes are derived; use <see cref="Create{TResult}(LambdaExpression, object[])"/> or one of its overloads to create an active expression
 /// </summary>
-public abstract class ActiveExpression : SyncDisposable
+public abstract class ActiveExpression :
+    SyncDisposable
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ActiveExpression"/> class
@@ -11,7 +12,8 @@ public abstract class ActiveExpression : SyncDisposable
     /// <param name="expression">The expression upon which the active expression is based</param>
     /// <param name="options">The <see cref="ActiveExpressionOptions"/> instance of this node</param>
     /// <param name="deferEvaluation"><c>true</c> if evaluation should be deferred until the <see cref="Value"/> property is accessed; otherwise, <c>false</c></param>
-    protected ActiveExpression(Expression expression, ActiveExpressionOptions? options, bool deferEvaluation) : this(expression is null ? throw new ArgumentNullException(nameof(expression)) : expression.Type, expression.NodeType, options, deferEvaluation)
+    protected ActiveExpression(Expression expression, ActiveExpressionOptions? options, bool deferEvaluation) :
+        this(expression is null ? throw new ArgumentNullException(nameof(expression)) : expression.Type, expression.NodeType, options, deferEvaluation)
     {
     }
 
@@ -40,7 +42,8 @@ public abstract class ActiveExpression : SyncDisposable
     /// <param name="nodeType">The <see cref="ExpressionType"/> for this node</param>
     /// <param name="options">The <see cref="ActiveExpressionOptions"/> instance of this node</param>
     /// <param name="value">The value of this node</param>
-    protected ActiveExpression(Type type, ExpressionType nodeType, ActiveExpressionOptions? options, object value) : this(type, nodeType, options, false) => val = value;
+    protected ActiveExpression(Type type, ExpressionType nodeType, ActiveExpressionOptions? options, object value) :
+        this(type, nodeType, options, false) => val = value;
 
     readonly object? defaultValue;
     bool deferringEvaluation;
@@ -141,13 +144,15 @@ public abstract class ActiveExpression : SyncDisposable
     /// <summary>
     /// Disposes of the expression's value if necessary and possible (intended to be called within <see cref="SyncDisposable.Dispose(bool)"/>)
     /// </summary>
-    protected void DisposeValueIfNecessaryAndPossible() => DisposeIfNecessaryAndPossible(val);
+    protected void DisposeValueIfNecessaryAndPossible() =>
+        DisposeIfNecessaryAndPossible(val);
 
     /// <summary>
     /// Throws a <see cref="NotImplementedException"/> because deriving classes should be overriding this method
     /// </summary>
     /// <param name="obj">The object to compare with the current object</param>
-    public override bool Equals(object? obj) => throw new NotImplementedException();
+    public override bool Equals(object? obj) =>
+        throw new NotImplementedException();
 
     /// <summary>
     /// Evaluates the current node
@@ -183,13 +188,15 @@ public abstract class ActiveExpression : SyncDisposable
     /// <summary>
     /// Throws a <see cref="NotImplementedException"/> because deriving classes should be overriding this method
     /// </summary>
-    public override int GetHashCode() => throw new NotImplementedException();
+    public override int GetHashCode() =>
+        throw new NotImplementedException();
 
     /// <summary>
     /// Gets whether a value produced by this expression should be disposed
     /// </summary>
     /// <returns><c>true</c> if values from this expression should be disposed; otherwise, <c>false</c></returns>
-    protected virtual bool GetShouldValueBeDisposed() => false;
+    protected virtual bool GetShouldValueBeDisposed() =>
+        false;
 
     /// <summary>
     /// Called after an active expression is created in order to initialize it
@@ -310,13 +317,16 @@ public abstract class ActiveExpression : SyncDisposable
     /// <param name="resultType">The type of the result when the expression is evaluated</param>
     /// <param name="operands">The operands (or arguments) of the expression</param>
     /// <returns>A human-readable representation of the expression</returns>
-    public static string GetOperatorExpressionSyntax(ExpressionType expressionType, Type resultType, params object?[] operands)
-    {
-        if (resultType is null)
-            throw new ArgumentNullException(nameof(resultType));
-        if (operands is null)
-            throw new ArgumentNullException(nameof(operands));
-        return expressionType switch
+    public static string GetOperatorExpressionSyntax(ExpressionType expressionType, Type resultType, params object?[] operands) =>
+        resultType is null
+        ?
+        throw new ArgumentNullException(nameof(resultType))
+        :
+        operands is null
+        ?
+        throw new ArgumentNullException(nameof(operands))
+        :
+        expressionType switch
         {
             ExpressionType.Add => $"({operands[0]} + {operands[1]})",
             ExpressionType.AddChecked => $"checked({operands[0]} + {operands[1]})",
@@ -338,7 +348,7 @@ public abstract class ActiveExpression : SyncDisposable
             ExpressionType.MultiplyChecked => $"checked({operands[0]} * {operands[1]})",
             ExpressionType.Negate => $"(-{operands[0]})",
             ExpressionType.NegateChecked => $"checked(-{operands[0]})",
-            ExpressionType.Not when operands[0] is bool || (operands[0] is ActiveExpression notOperand && (notOperand.Type == typeof(bool) || notOperand.Type == typeof(bool?))) => $"(!{operands[0]})",
+            ExpressionType.Not when operands[0] is bool || operands[0] is ActiveExpression notOperand && (notOperand.Type == typeof(bool) || notOperand.Type == typeof(bool?)) => $"(!{operands[0]})",
             ExpressionType.Not or ExpressionType.OnesComplement => $"(~{operands[0]})",
             ExpressionType.NotEqual => $"({operands[0]} != {operands[1]})",
             ExpressionType.Or => $"({operands[0]} | {operands[1]})",
@@ -350,9 +360,9 @@ public abstract class ActiveExpression : SyncDisposable
             ExpressionType.UnaryPlus => $"(+{operands[0]})",
             _ => throw new ArgumentOutOfRangeException(nameof(expressionType)),
         };
-    }
 
-    static PropertyInfo GetPropertyFromGetMethod(MethodInfo getMethod) => getMethod.DeclaringType.GetRuntimeProperties().FirstOrDefault(property => property.GetMethod == getMethod);
+    static PropertyInfo GetPropertyFromGetMethod(MethodInfo getMethod) =>
+        getMethod.DeclaringType.GetRuntimeProperties().FirstOrDefault(property => property.GetMethod == getMethod);
 
     /// <summary>
     /// Creates an active expression using a specified lambda expression and arguments
@@ -455,8 +465,6 @@ public abstract class ActiveExpression : SyncDisposable
             return $"[{fault.GetType().Name}: {fault.Message}]";
         if (deferred)
             return "?";
-        if (value is null)
-            return "null";
         if (value is string str)
         {
             var sb = new StringBuilder(str);
@@ -471,9 +479,9 @@ public abstract class ActiveExpression : SyncDisposable
             sb.Replace("\v", "\\v");
             return $"\"{sb}\"";
         }
-        if (value is char ch)
+        return value switch
         {
-            return ch switch
+            char ch => ch switch
             {
                 '\\' => "'\\\\'",
                 '\0' => "'\\0'",
@@ -485,15 +493,13 @@ public abstract class ActiveExpression : SyncDisposable
                 '\t' => "'\\t'",
                 '\v' => "'\\v'",
                 _ => $"'{ch}'",
-            };
-        }
-        if (value is DateTime dt)
-            return $"new System.DateTime({dt.Ticks}, System.DateTimeKind.{dt.Kind})";
-        if (value is TimeSpan ts)
-            return $"new System.TimeSpan({ts.Ticks})";
-        if (value is Guid guid)
-            return $"new System.Guid(\"{guid}\")";
-        return $"{value}";
+            },
+            DateTime dt => $"new System.DateTime({dt.Ticks}, System.DateTimeKind.{dt.Kind})",
+            Guid guid => $"new System.Guid(\"{guid}\")",
+            TimeSpan ts => $"new System.TimeSpan({ts.Ticks})",
+            null => "null",
+            _ => $"{value}"
+        };
     }
 
     internal static Expression? ReplaceParameters(LambdaExpression lambdaExpression, params object?[] arguments)
@@ -556,40 +562,68 @@ public abstract class ActiveExpression : SyncDisposable
     /// <param name="b">The second node to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
     [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
-    public static bool operator ==(ActiveExpression? a, ActiveExpression? b)
-    {
-        if (a is ActiveAndAlsoExpression andAlsoA && b is ActiveAndAlsoExpression andAlsoB)
-            return andAlsoA == andAlsoB;
-        if (a is ActiveCoalesceExpression coalesceA && b is ActiveCoalesceExpression coalesceB)
-            return coalesceA == coalesceB;
-        if (a is ActiveOrElseExpression orElseA && b is ActiveOrElseExpression orElseB)
-            return orElseA == orElseB;
-        if (a is ActiveBinaryExpression binaryA && b is ActiveBinaryExpression binaryB)
-            return binaryA == binaryB;
-        if (a is ActiveConditionalExpression conditionalA && b is ActiveConditionalExpression conditionalB)
-            return conditionalA == conditionalB;
-        if (a is ActiveConstantExpression constantA && b is ActiveConstantExpression constantB)
-            return constantA == constantB;
-        if (a is ActiveInvocationExpression invocationA && b is ActiveInvocationExpression invocationB)
-            return invocationA == invocationB;
-        if (a is ActiveIndexExpression indexA && b is ActiveIndexExpression indexB)
-            return indexA == indexB;
-        if (a is ActiveMemberExpression memberA && b is ActiveMemberExpression memberB)
-            return memberA == memberB;
-        if (a is ActiveMemberInitExpression memberInitA && b is ActiveMemberInitExpression memberInitB)
-            return memberInitA == memberInitB;
-        if (a is ActiveMethodCallExpression methodCallA && b is ActiveMethodCallExpression methodCallB)
-            return methodCallA == methodCallB;
-        if (a is ActiveNewArrayInitExpression newArrayInitA && b is ActiveNewArrayInitExpression newArrayInitB)
-            return newArrayInitA == newArrayInitB;
-        if (a is ActiveNewExpression newA && b is ActiveNewExpression newB)
-            return newA == newB;
-        if (a is ActiveTypeBinaryExpression typeBinaryA && b is ActiveTypeBinaryExpression typeBinaryB)
-            return typeBinaryA == typeBinaryB;
-        if (a is ActiveUnaryExpression unaryA && b is ActiveUnaryExpression unaryB)
-            return unaryA == unaryB;
-        return a is null && b is null;
-    }
+    public static bool operator ==(ActiveExpression? a, ActiveExpression? b) =>
+        a is ActiveAndAlsoExpression andAlsoA && b is ActiveAndAlsoExpression andAlsoB
+        ?
+        andAlsoA == andAlsoB
+        :
+        a is ActiveCoalesceExpression coalesceA && b is ActiveCoalesceExpression coalesceB
+        ?
+        coalesceA == coalesceB
+        :
+        a is ActiveOrElseExpression orElseA && b is ActiveOrElseExpression orElseB
+        ?
+        orElseA == orElseB
+        :
+        a is ActiveBinaryExpression binaryA && b is ActiveBinaryExpression binaryB
+        ?
+        binaryA == binaryB
+        :
+        a is ActiveConditionalExpression conditionalA && b is ActiveConditionalExpression conditionalB
+        ?
+        conditionalA == conditionalB
+        :
+        a is ActiveConstantExpression constantA && b is ActiveConstantExpression constantB
+        ?
+        constantA == constantB
+        :
+        a is ActiveInvocationExpression invocationA && b is ActiveInvocationExpression invocationB
+        ?
+        invocationA == invocationB
+        :
+        a is ActiveIndexExpression indexA && b is ActiveIndexExpression indexB
+        ?
+        indexA == indexB
+        :
+        a is ActiveMemberExpression memberA && b is ActiveMemberExpression memberB
+        ?
+        memberA == memberB
+        :
+        a is ActiveMemberInitExpression memberInitA && b is ActiveMemberInitExpression memberInitB
+        ?
+        memberInitA == memberInitB
+        :
+        a is ActiveMethodCallExpression methodCallA && b is ActiveMethodCallExpression methodCallB
+        ?
+        methodCallA == methodCallB
+        :
+        a is ActiveNewArrayInitExpression newArrayInitA && b is ActiveNewArrayInitExpression newArrayInitB
+        ?
+        newArrayInitA == newArrayInitB
+        :
+        a is ActiveNewExpression newA && b is ActiveNewExpression newB
+        ?
+        newA == newB
+        :
+        a is ActiveTypeBinaryExpression typeBinaryA && b is ActiveTypeBinaryExpression typeBinaryB
+        ?
+        typeBinaryA == typeBinaryB
+        :
+        a is ActiveUnaryExpression unaryA && b is ActiveUnaryExpression unaryB
+        ?
+        unaryA == unaryB
+        :
+        a is null && b is null;
 
     /// <summary>
     /// Determines whether two active expression tree nodes are different
@@ -598,7 +632,8 @@ public abstract class ActiveExpression : SyncDisposable
     /// <param name="b">The second node to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveExpression? a, ActiveExpression? b) => !(a == b);
+    public static bool operator !=(ActiveExpression? a, ActiveExpression? b) =>
+        !(a == b);
 
     /// <summary>
     /// Gets/sets the method that will be invoked during the active expression creation process to optimize expressions (default is null)
@@ -610,7 +645,10 @@ public abstract class ActiveExpression : SyncDisposable
 /// Represents an active evaluation of a lambda expression
 /// </summary>
 /// <typeparam name="TResult">The type of the value returned by the lambda expression upon which this active expression is based</typeparam>
-public class ActiveExpression<TResult> : SyncDisposable, IActiveExpression<TResult>, IEquatable<ActiveExpression<TResult>>
+public class ActiveExpression<TResult> :
+    SyncDisposable,
+    IActiveExpression<TResult>,
+    IEquatable<ActiveExpression<TResult>>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, EquatableList<object?> arguments)
     {
@@ -631,7 +669,8 @@ public class ActiveExpression<TResult> : SyncDisposable, IActiveExpression<TResu
     /// <summary>
     /// Gets the arguments that were passed to the lambda expression
     /// </summary>
-    public IReadOnlyList<object?> Arguments => arguments;
+    public IReadOnlyList<object?> Arguments =>
+        arguments;
 
     /// <summary>
     /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
@@ -679,19 +718,16 @@ public class ActiveExpression<TResult> : SyncDisposable, IActiveExpression<TResu
     /// </summary>
     /// <param name="obj">The object to compare with the current object</param>
     /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-    public override bool Equals(object? obj) => obj is ActiveExpression<TResult> other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveExpression<TResult> other && Equals(other);
 
     /// <summary>
     /// Determines whether the specified <see cref="ActiveExpression{TResult}"/> is equal to the current <see cref="ActiveExpression{TResult}"/>
     /// </summary>
     /// <param name="other">The other <see cref="ActiveExpression{TResult}"/></param>
     /// <returns><c>true</c> if the specified <see cref="ActiveExpression{TResult}"/> is equal to the current <see cref="ActiveExpression{TResult}"/>; otherwise, <c>false</c></returns>
-    public bool Equals(ActiveExpression<TResult> other)
-    {
-        if (other is null)
-            throw new ArgumentNullException(nameof(other));
-        return activeExpression == other.activeExpression;
-    }
+    public bool Equals(ActiveExpression<TResult> other) =>
+        other is null ? throw new ArgumentNullException(nameof(other)) : activeExpression == other.activeExpression;
 
     void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
@@ -705,13 +741,15 @@ public class ActiveExpression<TResult> : SyncDisposable, IActiveExpression<TResu
     /// Gets the hash code for this active expression
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveExpression<TResult>), activeExpression);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveExpression<TResult>), activeExpression);
 
     /// <summary>
     /// Returns a string that represents this active expression
     /// </summary>
     /// <returns>A string that represents this active expression</returns>
-    public override string ToString() => activeExpression.ToString();
+    public override string ToString() =>
+        activeExpression.ToString();
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<InstancesKey, ActiveExpression<TResult>> instances = new();
@@ -739,12 +777,8 @@ public class ActiveExpression<TResult> : SyncDisposable, IActiveExpression<TResu
     /// <param name="a">The first expression to compare, or null</param>
     /// <param name="b">The second expression to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-    public static bool operator ==(ActiveExpression<TResult> a, ActiveExpression<TResult> b)
-    {
-        if (a is null)
-            throw new ArgumentNullException(nameof(a));
-        return a.Equals(b);
-    }
+    public static bool operator ==(ActiveExpression<TResult> a, ActiveExpression<TResult> b) =>
+        a is null ? throw new ArgumentNullException(nameof(a)) : a.Equals(b);
 
     /// <summary>
     /// Determines whether two active expressions are different
@@ -752,7 +786,8 @@ public class ActiveExpression<TResult> : SyncDisposable, IActiveExpression<TResu
     /// <param name="a">The first expression to compare, or null</param>
     /// <param name="b">The second expression to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-    public static bool operator !=(ActiveExpression<TResult> a, ActiveExpression<TResult> b) => !(a == b);
+    public static bool operator !=(ActiveExpression<TResult> a, ActiveExpression<TResult> b) =>
+        !(a == b);
 
     record InstancesKey(ActiveExpression ActiveExpression, EquatableList<object?> Args);
 }
@@ -762,7 +797,10 @@ public class ActiveExpression<TResult> : SyncDisposable, IActiveExpression<TResu
 /// </summary>
 /// <typeparam name="TArg">The type of the argument passed to the lambda expression</typeparam>
 /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
-public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression<TArg, TResult>, IEquatable<ActiveExpression<TArg, TResult>>
+public class ActiveExpression<TArg, TResult> :
+    SyncDisposable,
+    IActiveExpression<TArg, TResult>,
+    IEquatable<ActiveExpression<TArg, TResult>>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg arg)
     {
@@ -789,7 +827,8 @@ public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression
     /// <summary>
     /// Gets the arguments that were passed to the lambda expression
     /// </summary>
-    public IReadOnlyList<object?> Arguments => arguments;
+    public IReadOnlyList<object?> Arguments =>
+        arguments;
 
     /// <summary>
     /// Gets the exception that was thrown while evaluating the lambda expression; <c>null</c> if there was no such exception
@@ -837,19 +876,16 @@ public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression
     /// </summary>
     /// <param name="obj">The object to compare with the current object</param>
     /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-    public override bool Equals(object? obj) => obj is ActiveExpression<TArg, TResult> other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveExpression<TArg, TResult> other && Equals(other);
 
     /// <summary>
     /// Determines whether the specified <see cref="ActiveExpression{TArg, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg, TResult}"/>
     /// </summary>
     /// <param name="other">The <see cref="ActiveExpression{TArg, TResult}"/> to compare with the current <see cref="ActiveExpression{TArg, TResult}"/></param>
     /// <returns><c>true</c> if the specified <see cref="ActiveExpression{TArg, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg, TResult}"/>; otherwise, <c>false</c></returns>
-    public bool Equals(ActiveExpression<TArg, TResult> other)
-    {
-        if (other is null)
-            throw new ArgumentNullException(nameof(other));
-        return activeExpression == other.activeExpression;
-    }
+    public bool Equals(ActiveExpression<TArg, TResult> other) =>
+        other is null ? throw new ArgumentNullException(nameof(other)) : activeExpression == other.activeExpression;
 
     void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
@@ -863,13 +899,15 @@ public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression
     /// Gets the hash code for this active expression
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveExpression<TArg, TResult>), activeExpression);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveExpression<TArg, TResult>), activeExpression);
 
     /// <summary>
     /// Returns a string that represents this active expression
     /// </summary>
     /// <returns>A string that represents this active expression</returns>
-    public override string ToString() => activeExpression.ToString();
+    public override string ToString() =>
+        activeExpression.ToString();
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<InstancesKey, ActiveExpression<TArg, TResult>> instances = new();
@@ -896,12 +934,8 @@ public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression
     /// <param name="a">The first expression to compare, or null</param>
     /// <param name="b">The second expression to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-    public static bool operator ==(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b)
-    {
-        if (a is null)
-            throw new ArgumentNullException(nameof(a));
-        return a.Equals(b);
-    }
+    public static bool operator ==(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b) =>
+        a is null ? throw new ArgumentNullException(nameof(a)) : a.Equals(b);
 
     /// <summary>
     /// Determines whether two active expressions are different
@@ -909,7 +943,8 @@ public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression
     /// <param name="a">The first expression to compare, or null</param>
     /// <param name="b">The second expression to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-    public static bool operator !=(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b) => !(a == b);
+    public static bool operator !=(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b) =>
+        !(a == b);
 
     record InstancesKey(ActiveExpression ActiveExpression, TArg Arg);
 }
@@ -921,7 +956,10 @@ public class ActiveExpression<TArg, TResult> : SyncDisposable, IActiveExpression
 /// <typeparam name="TArg2">The type of the second argument passed to the lambda expression</typeparam>
 /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
 [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
-public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TResult>>
+public class ActiveExpression<TArg1, TArg2, TResult> :
+    SyncDisposable,
+    IActiveExpression<TArg1, TArg2, TResult>,
+    IEquatable<ActiveExpression<TArg1, TArg2, TResult>>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2)
     {
@@ -944,7 +982,8 @@ public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveEx
     /// <summary>
     /// Gets the arguments that were passed to the lambda expression
     /// </summary>
-    public IReadOnlyList<object?> Arguments => arguments;
+    public IReadOnlyList<object?> Arguments =>
+        arguments;
 
     /// <summary>
     /// Gets the first argument that was passed to the lambda expression
@@ -1002,19 +1041,16 @@ public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveEx
     /// </summary>
     /// <param name="obj">The object to compare with the current object</param>
     /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-    public override bool Equals(object? obj) => obj is ActiveExpression<TArg1, TArg2, TResult> other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveExpression<TArg1, TArg2, TResult> other && Equals(other);
 
     /// <summary>
     /// Determines whether the specified <see cref="ActiveExpression{TArg1, TArg2, TResult}"/> is equal to the current object
     /// </summary>
     /// <param name="other">The object to compare with the current object</param>
     /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-    public bool Equals(ActiveExpression<TArg1, TArg2, TResult> other)
-    {
-        if (other is null)
-            throw new ArgumentNullException(nameof(other));
-        return activeExpression == other.activeExpression;
-    }
+    public bool Equals(ActiveExpression<TArg1, TArg2, TResult> other) =>
+        other is null ? throw new ArgumentNullException(nameof(other)) : activeExpression == other.activeExpression;
 
     void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
@@ -1028,13 +1064,15 @@ public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveEx
     /// Gets the hash code for this active expression
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TResult>), activeExpression);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TResult>), activeExpression);
 
     /// <summary>
     /// Returns a string that represents this active expression
     /// </summary>
     /// <returns>A string that represents this active expression</returns>
-    public override string ToString() => activeExpression.ToString();
+    public override string ToString() =>
+        activeExpression.ToString();
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TResult>> instances = new();
@@ -1061,12 +1099,8 @@ public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveEx
     /// <param name="a">The first expression to compare, or null</param>
     /// <param name="b">The second expression to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-    public static bool operator ==(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b)
-    {
-        if (a is null)
-            throw new ArgumentNullException(nameof(a));
-        return a.Equals(b);
-    }
+    public static bool operator ==(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b) =>
+        a is null ? throw new ArgumentNullException(nameof(a)) : a.Equals(b);
 
     /// <summary>
     /// Determines whether two active expressions are different
@@ -1074,7 +1108,8 @@ public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveEx
     /// <param name="a">The first expression to compare, or null</param>
     /// <param name="b">The second expression to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-    public static bool operator !=(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b) => !(a == b);
+    public static bool operator !=(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b) =>
+        !(a == b);
 
     record InstancesKey(ActiveExpression ActiveExpression, TArg1 Arg1, TArg2 Arg2);
 }
@@ -1087,7 +1122,10 @@ public class ActiveExpression<TArg1, TArg2, TResult> : SyncDisposable, IActiveEx
 /// <typeparam name="TArg3">The type of the third argument passed to the lambda expression</typeparam>
 /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
 [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
-public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IActiveExpression<TArg1, TArg2, TArg3, TResult>, IEquatable<ActiveExpression<TArg1, TArg2, TArg3, TResult>>
+public class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
+    SyncDisposable,
+    IActiveExpression<TArg1, TArg2, TArg3, TResult>,
+    IEquatable<ActiveExpression<TArg1, TArg2, TArg3, TResult>>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2, TArg3 arg3)
     {
@@ -1111,7 +1149,8 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IA
     /// <summary>
     /// Gets the arguments that were passed to the lambda expression
     /// </summary>
-    public IReadOnlyList<object?> Arguments => arguments;
+    public IReadOnlyList<object?> Arguments =>
+        arguments;
 
     /// <summary>
     /// Gets the first argument that was passed to the lambda expression
@@ -1174,19 +1213,16 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IA
     /// </summary>
     /// <param name="obj">The object to compare with the current object</param>
     /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-    public override bool Equals(object? obj) => obj is ActiveExpression<TArg1, TArg2, TArg3, TResult> other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveExpression<TArg1, TArg2, TArg3, TResult> other && Equals(other);
 
     /// <summary>
     /// Determines whether the specified <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/>
     /// </summary>
     /// <param name="other">The <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/> to compare with the current <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/></param>
     /// <returns><c>true</c> if the specified <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/> is equal to the current <see cref="ActiveExpression{TArg1, TArg2, TArg3, TResult}"/>; otherwise, <c>false</c></returns>
-    public bool Equals(ActiveExpression<TArg1, TArg2, TArg3, TResult> other)
-    {
-        if (other is null)
-            throw new ArgumentNullException(nameof(other));
-        return activeExpression == other.activeExpression;
-    }
+    public bool Equals(ActiveExpression<TArg1, TArg2, TArg3, TResult> other) =>
+        other is null ? throw new ArgumentNullException(nameof(other)) : activeExpression == other.activeExpression;
 
     void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
@@ -1200,13 +1236,15 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IA
     /// Gets the hash code for this active expression
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TArg3, TResult>), activeExpression);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TArg3, TResult>), activeExpression);
 
     /// <summary>
     /// Returns a string that represents this active expression
     /// </summary>
     /// <returns>A string that represents this active expression</returns>
-    public override string ToString() => activeExpression.ToString();
+    public override string ToString() =>
+        activeExpression.ToString();
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<InstancesKey, ActiveExpression<TArg1, TArg2, TArg3, TResult>> instances = new();
@@ -1233,12 +1271,8 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IA
     /// <param name="a">The first expression to compare, or null</param>
     /// <param name="b">The second expression to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-    public static bool operator ==(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b)
-    {
-        if (a is null)
-            throw new ArgumentNullException(nameof(a));
-        return a.Equals(b);
-    }
+    public static bool operator ==(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b) =>
+        a is null ? throw new ArgumentNullException(nameof(a)) : a.Equals(b);
 
     /// <summary>
     /// Determines whether two active expressions are different
@@ -1246,7 +1280,8 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> : SyncDisposable, IA
     /// <param name="a">The first expression to compare, or null</param>
     /// <param name="b">The second expression to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is different from <paramref name="b"/>; otherwise, <c>false</c></returns>
-    public static bool operator !=(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b) => !(a == b);
+    public static bool operator !=(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b) =>
+        !(a == b);
 
     record InstancesKey(ActiveExpression ActiveExpression, TArg1 Arg1, TArg2 Arg2, TArg3 Arg3);
 }

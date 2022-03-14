@@ -27,12 +27,8 @@ public static class WindowAssist
     /// </summary>
     /// <param name="window">The window for which to get the value</param>
     [AttachedPropertyBrowsableForType(typeof(Window))]
-    public static AutoActivationMode GetAutoActivation(Window window)
-    {
-        if (window is null)
-            throw new ArgumentNullException(nameof(window));
-        return (AutoActivationMode)window.GetValue(AutoActivationProperty);
-    }
+    public static AutoActivationMode GetAutoActivation(Window window) =>
+        window is null ? throw new ArgumentNullException(nameof(window)) : (AutoActivationMode)window.GetValue(AutoActivationProperty);
 
     static void OnAutoActivationChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
     {
@@ -68,7 +64,7 @@ public static class WindowAssist
 
     #region BlurBehind
 
-    static readonly ConcurrentDictionary<Window, BlurBehindMode> blurBehindPendingLoadByWindow = new ConcurrentDictionary<Window, BlurBehindMode>();
+    static readonly ConcurrentDictionary<Window, BlurBehindMode> blurBehindPendingLoadByWindow = new();
     /// <summary>
     /// Identifies the BlurBehind attached dependency property
     /// </summary>
@@ -129,12 +125,8 @@ public static class WindowAssist
     /// </summary>
     /// <param name="window">The window for which to get the value</param>
     [AttachedPropertyBrowsableForType(typeof(Window))]
-    public static BlurBehindMode GetBlurBehind(Window window)
-    {
-        if (window is null)
-            throw new ArgumentNullException(nameof(window));
-        return (BlurBehindMode)window.GetValue(BlurBehindProperty);
-    }
+    public static BlurBehindMode GetBlurBehind(Window window) =>
+        window is null ? throw new ArgumentNullException(nameof(window)) : (BlurBehindMode)window.GetValue(BlurBehindProperty);
 
     static void OnBlurBehindChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
     {
@@ -209,12 +201,8 @@ public static class WindowAssist
     /// </summary>
     /// <param name="window">The window for which to get the value</param>
     [AttachedPropertyBrowsableForType(typeof(Window))]
-    public static bool GetIsBlurredBehind(Window window)
-    {
-        if (window is null)
-            throw new ArgumentNullException(nameof(window));
-        return (bool)window.GetValue(IsBlurredBehindProperty);
-    }
+    public static bool GetIsBlurredBehind(Window window) =>
+        window is null ? throw new ArgumentNullException(nameof(window)) : (bool)window.GetValue(IsBlurredBehindProperty);
 
     #endregion IsBlurredBehind
 
@@ -230,12 +218,8 @@ public static class WindowAssist
     /// </summary>
     /// <param name="frameworkElement">The framework element for which to get the value</param>
     [AttachedPropertyBrowsableForType(typeof(FrameworkElement))]
-    public static bool GetIsCaption(FrameworkElement frameworkElement)
-    {
-        if (frameworkElement is null)
-            throw new ArgumentNullException(nameof(frameworkElement));
-        return (bool)frameworkElement.GetValue(IsCaptionProperty);
-    }
+    public static bool GetIsCaption(FrameworkElement frameworkElement) =>
+        frameworkElement is null ? throw new ArgumentNullException(nameof(frameworkElement)) : (bool)frameworkElement.GetValue(IsCaptionProperty);
 
     static void IsCaptionMouseLeftButtonDownHandler(object sender, MouseButtonEventArgs e)
     {
@@ -291,12 +275,8 @@ public static class WindowAssist
     /// </summary>
     /// <param name="frameworkElement">The framework element for which to get the value</param>
     [AttachedPropertyBrowsableForType(typeof(FrameworkElement))]
-    public static SystemCommand GetSendSystemCommand(FrameworkElement frameworkElement)
-    {
-        if (frameworkElement is null)
-            throw new ArgumentNullException(nameof(frameworkElement));
-        return (SystemCommand)frameworkElement.GetValue(SendSystemCommandProperty);
-    }
+    public static SystemCommand GetSendSystemCommand(FrameworkElement frameworkElement) =>
+        frameworkElement is null ? throw new ArgumentNullException(nameof(frameworkElement)) : (SystemCommand)frameworkElement.GetValue(SendSystemCommandProperty);
 
     static void OnSendSystemCommandChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
     {
@@ -362,7 +342,7 @@ public static class WindowAssist
 
     #region SetDefaultWindowStyleOnSystemCommands
 
-    static readonly ConcurrentDictionary<Window, bool> setDefaultWindowStyleOnSystemCommandsPendingLoadByWindow = new ConcurrentDictionary<Window, bool>();
+    static readonly ConcurrentDictionary<Window, bool> setDefaultWindowStyleOnSystemCommandsPendingLoadByWindow = new();
     /// <summary>
     /// Identifies the SetDefaultWindowStyleOnSystemCommands attached dependency property
     /// </summary>
@@ -373,12 +353,8 @@ public static class WindowAssist
     /// </summary>
     /// <param name="window">The window for which to get the value</param>
     [AttachedPropertyBrowsableForType(typeof(Window))]
-    public static bool GetSetDefaultWindowStyleOnSystemCommands(Window window)
-    {
-        if (window is null)
-            throw new ArgumentNullException(nameof(window));
-        return (bool)window.GetValue(SetDefaultWindowStyleOnSystemCommandsProperty);
-    }
+    public static bool GetSetDefaultWindowStyleOnSystemCommands(Window window) =>
+        window is null ? throw new ArgumentNullException(nameof(window)) : (bool)window.GetValue(SetDefaultWindowStyleOnSystemCommandsProperty);
 
     static void EffectSetDefaultWindowStyleOnSystemCommands(Window window, bool setDefaultWindowStyleOnSystemCommands)
     {
@@ -463,12 +439,8 @@ public static class WindowAssist
     /// </summary>
     /// <param name="frameworkElement">The framework element for which to get the value</param>
     [AttachedPropertyBrowsableForType(typeof(FrameworkElement))]
-    public static bool GetShowSystemMenu(FrameworkElement frameworkElement)
-    {
-        if (frameworkElement is null)
-            throw new ArgumentNullException(nameof(frameworkElement));
-        return (bool)frameworkElement.GetValue(ShowSystemMenuProperty);
-    }
+    public static bool GetShowSystemMenu(FrameworkElement frameworkElement) =>
+        frameworkElement is null ? throw new ArgumentNullException(nameof(frameworkElement)) : (bool)frameworkElement.GetValue(ShowSystemMenuProperty);
 
     static void OnShowSystemMenuChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
     {

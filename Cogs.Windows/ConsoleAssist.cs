@@ -9,15 +9,12 @@ public static class ConsoleAssist
     /// Attaches to the console of the specified process as a client application
     /// </summary>
     /// <param name="process">The process the console of which to use</param>
-    public static bool AttachTo(Process process)
-    {
-        if (process is null)
-            throw new ArgumentNullException(nameof(process));
-        return NativeMethods.AttachConsole(process.Id);
-    }
+    public static bool AttachTo(Process process) =>
+        process is null ? throw new ArgumentNullException(nameof(process)) : NativeMethods.AttachConsole(process.Id);
 
     /// <summary>
     /// Attaches to the console of the parent process as a client application
     /// </summary>
-    public static bool AttachToParentProcess() => NativeMethods.AttachConsole(-1);
+    public static bool AttachToParentProcess() =>
+        NativeMethods.AttachConsole(-1);
 }

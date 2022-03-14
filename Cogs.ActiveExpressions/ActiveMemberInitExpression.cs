@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveMemberInitExpression : ActiveExpression, IEquatable<ActiveMemberInitExpression>
+class ActiveMemberInitExpression :
+    ActiveExpression,
+    IEquatable<ActiveMemberInitExpression>
 {
-    public ActiveMemberInitExpression(CachedInstancesKey<MemberInitExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation)
+    public ActiveMemberInitExpression(CachedInstancesKey<MemberInitExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression, options, deferEvaluation)
     {
         this.instancesKey = instancesKey;
         memberInitExpression = instancesKey.Expression;
@@ -41,9 +44,11 @@ class ActiveMemberInitExpression : ActiveExpression, IEquatable<ActiveMemberInit
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveMemberInitExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveMemberInitExpression other && Equals(other);
 
-    public bool Equals(ActiveMemberInitExpression other) => newExpression == other.newExpression && memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName).SequenceEqual(other.memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName)) && Equals(options, other.options);
+    public bool Equals(ActiveMemberInitExpression other) =>
+        newExpression == other.newExpression && memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName).SequenceEqual(other.memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName)) && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -86,7 +91,8 @@ class ActiveMemberInitExpression : ActiveExpression, IEquatable<ActiveMemberInit
         return hashCode;
     }
 
-    protected override bool GetShouldValueBeDisposed() => ApplicableOptions.IsConstructedTypeDisposed(memberInitExpression.NewExpression.Constructor);
+    protected override bool GetShouldValueBeDisposed() =>
+        ApplicableOptions.IsConstructedTypeDisposed(memberInitExpression.NewExpression.Constructor);
 
     protected override void Initialize()
     {
@@ -150,9 +156,11 @@ class ActiveMemberInitExpression : ActiveExpression, IEquatable<ActiveMemberInit
         }
     }
 
-    void NewExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void NewExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
-    public override string ToString() => $"{newExpression} {{ {string.Join(", ", memberAssignmentExpressions.Select(kv => $"{kv.Value.Name} = {kv.Key}"))} }} {ToStringSuffix}";
+    public override string ToString() =>
+        $"{newExpression} {{ {string.Join(", ", memberAssignmentExpressions.Select(kv => $"{kv.Value.Name} = {kv.Key}"))} }} {ToStringSuffix}";
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<CachedInstancesKey<MemberInitExpression>, ActiveMemberInitExpression> instances = new(new CachedInstancesKeyComparer<MemberInitExpression>());
@@ -172,8 +180,10 @@ class ActiveMemberInitExpression : ActiveExpression, IEquatable<ActiveMemberInit
         }
     }
 
-    public static bool operator ==(ActiveMemberInitExpression a, ActiveMemberInitExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveMemberInitExpression a, ActiveMemberInitExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveMemberInitExpression a, ActiveMemberInitExpression b) => !(a == b);
+    public static bool operator !=(ActiveMemberInitExpression a, ActiveMemberInitExpression b) =>
+        !(a == b);
 }

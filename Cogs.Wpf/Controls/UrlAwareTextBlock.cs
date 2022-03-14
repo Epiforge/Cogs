@@ -14,13 +14,14 @@ public class UrlAwareTextBlock : TextBlock
         set => SetValue(ParsedTextProperty, value);
     }
 
-    static UrlAwareTextBlock() => TextProperty.OverrideMetadata(typeof(UrlAwareTextBlock), new FrameworkPropertyMetadata((sender, e) => sender.SetCurrentValue(ParsedTextProperty, e.NewValue)));
+    static UrlAwareTextBlock() =>
+        TextProperty.OverrideMetadata(typeof(UrlAwareTextBlock), new FrameworkPropertyMetadata((sender, e) => sender.SetCurrentValue(ParsedTextProperty, e.NewValue)));
 
     /// <summary>
     /// Identifies the <see cref="ParsedText"/> dependency property
     /// </summary>
     public static readonly DependencyProperty ParsedTextProperty = DependencyProperty.Register(nameof(ParsedText), typeof(string), typeof(UrlAwareTextBlock), new PropertyMetadata() { CoerceValueCallback = ParsedTextCoerceValue });
-    static readonly Regex textAndUrlPattern = new Regex(@"((?<text>.*?)(?<url>(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?)|(?<remainder>.*))", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    static readonly Regex textAndUrlPattern = new(@"((?<text>.*?)(?<url>(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?)|(?<remainder>.*))", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     static void HyperlinkRequestNavigateHandler(object sender, RequestNavigateEventArgs e)
     {

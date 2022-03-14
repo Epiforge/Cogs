@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression>
+class ActiveIndexExpression :
+    ActiveExpression,
+    IEquatable<ActiveIndexExpression>
 {
-    ActiveIndexExpression(CachedInstancesKey<IndexExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+    ActiveIndexExpression(CachedInstancesKey<IndexExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
     EquatableList<ActiveExpression>? arguments;
@@ -14,7 +17,8 @@ class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression
     ActiveExpression? @object;
     object? objectValue;
 
-    void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
     protected override bool Dispose(bool disposing)
     {
@@ -44,9 +48,11 @@ class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveIndexExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveIndexExpression other && Equals(other);
 
-    public bool Equals(ActiveIndexExpression other) => arguments == other.arguments && indexer == other.indexer && @object == other.@object && Equals(options, other.options);
+    public bool Equals(ActiveIndexExpression other) =>
+        arguments == other.arguments && indexer == other.indexer && @object == other.@object && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -76,9 +82,11 @@ class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveIndexExpression), arguments, indexer, @object, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveIndexExpression), arguments, indexer, @object, options);
 
-    protected override bool GetShouldValueBeDisposed() => getMethod is not null && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
+    protected override bool GetShouldValueBeDisposed() =>
+        getMethod is not null && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
 
     protected override void Initialize()
     {
@@ -118,7 +126,8 @@ class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression
         }
     }
 
-    void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
     [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
     void ObjectValueCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -134,7 +143,7 @@ class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression
             case NotifyCollectionChangedAction.Move:
                 {
                     var movingCount = Math.Max(e.OldItems?.Count ?? 0, e.NewItems?.Count ?? 0);
-                    if (e.OldStartingIndex >= 0 && e.NewStartingIndex >= 0 && movingCount > 0 && arguments?.Count == 1 && arguments?[0].Value is int index && ((index >= e.OldStartingIndex && index < e.OldStartingIndex + movingCount) || (index >= e.NewStartingIndex && index < e.NewStartingIndex + movingCount)))
+                    if (e.OldStartingIndex >= 0 && e.NewStartingIndex >= 0 && movingCount > 0 && arguments?.Count == 1 && arguments?[0].Value is int index && (index >= e.OldStartingIndex && index < e.OldStartingIndex + movingCount || index >= e.NewStartingIndex && index < e.NewStartingIndex + movingCount))
                         Evaluate();
                 }
                 break;
@@ -150,7 +159,7 @@ class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression
                     {
                         var oldCount = e.OldItems?.Count ?? 0;
                         var newCount = e.NewItems?.Count ?? 0;
-                        if ((oldCount != newCount && (e.OldStartingIndex >= 0 || e.NewStartingIndex >= 0) && index >= Math.Min(Math.Max(e.OldStartingIndex, 0), Math.Max(e.NewStartingIndex, 0))) || (e.OldStartingIndex >= 0 && index >= e.OldStartingIndex && index < e.OldStartingIndex + oldCount) || (e.NewStartingIndex >= 0 && index >= e.NewStartingIndex && index < e.NewStartingIndex + newCount))
+                        if (oldCount != newCount && (e.OldStartingIndex >= 0 || e.NewStartingIndex >= 0) && index >= Math.Min(Math.Max(e.OldStartingIndex, 0), Math.Max(e.NewStartingIndex, 0)) || e.OldStartingIndex >= 0 && index >= e.OldStartingIndex && index < e.OldStartingIndex + oldCount || e.NewStartingIndex >= 0 && index >= e.NewStartingIndex && index < e.NewStartingIndex + newCount)
                             Evaluate();
                     }
                 }
@@ -200,7 +209,8 @@ class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression
             propertyChangedNotifier.PropertyChanged += ObjectValuePropertyChanged;
     }
 
-    public override string ToString() => $"{@object}{string.Join(string.Empty, arguments?.Select(argument => $"[{argument}]"))} {ToStringSuffix}";
+    public override string ToString() =>
+        $"{@object}{string.Join(string.Empty, arguments?.Select(argument => $"[{argument}]"))} {ToStringSuffix}";
 
     void UnsubscribeFromObjectValueNotifications()
     {
@@ -230,7 +240,9 @@ class ActiveIndexExpression : ActiveExpression, IEquatable<ActiveIndexExpression
         }
     }
 
-    public static bool operator ==(ActiveIndexExpression a, ActiveIndexExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveIndexExpression a, ActiveIndexExpression b) =>
+        a.Equals(b);
 
-    public static bool operator !=(ActiveIndexExpression a, ActiveIndexExpression b) => !(a == b);
+    public static bool operator !=(ActiveIndexExpression a, ActiveIndexExpression b) =>
+        !(a == b);
 }

@@ -230,9 +230,11 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> :
         }
     }
 
-    void SourceFaultChanged(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanged?.Invoke(sender, e);
+    void SourceFaultChanged(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanged?.Invoke(sender, e);
 
-    void SourceFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(sender, e);
+    void SourceFaultChanging(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanging?.Invoke(sender, e);
 
     public ActiveExpressionOptions? Options { get; }
 

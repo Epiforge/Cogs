@@ -5,7 +5,9 @@ namespace Cogs.Collections.Synchronized;
 /// </summary>
 /// <typeparam name="TKey">The type of keys in the dictionary</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary</typeparam>
-public class SynchronizedObservableDictionary<TKey, TValue> : ObservableDictionary<TKey, TValue>, ISynchronizedObservableRangeDictionary<TKey, TValue>
+public class SynchronizedObservableDictionary<TKey, TValue> :
+    ObservableDictionary<TKey, TValue>,
+    ISynchronizedObservableRangeDictionary<TKey, TValue>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="SynchronizedObservableDictionary{TKey, TValue}"/> class that is empty, has the default initial capacity, uses the default equality comparer for the key type, and using <see cref="SynchronizationContext.Current"/> (or <see cref="Synchronization.DefaultSynchronizationContext"/> if that is <c>null</c>)
@@ -573,7 +575,6 @@ public class SynchronizedObservableDictionary<TKey, TValue> : ObservableDictiona
     /// </summary>
     public override void Reset() =>
         this.Execute(() => base.Reset());
-
 
     /// <summary>
     /// Reinitializes the hash table used internally by the <see cref="SynchronizedObservableDictionary{TKey, TValue}"/> with the elements from the specified dictionary

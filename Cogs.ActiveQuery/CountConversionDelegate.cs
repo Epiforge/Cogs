@@ -1,3 +1,3 @@
 namespace Cogs.ActiveQuery;
 
-internal delegate object CountConversionDelegate(int count);
+delegate object CountConversionDelegate(int count);

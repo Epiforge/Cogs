@@ -4,7 +4,8 @@ namespace Cogs.Wpf.ValueConversion;
 /// Compares the value to the non-null parameter using <see cref="object.Equals(object?, object?)"/>
 /// </summary>
 [ValueConversion(typeof(object), typeof(bool))]
-public class EqualToNonNullParameterIsTrueValueConverter : IValueConverter
+public class EqualToNonNullParameterIsTrueValueConverter :
+    IValueConverter
 {
     /// <summary>
     /// Converts a value

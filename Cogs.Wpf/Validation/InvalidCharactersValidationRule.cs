@@ -3,12 +3,13 @@ namespace Cogs.Wpf.Validation;
 /// <summary>
 /// Provides a way to create a rule in order to check that user input does not contain any invalid characters
 /// </summary>
-public class InvalidCharactersValidationRule : ValidationRule
+public class InvalidCharactersValidationRule :
+    ValidationRule
 {
     /// <summary>
     /// The array of characters that cannot appear in the value
     /// </summary>
-    protected char[] InvalidCharacters = new char[0];
+    protected char[] InvalidCharacters = Array.Empty<char>();
 
     /// <summary>
     /// Gets/sets information about the invalidity
@@ -29,7 +30,7 @@ public class InvalidCharactersValidationRule : ValidationRule
     /// </summary>
     public string InvalidCharactersString
     {
-        get => new string(InvalidCharacters);
+        get => new(InvalidCharacters);
         set
         {
             if (value is null)
@@ -46,8 +47,6 @@ public class InvalidCharactersValidationRule : ValidationRule
     public override ValidationResult Validate(object value, CultureInfo cultureInfo)
     {
         var str = Convert.ToString(value);
-        if ((str?.IndexOfAny(InvalidCharacters) ?? -1) >= 0)
-            return new ValidationResult(false, ErrorContent);
-        return ValidationResult.ValidResult;
+        return (str?.IndexOfAny(InvalidCharacters) ?? -1) >= 0 ? new ValidationResult(false, ErrorContent) : ValidationResult.ValidResult;
     }
 }

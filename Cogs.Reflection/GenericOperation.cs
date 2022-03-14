@@ -5,7 +5,7 @@ namespace Cogs.Reflection;
 /// </summary>
 public static class GenericOperations
 {
-    internal static ConcurrentDictionary<(BinaryOperation operation, Type type), Delegate> CompiledBinaryOperationMethods = new ConcurrentDictionary<(BinaryOperation operation, Type type), Delegate>();
+    internal static ConcurrentDictionary<(BinaryOperation operation, Type type), Delegate> CompiledBinaryOperationMethods = new();
 
     /// <summary>
     /// Adds the values of two specified <typeparamref name="T"/> objects

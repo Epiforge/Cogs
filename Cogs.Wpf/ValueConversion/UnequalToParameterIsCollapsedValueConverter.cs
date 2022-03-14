@@ -5,7 +5,8 @@ namespace Cogs.Wpf.ValueConversion;
 /// converting to <see cref="Visibility.Collapsed"/> when <c>false</c> and <see cref="Visibility.Visible"/> when <c>true</c>
 /// </summary>
 [ValueConversion(typeof(object), typeof(Visibility))]
-public class UnequalToParameterIsCollapsedValueConverter : IValueConverter
+public class UnequalToParameterIsCollapsedValueConverter :
+    IValueConverter
 {
     /// <summary>
     /// Converts a value

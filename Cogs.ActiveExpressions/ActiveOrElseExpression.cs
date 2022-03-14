@@ -1,14 +1,18 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveOrElseExpression : ActiveBinaryExpression, IEquatable<ActiveOrElseExpression>
+class ActiveOrElseExpression :
+    ActiveBinaryExpression,
+    IEquatable<ActiveOrElseExpression>
 {
     public ActiveOrElseExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey, options, deferEvaluation, false)
     {
     }
 
-    public override bool Equals(object? obj) => obj is ActiveOrElseExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveOrElseExpression other && Equals(other);
 
-    public bool Equals(ActiveOrElseExpression other) => left == other.left && right == other.right && Equals(options, other.options);
+    public bool Equals(ActiveOrElseExpression other) =>
+        left == other.left && right == other.right && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -27,12 +31,16 @@ class ActiveOrElseExpression : ActiveBinaryExpression, IEquatable<ActiveOrElseEx
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveOrElseExpression), left, right, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveOrElseExpression), left, right, options);
 
-    public override string ToString() => $"({left} || {right}) {ToStringSuffix}";
+    public override string ToString() =>
+        $"({left} || {right}) {ToStringSuffix}";
 
-    public static bool operator ==(ActiveOrElseExpression a, ActiveOrElseExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveOrElseExpression a, ActiveOrElseExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveOrElseExpression a, ActiveOrElseExpression b) => !(a == b);
+    public static bool operator !=(ActiveOrElseExpression a, ActiveOrElseExpression b) =>
+        !(a == b);
 }

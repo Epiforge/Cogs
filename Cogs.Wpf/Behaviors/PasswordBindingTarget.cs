@@ -67,12 +67,9 @@ public class PasswordBindingTarget : Behavior<PasswordBox>
     /// Gets the value of the Password dependency property for the specified password binding target
     /// </summary>
     /// <param name="passwordBindingTarget">The password binding target</param>
-    public static string? GetPassword(PasswordBindingTarget passwordBindingTarget)
-    {
-        if (passwordBindingTarget is null)
-            throw new ArgumentNullException(nameof(passwordBindingTarget));
-        return (string?)passwordBindingTarget.GetValue(PasswordProperty);
-    }
+    [AttachedPropertyBrowsableForType(typeof(PasswordBindingTarget))]
+    public static string? GetPassword(PasswordBindingTarget passwordBindingTarget) =>
+        passwordBindingTarget is null ? throw new ArgumentNullException(nameof(passwordBindingTarget)) : (string?)passwordBindingTarget.GetValue(PasswordProperty);
 
     static void OnPasswordChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
     {

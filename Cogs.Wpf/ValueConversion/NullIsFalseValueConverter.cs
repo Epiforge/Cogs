@@ -4,7 +4,8 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the value to <c>false</c> when <c>null</c>; otherwise, <c>true</c>
 /// </summary>
 [ValueConversion(typeof(object), typeof(bool))]
-public class NullIsFalseValueConverter : IValueConverter
+public class NullIsFalseValueConverter :
+    IValueConverter
 {
     /// <summary>
     /// Converts a value
@@ -14,7 +15,8 @@ public class NullIsFalseValueConverter : IValueConverter
     /// <param name="parameter">The converter parameter to use</param>
     /// <param name="culture">The culture to use in the converter</param>
     /// <returns>A converted value</returns>
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value is not null;
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is not null;
 
     /// <summary>
     /// Converts a value

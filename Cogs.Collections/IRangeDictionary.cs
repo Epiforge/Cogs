@@ -5,7 +5,9 @@ namespace Cogs.Collections;
 /// </summary>
 /// <typeparam name="TKey">The type of keys in the dictionary</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary</typeparam>
-public interface IRangeDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
+public interface IRangeDictionary<TKey, TValue> :
+    IDictionary<TKey, TValue>,
+    IReadOnlyDictionary<TKey, TValue>
 {
     /// <summary>
     /// Adds elements with the provided keys and values to the <see cref="IRangeDictionary{TKey, TValue}"/>

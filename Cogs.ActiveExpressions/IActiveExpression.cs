@@ -4,7 +4,14 @@ namespace Cogs.ActiveExpressions;
 /// Represents an active evaluation of a lambda expression
 /// </summary>
 /// <typeparam name="TResult">The type of the value returned by the lambda expression upon which this active expression is based</typeparam>
-public interface IActiveExpression<out TResult> : IDisposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, INotifyPropertyChanged, INotifyPropertyChanging
+public interface IActiveExpression<out TResult> :
+    IDisposable,
+    IDisposalStatus,
+    INotifyDisposalOverridden,
+    INotifyDisposed,
+    INotifyDisposing,
+    INotifyPropertyChanged,
+    INotifyPropertyChanging
 {
     /// <summary>
     /// Gets the arguments that were passed to the lambda expression
@@ -32,7 +39,15 @@ public interface IActiveExpression<out TResult> : IDisposable, IDisposalStatus, 
 /// </summary>
 /// <typeparam name="TArg">The type of the argument passed to the lambda expression</typeparam>
 /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
-public interface IActiveExpression<out TArg, out TResult> : IActiveExpression<TResult>, IDisposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, INotifyPropertyChanged, INotifyPropertyChanging
+public interface IActiveExpression<out TArg, out TResult> :
+    IActiveExpression<TResult>,
+    IDisposable,
+    IDisposalStatus,
+    INotifyDisposalOverridden,
+    INotifyDisposed,
+    INotifyDisposing,
+    INotifyPropertyChanged,
+    INotifyPropertyChanging
 {
     /// <summary>
     /// Gets the argument that was passed to the lambda expression
@@ -47,7 +62,15 @@ public interface IActiveExpression<out TArg, out TResult> : IActiveExpression<TR
 /// <typeparam name="TArg2">The type of the second argument passed to the lambda expression</typeparam>
 /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
 [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
-public interface IActiveExpression<out TArg1, out TArg2, out TResult> : IActiveExpression<TResult>, IDisposable, IDisposalStatus, INotifyDisposalOverridden, INotifyDisposed, INotifyDisposing, INotifyPropertyChanged, INotifyPropertyChanging
+public interface IActiveExpression<out TArg1, out TArg2, out TResult> :
+    IActiveExpression<TResult>,
+    IDisposable,
+    IDisposalStatus,
+    INotifyDisposalOverridden,
+    INotifyDisposed,
+    INotifyDisposing,
+    INotifyPropertyChanged,
+    INotifyPropertyChanging
 {
     /// <summary>
     /// Gets the first argument that was passed to the lambda expression
@@ -68,7 +91,8 @@ public interface IActiveExpression<out TArg1, out TArg2, out TResult> : IActiveE
 /// <typeparam name="TArg3">The type of the third argument passed to the lambda expression</typeparam>
 /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
 [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
-public interface IActiveExpression<out TArg1, out TArg2, out TArg3, out TResult> : IActiveExpression<TArg1, TArg2, TResult>
+public interface IActiveExpression<out TArg1, out TArg2, out TArg3, out TResult> :
+    IActiveExpression<TArg1, TArg2, TResult>
 {
     /// <summary>
     /// Gets the third argument that was passed to the lambda expression

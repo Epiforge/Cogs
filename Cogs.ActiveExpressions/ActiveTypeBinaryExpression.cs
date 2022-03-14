@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveTypeBinaryExpression : ActiveExpression, IEquatable<ActiveTypeBinaryExpression>
+class ActiveTypeBinaryExpression :
+    ActiveExpression,
+    IEquatable<ActiveTypeBinaryExpression>
 {
-    protected ActiveTypeBinaryExpression(CachedInstancesKey<TypeBinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+    protected ActiveTypeBinaryExpression(CachedInstancesKey<TypeBinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
     TypeIsDelegate? @delegate;
@@ -28,10 +31,11 @@ class ActiveTypeBinaryExpression : ActiveExpression, IEquatable<ActiveTypeBinary
         return result;
     }
 
+    public override bool Equals(object? obj) =>
+        obj is ActiveTypeBinaryExpression other && Equals(other);
 
-    public override bool Equals(object? obj) => obj is ActiveTypeBinaryExpression other && Equals(other);
-
-    public bool Equals(ActiveTypeBinaryExpression other) => expression == other.expression && typeOperand == other.typeOperand && Equals(options, other.options);
+    public bool Equals(ActiveTypeBinaryExpression other) =>
+        expression == other.expression && typeOperand == other.typeOperand && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -41,9 +45,11 @@ class ActiveTypeBinaryExpression : ActiveExpression, IEquatable<ActiveTypeBinary
             Value = @delegate?.Invoke(expression?.Value);
     }
 
-    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveTypeBinaryExpression), expression, typeOperand, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveTypeBinaryExpression), expression, typeOperand, options);
 
     protected override void Initialize()
     {
@@ -68,7 +74,8 @@ class ActiveTypeBinaryExpression : ActiveExpression, IEquatable<ActiveTypeBinary
         }
     }
 
-    public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, expression, typeOperand)} {ToStringSuffix}";
+    public override string ToString() =>
+        $"{GetOperatorExpressionSyntax(NodeType, Type, expression, typeOperand)} {ToStringSuffix}";
 
     static readonly ConcurrentDictionary<Type, TypeIsDelegate> delegates = new();
     static readonly object instanceManagementLock = new();
@@ -95,8 +102,10 @@ class ActiveTypeBinaryExpression : ActiveExpression, IEquatable<ActiveTypeBinary
         return Expression.Lambda<TypeIsDelegate>(Expression.TypeIs(parameter, type), parameter).Compile();
     }
 
-    public static bool operator ==(ActiveTypeBinaryExpression a, ActiveTypeBinaryExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveTypeBinaryExpression a, ActiveTypeBinaryExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveTypeBinaryExpression a, ActiveTypeBinaryExpression b) => !(a == b);
+    public static bool operator !=(ActiveTypeBinaryExpression a, ActiveTypeBinaryExpression b) =>
+        !(a == b);
 }

@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveConditionalExpression : ActiveExpression, IEquatable<ActiveConditionalExpression>
+class ActiveConditionalExpression :
+    ActiveExpression,
+    IEquatable<ActiveConditionalExpression>
 {
-    ActiveConditionalExpression(CachedInstancesKey<ConditionalExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+    ActiveConditionalExpression(CachedInstancesKey<ConditionalExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
     int disposalCount;
@@ -41,9 +44,11 @@ class ActiveConditionalExpression : ActiveExpression, IEquatable<ActiveCondition
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveConditionalExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveConditionalExpression other && Equals(other);
 
-    public bool Equals(ActiveConditionalExpression other) => ifFalse == other.ifFalse && ifTrue == other.ifTrue && test == other.test && Equals(options, other.options);
+    public bool Equals(ActiveConditionalExpression other) =>
+        ifFalse == other.ifFalse && ifTrue == other.ifTrue && test == other.test && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -68,7 +73,8 @@ class ActiveConditionalExpression : ActiveExpression, IEquatable<ActiveCondition
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveConditionalExpression), ifFalse, ifTrue, test, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveConditionalExpression), ifFalse, ifTrue, test, options);
 
     void IfFalsePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
@@ -151,7 +157,8 @@ class ActiveConditionalExpression : ActiveExpression, IEquatable<ActiveCondition
         }
     }
 
-    public override string ToString() => $"({test} ? {ifTrue} : {ifFalse}) {ToStringSuffix}";
+    public override string ToString() =>
+        $"({test} ? {ifTrue} : {ifFalse}) {ToStringSuffix}";
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<CachedInstancesKey<ConditionalExpression>, ActiveConditionalExpression> instances = new(new CachedInstancesKeyComparer<ConditionalExpression>());
@@ -171,8 +178,10 @@ class ActiveConditionalExpression : ActiveExpression, IEquatable<ActiveCondition
         }
     }
 
-    public static bool operator ==(ActiveConditionalExpression a, ActiveConditionalExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveConditionalExpression a, ActiveConditionalExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveConditionalExpression a, ActiveConditionalExpression b) => !(a == b);
+    public static bool operator !=(ActiveConditionalExpression a, ActiveConditionalExpression b) =>
+        !(a == b);
 }

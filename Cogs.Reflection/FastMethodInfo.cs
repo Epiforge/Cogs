@@ -27,7 +27,11 @@ public class FastMethodInfo
         if (callExpression.Type == typeof(void))
         {
             var voidDelegate = Expression.Lambda<VoidDelegate>(callExpression, instanceExpression, argumentsExpression).Compile();
-            @delegate = (instance, arguments) => { voidDelegate(instance, arguments); return null; };
+            @delegate = (instance, arguments) =>
+            {
+                voidDelegate(instance, arguments);
+                return null;
+            };
         }
         else
             @delegate = Expression.Lambda<ReturnValueDelegate>(Expression.Convert(callExpression, typeof(object)), instanceExpression, argumentsExpression).Compile();
@@ -48,21 +52,17 @@ public class FastMethodInfo
     /// </summary>
     public MethodInfo MethodInfo { get; }
 
-    static readonly ConcurrentDictionary<MethodInfo, FastMethodInfo> fastMethodInfos = new ConcurrentDictionary<MethodInfo, FastMethodInfo>();
+    static readonly ConcurrentDictionary<MethodInfo, FastMethodInfo> fastMethodInfos = new();
 
-    static FastMethodInfo Create(MethodInfo methodInfo) => new FastMethodInfo(methodInfo);
+    static FastMethodInfo Create(MethodInfo methodInfo) => new(methodInfo);
 
     /// <summary>
     /// Get a <see cref="FastMethodInfo"/> for the specified <see cref="System.Reflection.MethodInfo" />
     /// </summary>
     /// <param name="methodInfo">The <see cref="System.Reflection.MethodInfo"/></param>
     /// <returns>A <see cref="FastMethodInfo"/></returns>
-    public static FastMethodInfo Get(MethodInfo methodInfo)
-    {
-        if (methodInfo is null)
-            throw new ArgumentNullException(nameof(methodInfo));
-        return fastMethodInfos.GetOrAdd(methodInfo, Create);
-    }
+    public static FastMethodInfo Get(MethodInfo methodInfo) =>
+        methodInfo is null ? throw new ArgumentNullException(nameof(methodInfo)) : fastMethodInfos.GetOrAdd(methodInfo, Create);
 
     delegate object? ReturnValueDelegate(object? instance, object?[] arguments);
     delegate void VoidDelegate(object? instance, object?[] arguments);

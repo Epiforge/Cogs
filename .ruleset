@@ -1,5 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="Rules for Library projects" ToolsVersion="16.0">
+<RuleSet Name="Rules for Library projects" ToolsVersion="17.0">
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.Features" RuleNamespace="Microsoft.CodeAnalysis.Features">
+    <Rule Id="IDE0070" Action="Warning" />
+  </Rules>
   <Rules AnalyzerId="Microsoft.CodeAnalysis.NetAnalyzers" RuleNamespace="Microsoft.CodeAnalysis.NetAnalyzers">
     <Rule Id="CA1002" Action="Warning" />
     <Rule Id="CA1003" Action="Warning" />

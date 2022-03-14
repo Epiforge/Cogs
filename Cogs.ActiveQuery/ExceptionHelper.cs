@@ -1,6 +1,6 @@
 namespace Cogs.ActiveQuery;
 
-internal static class ExceptionHelper
+static class ExceptionHelper
 {
     public static ArgumentOutOfRangeException IndexArgumentWasOutOfRange =>
         new("index", "Index was out of range. Must be non-negative and less than the size of the collection.");

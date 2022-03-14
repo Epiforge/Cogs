@@ -15,7 +15,8 @@ namespace Cogs.Wpf.ValueConversion;
 [ValueConversion(typeof(double), typeof(Visibility))]
 [ValueConversion(typeof(decimal), typeof(Visibility))]
 [ValueConversion(typeof(BigInteger), typeof(Visibility))]
-public class ZeroIsCollapsedValueConverter : IValueConverter
+public class ZeroIsCollapsedValueConverter :
+    IValueConverter
 {
     /// <summary>
     /// Converts a value

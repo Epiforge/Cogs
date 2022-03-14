@@ -114,7 +114,7 @@ class ProductKeyDecoder
             key = digits[current] + key;
         }
         var keypart1 = key.Substring(1, last);
-        var keypart2 = key.Substring(last + 1, key.Length - (last + 1));
+        var keypart2 = key[(last + 1)..];
         key = keypart1 + "N" + keypart2;
         for (var i = 5; i < key.Length; i += 6)
             key = key.Insert(i, "-");

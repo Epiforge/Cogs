@@ -159,8 +159,8 @@ public static class SynchronizedExtensions
     /// </summary>
     /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
     /// <param name="asyncAction">The <see cref="Func{Task}"/></param>
-    public static Task ExecuteAsync(this ISynchronized? synchronizable, Func<Task> asyncAction) => ExecuteAsync(synchronizable?.SynchronizationContext, asyncAction);
-
+    public static Task ExecuteAsync(this ISynchronized? synchronizable, Func<Task> asyncAction) =>
+        ExecuteAsync(synchronizable?.SynchronizationContext, asyncAction);
 
     /// <summary>
     /// Executes the specified <paramref name="asyncFunc"/> on the specified <paramref name="synchronizationContext"/> and returns the result
@@ -187,14 +187,16 @@ public static class SynchronizedExtensions
     /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
     /// <param name="asyncFunc">The <see cref="Func{Task}"/> that returns a value</param>
     /// <returns>The result of <paramref name="asyncFunc"/></returns>
-    public static Task<TResult> ExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) => ExecuteAsync(synchronizable?.SynchronizationContext, asyncFunc);
+    public static Task<TResult> ExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) =>
+        ExecuteAsync(synchronizable?.SynchronizationContext, asyncFunc);
 
     /// <summary>
     /// Executes the specified <paramref name="action"/> on the specified <see cref="SynchronizationContext"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>)
     /// </summary>
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="action">The <see cref="Action"/></param>
-    public static void SequentialExecute(this SynchronizationContext? synchronizationContext, Action action) => Execute(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, action);
+    public static void SequentialExecute(this SynchronizationContext? synchronizationContext, Action action) =>
+        Execute(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, action);
 
     /// <summary>
     /// Executes the specified <paramref name="func"/> on the specified <see cref="SynchronizationContext"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>) and returns the result
@@ -203,14 +205,16 @@ public static class SynchronizedExtensions
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="func">The <see cref="Func{TResult}"/></param>
     /// <returns>The result of <paramref name="func"/></returns>
-    public static TResult SequentialExecute<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func) => Execute(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, func);
+    public static TResult SequentialExecute<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func) =>
+        Execute(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, func);
 
     /// <summary>
     /// Executes the specified <paramref name="action"/> on the specified <see cref="SynchronizationContext"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>)
     /// </summary>
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="action">The <see cref="Action"/></param>
-    public static Task SequentialExecuteAsync(this SynchronizationContext? synchronizationContext, Action action) => ExecuteAsync(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, action);
+    public static Task SequentialExecuteAsync(this SynchronizationContext? synchronizationContext, Action action) =>
+        ExecuteAsync(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, action);
 
     /// <summary>
     /// Executes the specified <paramref name="func"/> on the specified <see cref="SynchronizationContext"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>) and returns the result
@@ -219,14 +223,16 @@ public static class SynchronizedExtensions
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="func">The <see cref="Func{TResult}"/></param>
     /// <returns>The result of <paramref name="func"/></returns>
-    public static Task<TResult> SequentialExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func) => ExecuteAsync(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, func);
+    public static Task<TResult> SequentialExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<TResult> func) =>
+        ExecuteAsync(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, func);
 
     /// <summary>
     /// Executes the specified <paramref name="asyncAction"/> on the specified <see cref="SynchronizationContext"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>)
     /// </summary>
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="asyncAction">The <see cref="Func{Task}"/></param>
-    public static Task SequentialExecuteAsync(this SynchronizationContext? synchronizationContext, Func<Task> asyncAction) => ExecuteAsync(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, asyncAction);
+    public static Task SequentialExecuteAsync(this SynchronizationContext? synchronizationContext, Func<Task> asyncAction) =>
+        ExecuteAsync(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, asyncAction);
 
     /// <summary>
     /// Executes the specified <paramref name="asyncFunc"/> on the specified <see cref="SynchronizationContext"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>) and returns the result
@@ -235,14 +241,16 @@ public static class SynchronizedExtensions
     /// <param name="synchronizationContext">The <see cref="SynchronizationContext"/></param>
     /// <param name="asyncFunc">The <see cref="Func{Task}"/> that returns a value</param>
     /// <returns>The result of <paramref name="asyncFunc"/></returns>
-    public static Task<TResult> SequentialExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<Task<TResult>> asyncFunc) => ExecuteAsync(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, asyncFunc);
+    public static Task<TResult> SequentialExecuteAsync<TResult>(this SynchronizationContext? synchronizationContext, Func<Task<TResult>> asyncFunc) =>
+        ExecuteAsync(synchronizationContext ?? SynchronizationContext.Current ?? Synchronization.DefaultSynchronizationContext, asyncFunc);
 
     /// <summary>
     /// Executes the specified <paramref name="action"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>)
     /// </summary>
     /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
     /// <param name="action">The <see cref="Action"/></param>
-    public static void SequentialExecute(this ISynchronized? synchronizable, Action action) => SequentialExecute(synchronizable?.SynchronizationContext, action);
+    public static void SequentialExecute(this ISynchronized? synchronizable, Action action) =>
+        SequentialExecute(synchronizable?.SynchronizationContext, action);
 
     /// <summary>
     /// Executes the specified <paramref name="func"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>) and returns the result
@@ -251,14 +259,16 @@ public static class SynchronizedExtensions
     /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
     /// <param name="func">The <see cref="Func{TResult}"/></param>
     /// <returns>The result of <paramref name="func"/></returns>
-    public static TResult SequentialExecute<TResult>(this ISynchronized? synchronizable, Func<TResult> func) => SequentialExecute(synchronizable?.SynchronizationContext, func);
+    public static TResult SequentialExecute<TResult>(this ISynchronized? synchronizable, Func<TResult> func) =>
+        SequentialExecute(synchronizable?.SynchronizationContext, func);
 
     /// <summary>
     /// Executes the specified <paramref name="action"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>)
     /// </summary>
     /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
     /// <param name="action">The <see cref="Action"/></param>
-    public static Task SequentialExecuteAsync(this ISynchronized? synchronizable, Action action) => SequentialExecuteAsync(synchronizable?.SynchronizationContext, action);
+    public static Task SequentialExecuteAsync(this ISynchronized? synchronizable, Action action) =>
+        SequentialExecuteAsync(synchronizable?.SynchronizationContext, action);
 
     /// <summary>
     /// Executes the specified <paramref name="func"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>) and returns the result
@@ -267,14 +277,16 @@ public static class SynchronizedExtensions
     /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
     /// <param name="func">The <see cref="Func{TResult}"/></param>
     /// <returns>The result of <paramref name="func"/></returns>
-    public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<TResult> func) => SequentialExecuteAsync(synchronizable?.SynchronizationContext, func);
+    public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<TResult> func) =>
+        SequentialExecuteAsync(synchronizable?.SynchronizationContext, func);
 
     /// <summary>
     /// Executes the specified <paramref name="asyncAction"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>)
     /// </summary>
     /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
     /// <param name="asyncAction">The <see cref="Func{Task}"/></param>
-    public static Task SequentialExecuteAsync(this ISynchronized? synchronizable, Func<Task> asyncAction) => SequentialExecuteAsync(synchronizable?.SynchronizationContext, asyncAction);
+    public static Task SequentialExecuteAsync(this ISynchronized? synchronizable, Func<Task> asyncAction) =>
+        SequentialExecuteAsync(synchronizable?.SynchronizationContext, asyncAction);
 
     /// <summary>
     /// Executes the specified <paramref name="asyncFunc"/> on the <see cref="ISynchronized.SynchronizationContext"/> of the specified <paramref name="synchronizable"/> (or <see cref="SynchronizationContext.Current"/> if that is <c>null</c>, or <see cref="Synchronization.DefaultSynchronizationContext"/> if both are <c>null</c>) and returns the result
@@ -283,5 +295,6 @@ public static class SynchronizedExtensions
     /// <param name="synchronizable">The <see cref="ISynchronized"/></param>
     /// <param name="asyncFunc">The <see cref="Func{Task}"/> that returns a value</param>
     /// <returns>The result of <paramref name="asyncFunc"/></returns>
-    public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) => SequentialExecuteAsync(synchronizable?.SynchronizationContext, asyncFunc);
+    public static Task<TResult> SequentialExecuteAsync<TResult>(this ISynchronized? synchronizable, Func<Task<TResult>> asyncFunc) =>
+        SequentialExecuteAsync(synchronizable?.SynchronizationContext, asyncFunc);
 }

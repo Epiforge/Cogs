@@ -3,7 +3,10 @@ namespace Cogs.Wpf;
 /// <summary>
 /// A command that can be manipulated by its caller
 /// </summary>
-public class ActionCommand : ICommand, INotifyPropertyChanged, INotifyPropertyChanging
+public class ActionCommand :
+    ICommand,
+    INotifyPropertyChanged,
+    INotifyPropertyChanging
 {
     /// <summary>
     /// Initializes a new instance of <see cref="ActionCommand"/>
@@ -55,24 +58,28 @@ public class ActionCommand : ICommand, INotifyPropertyChanged, INotifyPropertyCh
     /// Defines the method that determines whether the command can execute in its current state
     /// </summary>
     /// <param name="parameter">Data used by the command</param>
-    public bool CanExecute(object? parameter) => executable;
+    public bool CanExecute(object? parameter) =>
+        executable;
 
     /// <summary>
     /// Defines the method to be called when the command is invoked
     /// </summary>
     /// <param name="parameter">Data used by the command</param>
-    public void Execute(object? parameter) => executeAction();
+    public void Execute(object? parameter) =>
+        executeAction();
 
     /// <summary>
     /// Raises the <see cref="CanExecuteChanged"/> event
     /// </summary>
     /// <param name="e">The event data</param>
-    protected virtual void OnCanExecuteChanged(EventArgs e) => CanExecuteChanged?.Invoke(this, e);
+    protected virtual void OnCanExecuteChanged(EventArgs e) =>
+        CanExecuteChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="CanExecuteChanged"/> event
     /// </summary>
-    protected void OnCanExecuteChanged() => OnCanExecuteChanged(new EventArgs());
+    protected void OnCanExecuteChanged() =>
+        OnCanExecuteChanged(new EventArgs());
 
     /// <summary>
     /// Raises the <see cref="PropertyChanged"/> event

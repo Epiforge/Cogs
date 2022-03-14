@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocationExpression>
+class ActiveInvocationExpression :
+    ActiveExpression,
+    IEquatable<ActiveInvocationExpression>
 {
-    ActiveInvocationExpression(CachedInstancesKey<InvocationExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression.Type, ExpressionType.Invoke, options, deferEvaluation) =>
+    ActiveInvocationExpression(CachedInstancesKey<InvocationExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression.Type, ExpressionType.Invoke, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
     ActiveExpression? activeExpression;
@@ -36,7 +39,8 @@ class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocation
         CreateActiveExpression();
     }
 
-    void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
     void CreateActiveExpression()
     {
@@ -96,9 +100,11 @@ class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocation
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveInvocationExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveInvocationExpression other && Equals(other);
 
-    public bool Equals(ActiveInvocationExpression other) => ExpressionEqualityComparer.Default.Equals(instancesKey.Expression, other.instancesKey.Expression) && Equals(options, other.options);
+    public bool Equals(ActiveInvocationExpression other) =>
+        ExpressionEqualityComparer.Default.Equals(instancesKey.Expression, other.instancesKey.Expression) && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -110,7 +116,8 @@ class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocation
             Value = activeExpression.Value;
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveInvocationExpression), ExpressionEqualityComparer.Default.GetHashCode(instancesKey.Expression), options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveInvocationExpression), ExpressionEqualityComparer.Default.GetHashCode(instancesKey.Expression), options);
 
     protected override void Initialize()
     {
@@ -151,7 +158,8 @@ class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocation
         }
     }
 
-    public override string ToString() => $"λ({(activeExpression is not null ? (object)activeExpression : instancesKey.Expression)})";
+    public override string ToString() =>
+        $"λ({(activeExpression is not null ? (object)activeExpression : instancesKey.Expression)})";
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<CachedInstancesKey<InvocationExpression>, ActiveInvocationExpression> instances = new(new CachedInstancesKeyComparer<InvocationExpression>());
@@ -171,8 +179,10 @@ class ActiveInvocationExpression : ActiveExpression, IEquatable<ActiveInvocation
         }
     }
 
-    public static bool operator ==(ActiveInvocationExpression a, ActiveInvocationExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveInvocationExpression a, ActiveInvocationExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveInvocationExpression a, ActiveInvocationExpression b) => !(a == b);
+    public static bool operator !=(ActiveInvocationExpression a, ActiveInvocationExpression b) =>
+        !(a == b);
 }

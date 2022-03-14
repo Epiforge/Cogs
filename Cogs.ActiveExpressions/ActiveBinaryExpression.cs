@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpression>
+class ActiveBinaryExpression :
+    ActiveExpression,
+    IEquatable<ActiveBinaryExpression>
 {
-    protected ActiveBinaryExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation, bool getDelegate = true, bool evaluateIfNotDeferred = true) : base(instancesKey.Expression, options, deferEvaluation)
+    protected ActiveBinaryExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation, bool getDelegate = true, bool evaluateIfNotDeferred = true) :
+        base(instancesKey.Expression, options, deferEvaluation)
     {
         this.instancesKey = instancesKey;
         this.getDelegate = getDelegate;
@@ -45,9 +48,11 @@ class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpressi
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveBinaryExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveBinaryExpression other && Equals(other);
 
-    public bool Equals(ActiveBinaryExpression other) => left == other.left && method == other.method && NodeType == other.NodeType && right == other.right && Equals(options, other.options);
+    public bool Equals(ActiveBinaryExpression other) =>
+        left == other.left && method == other.method && NodeType == other.NodeType && right == other.right && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -70,9 +75,11 @@ class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpressi
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveBinaryExpression), left, method, NodeType, right, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveBinaryExpression), left, method, NodeType, right, options);
 
-    protected override bool GetShouldValueBeDisposed() => method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
+    protected override bool GetShouldValueBeDisposed() =>
+        method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
 
     protected override void Initialize()
     {
@@ -117,11 +124,14 @@ class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpressi
         }
     }
 
-    void LeftPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void LeftPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
-    void RightPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void RightPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
-    public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, left, right)} {ToStringSuffix}";
+    public override string ToString() =>
+        $"{GetOperatorExpressionSyntax(NodeType, Type, left, right)} {ToStringSuffix}";
 
     static readonly ConcurrentDictionary<ImplementationsKey, BinaryOperationDelegate> implementations = new();
     static readonly object instanceManagementLock = new();
@@ -157,10 +167,12 @@ class ActiveBinaryExpression : ActiveExpression, IEquatable<ActiveBinaryExpressi
         return Expression.Lambda<BinaryOperationDelegate>(Expression.Convert(key.Method is null ? Expression.MakeBinary(key.NodeType, leftConversion, rightConversion) : Expression.MakeBinary(key.NodeType, leftConversion, rightConversion, key.IsLiftedToNull, key.Method), typeof(object)), leftParameter, rightParameter).Compile();
     }
 
-    public static bool operator ==(ActiveBinaryExpression a, ActiveBinaryExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveBinaryExpression a, ActiveBinaryExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveBinaryExpression a, ActiveBinaryExpression b) => !(a == b);
+    public static bool operator !=(ActiveBinaryExpression a, ActiveBinaryExpression b) =>
+        !(a == b);
 
     record ImplementationsKey(ExpressionType NodeType, Type LeftType, Type RightType, Type ReturnValueType, bool IsLiftedToNull, MethodInfo? Method);
 }

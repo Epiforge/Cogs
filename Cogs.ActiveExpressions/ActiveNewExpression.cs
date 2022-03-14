@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
+class ActiveNewExpression :
+    ActiveExpression,
+    IEquatable<ActiveNewExpression>
 {
-    ActiveNewExpression(CachedInstancesKey<NewExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+    ActiveNewExpression(CachedInstancesKey<NewExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
     protected override void Initialize()
@@ -41,7 +44,8 @@ class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
     FastConstructorInfo? fastConstructor;
     readonly CachedInstancesKey<NewExpression> instancesKey;
 
-    void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
     protected override bool Dispose(bool disposing)
     {
@@ -64,9 +68,11 @@ class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveNewExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveNewExpression other && Equals(other);
 
-    public bool Equals(ActiveNewExpression other) => Type == other.Type && arguments == other.arguments && Equals(options, other.options);
+    public bool Equals(ActiveNewExpression other) =>
+        Type == other.Type && arguments == other.arguments && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -75,10 +81,8 @@ class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
             var argumentFault = arguments.Select(argument => argument.Fault).Where(fault => fault is not null).FirstOrDefault();
             if (argumentFault is not null)
                 Fault = argumentFault;
-            else if (fastConstructor is not null)
-                Value = fastConstructor.Invoke(arguments.Select(argument => argument.Value).ToArray());
             else
-                Value = Activator.CreateInstance(Type, arguments.Select(argument => argument.Value).ToArray());
+                Value = fastConstructor is not null ? fastConstructor.Invoke(arguments.Select(argument => argument.Value).ToArray()) : Activator.CreateInstance(Type, arguments.Select(argument => argument.Value).ToArray());
         }
         catch (Exception ex)
         {
@@ -86,11 +90,14 @@ class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveNewExpression), Type, arguments, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveNewExpression), Type, arguments, options);
 
-    protected override bool GetShouldValueBeDisposed() => ApplicableOptions.IsConstructedTypeDisposed(Type, constructorParameterTypes);
+    protected override bool GetShouldValueBeDisposed() =>
+        ApplicableOptions.IsConstructedTypeDisposed(Type, constructorParameterTypes);
 
-    public override string ToString() => $"new {Type.FullName}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
+    public override string ToString() =>
+        $"new {Type.FullName}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
     static readonly Dictionary<CachedInstancesKey<NewExpression>, ActiveNewExpression> instances = new(new CachedInstancesKeyComparer<NewExpression>());
     static readonly object instanceManagementLock = new();
@@ -110,8 +117,10 @@ class ActiveNewExpression : ActiveExpression, IEquatable<ActiveNewExpression>
         }
     }
 
-    public static bool operator ==(ActiveNewExpression a, ActiveNewExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveNewExpression a, ActiveNewExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveNewExpression a, ActiveNewExpression b) => !(a == b);
+    public static bool operator !=(ActiveNewExpression a, ActiveNewExpression b) =>
+        !(a == b);
 }

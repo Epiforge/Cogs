@@ -3,13 +3,14 @@ namespace Cogs.Wpf.Input;
 /// <summary>
 /// Defines a mouse wheel up gesture that can be used to invoke a command
 /// </summary>
-public class MouseWheelUpGesture : MouseGesture
+public class MouseWheelUpGesture :
+    MouseGesture
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="MouseWheelUpGesture"/> class
     /// </summary>
-    public MouseWheelUpGesture()
-        : base(MouseAction.WheelClick)
+    public MouseWheelUpGesture() :
+        base(MouseAction.WheelClick)
     {
     }
 
@@ -17,8 +18,8 @@ public class MouseWheelUpGesture : MouseGesture
     /// Initializes a new instance of the <see cref="MouseWheelUpGesture"/> class using the specified <see cref="ModifierKeys"/>
     /// </summary>
     /// <param name="modifierKeys">The modifiers associated with this gesture</param>
-    public MouseWheelUpGesture(ModifierKeys modifierKeys)
-        : base(MouseAction.WheelClick, modifierKeys)
+    public MouseWheelUpGesture(ModifierKeys modifierKeys) :
+        base(MouseAction.WheelClick, modifierKeys)
     {
     }
 

@@ -4,7 +4,9 @@ namespace Cogs.Collections;
 /// Provides data for the <see cref="INotifyGenericCollectionChanged{T}.GenericCollectionChanged"/> event
 /// </summary>
 /// <typeparam name="T">The type of elements in the collection</typeparam>
-public class NotifyGenericCollectionChangedEventArgs<T> : EventArgs, INotifyGenericCollectionChangedEventArgs<T>
+public class NotifyGenericCollectionChangedEventArgs<T> :
+    EventArgs,
+    INotifyGenericCollectionChangedEventArgs<T>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="NotifyGenericCollectionChangedEventArgs{T}"/> class that describes a <see cref="NotifyCollectionChangedAction.Reset"/> change
@@ -298,11 +300,12 @@ public class NotifyGenericCollectionChangedEventArgs<T> : EventArgs, INotifyGene
     /// Converts of a <see cref="NotifyCollectionChangedEventArgs"/> to a <see cref="NotifyGenericCollectionChangedEventArgs{T}"/>
     /// </summary>
     /// <param name="notifyCollectionChangedEventArgs">The <see cref="NotifyCollectionChangedEventArgs"/></param>
-    public static NotifyGenericCollectionChangedEventArgs<T> FromNotifyCollectionChangedEventArgs(NotifyCollectionChangedEventArgs notifyCollectionChangedEventArgs)
-    {
-        if (notifyCollectionChangedEventArgs is null)
-            throw new ArgumentNullException(nameof(notifyCollectionChangedEventArgs));
-        return notifyCollectionChangedEventArgs.Action switch
+    public static NotifyGenericCollectionChangedEventArgs<T> FromNotifyCollectionChangedEventArgs(NotifyCollectionChangedEventArgs notifyCollectionChangedEventArgs) =>
+        notifyCollectionChangedEventArgs is null
+        ?
+        throw new ArgumentNullException(nameof(notifyCollectionChangedEventArgs))
+        :
+        notifyCollectionChangedEventArgs.Action switch
         {
             NotifyCollectionChangedAction.Add => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Add, notifyCollectionChangedEventArgs.NewItems.Cast<T>().ToImmutableArray(), notifyCollectionChangedEventArgs.NewStartingIndex),
             NotifyCollectionChangedAction.Move => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Move, (notifyCollectionChangedEventArgs.NewItems ?? notifyCollectionChangedEventArgs.OldItems).Cast<T>().ToImmutableArray(), notifyCollectionChangedEventArgs.NewStartingIndex, notifyCollectionChangedEventArgs.OldStartingIndex),
@@ -311,5 +314,4 @@ public class NotifyGenericCollectionChangedEventArgs<T> : EventArgs, INotifyGene
             NotifyCollectionChangedAction.Reset => new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Reset),
             _ => throw new NotSupportedException(),
         };
-    }
 }

@@ -48,7 +48,7 @@ public sealed class Theme : SyncDisposable
     }
 
     readonly RegistryKey colorHive = Registry.Users;
-    private Color color;
+    Color color;
     readonly RegistryKey colorKey;
     readonly string colorKeyName = $@"{WindowsIdentity.GetCurrent().User}\Software\Microsoft\Windows\DWM";
     readonly ManagementEventWatcher? colorKeyWatcher;

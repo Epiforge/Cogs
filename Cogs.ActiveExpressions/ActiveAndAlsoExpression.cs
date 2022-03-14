@@ -1,14 +1,19 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveAndAlsoExpression : ActiveBinaryExpression, IEquatable<ActiveAndAlsoExpression>
+class ActiveAndAlsoExpression :
+    ActiveBinaryExpression,
+    IEquatable<ActiveAndAlsoExpression>
 {
-    public ActiveAndAlsoExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey, options, deferEvaluation, false)
+    public ActiveAndAlsoExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey, options, deferEvaluation, false)
     {
     }
 
-    public override bool Equals(object? obj) => obj is ActiveAndAlsoExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveAndAlsoExpression other && Equals(other);
 
-    public bool Equals(ActiveAndAlsoExpression other) => left == other.left && right == other.right && Equals(options, other.options);
+    public bool Equals(ActiveAndAlsoExpression other) =>
+        left == other.left && right == other.right && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -27,12 +32,16 @@ class ActiveAndAlsoExpression : ActiveBinaryExpression, IEquatable<ActiveAndAlso
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveAndAlsoExpression), left, right, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveAndAlsoExpression), left, right, options);
 
-    public override string ToString() => $"({left} && {right}) {ToStringSuffix}";
+    public override string ToString() =>
+        $"({left} && {right}) {ToStringSuffix}";
 
-    public static bool operator ==(ActiveAndAlsoExpression a, ActiveAndAlsoExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveAndAlsoExpression a, ActiveAndAlsoExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveAndAlsoExpression a, ActiveAndAlsoExpression b) => !(a == b);
+    public static bool operator !=(ActiveAndAlsoExpression a, ActiveAndAlsoExpression b) =>
+        !(a == b);
 }

@@ -4,12 +4,15 @@ namespace Cogs.Collections;
 /// Represents a dynamic data collection that supports bulk operations and provides notifications when items get added, removed, or when the whole list is refreshed
 /// </summary>
 /// <typeparam name="T">The type of elements in the collection</typeparam>
-public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGenericCollectionChanged<T>
+public class RangeObservableCollection<T> :
+    ObservableCollection<T>,
+    INotifyGenericCollectionChanged<T>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="RangeObservableCollection{T}"/>
     /// </summary>
-    public RangeObservableCollection() : base()
+    public RangeObservableCollection() :
+        base()
     {
     }
 
@@ -17,14 +20,16 @@ public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGene
     /// Initializes a new instance of the <see cref="RangeObservableCollection{T}"/>
     /// </summary>
     /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon by range methods</param>
-    public RangeObservableCollection(bool raiseCollectionChangedEventsForIndividualElements) : base() =>
+    public RangeObservableCollection(bool raiseCollectionChangedEventsForIndividualElements) :
+        base() =>
         RaiseCollectionChangedEventsForIndividualElements = raiseCollectionChangedEventsForIndividualElements;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RangeObservableCollection{T}"/> class that contains elements copied from the specified collection
     /// </summary>
     /// <param name="collection">The collection from which the elements are copied</param>
-    public RangeObservableCollection(IEnumerable<T> collection) : base(collection)
+    public RangeObservableCollection(IEnumerable<T> collection) :
+        base(collection)
     {
     }
 
@@ -33,7 +38,8 @@ public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGene
     /// </summary>
     /// <param name="collection">The collection from which the elements are copied</param>
     /// <param name="raiseCollectionChangedEventsForIndividualElements">Whether to raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon by range methods</param>
-    public RangeObservableCollection(IEnumerable<T> collection, bool raiseCollectionChangedEventsForIndividualElements) : base(collection) =>
+    public RangeObservableCollection(IEnumerable<T> collection, bool raiseCollectionChangedEventsForIndividualElements) :
+        base(collection) =>
         RaiseCollectionChangedEventsForIndividualElements = raiseCollectionChangedEventsForIndividualElements;
 
     /// <summary>
@@ -50,13 +56,15 @@ public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGene
     /// Adds objects to the end of the <see cref="RangeObservableCollection{T}"/>
     /// </summary>
     /// <param name="items">The objects to be added to the end of the <see cref="RangeObservableCollection{T}"/></param>
-    public void AddRange(IEnumerable<T> items) => InsertRange(Items.Count, items);
+    public void AddRange(IEnumerable<T> items) =>
+        InsertRange(Items.Count, items);
 
     /// <summary>
     /// Adds objects to the end of the <see cref="RangeObservableCollection{T}"/>
     /// </summary>
     /// <param name="items">The objects to be added to the end of the <see cref="RangeObservableCollection{T}"/></param>
-    public void AddRange(IList<T> items) => AddRange((IEnumerable<T>)items);
+    public void AddRange(IList<T> items) =>
+        AddRange((IEnumerable<T>)items);
 
     /// <summary>
     /// Removes all object from the <see cref="RangeObservableCollection{T}"/> that satisfy the <paramref name="predicate"/>
@@ -141,7 +149,8 @@ public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGene
     /// </summary>
     /// <param name="index">The zero-based index at which <paramref name="items"/> should be inserted</param>
     /// <param name="items">The objects to insert</param>
-    public void InsertRange(int index, IList<T> items) => InsertRange(index, (IEnumerable<T>)items);
+    public void InsertRange(int index, IList<T> items) =>
+        InsertRange(index, (IEnumerable<T>)items);
 
     /// <summary>
     /// Moves the items at the specified index to a new location in the collection
@@ -179,7 +188,8 @@ public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGene
         }
     }
 
-    void NotifyCountChanged() => OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+    void NotifyCountChanged() =>
+        OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
 
     /// <summary>
     /// Raises the <see cref="INotifyCollectionChanged.CollectionChanged"/> event with the provided arguments
@@ -195,14 +205,16 @@ public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGene
     /// Raises the <see cref="INotifyGenericCollectionChanged{T}.GenericCollectionChanged"/> event with the provided arguments
     /// </summary>
     /// <param name="e">Arguments of the event being raised</param>
-    protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<T> e) => GenericCollectionChanged?.Invoke(this, e);
+    protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<T> e) =>
+        GenericCollectionChanged?.Invoke(this, e);
 
     /// <summary>
     /// Removes all object from the <see cref="RangeObservableCollection{T}"/> that satisfy the <paramref name="predicate"/>
     /// </summary>
     /// <param name="predicate">A predicate used to determine whether to remove an object from the <see cref="RangeObservableCollection{T}"/></param>
     /// <returns>The number of items that were removed</returns>
-    public int RemoveAll(Func<T, bool> predicate) => GetAndRemoveAll(predicate).Count;
+    public int RemoveAll(Func<T, bool> predicate) =>
+        GetAndRemoveAll(predicate).Count;
 
     /// <summary>
     /// Removes the specified items from the <see cref="RangeObservableCollection{T}"/>
@@ -230,7 +242,8 @@ public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGene
     /// </summary>
     /// <param name="items">The items to be removed</param>
     /// <returns>The number of items that were removed</returns>
-    public void RemoveRange(IList<T> items) => RemoveRange((IEnumerable<T>)items);
+    public void RemoveRange(IList<T> items) =>
+        RemoveRange((IEnumerable<T>)items);
 
     /// <summary>
     /// Removes the specified range of items from the <see cref="RangeObservableCollection{T}"/>
@@ -292,7 +305,8 @@ public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGene
     /// Replace all items in the <see cref="RangeObservableCollection{T}"/> with the items in the specified collection
     /// </summary>
     /// <param name="items">The collection of replacement items</param>
-    public void ReplaceAll(IList<T> items) => ReplaceAll((IEnumerable<T>)items);
+    public void ReplaceAll(IList<T> items) =>
+        ReplaceAll((IEnumerable<T>)items);
 
     /// <summary>
     /// Replaces the specified range of items from the <see cref="RangeObservableCollection{T}"/> with the items in the specified collection
@@ -345,7 +359,8 @@ public class RangeObservableCollection<T> : ObservableCollection<T>, INotifyGene
     /// <param name="count">The number of items in the range</param>
     /// <param name="list">The list of replacement items</param>
     /// <returns>The items that were replaced</returns>
-    public IReadOnlyList<T> ReplaceRange(int index, int count, IList<T> list) => ReplaceRange(index, count, (IEnumerable<T>)list);
+    public IReadOnlyList<T> ReplaceRange(int index, int count, IList<T> list) =>
+        ReplaceRange(index, count, (IEnumerable<T>)list);
 
     /// <summary>
     /// Resets the <see cref="RangeObservableCollection{T}"/> with the specified collection of items

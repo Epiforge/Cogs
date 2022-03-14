@@ -17,10 +17,7 @@ public class ActiveDictionary<TKey, TValue> :
     public ActiveDictionary(IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, Action? onDispose = null)
     {
         synchronized = readOnlyDictionary as ISynchronized;
-        if (readOnlyDictionary is ActiveDictionary<TKey, TValue> activeDictionary)
-            this.readOnlyDictionary = activeDictionary.readOnlyDictionary;
-        else
-            this.readOnlyDictionary = readOnlyDictionary;
+        this.readOnlyDictionary = readOnlyDictionary is ActiveDictionary<TKey, TValue> activeDictionary ? activeDictionary.readOnlyDictionary : readOnlyDictionary;
         if (this.readOnlyDictionary is INotifyDictionaryChanged dictionaryNotifier)
             dictionaryNotifier.DictionaryChanged += DictionaryChangedHandler;
         if (this.readOnlyDictionary is INotifyDictionaryChanged<TKey, TValue> genericDictionaryNotifier)

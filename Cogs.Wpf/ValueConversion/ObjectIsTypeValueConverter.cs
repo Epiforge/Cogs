@@ -4,7 +4,8 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the value to its corresponding <see cref="Type"/>
 /// </summary>
 [ValueConversion(typeof(object), typeof(Type))]
-public class ObjectIsTypeValueConverter : IValueConverter
+public class ObjectIsTypeValueConverter :
+    IValueConverter
 {
     /// <summary>
     /// Converts a value

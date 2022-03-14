@@ -14,7 +14,7 @@ public static class VisualExtensions
     {
         do
             reference = VisualTreeHelper.GetParent(reference);
-        while (reference is not null && reference is not T);
+        while (reference is not null and not T);
         return reference is T typedAncestor ? typedAncestor : null;
     }
 
@@ -28,7 +28,7 @@ public static class VisualExtensions
     {
         do
             reference = VisualTreeHelper.GetParent(reference);
-        while (reference is not null && reference is not T1 && reference is not T2);
+        while (reference is not null and not T1 and not T2);
         return reference;
     }
 
@@ -43,7 +43,7 @@ public static class VisualExtensions
     {
         do
             reference = VisualTreeHelper.GetParent(reference);
-        while (reference is not null && reference is not T1 && reference is not T2 && reference is not T3);
+        while (reference is not null and not T1 and not T2 and not T3);
         return reference;
     }
 

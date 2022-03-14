@@ -38,19 +38,15 @@ public class FastEqualityComparer
     /// </summary>
     public Type Type { get; }
 
-    static readonly ConcurrentDictionary<Type, FastEqualityComparer> equalityComparers = new ConcurrentDictionary<Type, FastEqualityComparer>();
+    static readonly ConcurrentDictionary<Type, FastEqualityComparer> equalityComparers = new();
 
     /// <summary>
     /// Gets a <see cref="FastEqualityComparer"/> for the specified type
     /// </summary>
     /// <param name="type">The type</param>
     /// <returns>A <see cref="FastEqualityComparer"/></returns>
-    public static FastEqualityComparer Get(Type type)
-    {
-        if (type is null)
-            throw new ArgumentNullException(nameof(type));
-        return equalityComparers.GetOrAdd(type, Factory);
-    }
+    public static FastEqualityComparer Get(Type type) =>
+        type is null ? throw new ArgumentNullException(nameof(type)) : equalityComparers.GetOrAdd(type, Factory);
 
-    static FastEqualityComparer Factory(Type type) => new FastEqualityComparer(type);
+    static FastEqualityComparer Factory(Type type) => new(type);
 }

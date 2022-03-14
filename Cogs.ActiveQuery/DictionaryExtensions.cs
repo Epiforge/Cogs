@@ -16,7 +16,8 @@ static class DictionaryExtensions
             _ => keyEqualityComparer is { } ? new NullableKeyDictionary<TKey, TResultValue>(keyEqualityComparer) : new NullableKeyDictionary<TKey, TResultValue>(),
         };
 
-    public static IDictionary<TKey, TValue> CreateSimilarDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary) => CreateSimilarDictionary<TKey, TValue, TValue>(readOnlyDictionary);
+    public static IDictionary<TKey, TValue> CreateSimilarDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary) =>
+        CreateSimilarDictionary<TKey, TValue, TValue>(readOnlyDictionary);
 
     public static IDictionary<TKey, TResultValue> CreateSimilarDictionary<TKey, TSourceValue, TResultValue>(this IReadOnlyDictionary<TKey, TSourceValue> readOnlyDictionary)
     {
@@ -38,9 +39,11 @@ static class DictionaryExtensions
         };
     }
 
-    public static ISynchronizedObservableRangeDictionary<TKey, TValue> CreateSimilarSynchronizedObservableDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary) => CreateSimilarSynchronizedObservableDictionary(readOnlyDictionary, SynchronizationContext.Current);
+    public static ISynchronizedObservableRangeDictionary<TKey, TValue> CreateSimilarSynchronizedObservableDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary) =>
+        CreateSimilarSynchronizedObservableDictionary(readOnlyDictionary, SynchronizationContext.Current);
 
-    public static ISynchronizedObservableRangeDictionary<TKey, TValue> CreateSimilarSynchronizedObservableDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, SynchronizationContext? synchronizationContext) => CreateSimilarSynchronizedObservableDictionary<TKey, TValue, TValue>(readOnlyDictionary, synchronizationContext);
+    public static ISynchronizedObservableRangeDictionary<TKey, TValue> CreateSimilarSynchronizedObservableDictionary<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> readOnlyDictionary, SynchronizationContext? synchronizationContext) =>
+        CreateSimilarSynchronizedObservableDictionary<TKey, TValue, TValue>(readOnlyDictionary, synchronizationContext);
 
     public static ISynchronizedObservableRangeDictionary<TKey, TResultValue> CreateSimilarSynchronizedObservableDictionary<TKey, TSourceValue, TResultValue>(this IReadOnlyDictionary<TKey, TSourceValue> readOnlyDictionary, SynchronizationContext? synchronizationContext)
     {

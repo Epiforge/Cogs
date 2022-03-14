@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveCoalesceExpression : ActiveBinaryExpression, IEquatable<ActiveCoalesceExpression>
+class ActiveCoalesceExpression :
+    ActiveBinaryExpression,
+    IEquatable<ActiveCoalesceExpression>
 {
-    public ActiveCoalesceExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey, options, deferEvaluation, false, false)
+    public ActiveCoalesceExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey, options, deferEvaluation, false, false)
     {
     }
 
@@ -28,9 +31,11 @@ class ActiveCoalesceExpression : ActiveBinaryExpression, IEquatable<ActiveCoales
 
     UnaryOperationDelegate? conversionDelegate;
 
-    public override bool Equals(object? obj) => obj is ActiveCoalesceExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveCoalesceExpression other && Equals(other);
 
-    public bool Equals(ActiveCoalesceExpression other) => left == other.left && right == other.right && Equals(options, other.options);
+    public bool Equals(ActiveCoalesceExpression other) =>
+        left == other.left && right == other.right && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -60,17 +65,21 @@ class ActiveCoalesceExpression : ActiveBinaryExpression, IEquatable<ActiveCoales
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveCoalesceExpression), left, right, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveCoalesceExpression), left, right, options);
 
-    public override string ToString() => $"({left} ?? {right}) {ToStringSuffix}";
+    public override string ToString() =>
+        $"({left} ?? {right}) {ToStringSuffix}";
 
     static readonly object conversionDelegateManagementLock = new();
     static readonly Dictionary<ConversionDelegatesKey, UnaryOperationDelegate> conversionDelegates = new();
 
-    public static bool operator ==(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveCoalesceExpression a, ActiveCoalesceExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveCoalesceExpression a, ActiveCoalesceExpression b) => !(a == b);
+    public static bool operator !=(ActiveCoalesceExpression a, ActiveCoalesceExpression b) =>
+        !(a == b);
 
     record ConversionDelegatesKey(Type ConvertFrom, Type ConvertTo);
 }

@@ -3,7 +3,8 @@ namespace Cogs.ActiveExpressions;
 /// <summary>
 /// Represents certain options governing the behavior of active expressions
 /// </summary>
-public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
+public class ActiveExpressionOptions :
+    IEquatable<ActiveExpressionOptions>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ActiveExpressionOptions"/> class
@@ -166,7 +167,8 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
     /// <typeparam name="T">The type of the objects</typeparam>
     /// <param name="lambda">An expression indicating the kind of behavior that is yielding the objects</param>
     /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
-    public bool AddExpressionValueDisposal<T>(Expression<Func<T>> lambda) => AddExpressionValueDisposal(lambda, false);
+    public bool AddExpressionValueDisposal<T>(Expression<Func<T>> lambda) =>
+        AddExpressionValueDisposal(lambda, false);
 
     /// <summary>
     /// Specifies that active expressions using these options should dispose of objects they have received as a result of invoking a constructor, operator, or method, or getting the value of a property or indexer when the objects are replaced or otherwise discarded
@@ -198,7 +200,8 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
     /// </summary>
     /// <param name="method">The method yielding the objects</param>
     /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
-    public bool AddMethodReturnValueDisposal(MethodInfo method) => AddMethodReturnValueDisposal(method, false);
+    public bool AddMethodReturnValueDisposal(MethodInfo method) =>
+        AddMethodReturnValueDisposal(method, false);
 
     /// <summary>
     /// Specifies that active expressions using these options should dispose of objects they have received as a result of invoking a specified method when the objects are replaced or otherwise discarded
@@ -225,7 +228,8 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
     /// </summary>
     /// <param name="property">The property yielding the objects</param>
     /// <returns><c>true</c> if this has resulted in a change in the options; otherwise, <c>false</c></returns>
-    public bool AddPropertyValueDisposal(PropertyInfo property) => AddPropertyValueDisposal(property, false);
+    public bool AddPropertyValueDisposal(PropertyInfo property) =>
+        AddPropertyValueDisposal(property, false);
 
     /// <summary>
     /// Specifies that active expressions using these options should dispose of objects they have received as a result of getting the value of a specified property when the objects are replaced or otherwise discarded
@@ -246,30 +250,32 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
     /// </summary>
     /// <param name="obj">The object to compare with the current object</param>
     /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c></returns>
-    public override bool Equals(object? obj) => obj is ActiveExpressionOptions other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveExpressionOptions other && Equals(other);
 
     /// <summary>
     /// Determines whether the specified options are equal to the current options
     /// </summary>
     /// <param name="other">The other options</param>
     /// <returns><c>true</c> if the specified options are equal to the current options; otherwise, <c>false</c></returns>
-    public bool Equals(ActiveExpressionOptions other)
-    {
-        if (other is null)
-            throw new ArgumentNullException(nameof(other));
-        return blockOnAsyncDisposal == other.blockOnAsyncDisposal &&
-            constantExpressionsListenForCollectionChanged == other.constantExpressionsListenForCollectionChanged &&
-            constantExpressionsListenForDictionaryChanged == other.constantExpressionsListenForDictionaryChanged &&
-            disposeConstructedObjects == other.disposeConstructedObjects &&
-            disposeStaticMethodReturnValues == other.disposeStaticMethodReturnValues &&
-            memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged &&
-            memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged &&
-            preferAsyncDisposal == other.preferAsyncDisposal &&
-            disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value))) &&
-            disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)));
-    }
+    public bool Equals(ActiveExpressionOptions other) =>
+        other is null
+        ?
+        throw new ArgumentNullException(nameof(other))
+        :
+        blockOnAsyncDisposal == other.blockOnAsyncDisposal &&
+        constantExpressionsListenForCollectionChanged == other.constantExpressionsListenForCollectionChanged &&
+        constantExpressionsListenForDictionaryChanged == other.constantExpressionsListenForDictionaryChanged &&
+        disposeConstructedObjects == other.disposeConstructedObjects &&
+        disposeStaticMethodReturnValues == other.disposeStaticMethodReturnValues &&
+        memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged &&
+        memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged == other.memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged &&
+        preferAsyncDisposal == other.preferAsyncDisposal &&
+        disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other.disposeConstructedTypes.OrderBy(kv => $"{kv.Key.type}({string.Join(", ", kv.Key.constuctorParameterTypes.Select(p => p))})").Select(kv => (key: kv.Key, value: kv.Value))) &&
+        disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)).SequenceEqual(other.disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => (key: kv.Key, value: kv.Value)));
 
-    internal void Freeze() => isFrozen = true;
+    internal void Freeze() =>
+        isFrozen = true;
 
     /// <summary>
     /// Gets the hash code for this <see cref="ActiveExpressionOptions"/> instance
@@ -297,7 +303,8 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
         return new EquatableList<object>(objects).GetHashCode();
     }
 
-    internal bool IsConstructedTypeDisposed(Type type, EquatableList<Type> constructorParameterTypes) => DisposeConstructedObjects || disposeConstructedTypes.ContainsKey((type, constructorParameterTypes));
+    internal bool IsConstructedTypeDisposed(Type type, EquatableList<Type> constructorParameterTypes) =>
+        DisposeConstructedObjects || disposeConstructedTypes.ContainsKey((type, constructorParameterTypes));
 
     /// <summary>
     /// Gets whether active expressions using these options should dispose of objects they have created of the specified type and using constructor arguments of the specified types when the objects are replaced or otherwise discarded
@@ -305,19 +312,16 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
     /// <param name="type">The type of object created</param>
     /// <param name="constructorParameterTypes">The types of the arguments passed to the constructor, in order</param>
     /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-    public bool IsConstructedTypeDisposed(Type type, params Type[] constructorParameterTypes) => DisposeConstructedObjects || IsConstructedTypeDisposed(type, new EquatableList<Type>(constructorParameterTypes));
+    public bool IsConstructedTypeDisposed(Type type, params Type[] constructorParameterTypes) =>
+        DisposeConstructedObjects || IsConstructedTypeDisposed(type, new EquatableList<Type>(constructorParameterTypes));
 
     /// <summary>
     /// Gets whether active expressions using these options should dispose of objects they have created using the specified constructor when the objects are replaced or otherwise discarded
     /// </summary>
     /// <param name="constructor">The constructor</param>
     /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-    public bool IsConstructedTypeDisposed(ConstructorInfo constructor)
-    {
-        if (constructor is null)
-            throw new ArgumentNullException(nameof(constructor));
-        return disposeConstructedTypes.ContainsKey((constructor.DeclaringType, new EquatableList<Type>(constructor.GetParameters().Select(parameterInfo => parameterInfo.ParameterType).ToList())));
-    }
+    public bool IsConstructedTypeDisposed(ConstructorInfo constructor) =>
+        constructor is null ? throw new ArgumentNullException(nameof(constructor)) : disposeConstructedTypes.ContainsKey((constructor.DeclaringType, new EquatableList<Type>(constructor.GetParameters().Select(parameterInfo => parameterInfo.ParameterType).ToList())));
 
     /// <summary>
     /// Gets whether active expressions using these options should dispose of objects they have received as a result of invoking a constructor, operator, or method, or getting the value of a property or indexer when the objects are replaced or otherwise discarded
@@ -325,11 +329,12 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
     /// <typeparam name="T">The type of the objects</typeparam>
     /// <param name="lambda">An expression indicating the kind of behavior that is yielding the objects</param>
     /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-    public bool IsExpressionValueDisposed<T>(Expression<Func<T>> lambda)
-    {
-        if (lambda is null)
-            throw new ArgumentNullException(nameof(lambda));
-        return lambda.Body switch
+    public bool IsExpressionValueDisposed<T>(Expression<Func<T>> lambda) =>
+        lambda is null
+        ?
+        throw new ArgumentNullException(nameof(lambda))
+        :
+        lambda.Body switch
         {
             BinaryExpression binary => IsMethodReturnValueDisposed(binary.Method),
             IndexExpression index => IsPropertyValueDisposed(index.Indexer),
@@ -340,31 +345,22 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
             UnaryExpression unary => IsMethodReturnValueDisposed(unary.Method),
             _ => throw new NotSupportedException(),
         };
-    }
 
     /// <summary>
     /// Gets whether active expressions using these options should dispose of objects they have received as a result of invoking a specified method when the objects are replaced or otherwise discarded
     /// </summary>
     /// <param name="method">The method yielding the objects</param>
     /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-    public bool IsMethodReturnValueDisposed(MethodInfo method)
-    {
-        if (method is null)
-            throw new ArgumentNullException(nameof(method));
-        return (method.IsStatic && DisposeStaticMethodReturnValues) || disposeMethodReturnValues.ContainsKey(method) || (method.IsGenericMethod && disposeMethodReturnValues.ContainsKey(genericMethodToGenericMethodDefinition.GetOrAdd(method, GetGenericMethodDefinitionFromGenericMethod)));
-    }
+    public bool IsMethodReturnValueDisposed(MethodInfo method) =>
+        method is null ? throw new ArgumentNullException(nameof(method)) : method.IsStatic && DisposeStaticMethodReturnValues || disposeMethodReturnValues.ContainsKey(method) || method.IsGenericMethod && disposeMethodReturnValues.ContainsKey(genericMethodToGenericMethodDefinition.GetOrAdd(method, GetGenericMethodDefinitionFromGenericMethod));
 
     /// <summary>
     /// Gets whether active expressions using these options should dispose of objects they have received as a result of getting the value of a specified property when the objects are replaced or otherwise discarded
     /// </summary>
     /// <param name="property">The property yielding the objects</param>
     /// <returns><c>true</c> if objects from this source should be disposed; otherwise, <c>false</c></returns>
-    public bool IsPropertyValueDisposed(PropertyInfo property)
-    {
-        if (property is null)
-            throw new ArgumentNullException(nameof(property));
-        return IsMethodReturnValueDisposed(property.GetMethod);
-    }
+    public bool IsPropertyValueDisposed(PropertyInfo property) =>
+        property is null ? throw new ArgumentNullException(nameof(property)) : IsMethodReturnValueDisposed(property.GetMethod);
 
     /// <summary>
     /// Specifies that active expressions using these options should not dispose of objects they have created of the specified type and using constructor arguments of the specified types when the objects are replaced or otherwise discarded
@@ -465,12 +461,8 @@ public class ActiveExpressionOptions : IEquatable<ActiveExpressionOptions>
     /// <param name="a">The first options to compare, or null</param>
     /// <param name="b">The second options to compare, or null</param>
     /// <returns><c>true</c> is <paramref name="a"/> is the same as <paramref name="b"/>; otherwise, <c>false</c></returns>
-    public static bool operator ==(ActiveExpressionOptions a, ActiveExpressionOptions b)
-    {
-        if (a is null)
-            throw new ArgumentNullException(nameof(a));
-        return a.Equals(b);
-    }
+    public static bool operator ==(ActiveExpressionOptions a, ActiveExpressionOptions b) =>
+        a is null ? throw new ArgumentNullException(nameof(a)) : a.Equals(b);
 
     /// <summary>
     /// Determines whether two active expression options are different

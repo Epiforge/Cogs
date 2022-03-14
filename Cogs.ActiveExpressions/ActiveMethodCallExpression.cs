@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveMethodCallExpression : ActiveExpression, IEquatable<ActiveMethodCallExpression>
+class ActiveMethodCallExpression :
+    ActiveExpression,
+    IEquatable<ActiveMethodCallExpression>
 {
-    ActiveMethodCallExpression(CachedInstancesKey<MethodCallExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+    ActiveMethodCallExpression(CachedInstancesKey<MethodCallExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
     EquatableList<ActiveExpression>? arguments;
@@ -12,7 +15,8 @@ class ActiveMethodCallExpression : ActiveExpression, IEquatable<ActiveMethodCall
     MethodInfo? method;
     ActiveExpression? @object;
 
-    void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
     protected override bool Dispose(bool disposing)
     {
@@ -41,9 +45,11 @@ class ActiveMethodCallExpression : ActiveExpression, IEquatable<ActiveMethodCall
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveMethodCallExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveMethodCallExpression other && Equals(other);
 
-    public bool Equals(ActiveMethodCallExpression other) => arguments == other.arguments && method == other.method && Equals(@object, other.@object) && Equals(options, other.options);
+    public bool Equals(ActiveMethodCallExpression other) =>
+        arguments == other.arguments && method == other.method && Equals(@object, other.@object) && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -64,9 +70,11 @@ class ActiveMethodCallExpression : ActiveExpression, IEquatable<ActiveMethodCall
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveMethodCallExpression), arguments, method, @object, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveMethodCallExpression), arguments, method, @object, options);
 
-    protected override bool GetShouldValueBeDisposed() => method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
+    protected override bool GetShouldValueBeDisposed() =>
+        method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
 
     protected override void Initialize()
     {
@@ -107,9 +115,11 @@ class ActiveMethodCallExpression : ActiveExpression, IEquatable<ActiveMethodCall
         }
     }
 
-    void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
-    public override string ToString() => $"{@object?.ToString() ?? method?.DeclaringType.FullName}.{method?.Name}({string.Join(", ", arguments?.Select(argument => $"{argument}"))}) {ToStringSuffix}";
+    public override string ToString() =>
+        $"{@object?.ToString() ?? method?.DeclaringType.FullName}.{method?.Name}({string.Join(", ", arguments?.Select(argument => $"{argument}"))}) {ToStringSuffix}";
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<CachedInstancesKey<MethodCallExpression>, ActiveMethodCallExpression> instances = new(new CachedInstancesKeyComparer<MethodCallExpression>());
@@ -129,8 +139,10 @@ class ActiveMethodCallExpression : ActiveExpression, IEquatable<ActiveMethodCall
         }
     }
 
-    public static bool operator ==(ActiveMethodCallExpression a, ActiveMethodCallExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveMethodCallExpression a, ActiveMethodCallExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveMethodCallExpression a, ActiveMethodCallExpression b) => !(a == b);
+    public static bool operator !=(ActiveMethodCallExpression a, ActiveMethodCallExpression b) =>
+        !(a == b);
 }

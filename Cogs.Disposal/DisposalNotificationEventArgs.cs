@@ -3,7 +3,8 @@ namespace Cogs.Disposal;
 /// <summary>
 /// Represents the arguments for the <see cref="INotifyDisposalOverridden.DisposalOverridden"/>, <see cref="INotifyDisposed.Disposed"/>, and <see cref="INotifyDisposing.Disposing"/> events
 /// </summary>
-public class DisposalNotificationEventArgs : EventArgs
+public class DisposalNotificationEventArgs :
+    EventArgs
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="DisposalNotificationEventArgs"/> class

@@ -23,10 +23,7 @@ public class ActiveEnumerable<TElement> :
             this.faultNotifier.ElementFaultChanged += FaultNotifierElementFaultChanged;
             this.faultNotifier.ElementFaultChanging += FaultNotifierElementFaultChanging;
         }
-        if (readOnlyList is ActiveEnumerable<TElement> activeEnumerable)
-            this.readOnlyList = activeEnumerable.readOnlyList;
-        else
-            this.readOnlyList = readOnlyList;
+        this.readOnlyList = readOnlyList is ActiveEnumerable<TElement> activeEnumerable ? activeEnumerable.readOnlyList : readOnlyList;
         if (this.readOnlyList is INotifyCollectionChanged collectionNotifier)
         {
             isCollectionNotifier = true;

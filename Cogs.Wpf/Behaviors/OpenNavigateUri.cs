@@ -8,12 +8,14 @@ public class OpenNavigateUri : Behavior<Hyperlink>
     /// <summary>
     /// Called after the behavior is attached to an <see cref="Behavior{Hyperlink}.AssociatedObject"/>
     /// </summary>
-    protected override void OnAttached() => AssociatedObject.Click += Click;
+    protected override void OnAttached() =>
+        AssociatedObject.Click += Click;
 
     /// <summary>
     /// Called when the behavior is being detached from its <see cref="Behavior{Hyperlink}.AssociatedObject"/>, but before it has actually occurred
     /// </summary>
-    protected override void OnDetaching() => AssociatedObject.Click -= Click;
+    protected override void OnDetaching() =>
+        AssociatedObject.Click -= Click;
 
     static void Click(object sender, RoutedEventArgs e)
     {

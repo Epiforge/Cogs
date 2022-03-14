@@ -5,7 +5,8 @@ namespace Cogs.Collections;
 /// </summary>
 /// <typeparam name="TKey">The type of keys in the dictionary</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary</typeparam>
-public class NotifyDictionaryChangedEventArgs<TKey, TValue> : EventArgs
+public class NotifyDictionaryChangedEventArgs<TKey, TValue> :
+    EventArgs
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="NotifyDictionaryChangedEventArgs{TKey, TValue}"/> class that describes a <see cref="NotifyDictionaryChangedAction.Reset"/> change
@@ -24,7 +25,8 @@ public class NotifyDictionaryChangedEventArgs<TKey, TValue> : EventArgs
     /// <param name="action">The action that caused the event (this must be set to <see cref="NotifyDictionaryChangedAction.Add"/> or <see cref="NotifyDictionaryChangedAction.Remove"/>)</param>
     /// <param name="key">The key of the item that is affected by the change</param>
     /// <param name="value">The value of the item that is affected by the change</param>
-    public NotifyDictionaryChangedEventArgs(NotifyDictionaryChangedAction action, TKey key, TValue value) : this(action, new KeyValuePair<TKey, TValue>(key, value))
+    public NotifyDictionaryChangedEventArgs(NotifyDictionaryChangedAction action, TKey key, TValue value) :
+        this(action, new KeyValuePair<TKey, TValue>(key, value))
     {
     }
 
@@ -33,7 +35,8 @@ public class NotifyDictionaryChangedEventArgs<TKey, TValue> : EventArgs
     /// </summary>
     /// <param name="action">The action that caused the event (this must be set to <see cref="NotifyDictionaryChangedAction.Add"/> or <see cref="NotifyDictionaryChangedAction.Remove"/>)</param>
     /// <param name="changedItem">The item that is affected by the change</param>
-    public NotifyDictionaryChangedEventArgs(NotifyDictionaryChangedAction action, KeyValuePair<TKey, TValue> changedItem) : this(action, new KeyValuePair<TKey, TValue>[] { changedItem })
+    public NotifyDictionaryChangedEventArgs(NotifyDictionaryChangedAction action, KeyValuePair<TKey, TValue> changedItem) :
+        this(action, new KeyValuePair<TKey, TValue>[] { changedItem })
     {
     }
 
@@ -64,7 +67,8 @@ public class NotifyDictionaryChangedEventArgs<TKey, TValue> : EventArgs
     /// <param name="key">The key of the item that is affected by the change</param>
     /// <param name="newValue">The new value that is replacing the original value</param>
     /// <param name="oldValue">The original value that is replaced</param>
-    public NotifyDictionaryChangedEventArgs(NotifyDictionaryChangedAction action, TKey key, TValue newValue, TValue oldValue) : this(action, new KeyValuePair<TKey, TValue>(key, newValue), new KeyValuePair<TKey, TValue>(key, oldValue))
+    public NotifyDictionaryChangedEventArgs(NotifyDictionaryChangedAction action, TKey key, TValue newValue, TValue oldValue) :
+        this(action, new KeyValuePair<TKey, TValue>(key, newValue), new KeyValuePair<TKey, TValue>(key, oldValue))
     {
     }
 
@@ -74,7 +78,8 @@ public class NotifyDictionaryChangedEventArgs<TKey, TValue> : EventArgs
     /// <param name="action">The action that caused the event (this must be set to <see cref="NotifyDictionaryChangedAction.Replace"/>)</param>
     /// <param name="newItem">The new key-value pair that is replacing the original key-value pair</param>
     /// <param name="oldItem">The original key-value pair that is replaced</param>
-    public NotifyDictionaryChangedEventArgs(NotifyDictionaryChangedAction action, KeyValuePair<TKey, TValue> newItem, KeyValuePair<TKey, TValue> oldItem) : this(action, new KeyValuePair<TKey, TValue>[] { newItem }, new KeyValuePair<TKey, TValue>[] { oldItem })
+    public NotifyDictionaryChangedEventArgs(NotifyDictionaryChangedAction action, KeyValuePair<TKey, TValue> newItem, KeyValuePair<TKey, TValue> oldItem) :
+        this(action, new KeyValuePair<TKey, TValue>[] { newItem }, new KeyValuePair<TKey, TValue>[] { oldItem })
     {
     }
 

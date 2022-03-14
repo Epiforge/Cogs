@@ -4,7 +4,8 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the value to a <see cref="string"/> when it is a <see cref="Nullable{Guid}"/>, optionally accepting a specifier to pass to <see cref="Guid.ToString(string)"/> as an argument and retaining the results of the last successful call to <see cref="ConvertBack(object?, Type, object, CultureInfo)"/> which prevents two-way bindings from overriding characters when the user is typing
 /// </summary>
 [ValueConversion(typeof(Guid?), typeof(string))]
-public class StatefulNullableGuidIsStringValueConverter : IValueConverter
+public class StatefulNullableGuidIsStringValueConverter :
+    IValueConverter
 {
     (string? str, Guid? guid)? lastSuccessfulConvertBack;
 

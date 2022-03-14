@@ -1,6 +1,6 @@
 namespace Cogs.ActiveQuery;
 
-internal static class CountConversion
+static class CountConversion
 {
     static readonly ConcurrentDictionary<Type, CountConversionDelegate> converters = new();
 

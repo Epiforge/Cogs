@@ -49,19 +49,15 @@ public class FastComparer
     /// </returns>
     public int Compare(object? x, object? y) => compare.Invoke(comparer, x, y) is int comparison ? comparison : throw new Exception("Comparison failed");
 
-    static readonly ConcurrentDictionary<Type, FastComparer> comparers = new ConcurrentDictionary<Type, FastComparer>();
+    static readonly ConcurrentDictionary<Type, FastComparer> comparers = new();
 
     /// <summary>
     /// Gets a <see cref="FastComparer"/> for the specified type
     /// </summary>
     /// <param name="type">The type</param>
     /// <returns>A <see cref="FastComparer"/></returns>
-    public static FastComparer Get(Type type)
-    {
-        if (type is null)
-            throw new ArgumentNullException(nameof(type));
-        return comparers.GetOrAdd(type, Factory);
-    }
+    public static FastComparer Get(Type type) =>
+        type is null ? throw new ArgumentNullException(nameof(type)) : comparers.GetOrAdd(type, Factory);
 
-    static FastComparer Factory(Type type) => new FastComparer(type);
+    static FastComparer Factory(Type type) => new(type);
 }

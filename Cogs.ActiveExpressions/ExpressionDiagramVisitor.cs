@@ -3,7 +3,8 @@ namespace Cogs.ActiveExpressions;
 /// <summary>
 /// Represents a visitor for expression trees that reduces them to a list of unique combination of elements for comparison and hash code generation
 /// </summary>
-public class ExpressionDiagramVisitor : ExpressionVisitor
+public class ExpressionDiagramVisitor :
+    ExpressionVisitor
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ExpressionDiagramVisitor"/> class
@@ -15,14 +16,15 @@ public class ExpressionDiagramVisitor : ExpressionVisitor
             Visit(visit);
     }
 
-    readonly List<object?> elements = new List<object?>();
-    readonly Dictionary<ParameterExpression, (int set, int index)> parameters = new Dictionary<ParameterExpression, (int set, int index)>();
+    readonly List<object?> elements = new();
+    readonly Dictionary<ParameterExpression, (int set, int index)> parameters = new();
     int parameterSet = -1;
 
     /// <summary>
     /// Gets the list of unique combination of elements for comparison and hash code generation
     /// </summary>
-    public IReadOnlyList<object?> Elements => elements;
+    public IReadOnlyList<object?> Elements =>
+        elements;
 
     /// <summary>
     /// Dispatches the expression to one of the more specialized visit methods in this class

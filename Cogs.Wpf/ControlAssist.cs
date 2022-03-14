@@ -17,12 +17,8 @@ public static class ControlAssist
     /// </summary>
     /// <param name="uiElement">The UI element for which to get the value</param>
     [AttachedPropertyBrowsableForType(typeof(UIElement))]
-    public static InputBindingCollection? GetAdditionalInputBindings(UIElement uiElement)
-    {
-        if (uiElement is null)
-            throw new ArgumentNullException(nameof(uiElement));
-        return (InputBindingCollection)uiElement.GetValue(AdditionalInputBindingsProperty);
-    }
+    public static InputBindingCollection? GetAdditionalInputBindings(UIElement uiElement) =>
+        uiElement is null ? throw new ArgumentNullException(nameof(uiElement)) : (InputBindingCollection)uiElement.GetValue(AdditionalInputBindingsProperty);
 
     static void OnAdditionalInputBindingsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
     {

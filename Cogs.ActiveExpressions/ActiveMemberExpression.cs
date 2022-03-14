@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpression>
+class ActiveMemberExpression :
+    ActiveExpression,
+    IEquatable<ActiveMemberExpression>
 {
-    ActiveMemberExpression(CachedInstancesKey<MemberExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+    ActiveMemberExpression(CachedInstancesKey<MemberExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
     int disposalCount;
@@ -41,9 +44,11 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveMemberExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveMemberExpression other && Equals(other);
 
-    public bool Equals(ActiveMemberExpression other) => Equals(expression, other.expression) && member == other.member && Equals(options, other.options);
+    public bool Equals(ActiveMemberExpression other) =>
+        Equals(expression, other.expression) && member == other.member && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -79,7 +84,8 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
         }
     }
 
-    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
     void ExpressionValuePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
@@ -87,9 +93,11 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
             Evaluate();
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveMemberExpression), expression, member, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveMemberExpression), expression, member, options);
 
-    protected override bool GetShouldValueBeDisposed() => getMethod is not null && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
+    protected override bool GetShouldValueBeDisposed() =>
+        getMethod is not null && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);
 
     protected override void Initialize()
     {
@@ -133,7 +141,8 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
         }
     }
 
-    public override string ToString() => $"{expression?.ToString() ?? member?.DeclaringType.FullName}.{member?.Name} {ToStringSuffix}";
+    public override string ToString() =>
+        $"{expression?.ToString() ?? member?.DeclaringType.FullName}.{member?.Name} {ToStringSuffix}";
 
     void SubscribeToExpressionValueNotifications()
     {
@@ -173,7 +182,8 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
         }
     }
 
-    void ValueChanged(object sender, EventArgs e) => OnPropertyChanged(nameof(Value));
+    void ValueChanged(object sender, EventArgs e) =>
+        OnPropertyChanged(nameof(Value));
 
     static readonly object[] emptyArray = Array.Empty<object>();
     static readonly object instanceManagementLock = new();
@@ -194,8 +204,10 @@ class ActiveMemberExpression : ActiveExpression, IEquatable<ActiveMemberExpressi
         }
     }
 
-    public static bool operator ==(ActiveMemberExpression a, ActiveMemberExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveMemberExpression a, ActiveMemberExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveMemberExpression a, ActiveMemberExpression b) => !(a == b);
+    public static bool operator !=(ActiveMemberExpression a, ActiveMemberExpression b) =>
+        !(a == b);
 }

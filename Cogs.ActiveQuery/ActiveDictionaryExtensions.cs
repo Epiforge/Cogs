@@ -295,16 +295,13 @@ public static class ActiveDictionaryExtensions
         }
         try
         {
-            if (source is null)
-                throw new ArgumentNullException(nameof(source));
-            return new ActiveValue<int>(source.Count, elementFaultChangeNotifier: elementFaultChangeNotifier);
+            return source is null ? throw new ArgumentNullException(nameof(source)) : (IActiveValue<int>)new ActiveValue<int>(source.Count, elementFaultChangeNotifier: elementFaultChangeNotifier);
         }
         catch (Exception ex)
         {
             return new ActiveValue<int>(default, ex, elementFaultChangeNotifier);
         }
     }
-
 
     /// <summary>
     /// Actively counts whether all key/value pairs of a dictionary that satisfy a condition
@@ -2499,9 +2496,7 @@ public static class ActiveDictionaryExtensions
         }
         try
         {
-            if (source is null)
-                throw new ArgumentNullException(nameof(source));
-            return new ActiveValue<TValue?>(source[key], elementFaultChangeNotifier: elementFaultChangeNotifier);
+            return source is null ? throw new ArgumentNullException(nameof(source)) : (IActiveValue<TValue?>)new ActiveValue<TValue?>(source[key], elementFaultChangeNotifier: elementFaultChangeNotifier);
         }
         catch (Exception ex)
         {
@@ -2569,9 +2564,7 @@ public static class ActiveDictionaryExtensions
         }
         else
         {
-            if (source is null)
-                throw new ArgumentNullException(nameof(source));
-            return new ActiveValue<TValue?>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier);
+            return source is null ? throw new ArgumentNullException(nameof(source)) : (IActiveValue<TValue?>)new ActiveValue<TValue?>(source.TryGetValue(key, out var value) ? value : default, elementFaultChangeNotifier: elementFaultChangeNotifier);
         }
     }
 

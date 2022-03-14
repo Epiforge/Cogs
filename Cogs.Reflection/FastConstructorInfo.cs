@@ -39,21 +39,17 @@ public class FastConstructorInfo
     /// </summary>
     public ConstructorInfo ConstructorInfo { get; }
 
-    static readonly ConcurrentDictionary<ConstructorInfo, FastConstructorInfo> fastConstructorInfos = new ConcurrentDictionary<ConstructorInfo, FastConstructorInfo>();
+    static readonly ConcurrentDictionary<ConstructorInfo, FastConstructorInfo> fastConstructorInfos = new();
 
-    static FastConstructorInfo Create(ConstructorInfo constructorInfo) => new FastConstructorInfo(constructorInfo);
+    static FastConstructorInfo Create(ConstructorInfo constructorInfo) => new(constructorInfo);
 
     /// <summary>
     /// Get a <see cref="FastConstructorInfo"/> for the specified <see cref="System.Reflection.ConstructorInfo" />
     /// </summary>
     /// <param name="constructorInfo">The <see cref="System.Reflection.ConstructorInfo"/></param>
     /// <returns>A <see cref="FastConstructorInfo"/></returns>
-    public static FastConstructorInfo Get(ConstructorInfo constructorInfo)
-    {
-        if (constructorInfo is null)
-            throw new ArgumentNullException(nameof(constructorInfo));
-        return fastConstructorInfos.GetOrAdd(constructorInfo, Create);
-    }
+    public static FastConstructorInfo Get(ConstructorInfo constructorInfo) =>
+        constructorInfo is null ? throw new ArgumentNullException(nameof(constructorInfo)) : fastConstructorInfos.GetOrAdd(constructorInfo, Create);
 
     delegate object ConstructorDelegate(object?[] arguments);
 }

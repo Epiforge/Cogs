@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression>
+class ActiveUnaryExpression :
+    ActiveExpression,
+    IEquatable<ActiveUnaryExpression>
 {
-    ActiveUnaryExpression(CachedInstancesKey<UnaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+    ActiveUnaryExpression(CachedInstancesKey<UnaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
     UnaryOperationDelegate? @delegate;
@@ -32,9 +35,11 @@ class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveUnaryExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveUnaryExpression other && Equals(other);
 
-    public bool Equals(ActiveUnaryExpression other) => method == other.method && NodeType == other.NodeType && operand == other.operand && Equals(options, other.options);
+    public bool Equals(ActiveUnaryExpression other) =>
+        method == other.method && NodeType == other.NodeType && operand == other.operand && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -52,9 +57,11 @@ class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveUnaryExpression), method, NodeType, operand, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveUnaryExpression), method, NodeType, operand, options);
 
-    protected override bool GetShouldValueBeDisposed() => method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
+    protected override bool GetShouldValueBeDisposed() =>
+        method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);
 
     protected override void Initialize()
     {
@@ -79,9 +86,11 @@ class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression
         }
     }
 
-    void OperandPropertyChanged(object sender, PropertyChangedEventArgs e) => Evaluate();
+    void OperandPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
-    public override string ToString() => $"{GetOperatorExpressionSyntax(NodeType, Type, operand)} {ToStringSuffix}";
+    public override string ToString() =>
+        $"{GetOperatorExpressionSyntax(NodeType, Type, operand)} {ToStringSuffix}";
 
     static readonly ConcurrentDictionary<ImplementationsKey, Lazy<UnaryOperationDelegate>> implementations = new();
     static readonly object instanceManagementLock = new();
@@ -102,17 +111,20 @@ class ActiveUnaryExpression : ActiveExpression, IEquatable<ActiveUnaryExpression
         }
     }
 
-    static Lazy<UnaryOperationDelegate> ImplementationsValueFactory(ImplementationsKey key) => new(() =>
-    {
-        var operandParameter = Expression.Parameter(typeof(object));
-        var operandConversion = Expression.Convert(operandParameter, key.OperandType);
-        return Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(key.Method is null ? Expression.MakeUnary(key.NodeType, operandConversion, key.ReturnValueType) : Expression.MakeUnary(key.NodeType, operandConversion, key.ReturnValueType, key.Method), typeof(object)), operandParameter).Compile();
-    }, LazyThreadSafetyMode.ExecutionAndPublication);
+    static Lazy<UnaryOperationDelegate> ImplementationsValueFactory(ImplementationsKey key) =>
+        new(() =>
+        {
+            var operandParameter = Expression.Parameter(typeof(object));
+            var operandConversion = Expression.Convert(operandParameter, key.OperandType);
+            return Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(key.Method is null ? Expression.MakeUnary(key.NodeType, operandConversion, key.ReturnValueType) : Expression.MakeUnary(key.NodeType, operandConversion, key.ReturnValueType, key.Method), typeof(object)), operandParameter).Compile();
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-    public static bool operator ==(ActiveUnaryExpression a, ActiveUnaryExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveUnaryExpression a, ActiveUnaryExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveUnaryExpression a, ActiveUnaryExpression b) => !(a == b);
+    public static bool operator !=(ActiveUnaryExpression a, ActiveUnaryExpression b) =>
+        !(a == b);
 
     record ImplementationsKey(ExpressionType NodeType, Type OperandType, Type ReturnValueType, MethodInfo? Method);
 }

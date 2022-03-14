@@ -6,7 +6,18 @@ namespace Cogs.Collections;
 /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
 /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
 [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
-public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, ICollection, ICollection<KeyValuePair<TKey, TValue>>, IDictionary, IDictionary<TKey, TValue>, IEnumerable, IEnumerable<KeyValuePair<TKey, TValue>>, IHashKeys<TKey>, IObservableRangeDictionary<TKey, TValue>, IReadOnlyCollection<KeyValuePair<TKey, TValue>>, IReadOnlyDictionary<TKey, TValue>
+public class ObservableDictionary<TKey, TValue> :
+    PropertyChangeNotifier,
+    ICollection,
+    ICollection<KeyValuePair<TKey, TValue>>,
+    IDictionary,
+    IDictionary<TKey, TValue>,
+    IEnumerable,
+    IEnumerable<KeyValuePair<TKey, TValue>>,
+    IHashKeys<TKey>,
+    IObservableRangeDictionary<TKey, TValue>,
+    IReadOnlyCollection<KeyValuePair<TKey, TValue>>,
+    IReadOnlyDictionary<TKey, TValue>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ObservableDictionary{TKey, TValue}"/> class that is empty, has the default initial capacity, and uses the default equality comparer for the key type
@@ -154,9 +165,11 @@ public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, IColle
         NotifyCountChanged();
     }
 
-    void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => Add(item);
+    void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) =>
+        Add(item);
 
-    void IDictionary.Add(object key, object value) => Add(key, value);
+    void IDictionary.Add(object key, object value) =>
+        Add(key, value);
 
     /// <summary>
     /// Adds an element with the provided key and value to the <see cref="IDictionary"/> object
@@ -242,116 +255,138 @@ public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, IColle
         }
     }
 
-    bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => Contains(item);
+    bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) =>
+        Contains(item);
 
-    bool IDictionary.Contains(object key) => Contains(key);
+    bool IDictionary.Contains(object key) =>
+        Contains(key);
 
     /// <summary>
     /// Determines whether the <see cref="IDictionary"/> contains the specified key
     /// </summary>
     /// <param name="key">The key to locate in the <see cref="IDictionary"/></param>
     /// <returns><c>true</c> if the <see cref="IDictionary"/> contains an element with the specified key; otherwise, <c>false</c></returns>
-    protected virtual bool Contains(object key) => di.Contains(key);
+    protected virtual bool Contains(object key) =>
+        di.Contains(key);
 
     /// <summary>
     /// Determines whether the <see cref="ICollection{T}"/> contains a specific value
     /// </summary>
     /// <param name="item">The object to locate in the <see cref="ICollection{T}"/></param>
     /// <returns><c>true</c> if <paramref name="item"/> is found in the <see cref="ICollection{T}"/>; otherwise, <c>false</c></returns>
-    protected virtual bool Contains(KeyValuePair<TKey, TValue> item) => gci.Contains(item);
+    protected virtual bool Contains(KeyValuePair<TKey, TValue> item) =>
+        gci.Contains(item);
 
     /// <summary>
     /// Determines whether the <see cref="IDictionary{TKey, TValue}"/> contains an element with the specified key
     /// </summary>
     /// <param name="key">The key to locate in the <see cref="IDictionary{TKey, TValue}"/></param>
     /// <returns><c>true</c> if the <see cref="IDictionary{TKey, TValue}"/> contains an element with the key; otherwise, <c>false</c></returns>
-    public virtual bool ContainsKey(TKey key) => gd.ContainsKey(key);
+    public virtual bool ContainsKey(TKey key) =>
+        gd.ContainsKey(key);
 
     /// <summary>
     /// Determines whether the <see cref="ObservableDictionary{TKey, TValue}"/> contains a specific value
     /// </summary>
     /// <param name="value">The value to locate in the <see cref="ObservableDictionary{TKey, TValue}"/></param>
     /// <returns><c>true</c> if the <see cref="ObservableDictionary{TKey, TValue}"/> contains an element with the specified value; otherwise, <c>false</c></returns>
-    public virtual bool ContainsValue(TValue value) => gd.ContainsValue(value);
+    public virtual bool ContainsValue(TValue value) =>
+        gd.ContainsValue(value);
 
-    void ICollection.CopyTo(Array array, int index) => CopyTo(array, index);
+    void ICollection.CopyTo(Array array, int index) =>
+        CopyTo(array, index);
 
-    void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => CopyTo(array, arrayIndex);
+    void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) =>
+        CopyTo(array, arrayIndex);
 
     /// <summary>
     /// Copies the elements of the <see cref="ICollection"/> to an <see cref="Array"/>, starting at a particular <see cref="Array"/> index
     /// </summary>
     /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="ICollection"/> (the <see cref="Array"/> must have zero-based indexing)</param>
     /// <param name="index">The zero-based index in <paramref name="array"/> at which copying begins</param>
-    protected virtual void CopyTo(Array array, int index) => ci.CopyTo(array, index);
+    protected virtual void CopyTo(Array array, int index) =>
+        ci.CopyTo(array, index);
 
     /// <summary>
     /// Copies the elements of the <see cref="ICollection{T}"/> to an <see cref="Array"/>, starting at a particular <see cref="Array"/> index
     /// </summary>
     /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="ICollection{T}"/> (the <see cref="Array"/> must have zero-based indexing)</param>
     /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins</param>
-    protected virtual void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => gci.CopyTo(array, arrayIndex);
+    protected virtual void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) =>
+        gci.CopyTo(array, arrayIndex);
 
     /// <summary>
     /// Ensures that the dictionary can hold up to a specified number of entries without any further expansion of its backing storage
     /// </summary>
     /// <param name="capacity">The number of entries</param>
     /// <returns>The current capacity of the <see cref="ObservableDictionary{TKey, TValue}"/></returns>
-    public virtual int EnsureCapacity(int capacity) => gd.EnsureCapacity(capacity);
+    public virtual int EnsureCapacity(int capacity) =>
+        gd.EnsureCapacity(capacity);
 
     /// <summary>
     /// Returns an <see cref="IDictionaryEnumerator"/> object for the <see cref="IDictionary"/> object
     /// </summary>
     /// <returns>An <see cref="IDictionaryEnumerator"/> object for the <see cref="IDictionary"/> object</returns>
-    protected virtual IDictionaryEnumerator GetDictionaryEnumerator() => di.GetEnumerator();
+    protected virtual IDictionaryEnumerator GetDictionaryEnumerator() =>
+        di.GetEnumerator();
 
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="ObservableDictionary{TKey, TValue}"/>
     /// </summary>
     /// <returns>A <see cref="Dictionary{TKey, TValue}.Enumerator"/> structure for the <see cref="ObservableDictionary{TKey, TValue}"/></returns>
-    public virtual Dictionary<TKey, TValue>.Enumerator GetEnumerator() => gd.GetEnumerator();
+    public virtual Dictionary<TKey, TValue>.Enumerator GetEnumerator() =>
+        gd.GetEnumerator();
 
-    IDictionaryEnumerator IDictionary.GetEnumerator() => GetDictionaryEnumerator();
+    IDictionaryEnumerator IDictionary.GetEnumerator() =>
+        GetDictionaryEnumerator();
 
-    IEnumerator IEnumerable.GetEnumerator() => GetNonGenericEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() =>
+        GetNonGenericEnumerator();
 
-    IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() => GetKeyValuePairEnumerator();
+    IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() =>
+        GetKeyValuePairEnumerator();
 
     /// <summary>
     /// Returns an enumerator that iterates through the collection
     /// </summary>
     /// <returns>An enumerator that can be used to iterate through the collection</returns>
-    protected virtual IEnumerator<KeyValuePair<TKey, TValue>> GetKeyValuePairEnumerator() => gei.GetEnumerator();
+    protected virtual IEnumerator<KeyValuePair<TKey, TValue>> GetKeyValuePairEnumerator() =>
+        gei.GetEnumerator();
 
     /// <summary>
     /// Returns an enumerator that iterates through a collection
     /// </summary>
     /// <returns>An <see cref="IEnumerator"/> object that can be used to iterate through the collection</returns>
-    protected virtual IEnumerator GetNonGenericEnumerator() => ei.GetEnumerator();
+    protected virtual IEnumerator GetNonGenericEnumerator() =>
+        ei.GetEnumerator();
 
     /// <summary>
     /// Gets the elements with the specified keys
     /// </summary>
     /// <param name="keys">The keys of the elements to get</param>
     /// <returns>The elements with the specified keys</returns>
-    public virtual IReadOnlyList<KeyValuePair<TKey, TValue>> GetRange(IEnumerable<TKey> keys) => keys.Select(key => new KeyValuePair<TKey, TValue>(key, gd[key])).ToImmutableArray();
+    public virtual IReadOnlyList<KeyValuePair<TKey, TValue>> GetRange(IEnumerable<TKey> keys) =>
+        keys.Select(key => new KeyValuePair<TKey, TValue>(key, gd[key])).ToImmutableArray();
 
     /// <summary>
     /// Gets the element with the specified key
     /// </summary>
     /// <param name="key">The key of the element to get</param>
     /// <returns>The element with the specified key, or <c>null</c> if the key does not exist</returns>
-    protected virtual object GetValue(object key) => di[key];
+    protected virtual object GetValue(object key) =>
+        di[key];
 
     /// <summary>
     /// Raises the <see cref="INotifyPropertyChanged.PropertyChanged"/> event for the <see cref="Count"/> property
     /// </summary>
-    protected void NotifyCountChanged() => OnPropertyChanged(nameof(Count));
+    protected void NotifyCountChanged() =>
+        OnPropertyChanged(nameof(Count));
 
     /// <summary>
     /// Raises the <see cref="INotifyPropertyChanging.PropertyChanging"/> event for the <see cref="Count"/> property
     /// </summary>
-    protected void NotifyCountChanging() => OnPropertyChanging(nameof(Count));
+    protected void NotifyCountChanging() =>
+        OnPropertyChanging(nameof(Count));
 
     /// <summary>
     /// Calls <see cref="OnDictionaryChanged(NotifyDictionaryChangedEventArgs{TKey, TValue})"/> and also calls <see cref="OnCollectionChanged(NotifyCollectionChangedEventArgs)"/>, <see cref="OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs{object, object})"/>, and <see cref="OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs{KeyValuePair{TKey, TValue}})"/> when applicable
@@ -420,25 +455,29 @@ public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, IColle
     /// Raises the <see cref="INotifyCollectionChanged.CollectionChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e) => CollectionChanged?.Invoke(this, e);
+    protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
+        CollectionChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e) => DictionaryChanged?.Invoke(this, e);
+    protected virtual void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
+        DictionaryChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyDictionaryChanged.DictionaryChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs<object?, object?> e) => DictionaryChangedBoxed?.Invoke(this, e);
+    protected virtual void OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs<object?, object?> e) =>
+        DictionaryChangedBoxed?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyGenericCollectionChanged{T}.GenericCollectionChanged"/> event
     /// </summary>
     /// <param name="e"></param>
-    protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) => GenericCollectionChanged?.Invoke(this, e);
+    protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) =>
+        GenericCollectionChanged?.Invoke(this, e);
 
     /// <summary>
     /// Removes the element with the specified key from the <see cref="IDictionary{TKey, TValue}"/>
@@ -472,9 +511,11 @@ public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, IColle
         return false;
     }
 
-    bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => Remove(item);
+    bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) =>
+        Remove(item);
 
-    void IDictionary.Remove(object key) => Remove(key);
+    void IDictionary.Remove(object key) =>
+        Remove(key);
 
     /// <summary>
     /// Removes the element with the specified key from the <see cref="IDictionary"/> object
@@ -622,10 +663,7 @@ public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, IColle
         var countChanging = gd.Count > 0;
         if (countChanging)
             NotifyCountChanging();
-        if (comparer is null)
-            gd = new Dictionary<TKey, TValue>();
-        else
-            gd = new Dictionary<TKey, TValue>(comparer);
+        gd = comparer is null ? new Dictionary<TKey, TValue>() : new Dictionary<TKey, TValue>(comparer);
         CastAndNotifyReset();
         if (countChanging)
             NotifyCountChanged();
@@ -642,10 +680,7 @@ public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, IColle
         var countChanging = gd.Count != dictionary.Count;
         if (countChanging)
             NotifyCountChanging();
-        if (comparer is null)
-            gd = new Dictionary<TKey, TValue>(dictionary);
-        else
-            gd = new Dictionary<TKey, TValue>(dictionary, comparer);
+        gd = comparer is null ? new Dictionary<TKey, TValue>(dictionary) : new Dictionary<TKey, TValue>(dictionary, comparer);
         CastAndNotifyReset();
         if (countChanging)
             NotifyCountChanged();
@@ -666,13 +701,15 @@ public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, IColle
     /// <summary>
     /// Sets the capacity of this dictionary to what it would be if it had been originally initialized with all its entries
     /// </summary>
-    public virtual void TrimExcess() => gd.TrimExcess();
+    public virtual void TrimExcess() =>
+        gd.TrimExcess();
 
     /// <summary>
     /// Sets the capacity of this dictionary to hold up a specified number of entries without any further expansion of its backing storage
     /// </summary>
     /// <param name="capacity">The new capacity</param>
-    public virtual void TrimExcess(int capacity) => gd.TrimExcess(capacity);
+    public virtual void TrimExcess(int capacity) =>
+        gd.TrimExcess(capacity);
 
     /// <summary>
     /// Attempts to add the specified key and value to the dictionary
@@ -768,101 +805,129 @@ public class ObservableDictionary<TKey, TValue> : PropertyChangeNotifier, IColle
     /// <summary>
     /// Gets the <see cref="IEqualityComparer{T}"/> that is used to determine equality of keys for the dictionary
     /// </summary>
-    public virtual IEqualityComparer<TKey> Comparer => gd.Comparer;
+    public virtual IEqualityComparer<TKey> Comparer =>
+        gd.Comparer;
 
     /// <summary>
     /// Gets the number of elements in the collection
     /// </summary>
-    public virtual int Count => gd.Count;
+    public virtual int Count =>
+        gd.Count;
 
     /// <summary>
     /// Gets a value that indicates whether the <see cref="IDictionary"/> is read-only
     /// </summary>
-    protected virtual bool DictionaryIsReadOnly => di.IsReadOnly;
+    protected virtual bool DictionaryIsReadOnly =>
+        di.IsReadOnly;
 
     /// <summary>
     /// Gets a value indicating whether the <see cref="ICollection{T}"/> is read-only
     /// </summary>
-    protected virtual bool GenericCollectionIsReadOnly => gci.IsReadOnly;
+    protected virtual bool GenericCollectionIsReadOnly =>
+        gci.IsReadOnly;
 
     /// <summary>
     /// Gets a value that indicates whether access to the <see cref="ICollection"/> is synchronized (thread safe)
     /// </summary>
-    protected virtual bool IsCollectionSynchronized => ci.IsSynchronized;
+    protected virtual bool IsCollectionSynchronized =>
+        ci.IsSynchronized;
 
-    bool IDictionary.IsFixedSize => IsFixedSize;
+    bool IDictionary.IsFixedSize =>
+        IsFixedSize;
 
     /// <summary>
     /// Gets a value that indicates whether the <see cref="IDictionary"/> has a fixed size
     /// </summary>
-    protected virtual bool IsFixedSize => di.IsFixedSize;
+    protected virtual bool IsFixedSize =>
+        di.IsFixedSize;
 
-    bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => GenericCollectionIsReadOnly;
+    bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly =>
+        GenericCollectionIsReadOnly;
 
-    bool IDictionary.IsReadOnly => DictionaryIsReadOnly;
+    bool IDictionary.IsReadOnly =>
+        DictionaryIsReadOnly;
 
-    bool ICollection.IsSynchronized => IsCollectionSynchronized;
+    bool ICollection.IsSynchronized =>
+        IsCollectionSynchronized;
 
     /// <summary>
     /// Gets an <see cref="ICollection{T}"/> containing the keys of the <see cref="IDictionary{TKey, TValue}"/>
     /// </summary>
-    public virtual Dictionary<TKey, TValue>.KeyCollection Keys => gd.Keys;
+    public virtual Dictionary<TKey, TValue>.KeyCollection Keys =>
+        gd.Keys;
 
-    ICollection IDictionary.Keys => KeysCollection;
+    ICollection IDictionary.Keys =>
+        KeysCollection;
 
-    ICollection<TKey> IDictionary<TKey, TValue>.Keys => KeysGenericCollection;
+    ICollection<TKey> IDictionary<TKey, TValue>.Keys =>
+        KeysGenericCollection;
 
-    IEnumerable<TKey> IRangeDictionary<TKey, TValue>.Keys => KeysGenericEnumerable;
+    IEnumerable<TKey> IRangeDictionary<TKey, TValue>.Keys =>
+        KeysGenericEnumerable;
 
-    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => KeysGenericEnumerable;
+    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys =>
+        KeysGenericEnumerable;
 
     /// <summary>
     /// Gets an <see cref="ICollection"/> containing the keys of the <see cref="IDictionary"/>
     /// </summary>
-    protected virtual ICollection KeysCollection => di.Keys;
+    protected virtual ICollection KeysCollection =>
+        di.Keys;
 
     /// <summary>
     /// Gets an <see cref="ICollection{T}"/> containing the keys of the <see cref="IDictionary{TKey, TValue}"/>
     /// </summary>
-    protected virtual ICollection<TKey> KeysGenericCollection => gdi.Keys;
+    protected virtual ICollection<TKey> KeysGenericCollection =>
+        gdi.Keys;
 
     /// <summary>
     /// Gets a collection containing the keys of the <see cref="IReadOnlyDictionary{TKey, TValue}"/>
     /// </summary>
-    protected virtual IEnumerable<TKey> KeysGenericEnumerable => grodi.Keys;
+    protected virtual IEnumerable<TKey> KeysGenericEnumerable =>
+        grodi.Keys;
 
-    object ICollection.SyncRoot => SyncRoot;
+    object ICollection.SyncRoot =>
+        SyncRoot;
 
     /// <summary>
     /// Gets an object that can be used to synchronize access to the <see cref="ICollection"/>
     /// </summary>
-    protected virtual object SyncRoot => ci.SyncRoot;
+    protected virtual object SyncRoot =>
+        ci.SyncRoot;
 
     /// <summary>
     /// Gets an <see cref="ICollection{T}"/> containing the values in the <see cref="IDictionary{TKey, TValue}"/>
     /// </summary>
-    public virtual Dictionary<TKey, TValue>.ValueCollection Values => gd.Values;
+    public virtual Dictionary<TKey, TValue>.ValueCollection Values =>
+        gd.Values;
 
-    ICollection IDictionary.Values => ValuesCollection;
+    ICollection IDictionary.Values =>
+        ValuesCollection;
 
-    ICollection<TValue> IDictionary<TKey, TValue>.Values => ValuesGenericCollection;
+    ICollection<TValue> IDictionary<TKey, TValue>.Values =>
+        ValuesGenericCollection;
 
-    IEnumerable<TValue> IRangeDictionary<TKey, TValue>.Values => ValuesGenericEnumerable;
+    IEnumerable<TValue> IRangeDictionary<TKey, TValue>.Values =>
+        ValuesGenericEnumerable;
 
-    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => ValuesGenericEnumerable;
+    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values =>
+        ValuesGenericEnumerable;
 
     /// <summary>
     /// Gets an <see cref="ICollection"/> containing the values in the <see cref="IDictionary"/>
     /// </summary>
-    protected virtual ICollection ValuesCollection => di.Values;
+    protected virtual ICollection ValuesCollection =>
+        di.Values;
 
     /// <summary>
     /// Gets an <see cref="ICollection{T}"/> containing the values in the <see cref="IDictionary{TKey, TValue}"/>
     /// </summary>
-    protected virtual ICollection<TValue> ValuesGenericCollection => gdi.Values;
+    protected virtual ICollection<TValue> ValuesGenericCollection =>
+        gdi.Values;
 
     /// <summary>
     /// Gets an enumerable collection that contains the values in the read-only dictionary
     /// </summary>
-    protected virtual IEnumerable<TValue> ValuesGenericEnumerable => grodi.Values;
+    protected virtual IEnumerable<TValue> ValuesGenericEnumerable =>
+        grodi.Values;
 }

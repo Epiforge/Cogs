@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveConstantExpression : ActiveExpression, IEquatable<ActiveConstantExpression>
+class ActiveConstantExpression :
+    ActiveExpression,
+    IEquatable<ActiveConstantExpression>
 {
-    ActiveConstantExpression(Type type, object value, ActiveExpressionOptions? options, ExpressionInstancesKey? expressionInstancesKey, InstancesKey? instancesKey) : base(type, ExpressionType.Constant, options, value)
+    ActiveConstantExpression(Type type, object value, ActiveExpressionOptions? options, ExpressionInstancesKey? expressionInstancesKey, InstancesKey? instancesKey) :
+        base(type, ExpressionType.Constant, options, value)
     {
         this.expressionInstancesKey = expressionInstancesKey;
         this.instancesKey = instancesKey;
@@ -34,20 +37,25 @@ class ActiveConstantExpression : ActiveExpression, IEquatable<ActiveConstantExpr
         }
     }
 
-    public override bool Equals(object? obj) => obj is ActiveConstantExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveConstantExpression other && Equals(other);
 
-    public bool Equals(ActiveConstantExpression other) => Type == other.Type && FastEqualityComparer.Get(Type).Equals(Value, other.Value) && Equals(options, other.options);
+    public bool Equals(ActiveConstantExpression other) =>
+        Type == other.Type && FastEqualityComparer.Get(Type).Equals(Value, other.Value) && Equals(options, other.options);
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveConstantExpression), Value);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveConstantExpression), Value);
 
     protected override void Initialize()
     {
         // nothing to do here
     }
 
-    public override string ToString() => $"{{C}} {ToStringSuffix}";
+    public override string ToString() =>
+        $"{{C}} {ToStringSuffix}";
 
-    void ValueChanged(object sender, EventArgs e) => OnPropertyChanged(nameof(Value));
+    void ValueChanged(object sender, EventArgs e) =>
+        OnPropertyChanged(nameof(Value));
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<ExpressionInstancesKey, ActiveConstantExpression> expressionInstances = new(new ExpressionInstancesKeyComparer());
@@ -87,17 +95,19 @@ class ActiveConstantExpression : ActiveExpression, IEquatable<ActiveConstantExpr
         }
     }
 
-    public static bool operator ==(ActiveConstantExpression a, ActiveConstantExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveConstantExpression a, ActiveConstantExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveConstantExpression a, ActiveConstantExpression b) => !(a == b);
+    public static bool operator !=(ActiveConstantExpression a, ActiveConstantExpression b) =>
+        !(a == b);
 
     record ExpressionInstancesKey(Expression? Expression, ActiveExpressionOptions? Options);
 
     class ExpressionInstancesKeyComparer : IEqualityComparer<ExpressionInstancesKey>
     {
         public bool Equals(ExpressionInstancesKey x, ExpressionInstancesKey y) =>
-            ((x.Expression is null && y.Expression is null) || (x.Expression is not null && y.Expression is not null && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression))) && ((x.Options is null && y.Options is null) || (x.Options is not null && y.Options is not null && x.Options.Equals(y.Options)));
+            (x.Expression is null && y.Expression is null || x.Expression is not null && y.Expression is not null && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression)) && (x.Options is null && y.Options is null || x.Options is not null && y.Options is not null && x.Options.Equals(y.Options));
 
         public int GetHashCode(ExpressionInstancesKey obj) =>
             HashCode.Combine(obj.Expression is null ? 0 : ExpressionEqualityComparer.Default.GetHashCode(obj.Expression), obj.Options);

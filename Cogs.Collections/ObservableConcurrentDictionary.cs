@@ -6,12 +6,27 @@ namespace Cogs.Collections;
 /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
 /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
 [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
-public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifier, ICollection, ICollection<KeyValuePair<TKey, TValue>>, IEnumerable, IEnumerable<KeyValuePair<TKey, TValue>>, IDictionary, IDictionary<TKey, TValue>, IHashKeys<TKey>, INotifyCollectionChanged, INotifyGenericCollectionChanged<KeyValuePair<TKey, TValue>>, INotifyDictionaryChanged, INotifyDictionaryChanged<TKey, TValue>, IReadOnlyCollection<KeyValuePair<TKey, TValue>>, IReadOnlyDictionary<TKey, TValue>
+public class ObservableConcurrentDictionary<TKey, TValue> :
+    PropertyChangeNotifier,
+    ICollection,
+    ICollection<KeyValuePair<TKey, TValue>>,
+    IEnumerable,
+    IEnumerable<KeyValuePair<TKey, TValue>>,
+    IDictionary,
+    IDictionary<TKey, TValue>,
+    IHashKeys<TKey>,
+    INotifyCollectionChanged,
+    INotifyGenericCollectionChanged<KeyValuePair<TKey, TValue>>,
+    INotifyDictionaryChanged,
+    INotifyDictionaryChanged<TKey, TValue>,
+    IReadOnlyCollection<KeyValuePair<TKey, TValue>>,
+    IReadOnlyDictionary<TKey, TValue>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> class that is empty, has the default concurrency level, has the default initial capacity, and uses the default comparer for the key type
     /// </summary>
-    public ObservableConcurrentDictionary() => cd = new ConcurrentDictionary<TKey, TValue>();
+    public ObservableConcurrentDictionary() =>
+        cd = new ConcurrentDictionary<TKey, TValue>();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> class that contains elements copied from the specified <see cref="IEnumerable{KeyValuePair}"/>, has the default concurrency level, has the default initial capacity, and uses the default comparer for the key type
@@ -19,7 +34,8 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// <param name="collection">The <see cref="IEnumerable{KeyValuePair}"/> whose elements are copied to the new <see cref="ObservableConcurrentDictionary{TKey, TValue}"/></param>
     /// <exception cref="ArgumentNullException"><paramref name="collection"/> or any of its keys is <c>null</c></exception>
     /// <exception cref="ArgumentException"><paramref name="collection"/> contains one or more duplicate keys</exception>
-    public ObservableConcurrentDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection) => cd = new ConcurrentDictionary<TKey, TValue>(collection);
+    public ObservableConcurrentDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection) =>
+        cd = new ConcurrentDictionary<TKey, TValue>(collection);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> class that is empty, has the default concurrency level and capacity, and uses the specified <see cref="IEqualityComparer{TKey}"/>
@@ -146,45 +162,59 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// <summary>
     /// Gets the equality comparison implementation used when comparing keys
     /// </summary>
-    public virtual IEqualityComparer<TKey> Comparer => comparer ?? EqualityComparer<TKey>.Default;
+    public virtual IEqualityComparer<TKey> Comparer =>
+        comparer ?? EqualityComparer<TKey>.Default;
 
     /// <summary>
     /// Gets the number of key/value pairs contained in the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/>
     /// </summary>
-    public virtual int Count => cd.Count;
+    public virtual int Count =>
+        cd.Count;
 
     /// <summary>
     /// Gets a value that indicates whether the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> is empty
     /// </summary>
-    public virtual bool IsEmpty => cd.IsEmpty;
+    public virtual bool IsEmpty =>
+        cd.IsEmpty;
 
-    bool IDictionary.IsFixedSize => ((IDictionary)cd).IsFixedSize;
+    bool IDictionary.IsFixedSize =>
+        ((IDictionary)cd).IsFixedSize;
 
-    bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => ((ICollection<KeyValuePair<TKey, TValue>>)cd).IsReadOnly;
+    bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly =>
+        ((ICollection<KeyValuePair<TKey, TValue>>)cd).IsReadOnly;
 
-    bool IDictionary.IsReadOnly => ((IDictionary)cd).IsReadOnly;
+    bool IDictionary.IsReadOnly =>
+        ((IDictionary)cd).IsReadOnly;
 
-    bool ICollection.IsSynchronized => ((ICollection)cd).IsSynchronized;
+    bool ICollection.IsSynchronized =>
+        ((ICollection)cd).IsSynchronized;
 
     /// <summary>
     /// Gets a collection containing the keys in the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/>
     /// </summary>
-    public virtual ICollection<TKey> Keys => cd.Keys;
+    public virtual ICollection<TKey> Keys =>
+        cd.Keys;
 
-    ICollection IDictionary.Keys => ((IDictionary)cd).Keys;
+    ICollection IDictionary.Keys =>
+        ((IDictionary)cd).Keys;
 
-    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => ((IReadOnlyDictionary<TKey, TValue>)cd).Keys;
+    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys =>
+        ((IReadOnlyDictionary<TKey, TValue>)cd).Keys;
 
-    object ICollection.SyncRoot => ((ICollection)cd).SyncRoot;
+    object ICollection.SyncRoot =>
+        ((ICollection)cd).SyncRoot;
 
     /// <summary>
     /// Gets a collection that contains the values in the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/>
     /// </summary>
-    public virtual ICollection<TValue> Values => cd.Values;
+    public virtual ICollection<TValue> Values =>
+        cd.Values;
 
-    ICollection IDictionary.Values => ((IDictionary)cd).Values;
+    ICollection IDictionary.Values =>
+        ((IDictionary)cd).Values;
 
-    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => ((IReadOnlyDictionary<TKey, TValue>)cd).Values;
+    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values =>
+        ((IReadOnlyDictionary<TKey, TValue>)cd).Values;
 
     /// <summary>
     /// Occurs when the collection changes
@@ -209,7 +239,8 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// </summary>
     public event NotifyGenericCollectionChangedEventHandler<KeyValuePair<TKey, TValue>>? GenericCollectionChanged;
 
-    void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => ((IDictionary<TKey, TValue>)this).Add(item.Key, item.Value);
+    void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) =>
+        ((IDictionary<TKey, TValue>)this).Add(item.Key, item.Value);
 
     void IDictionary<TKey, TValue>.Add(TKey key, TValue value)
     {
@@ -333,29 +364,17 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     public virtual void Clear()
     {
         var currentCd = cd;
-        if (comparer is not null)
-        {
-            if (concurrencyLevel is { } cl)
-            {
-                if (capacity is { } c)
-                    cd = new ConcurrentDictionary<TKey, TValue>(cl, c, comparer);
-                else
-                    cd = new ConcurrentDictionary<TKey, TValue>(cl, Enumerable.Empty<KeyValuePair<TKey, TValue>>(), comparer);
-            }
-            else
-                cd = new ConcurrentDictionary<TKey, TValue>(comparer);
-        }
-        else if (concurrencyLevel is { } cl && capacity is { } c)
-            cd = new ConcurrentDictionary<TKey, TValue>(cl, c);
-        else
-            cd = new ConcurrentDictionary<TKey, TValue>();
+        // somewhere, George is clutching his chest like Yoda during Attack of the Clones
+        cd = comparer is not null ? concurrencyLevel is { } comparerCl ? capacity is { } comparerC ? new ConcurrentDictionary<TKey, TValue>(comparerCl, comparerC, comparer) : new ConcurrentDictionary<TKey, TValue>(comparerCl, Enumerable.Empty<KeyValuePair<TKey, TValue>>(), comparer) : new ConcurrentDictionary<TKey, TValue>(comparer) : concurrencyLevel is { } cl && capacity is { } c ? new ConcurrentDictionary<TKey, TValue>(cl, c) : new ConcurrentDictionary<TKey, TValue>();
         NotifyCountChanged();
         OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Replace, Enumerable.Empty<KeyValuePair<TKey, TValue>>(), currentCd.ToImmutableArray()));
     }
 
-    bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => ((ICollection<KeyValuePair<TKey, TValue>>)cd).Contains(item);
+    bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) =>
+        ((ICollection<KeyValuePair<TKey, TValue>>)cd).Contains(item);
 
-    bool IDictionary.Contains(object key) => ((IDictionary)cd).Contains(key);
+    bool IDictionary.Contains(object key) =>
+        ((IDictionary)cd).Contains(key);
 
     /// <summary>
     /// Determines whether the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> contains the specified key
@@ -363,21 +382,27 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// <param name="key">The key to locate in the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/></param>
     /// <returns><c>true</c> if the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> contains an element with the specified key; otherwise, <c>false</c></returns>
     /// <exception cref="ArgumentNullException"><paramref name="key"/> is <c>null</c></exception>
-    public virtual bool ContainsKey(TKey key) => cd.ContainsKey(key);
+    public virtual bool ContainsKey(TKey key) =>
+        cd.ContainsKey(key);
 
-    void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => ((ICollection<KeyValuePair<TKey, TValue>>)cd).CopyTo(array, arrayIndex);
+    void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) =>
+        ((ICollection<KeyValuePair<TKey, TValue>>)cd).CopyTo(array, arrayIndex);
 
-    void ICollection.CopyTo(Array array, int index) => ((ICollection)cd).CopyTo(array, index);
+    void ICollection.CopyTo(Array array, int index) =>
+        ((ICollection)cd).CopyTo(array, index);
 
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/>
     /// </summary>
     /// <returns>An enumerator for the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/></returns>
-    public virtual IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => cd.GetEnumerator();
+    public virtual IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() =>
+        cd.GetEnumerator();
 
-    IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)cd).GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() =>
+        ((IEnumerable)cd).GetEnumerator();
 
-    IDictionaryEnumerator IDictionary.GetEnumerator() => ((IDictionary)cd).GetEnumerator();
+    IDictionaryEnumerator IDictionary.GetEnumerator() =>
+        ((IDictionary)cd).GetEnumerator();
 
     /// <summary>
     /// Adds a key/value pair to the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> by using the specified function if the key does not already exist (returns the new value, or the existing value if the key exists)
@@ -456,7 +481,8 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// <summary>
     /// Raises the <see cref="INotifyPropertyChanged.PropertyChanged"/> event for the <see cref="Count"/> property
     /// </summary>
-    protected virtual void NotifyCountChanged() => OnPropertyChanged(nameof(Count));
+    protected virtual void NotifyCountChanged() =>
+        OnPropertyChanged(nameof(Count));
 
     /// <summary>
     /// Calls <see cref="OnDictionaryChanged(NotifyDictionaryChangedEventArgs{TKey, TValue})"/> and also calls <see cref="OnCollectionChanged(NotifyCollectionChangedEventArgs)"/>, <see cref="OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs{object, object})"/>, and <see cref="OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs{KeyValuePair{TKey, TValue}})"/> when applicable
@@ -525,25 +551,29 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// Raises the <see cref="INotifyCollectionChanged.CollectionChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e) => CollectionChanged?.Invoke(this, e);
+    protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
+        CollectionChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e) => DictionaryChanged?.Invoke(this, e);
+    protected virtual void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
+        DictionaryChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyDictionaryChanged.DictionaryChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs<object?, object?> e) => DictionaryChangedBoxed?.Invoke(this, e);
+    protected virtual void OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs<object?, object?> e) =>
+        DictionaryChangedBoxed?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyGenericCollectionChanged{T}.GenericCollectionChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) => GenericCollectionChanged?.Invoke(this, e);
+    protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) =>
+        GenericCollectionChanged?.Invoke(this, e);
 
     bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) =>
         TryGetValue(item.Key, out var value) && EqualityComparer<TValue>.Default.Equals(item.Value, value) && TryRemove(item.Key, out _);
@@ -565,22 +595,7 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// </summary>
     public virtual void Reset()
     {
-        if (comparer is not null)
-        {
-            if (concurrencyLevel is { } cl)
-            {
-                if (capacity is { } c)
-                    cd = new ConcurrentDictionary<TKey, TValue>(cl, c, comparer);
-                else
-                    cd = new ConcurrentDictionary<TKey, TValue>(cl, Enumerable.Empty<KeyValuePair<TKey, TValue>>(), comparer);
-            }
-            else
-                cd = new ConcurrentDictionary<TKey, TValue>(comparer);
-        }
-        else if (concurrencyLevel is { } cl && capacity is { } c)
-            cd = new ConcurrentDictionary<TKey, TValue>(cl, c);
-        else
-            cd = new ConcurrentDictionary<TKey, TValue>();
+        cd = comparer is not null ? concurrencyLevel is { } comparerCl ? capacity is { } comparerC ? new ConcurrentDictionary<TKey, TValue>(comparerCl, comparerC, comparer) : new ConcurrentDictionary<TKey, TValue>(comparerCl, Enumerable.Empty<KeyValuePair<TKey, TValue>>(), comparer) : new ConcurrentDictionary<TKey, TValue>(comparer) : concurrencyLevel is { } cl && capacity is { } c ? new ConcurrentDictionary<TKey, TValue>(cl, c) : new ConcurrentDictionary<TKey, TValue>();
         NotifyCountChanged();
         OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Reset));
     }
@@ -591,15 +606,7 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// <param name="keyValuePairs">The elements with which to reinitialize the dictionary</param>
     public virtual void Reset(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs)
     {
-        if (comparer is { } c)
-        {
-            if (concurrencyLevel is { } cl)
-                cd = new ConcurrentDictionary<TKey, TValue>(cl, keyValuePairs, c);
-            else
-                cd = new ConcurrentDictionary<TKey, TValue>(keyValuePairs, c);
-        }
-        else
-            cd = new ConcurrentDictionary<TKey, TValue>(keyValuePairs);
+        cd = comparer is { } c ? concurrencyLevel is { } cl ? new ConcurrentDictionary<TKey, TValue>(cl, keyValuePairs, c) : new ConcurrentDictionary<TKey, TValue>(keyValuePairs, c) : new ConcurrentDictionary<TKey, TValue>(keyValuePairs);
         NotifyCountChanged();
         OnChanged(new NotifyDictionaryChangedEventArgs<TKey, TValue>(NotifyDictionaryChangedAction.Reset));
     }
@@ -608,7 +615,8 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// Copies the key and value pairs stored in the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> to a new array
     /// </summary>
     /// <returns>A new array containing a snapshot of key and value pairs copied from the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/></returns>
-    public virtual KeyValuePair<TKey, TValue>[] ToArray() => cd.ToArray();
+    public virtual KeyValuePair<TKey, TValue>[] ToArray() =>
+        cd.ToArray();
 
     /// <summary>
     /// Attempts to add the specified key and value to the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/>
@@ -636,7 +644,8 @@ public class ObservableConcurrentDictionary<TKey, TValue> : PropertyChangeNotifi
     /// <param name="value">When this method returns, contains the object from the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/> that has the specified key, or the default value of the type if the operation failed</param>
     /// <returns><c>true</c> if the key was found in the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/>; otherwise, <c>false</c></returns>
     /// <exception cref="ArgumentNullException"><paramref name="key"/> is <c>null</c></exception>
-    public virtual bool TryGetValue(TKey key, out TValue value) => cd.TryGetValue(key, out value);
+    public virtual bool TryGetValue(TKey key, out TValue value) =>
+        cd.TryGetValue(key, out value);
 
     /// <summary>
     /// Attempts to remove and return the value that has the specified key from the <see cref="ObservableConcurrentDictionary{TKey, TValue}"/>

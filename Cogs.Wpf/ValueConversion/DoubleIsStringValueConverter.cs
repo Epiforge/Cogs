@@ -4,7 +4,8 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the value to a <see cref="string"/> when it is a <see cref="double"/>, optionally accepting a <see cref="NumberStyles"/> value as a parameter
 /// </summary>
 [ValueConversion(typeof(double), typeof(string))]
-public class DoubleIsStringValueConverter : IValueConverter
+public class DoubleIsStringValueConverter :
+    IValueConverter
 {
     /// <summary>
     /// Converts a value

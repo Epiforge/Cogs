@@ -3,7 +3,8 @@ namespace Cogs.Wpf.ValueConversion;
 /// <summary>
 /// Converts the values to <c>false</c> when any of them are <c>false</c> or not a <see cref="bool"/>; otherwise, to <c>true</c>
 /// </summary>
-public class AnyFalseIsFalseMultiValueConverter : IMultiValueConverter
+public class AnyFalseIsFalseMultiValueConverter :
+    IMultiValueConverter
 {
     /// <summary>
     /// Converts source values to a value for the binding target

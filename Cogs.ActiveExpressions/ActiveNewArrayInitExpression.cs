@@ -1,8 +1,11 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveNewArrayInitExpression : ActiveExpression, IEquatable<ActiveNewArrayInitExpression>
+class ActiveNewArrayInitExpression :
+    ActiveExpression,
+    IEquatable<ActiveNewArrayInitExpression>
 {
-    ActiveNewArrayInitExpression(CachedInstancesKey<NewArrayExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) : base(instancesKey.Expression, options, deferEvaluation) =>
+    ActiveNewArrayInitExpression(CachedInstancesKey<NewArrayExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+        base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
     protected override void Initialize()
@@ -55,9 +58,11 @@ class ActiveNewArrayInitExpression : ActiveExpression, IEquatable<ActiveNewArray
         return result;
     }
 
-    public override bool Equals(object? obj) => obj is ActiveNewArrayInitExpression other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj is ActiveNewArrayInitExpression other && Equals(other);
 
-    public bool Equals(ActiveNewArrayInitExpression other) => elementType == other.elementType && initializers == other.initializers && Equals(options, other.options);
+    public bool Equals(ActiveNewArrayInitExpression other) =>
+        elementType == other.elementType && initializers == other.initializers && Equals(options, other.options);
 
     protected override void Evaluate()
     {
@@ -73,11 +78,14 @@ class ActiveNewArrayInitExpression : ActiveExpression, IEquatable<ActiveNewArray
         }
     }
 
-    public override int GetHashCode() => HashCode.Combine(typeof(ActiveNewArrayInitExpression), elementType, initializers, options);
+    public override int GetHashCode() =>
+        HashCode.Combine(typeof(ActiveNewArrayInitExpression), elementType, initializers, options);
 
-    void InitializerPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e) => Evaluate();
+    void InitializerPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+        Evaluate();
 
-    public override string ToString() => $"new {elementType?.FullName}[] {{{string.Join(", ", initializers?.Select(initializer => $"{initializer}"))}}} {ToStringSuffix}";
+    public override string ToString() =>
+        $"new {elementType?.FullName}[] {{{string.Join(", ", initializers?.Select(initializer => $"{initializer}"))}}} {ToStringSuffix}";
 
     static readonly object instanceManagementLock = new();
     static readonly Dictionary<CachedInstancesKey<NewArrayExpression>, ActiveNewArrayInitExpression> instances = new(new CachedInstancesKeyComparer<NewArrayExpression>());
@@ -97,8 +105,10 @@ class ActiveNewArrayInitExpression : ActiveExpression, IEquatable<ActiveNewArray
         }
     }
 
-    public static bool operator ==(ActiveNewArrayInitExpression a, ActiveNewArrayInitExpression b) => a.Equals(b);
+    public static bool operator ==(ActiveNewArrayInitExpression a, ActiveNewArrayInitExpression b) =>
+        a.Equals(b);
 
     [ExcludeFromCodeCoverage]
-    public static bool operator !=(ActiveNewArrayInitExpression a, ActiveNewArrayInitExpression b) => !(a == b);
+    public static bool operator !=(ActiveNewArrayInitExpression a, ActiveNewArrayInitExpression b) =>
+        !(a == b);
 }

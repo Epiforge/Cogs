@@ -54,15 +54,18 @@ public class ActiveValue<TValue> :
         return true;
     }
 
-    void ElementFaultChangeNotifierElementFaultChanged(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanged?.Invoke(this, e);
+    void ElementFaultChangeNotifierElementFaultChanged(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanged?.Invoke(this, e);
 
-    void ElementFaultChangeNotifierElementFaultChanging(object sender, ElementFaultChangeEventArgs e) => ElementFaultChanging?.Invoke(this, e);
+    void ElementFaultChangeNotifierElementFaultChanging(object sender, ElementFaultChangeEventArgs e) =>
+        ElementFaultChanging?.Invoke(this, e);
 
     /// <summary>
     /// Gets a list of all faulted elements
     /// </summary>
     /// <returns>The list</returns>
-    public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() => elementFaultChangeNotifier?.GetElementFaults() ?? Enumerable.Empty<(object? element, Exception? fault)>().ToImmutableArray();
+    public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
+        elementFaultChangeNotifier?.GetElementFaults() ?? Enumerable.Empty<(object? element, Exception? fault)>().ToImmutableArray();
 
     void InitializeFaultNotification()
     {
