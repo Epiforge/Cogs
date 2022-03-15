@@ -1,1 +1,1 @@
-We added the OrderedHashSet class.
+We added First and Last properties and RemoveFirst and RemoveLast methods to the OrderedHashSet class.

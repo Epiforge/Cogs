@@ -85,7 +85,19 @@ public class OrderedHashSet<T> :
     public int Count =>
         dict.Count;
 
+    /// <summary>
+    /// Gets the first element in the ordered set
+    /// </summary>
+    public T First =>
+        dict.Count == 0 ? throw new InvalidOperationException("The ordered set contains no elements") : list.First.Value;
+
     bool ICollection<T>.IsReadOnly { get; } = false;
+
+    /// <summary>
+    /// Gets the last element in the ordered set
+    /// </summary>
+    public T Last =>
+        dict.Count == 0 ? throw new InvalidOperationException("The ordered set contains no elements") : list.Last.Value;
 
     /// <summary>
     /// Adds the specified element to a set
@@ -350,6 +362,46 @@ public class OrderedHashSet<T> :
     {
         if (!dict.TryGetValue(item, out var node))
             return false;
+        dict.Remove(item);
+        list.Remove(node);
+        return true;
+    }
+
+    /// <summary>
+    /// Removes the first element in the ordered set
+    /// </summary>
+    /// <param name="item">The item that was removed</param>
+    /// <returns><c>true</c> if an element was removed; otherwise, <c>false</c></returns>
+    [SuppressMessage("Design", "CA1021: Avoid out parameters", Justification = "Since the set may contain null, we really don't have a choice here unless we resort to tuples.")]
+    public bool RemoveFirst([MaybeNullWhen(false)] out T item)
+    {
+        if (dict.Count == 0)
+        {
+            item = default;
+            return false;
+        }
+        var node = list.First;
+        item = node.Value;
+        dict.Remove(item);
+        list.Remove(node);
+        return true;
+    }
+
+    /// <summary>
+    /// Removes the last element in the ordered set
+    /// </summary>
+    /// <param name="item">The item that was removed</param>
+    /// <returns><c>true</c> if an element was removed; otherwise, <c>false</c></returns>
+    [SuppressMessage("Design", "CA1021: Avoid out parameters", Justification = "Since the set may contain null, we really don't have a choice here unless we resort to tuples.")]
+    public bool RemoveLast([MaybeNullWhen(false)] out T item)
+    {
+        if (dict.Count == 0)
+        {
+            item = default;
+            return false;
+        }
+        var node = list.Last;
+        item = node.Value;
         dict.Remove(item);
         list.Remove(node);
         return true;
