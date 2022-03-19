@@ -363,6 +363,7 @@ Also includes extension methods for windows:
 
 Also includes behaviors:
 
+* `ComboBoxDataVirtualization` & `ListBoxDataVirtualization` - sets the items source of a combo box or list box (including list views), respectively, to a collection that loads elements as they are needed for display and keeps selected elements loaded (requires .NET Core 3.1 or later)
 * `DelayedFocus` - focuses an element after a specified delay
 * `DeselectAllOnEmptySpaceClicked` - feselects all items when empty space in a list view is clicked
 * `OpenNavigateUri` - opens the `Hyperlink`'s `NavigateUri` when it is clicked
