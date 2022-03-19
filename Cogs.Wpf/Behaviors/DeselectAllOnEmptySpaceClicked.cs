@@ -3,7 +3,8 @@ namespace Cogs.Wpf.Behaviors;
 /// <summary>
 /// Deselects all items when empty space in a <see cref="ListView"/> is clicked
 /// </summary>
-public class DeselectAllOnEmptySpaceClicked : Behavior<ListView>
+public class DeselectAllOnEmptySpaceClicked :
+    Behavior<ListView>
 {
     void AssociatedObjectPreviewMouseDown(object sender, MouseButtonEventArgs e)
     {

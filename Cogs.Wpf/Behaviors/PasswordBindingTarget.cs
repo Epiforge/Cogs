@@ -3,7 +3,8 @@ namespace Cogs.Wpf.Behaviors;
 /// <summary>
 /// Allows binding to <see cref="PasswordBox.Password"/>
 /// </summary>
-public class PasswordBindingTarget : Behavior<PasswordBox>
+public class PasswordBindingTarget :
+    Behavior<PasswordBox>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PasswordBindingTarget"/> class

@@ -3,7 +3,8 @@ namespace Cogs.Wpf.Behaviors;
 /// <summary>
 /// Opens the <see cref="Hyperlink"/>'s <see cref="Hyperlink.NavigateUri"/> when it is clicked
 /// </summary>
-public class OpenNavigateUri : Behavior<Hyperlink>
+public class OpenNavigateUri :
+    Behavior<Hyperlink>
 {
     /// <summary>
     /// Called after the behavior is attached to an <see cref="Behavior{Hyperlink}.AssociatedObject"/>
