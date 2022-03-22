@@ -11,11 +11,10 @@ public class DataVirtualizationList<T> :
     SyncDisposable,
     IList,
     INotifyCollectionChanged
-    where T : IDataVirtualizationItem
 {
     internal DataVirtualizationList(IReadOnlyList<T> list)
     {
-        loaded = new OrderedHashSet<T>();
+        loaded = new OrderedHashSet<IDataVirtualizationItem>();
         this.list = list;
         if (list is INotifyCollectionChanged collectionChangedNotifyingList)
             collectionChangedNotifyingList.CollectionChanged += ListCollectionChanged;
@@ -25,7 +24,7 @@ public class DataVirtualizationList<T> :
 
     int lastIndex = -1;
     readonly IReadOnlyList<T> list;
-    readonly OrderedHashSet<T> loaded;
+    readonly OrderedHashSet<IDataVirtualizationItem> loaded;
     int loadCapacity = 1;
 
     /// <summary>
@@ -145,13 +144,16 @@ public class DataVirtualizationList<T> :
 
     void Load(T item)
     {
-        if (loaded.AddFirst(item))
+        if (item is IDataVirtualizationItem virtualizedItem)
         {
-            item.Load();
-            TrimByLoadCapacity();
+            if (loaded.AddFirst(virtualizedItem))
+            {
+                virtualizedItem.Load();
+                TrimByLoadCapacity();
+            }
+            else
+                loaded.MoveToFirst(virtualizedItem);
         }
-        else
-            loaded.MoveToFirst(item);
     }
 
     void Load(int index) =>
@@ -180,7 +182,7 @@ public class DataVirtualizationList<T> :
     {
         if (loaded is not null)
             while (loaded.Count > loadCapacity)
-                Unload(loaded.Last);
+                Unload((T)loaded.Last);
     }
 
     void IList.Remove(object? value) =>
@@ -191,7 +193,7 @@ public class DataVirtualizationList<T> :
 
     void Unload(T item)
     {
-        if (loaded.Remove(item))
-            item.Unload();
+        if (item is IDataVirtualizationItem virtualizedItem && loaded.Remove(virtualizedItem))
+            virtualizedItem.Unload();
     }
 }
