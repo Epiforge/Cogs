@@ -33,6 +33,36 @@ public class AsyncSynchronizationContext :
     readonly BufferBlock<(SendOrPostCallback callback, object? state, ManualResetEventSlim? signal, Exception? exception)> queuedCallbacks;
     readonly CancellationTokenSource queuedCallbacksCancellationTokenSource;
 
+    /// <inheritdoc/>
+    public override SynchronizationContext CreateCopy() =>
+        this;
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (!allowDisposal)
+            throw new InvalidOperationException();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Frees, releases, or resets unmanaged resources
+    /// </summary>
+    /// <param name="disposing"><c>false</c> if invoked by the finalizer because the object is being garbage collected; otherwise, <c>true</c></param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            queuedCallbacksCancellationTokenSource.Cancel();
+            queuedCallbacksCancellationTokenSource.Dispose();
+        }
+    }
+
+    /// <inheritdoc/>
+    public override void Post(SendOrPostCallback d, object state) =>
+        queuedCallbacks.Post((d ?? throw new ArgumentNullException(nameof(d)), state, null, null));
+
     async Task ProcessCallbacks()
     {
         while (true)
@@ -55,43 +85,7 @@ public class AsyncSynchronizationContext :
         }
     }
 
-    /// <summary>
-    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources
-    /// </summary>
-    public void Dispose()
-    {
-        if (!allowDisposal)
-            throw new InvalidOperationException();
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>
-    /// Frees, releases, or resets unmanaged resources
-    /// </summary>
-    /// <param name="disposing"><c>false</c> if invoked by the finalizer because the object is being garbage collected; otherwise, <c>true</c></param>
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            queuedCallbacksCancellationTokenSource.Cancel();
-            queuedCallbacksCancellationTokenSource.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Dispatches an asynchronous message to the synchronization context
-    /// </summary>
-    /// <param name="d">The <see cref="SendOrPostCallback"/> delegate to call</param>
-    /// <param name="state">The object passed to the delegate</param>
-    public override void Post(SendOrPostCallback d, object state) =>
-        queuedCallbacks.Post((d ?? throw new ArgumentNullException(nameof(d)), state, null, null));
-
-    /// <summary>
-    /// Dispatches a synchronous message to the synchronization context
-    /// </summary>
-    /// <param name="d">The <see cref="SendOrPostCallback"/> delegate to call</param>
-    /// <param name="state">The object passed to the delegate</param>
+    /// <inheritdoc/>
     [SuppressMessage("Code Analysis", "CA1508: Avoid dead conditional code", Justification = "The analyzer is mistaken")]
     public override void Send(SendOrPostCallback d, object state)
     {

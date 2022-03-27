@@ -23,7 +23,7 @@
         <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.10.3</Version>
+        <Version>1.11.0</Version>
     </PropertyGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">

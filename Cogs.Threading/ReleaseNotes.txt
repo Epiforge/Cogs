@@ -1,1 +1,1 @@
-Synchronized extensions no longer maintain a stack of synchronization contexts since that was a dirty, dirty lie anyway (this will break some naughty code).
+We correctly implemented CreateCopy for AsyncSynchronizationContext. We added the SwitchSynchronizationContext class.
