@@ -1,3 +1,4 @@
+
 namespace Cogs.ActiveExpressions;
 
 /// <summary>
@@ -134,7 +135,7 @@ public abstract class ActiveExpression :
                 if (ApplicableOptions.BlockOnAsyncDisposal)
                     asyncDisposable.DisposeAsync().AsTask().Wait();
                 else
-                    ThreadPool.QueueUserWorkItem(async state => await asyncDisposable.DisposeAsync().ConfigureAwait(false));
+                    Task.Run(async () => await asyncDisposable.DisposeAsync().ConfigureAwait(false));
             }
             else if (value is IDisposable disposable)
                 disposable.Dispose();

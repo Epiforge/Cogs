@@ -13,7 +13,7 @@ public class DelayedFocus :
     /// </summary>
     public TimeSpan? Delay { get; set; }
 
-    async void DelayCallback(object? state)
+    async Task DelayCallbackAsync()
     {
         await Task.Delay(Delay ?? TimeSpan.Zero).ConfigureAwait(false);
         if (dispatcher is not null)
@@ -30,6 +30,6 @@ public class DelayedFocus :
     {
         base.OnAttached();
         dispatcher = AssociatedObject.Dispatcher;
-        ThreadPool.QueueUserWorkItem(DelayCallback);
+        Task.Run(DelayCallbackAsync);
     }
 }
