@@ -1,1 +1,1 @@
-We correctly implemented CreateCopy for AsyncSynchronizationContext. We added the SwitchSynchronizationContext class.
+We corrected some defects in the SwitchSynchronizationContext class.

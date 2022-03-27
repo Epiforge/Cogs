@@ -18,7 +18,7 @@ public class SwitchSynchronizationContext :
     /// <summary>
     /// Gets/sets whether or not the basis <see cref="SynchronizationContext"/> will be used for methods invoked on this instance
     /// </summary>
-    public bool UsingBasis { get; } = true;
+    public bool UsingBasis { get; set; } = true;
 
     /// <inheritdoc/>
     public override SynchronizationContext CreateCopy() =>
@@ -48,7 +48,7 @@ public class SwitchSynchronizationContext :
         if (UsingBasis)
             basis.Post(d, state);
         else
-            base.Post(d, state);
+            Synchronization.DefaultSynchronizationContext.Post(d, state);
     }
 
     /// <inheritdoc/>
