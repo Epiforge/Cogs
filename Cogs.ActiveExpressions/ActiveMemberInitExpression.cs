@@ -114,7 +114,7 @@ class ActiveMemberInitExpression :
                 else
                     throw new NotSupportedException("Only member assignment bindings are supported in member init expressions");
             }
-            this.memberAssignmentExpressions = memberAssignmentExpressions.ToImmutableDictionary();
+            this.memberAssignmentExpressions = memberAssignmentExpressions;
             EvaluateIfNotDeferred();
         }
         catch (Exception ex)
