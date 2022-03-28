@@ -1,1 +1,1 @@
-We increased the resillience of ActiveOrderBy.
+We increased the resilience of ActiveOrderBy.
