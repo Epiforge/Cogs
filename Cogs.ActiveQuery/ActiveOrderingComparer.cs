@@ -66,22 +66,13 @@ class ActiveOrderingComparer<TElement> :
 
     public int Compare(TElement x, TElement y)
     {
-        IReadOnlyList<IComparable?> xList, yList;
-        if (indexingStrategy == IndexingStrategy.NoneOrInherit)
-        {
-            xList = GetComparables(x);
-            yList = GetComparables(y);
-        }
-        else
-        {
-            xList = comparables![x];
-            yList = comparables![y];
-        }
+        var xReadOnlyList = (comparables?.TryGetValue(x, out var xList) ?? false) ? xList : GetComparables(x);
+        var yReadOnlyList = (comparables?.TryGetValue(y, out var yList) ?? false) ? yList : GetComparables(y);
         for (var i = 0; i < selectors.Count; ++i)
         {
             var isDescending = selectors[i].isDescending;
-            var xComparable = xList[i];
-            var yComparable = yList[i];
+            var xComparable = xReadOnlyList[i];
+            var yComparable = yReadOnlyList[i];
             if (xComparable is null)
                 return yComparable is null ? 0 : isDescending ? 1 : -1;
             else if (yComparable is null)
