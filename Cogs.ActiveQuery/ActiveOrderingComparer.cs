@@ -96,7 +96,7 @@ class ActiveOrderingComparer<TElement> :
     }
 
     IReadOnlyList<IComparable?> GetComparables(TElement element) =>
-        selectors.Select(expressionAndOrder => expressionAndOrder.rangeActiveExpression.GetResultsUnderLock().First(er => equalityComparer.Equals(er.element, element)).result).ToImmutableArray();
+        selectors.Select(expressionAndOrder => expressionAndOrder.rangeActiveExpression.GetResultsUnderLock().FirstOrDefault(er => equalityComparer.Equals(er.element, element)).result).ToImmutableArray();
 
     void RangeActiveExpressionElementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TElement, IComparable?> e)
     {
