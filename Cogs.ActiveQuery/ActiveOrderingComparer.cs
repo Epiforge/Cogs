@@ -66,13 +66,28 @@ class ActiveOrderingComparer<TElement> :
 
     public int Compare(TElement x, TElement y)
     {
-        var xReadOnlyList = (comparables?.TryGetValue(x, out var xList) ?? false) ? xList : GetComparables(x);
-        var yReadOnlyList = (comparables?.TryGetValue(y, out var yList) ?? false) ? yList : GetComparables(y);
+        IReadOnlyList<IComparable?> xList, yList;
+        if (indexingStrategy == IndexingStrategy.NoneOrInherit)
+        {
+            xList = GetComparables(x);
+            yList = GetComparables(y);
+        }
+        else
+        {
+            if (comparables!.TryGetValue(x, out var rawXList))
+                xList = rawXList;
+            else
+                xList = Enumerable.Range(0, selectors.Count).Select(i => (IComparable?)null).ToImmutableArray();
+            if (comparables!.TryGetValue(y, out var rawYList))
+                yList = rawYList;
+            else
+                yList = Enumerable.Range(0, selectors.Count).Select(i => (IComparable?)null).ToImmutableArray();
+        }
         for (var i = 0; i < selectors.Count; ++i)
         {
             var isDescending = selectors[i].isDescending;
-            var xComparable = xReadOnlyList[i];
-            var yComparable = yReadOnlyList[i];
+            var xComparable = xList[i];
+            var yComparable = yList[i];
             if (xComparable is null)
                 return yComparable is null ? 0 : isDescending ? 1 : -1;
             else if (yComparable is null)
@@ -96,7 +111,7 @@ class ActiveOrderingComparer<TElement> :
     }
 
     IReadOnlyList<IComparable?> GetComparables(TElement element) =>
-        selectors.Select(expressionAndOrder => expressionAndOrder.rangeActiveExpression.GetResultsUnderLock().FirstOrDefault(er => equalityComparer.Equals(er.element, element)).result).ToImmutableArray();
+        selectors.Select(expressionAndOrder => expressionAndOrder.rangeActiveExpression.GetResultsUnderLock().First(er => equalityComparer.Equals(er.element, element)).result).ToImmutableArray();
 
     void RangeActiveExpressionElementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TElement, IComparable?> e)
     {
