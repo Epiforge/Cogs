@@ -1827,81 +1827,92 @@ public static class ActiveEnumerableExtensions
                 }
                 else if (e.Action != NotifyCollectionChangedAction.Move)
                 {
-                    if (e.OldItems is { } && e.OldItems.Count > 0)
+                    try
                     {
-                        if (e.OldItems.Count == rangeObservableCollection!.Count)
+                        if (e.OldItems is { } && e.OldItems.Count > 0)
                         {
-                            switch (indexingStrategy)
+                            if (e.OldItems.Count == rangeObservableCollection!.Count)
                             {
-                                case IndexingStrategy.HashTable:
-                                    startingIndiciesAndCounts = new Dictionary<TSource, (int startingIndex, int count)>();
-                                    break;
-                                case IndexingStrategy.SelfBalancingBinarySearchTree:
-                                    startingIndiciesAndCounts = new SortedDictionary<TSource, (int startingIndex, int count)>();
-                                    break;
-                            }
-                            rangeObservableCollection.Clear();
-                        }
-                        else if (indexingStrategy == IndexingStrategy.NoneOrInherit)
-                            foreach (var elementAndResults in e.OldItems.GroupBy(er => er.element, er => er.comparable))
-                                rangeObservableCollection.RemoveRange(rangeObservableCollection.IndexOf(elementAndResults.Key), elementAndResults.Count());
-                        else
-                            foreach (var elementAndResults in e.OldItems.GroupBy(er => er.element, er => er.comparable))
-                            {
-                                var element = elementAndResults.Key;
-                                var (startingIndex, currentCount) = startingIndiciesAndCounts![element];
-                                var removedCount = elementAndResults.Count();
-                                rangeObservableCollection.RemoveRange(startingIndex, removedCount);
-                                if (removedCount == currentCount)
-                                    startingIndiciesAndCounts.Remove(element);
-                                else
-                                    startingIndiciesAndCounts[element] = (startingIndex, currentCount - removedCount);
-                                foreach (var otherElement in startingIndiciesAndCounts.Keys.ToImmutableArray())
+                                switch (indexingStrategy)
                                 {
-                                    var (otherStartingIndex, otherCount) = startingIndiciesAndCounts[otherElement];
-                                    if (otherStartingIndex > startingIndex)
-                                        startingIndiciesAndCounts[otherElement] = (otherStartingIndex - removedCount, otherCount);
+                                    case IndexingStrategy.HashTable:
+                                        startingIndiciesAndCounts = new Dictionary<TSource, (int startingIndex, int count)>();
+                                        break;
+                                    case IndexingStrategy.SelfBalancingBinarySearchTree:
+                                        startingIndiciesAndCounts = new SortedDictionary<TSource, (int startingIndex, int count)>();
+                                        break;
                                 }
+                                rangeObservableCollection.Clear();
                             }
-                    }
-                    if ((e.NewItems?.Count ?? 0) > 0)
-                    {
-                        if (rangeObservableCollection!.Count == 0)
-                        {
-                            var sorted = e.NewItems.Select(er => er.element).ToList();
-                            sorted.Sort(comparer);
-                            if (indexingStrategy != IndexingStrategy.NoneOrInherit)
-                                rebuildStartingIndiciesAndCounts(sorted);
-                            rangeObservableCollection.Reset(sorted);
-                        }
-                        else
-                            foreach (var elementAndResults in e.NewItems.GroupBy(er => er.element, er => er.comparable))
-                            {
-                                var element = elementAndResults.Key;
-                                var count = elementAndResults.Count();
-                                var index = 0;
-                                while (index < rangeObservableCollection.Count && comparer!.Compare(element, rangeObservableCollection[index]) >= 0)
-                                    ++index;
-                                if (indexingStrategy != IndexingStrategy.NoneOrInherit)
-                                    foreach (var startingIndexAndCountKv in startingIndiciesAndCounts.ToList())
-                                    {
-                                        var otherElement = startingIndexAndCountKv.Key;
-                                        if (!equalityComparer!.Equals(otherElement, element))
-                                        {
-                                            var (otherStartingIndex, otherCount) = startingIndexAndCountKv.Value;
-                                            if (otherStartingIndex >= index)
-                                                startingIndiciesAndCounts![otherElement] = (otherStartingIndex + count, otherCount);
-                                        }
-                                    }
-                                rangeObservableCollection.InsertRange(index, Enumerable.Range(0, count).Select(i => element));
-                                if (indexingStrategy != IndexingStrategy.NoneOrInherit)
+                            else if (indexingStrategy == IndexingStrategy.NoneOrInherit)
+                                foreach (var elementAndResults in e.OldItems.GroupBy(er => er.element, er => er.comparable))
+                                    rangeObservableCollection.RemoveRange(rangeObservableCollection.IndexOf(elementAndResults.Key), elementAndResults.Count());
+                            else
+                                foreach (var elementAndResults in e.OldItems.GroupBy(er => er.element, er => er.comparable))
                                 {
-                                    if (startingIndiciesAndCounts!.TryGetValue(element, out var startingIndexAndCount))
-                                        startingIndiciesAndCounts[element] = (startingIndexAndCount.startingIndex, startingIndexAndCount.count + count);
+                                    var element = elementAndResults.Key;
+                                    var (startingIndex, currentCount) = startingIndiciesAndCounts![element];
+                                    var removedCount = elementAndResults.Count();
+                                    rangeObservableCollection.RemoveRange(startingIndex, removedCount);
+                                    if (removedCount == currentCount)
+                                        startingIndiciesAndCounts.Remove(element);
                                     else
-                                        startingIndiciesAndCounts.Add(element, (index, count));
+                                        startingIndiciesAndCounts[element] = (startingIndex, currentCount - removedCount);
+                                    foreach (var otherElement in startingIndiciesAndCounts.Keys.ToImmutableArray())
+                                    {
+                                        var (otherStartingIndex, otherCount) = startingIndiciesAndCounts[otherElement];
+                                        if (otherStartingIndex > startingIndex)
+                                            startingIndiciesAndCounts[otherElement] = (otherStartingIndex - removedCount, otherCount);
+                                    }
                                 }
+                        }
+                        if ((e.NewItems?.Count ?? 0) > 0)
+                        {
+                            if (rangeObservableCollection!.Count == 0)
+                            {
+                                var sorted = e.NewItems.Select(er => er.element).ToList();
+                                sorted.Sort(comparer);
+                                if (indexingStrategy != IndexingStrategy.NoneOrInherit)
+                                    rebuildStartingIndiciesAndCounts(sorted);
+                                rangeObservableCollection.Reset(sorted);
                             }
+                            else
+                                foreach (var elementAndResults in e.NewItems.GroupBy(er => er.element, er => er.comparable))
+                                {
+                                    var element = elementAndResults.Key;
+                                    var count = elementAndResults.Count();
+                                    var index = 0;
+                                    while (index < rangeObservableCollection.Count && comparer!.Compare(element, rangeObservableCollection[index]) >= 0)
+                                        ++index;
+                                    if (indexingStrategy != IndexingStrategy.NoneOrInherit)
+                                        foreach (var startingIndexAndCountKv in startingIndiciesAndCounts.ToList())
+                                        {
+                                            var otherElement = startingIndexAndCountKv.Key;
+                                            if (!equalityComparer!.Equals(otherElement, element))
+                                            {
+                                                var (otherStartingIndex, otherCount) = startingIndexAndCountKv.Value;
+                                                if (otherStartingIndex >= index)
+                                                    startingIndiciesAndCounts![otherElement] = (otherStartingIndex + count, otherCount);
+                                            }
+                                        }
+                                    rangeObservableCollection.InsertRange(index, Enumerable.Range(0, count).Select(i => element));
+                                    if (indexingStrategy != IndexingStrategy.NoneOrInherit)
+                                    {
+                                        if (startingIndiciesAndCounts!.TryGetValue(element, out var startingIndexAndCount))
+                                            startingIndiciesAndCounts[element] = (startingIndexAndCount.startingIndex, startingIndexAndCount.count + count);
+                                        else
+                                            startingIndiciesAndCounts.Add(element, (index, count));
+                                    }
+                                }
+                        }
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        var sortedSource = source.ToList();
+                        sortedSource.Sort(comparer);
+                        if (indexingStrategy != IndexingStrategy.NoneOrInherit)
+                            rebuildStartingIndiciesAndCounts(sortedSource);
+                        rangeObservableCollection!.Reset(sortedSource);
                     }
                 }
             });
