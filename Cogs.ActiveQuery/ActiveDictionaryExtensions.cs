@@ -1075,6 +1075,7 @@ public static class ActiveDictionaryExtensions
         var synchronizedSource = source as ISynchronized;
         ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
         ActiveValue<TResult?>? activeValue = null;
+        var activeValueAccess = new object();
 
         void dispose()
         {
@@ -1086,47 +1087,50 @@ public static class ActiveDictionaryExtensions
         void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
             synchronizedSource.Execute(() =>
             {
-                if (e.Action == NotifyDictionaryChangedAction.Reset)
+                lock (activeValueAccess)
                 {
-                    try
+                    if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
-                        activeValue!.OperationFault = null;
-                        activeValue!.Value = rangeActiveExpression.GetResults().Max(kr => kr.result);
-                    }
-                    catch (Exception ex)
-                    {
-                        activeValue!.OperationFault = ex;
-                        activeValue!.Value = default;
-                    }
-                }
-                else
-                {
-                    var activeValueValue = activeValue!.Value;
-                    if ((e.OldItems?.Count ?? 0) > 0)
-                    {
-                        var removedMax = e.OldItems.Max(kv => kv.Value);
-                        if ((activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, removedMax)) == 0)
-                        {
-                            try
-                            {
-                                var value = rangeActiveExpression.GetResultsUnderLock().Max(er => er.result);
-                                activeValue!.OperationFault = null;
-                                activeValue!.Value = value;
-                            }
-                            catch (Exception ex)
-                            {
-                                activeValue!.OperationFault = ex;
-                            }
-                        }
-                    }
-                    activeValueValue = activeValue!.Value;
-                    if ((e.NewItems?.Count ?? 0) > 0)
-                    {
-                        var addedMax = e.NewItems.Max(kv => kv.Value);
-                        if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, addedMax)) < 0)
+                        try
                         {
                             activeValue!.OperationFault = null;
-                            activeValue!.Value = addedMax;
+                            activeValue!.Value = rangeActiveExpression.GetResults().Max(kr => kr.result);
+                        }
+                        catch (Exception ex)
+                        {
+                            activeValue!.OperationFault = ex;
+                            activeValue!.Value = default;
+                        }
+                    }
+                    else
+                    {
+                        var activeValueValue = activeValue!.Value;
+                        if ((e.OldItems?.Count ?? 0) > 0)
+                        {
+                            var removedMax = e.OldItems.Max(kv => kv.Value);
+                            if ((activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, removedMax)) == 0)
+                            {
+                                try
+                                {
+                                    var value = rangeActiveExpression.GetResultsUnderLock().Max(er => er.result);
+                                    activeValue!.OperationFault = null;
+                                    activeValue!.Value = value;
+                                }
+                                catch (Exception ex)
+                                {
+                                    activeValue!.OperationFault = ex;
+                                }
+                            }
+                        }
+                        activeValueValue = activeValue!.Value;
+                        if ((e.NewItems?.Count ?? 0) > 0)
+                        {
+                            var addedMax = e.NewItems.Max(kv => kv.Value);
+                            if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, addedMax)) < 0)
+                            {
+                                activeValue!.OperationFault = null;
+                                activeValue!.Value = addedMax;
+                            }
                         }
                     }
                 }
@@ -1135,36 +1139,42 @@ public static class ActiveDictionaryExtensions
         void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
             synchronizedSource.Execute(() =>
             {
-                var activeValueValue = activeValue!.Value;
-                var comparison = 0;
-                if (activeValueValue is { } && e.Result is { })
-                    comparison = comparer!.Compare(activeValueValue, e.Result);
-                else if (activeValueValue is null)
-                    comparison = -1;
-                else if (e.Result is null)
-                    comparison = 1;
-                if (comparison < 0)
-                    activeValue!.Value = e.Result;
-                else if (comparison > 0)
-                    activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Max(er => er.result);
+                lock (activeValueAccess)
+                {
+                    var activeValueValue = activeValue!.Value;
+                    var comparison = 0;
+                    if (activeValueValue is { } && e.Result is { })
+                        comparison = comparer!.Compare(activeValueValue, e.Result);
+                    else if (activeValueValue is null)
+                        comparison = -1;
+                    else if (e.Result is null)
+                        comparison = 1;
+                    if (comparison < 0)
+                        activeValue!.Value = e.Result;
+                    else if (comparison > 0)
+                        activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Max(er => er.result);
+                }
             });
 
         return synchronizedSource.Execute(() =>
         {
-            rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-            try
+            lock (activeValueAccess)
             {
-                activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Max(kr => kr.result), null, rangeActiveExpression, dispose);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-                return activeValue;
-            }
-            catch (Exception ex)
-            {
-                activeValue = new ActiveValue<TResult?>(default, ex, rangeActiveExpression, dispose);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-                return activeValue;
+                rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
+                try
+                {
+                    activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Max(kr => kr.result), null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    return activeValue;
+                }
+                catch (Exception ex)
+                {
+                    activeValue = new ActiveValue<TResult?>(default, ex, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    return activeValue;
+                }
             }
         });
     }
@@ -1213,6 +1223,7 @@ public static class ActiveDictionaryExtensions
         var synchronizedSource = source as ISynchronized;
         ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
         ActiveValue<TResult?>? activeValue = null;
+        var activeValueAccess = new object();
 
         void dispose()
         {
@@ -1224,47 +1235,50 @@ public static class ActiveDictionaryExtensions
         void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
             synchronizedSource.Execute(() =>
             {
-                if (e.Action == NotifyDictionaryChangedAction.Reset)
+                lock (activeValueAccess)
                 {
-                    try
+                    if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
-                        activeValue!.OperationFault = null;
-                        activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Min();
-                    }
-                    catch (Exception ex)
-                    {
-                        activeValue!.OperationFault = ex;
-                        activeValue!.Value = default;
-                    }
-                }
-                else
-                {
-                    var activeValueValue = activeValue!.Value;
-                    if ((e.OldItems?.Count ?? 0) > 0)
-                    {
-                        var removedMin = e.OldItems.Select(kv => kv.Value).Min();
-                        if ((activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, removedMin)) == 0)
-                        {
-                            try
-                            {
-                                var value = rangeActiveExpression.GetResultsUnderLock().Select(er => er.result).Min();
-                                activeValue!.OperationFault = null;
-                                activeValue!.Value = value;
-                            }
-                            catch (Exception ex)
-                            {
-                                activeValue!.OperationFault = ex;
-                            }
-                        }
-                    }
-                    activeValueValue = activeValue!.Value;
-                    if ((e.NewItems?.Count ?? 0) > 0)
-                    {
-                        var addedMin = e.NewItems.Select(kv => kv.Value).Min();
-                        if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, addedMin)) > 0)
+                        try
                         {
                             activeValue!.OperationFault = null;
-                            activeValue!.Value = addedMin;
+                            activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Min();
+                        }
+                        catch (Exception ex)
+                        {
+                            activeValue!.OperationFault = ex;
+                            activeValue!.Value = default;
+                        }
+                    }
+                    else
+                    {
+                        var activeValueValue = activeValue!.Value;
+                        if ((e.OldItems?.Count ?? 0) > 0)
+                        {
+                            var removedMin = e.OldItems.Select(kv => kv.Value).Min();
+                            if ((activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, removedMin)) == 0)
+                            {
+                                try
+                                {
+                                    var value = rangeActiveExpression.GetResultsUnderLock().Select(er => er.result).Min();
+                                    activeValue!.OperationFault = null;
+                                    activeValue!.Value = value;
+                                }
+                                catch (Exception ex)
+                                {
+                                    activeValue!.OperationFault = ex;
+                                }
+                            }
+                        }
+                        activeValueValue = activeValue!.Value;
+                        if ((e.NewItems?.Count ?? 0) > 0)
+                        {
+                            var addedMin = e.NewItems.Select(kv => kv.Value).Min();
+                            if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, addedMin)) > 0)
+                            {
+                                activeValue!.OperationFault = null;
+                                activeValue!.Value = addedMin;
+                            }
                         }
                     }
                 }
@@ -1273,36 +1287,42 @@ public static class ActiveDictionaryExtensions
         void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
             synchronizedSource.Execute(() =>
             {
-                var activeValueValue = activeValue!.Value;
-                var comparison = 0;
-                if (activeValueValue is { } && e.Result is { })
-                    comparison = comparer!.Compare(activeValueValue, e.Result);
-                else if (activeValueValue is null)
-                    comparison = -1;
-                else if (e.Result is null)
-                    comparison = 1;
-                if (comparison > 0)
-                    activeValue!.Value = e.Result;
-                else if (comparison < 0)
-                    activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Select(er => er.result).Min();
+                lock (activeValueAccess)
+                {
+                    var activeValueValue = activeValue!.Value;
+                    var comparison = 0;
+                    if (activeValueValue is { } && e.Result is { })
+                        comparison = comparer!.Compare(activeValueValue, e.Result);
+                    else if (activeValueValue is null)
+                        comparison = -1;
+                    else if (e.Result is null)
+                        comparison = 1;
+                    if (comparison > 0)
+                        activeValue!.Value = e.Result;
+                    else if (comparison < 0)
+                        activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Select(er => er.result).Min();
+                }
             });
 
         return synchronizedSource.Execute(() =>
         {
-            rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-            try
+            lock (activeValueAccess)
             {
-                activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Select(kr => kr.result).Min(), null, rangeActiveExpression, dispose);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-                return activeValue;
-            }
-            catch (Exception ex)
-            {
-                activeValue = new ActiveValue<TResult?>(default, ex, rangeActiveExpression, dispose);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-                return activeValue;
+                rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
+                try
+                {
+                    activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Select(kr => kr.result).Min(), null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    return activeValue;
+                }
+                catch (Exception ex)
+                {
+                    activeValue = new ActiveValue<TResult?>(default, ex, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    return activeValue;
+                }
             }
         });
     }
@@ -1400,90 +1420,101 @@ public static class ActiveDictionaryExtensions
         ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
         var keyToIndex = source.CreateSimilarNullableKeyDictionary<TKey, TValue, int>();
         SynchronizedRangeObservableCollection<TResult?>? rangeObservableCollection = null;
+        var rangeObservableCollectionAccess = new object();
 
         void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
             synchronizedSource.Execute(() =>
             {
-                if (e.Action == NotifyDictionaryChangedAction.Reset)
+                lock (rangeObservableCollectionAccess)
                 {
-                    rangeObservableCollection!.Reset(rangeActiveExpression.GetResults().Select(((TKey key, TResult? result) er, int index) =>
+                    if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
-                        keyToIndex!.Add(er.key, index);
-                        return er.result;
-                    }));
-                }
-                else
-                {
-                    if (e.OldItems is { } && e.OldItems.Count > 0)
+                        rangeObservableCollection!.Reset(rangeActiveExpression.GetResults().Select(((TKey key, TResult? result) er, int index) =>
+                        {
+                            keyToIndex!.Add(er.key, index);
+                            return er.result;
+                        }));
+                    }
+                    else
                     {
-                        var removingIndicies = new List<int>();
-                        foreach (var kv in e.OldItems)
+                        if (e.OldItems is { } && e.OldItems.Count > 0)
                         {
-                            var key = kv.Key;
-                            removingIndicies.Add(keyToIndex![key]);
-                            keyToIndex.Remove(key);
-                        }
-                        var rangeStart = -1;
-                        var rangeCount = 0;
-                        rangeObservableCollection.Execute(() =>
-                        {
-                            foreach (var removingIndex in removingIndicies.OrderByDescending(i => i))
+                            var removingIndicies = new List<int>();
+                            foreach (var kv in e.OldItems)
                             {
-                                if (removingIndex != rangeStart - 1 && rangeStart != -1)
+                                var key = kv.Key;
+                                removingIndicies.Add(keyToIndex![key]);
+                                keyToIndex.Remove(key);
+                            }
+                            var rangeStart = -1;
+                            var rangeCount = 0;
+                            rangeObservableCollection.Execute(() =>
+                            {
+                                foreach (var removingIndex in removingIndicies.OrderByDescending(i => i))
+                                {
+                                    if (removingIndex != rangeStart - 1 && rangeStart != -1)
+                                    {
+                                        if (rangeCount == 1)
+                                            rangeObservableCollection!.RemoveAt(rangeStart);
+                                        else
+                                            rangeObservableCollection!.RemoveRange(rangeStart, rangeCount);
+                                        rangeCount = 0;
+                                    }
+                                    rangeStart = removingIndex;
+                                    ++rangeCount;
+                                }
+                                if (rangeStart != -1)
                                 {
                                     if (rangeCount == 1)
                                         rangeObservableCollection!.RemoveAt(rangeStart);
                                     else
                                         rangeObservableCollection!.RemoveRange(rangeStart, rangeCount);
-                                    rangeCount = 0;
                                 }
-                                rangeStart = removingIndex;
-                                ++rangeCount;
-                            }
-                            if (rangeStart != -1)
-                            {
-                                if (rangeCount == 1)
-                                    rangeObservableCollection!.RemoveAt(rangeStart);
-                                else
-                                    rangeObservableCollection!.RemoveRange(rangeStart, rangeCount);
-                            }
-                        });
-                        var revisedKeyedIndicies = keyToIndex.OrderBy(kv => kv.Value);
-                        keyToIndex = source.CreateSimilarDictionary<TKey, TValue, int>();
-                        foreach (var (key, index) in revisedKeyedIndicies.Select((kv, index) => (kv.Key, index)))
-                            keyToIndex.Add(key, index);
-                    }
-                    if ((e.NewItems?.Count ?? 0) > 0)
-                    {
-                        var currentCount = keyToIndex!.Count;
-                        rangeObservableCollection!.AddRange(e.NewItems.Select((KeyValuePair<TKey, TResult> kv, int index) =>
+                            });
+                            var revisedKeyedIndicies = keyToIndex.OrderBy(kv => kv.Value);
+                            keyToIndex = source.CreateSimilarDictionary<TKey, TValue, int>();
+                            foreach (var (key, index) in revisedKeyedIndicies.Select((kv, index) => (kv.Key, index)))
+                                keyToIndex.Add(key, index);
+                        }
+                        if ((e.NewItems?.Count ?? 0) > 0)
                         {
-                            keyToIndex.Add(kv.Key, currentCount + index);
-                            return kv.Value;
-                        }));
+                            var currentCount = keyToIndex!.Count;
+                            rangeObservableCollection!.AddRange(e.NewItems.Select((KeyValuePair<TKey, TResult> kv, int index) =>
+                            {
+                                keyToIndex.Add(kv.Key, currentCount + index);
+                                return kv.Value;
+                            }));
+                        }
                     }
                 }
             });
 
         void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
-            synchronizedSource.Execute(() => rangeObservableCollection!.Replace(keyToIndex![e.Element], e.Result));
+            synchronizedSource.Execute(() =>
+            {
+                lock (rangeObservableCollectionAccess)
+                    rangeObservableCollection!.Replace(keyToIndex![e.Element], e.Result);
+            });
 
         return synchronizedSource.Execute(() =>
         {
-            rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-            rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult?>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().Select(((TKey key, TResult? result) er, int index) =>
+            lock (rangeObservableCollectionAccess)
             {
-                keyToIndex.Add(er.key, index);
-                return er.result;
-            }));
-            rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-            rangeActiveExpression.ValueResultChanged += valueResultChanged;
-            return new ActiveEnumerable<TResult?>(rangeObservableCollection, rangeActiveExpression, () =>
-            {
-                rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged -= valueResultChanged;
-                rangeActiveExpression.Dispose();
-            });
+                rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
+                rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult?>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().Select(((TKey key, TResult? result) er, int index) =>
+                {
+                    keyToIndex.Add(er.key, index);
+                    return er.result;
+                }));
+                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                return new ActiveEnumerable<TResult?>(rangeObservableCollection, rangeActiveExpression, () =>
+                {
+                    rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged -= valueResultChanged;
+                    rangeActiveExpression.Dispose();
+                });
+            }
         });
     }
 
@@ -1804,62 +1835,76 @@ public static class ActiveDictionaryExtensions
         var synchronizedSource = source as ISynchronized;
         ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> rangeActiveExpression;
         ActiveValue<TResult?>? activeValue = null;
+        var activeValueAccess = new object();
         var valuesChanging = new NullableKeyDictionary<TKey, TResult?>();
 
         void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
             synchronizedSource.Execute(() =>
             {
-                if (e.Action == NotifyDictionaryChangedAction.Reset)
-                    activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations!.Add!);
-                else
+                lock (activeValueAccess)
                 {
-                    var sum = activeValue!.Value;
-                    if ((e.OldItems?.Count ?? 0) > 0)
-                        sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.OldItems.Select(kv => kv.Value)).Aggregate(operations!.Subtract!);
-                    if ((e.NewItems?.Count ?? 0) > 0)
-                        sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.NewItems.Select(kv => kv.Value)).Aggregate(operations!.Add!);
-                    activeValue!.Value = sum;
+                    if (e.Action == NotifyDictionaryChangedAction.Reset)
+                        activeValue!.Value = rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations!.Add!);
+                    else
+                    {
+                        var sum = activeValue!.Value;
+                        if ((e.OldItems?.Count ?? 0) > 0)
+                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.OldItems.Select(kv => kv.Value)).Aggregate(operations!.Subtract!);
+                        if ((e.NewItems?.Count ?? 0) > 0)
+                            sum = (sum is null ? Enumerable.Empty<TResult>() : new TResult[] { sum }).Concat(e.NewItems.Select(kv => kv.Value)).Aggregate(operations!.Add!);
+                        activeValue!.Value = sum;
+                    }
                 }
             });
 
         void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
             synchronizedSource.Execute(() =>
             {
-                var key = e.Element;
-                activeValue!.Value = operations!.Add(activeValue!.Value, operations.Subtract(e.Result, valuesChanging![key]));
-                valuesChanging.Remove(key);
+                lock (activeValueAccess)
+                {
+                    var key = e.Element;
+                    activeValue!.Value = operations!.Add(activeValue!.Value, operations.Subtract(e.Result, valuesChanging![key]));
+                    valuesChanging.Remove(key);
+                }
             });
 
         void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
-            synchronizedSource.Execute(() => valuesChanging!.Add(e.Element, e.Result));
+            synchronizedSource.Execute(() =>
+            {
+                lock (activeValueAccess)
+                    valuesChanging!.Add(e.Element, e.Result);
+            });
 
         return synchronizedSource.Execute(() =>
         {
-            rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
+            lock (activeValueAccess)
+            {
+                rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
 
-            void dispose()
-            {
-                rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged -= valueResultChanged;
-                rangeActiveExpression.ValueResultChanging -= valueResultChanging;
-                rangeActiveExpression.Dispose();
-            }
+                void dispose()
+                {
+                    rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged -= valueResultChanged;
+                    rangeActiveExpression.ValueResultChanging -= valueResultChanging;
+                    rangeActiveExpression.Dispose();
+                }
 
-            try
-            {
-                activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations.Add!), null, rangeActiveExpression, dispose);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-                rangeActiveExpression.ValueResultChanging += valueResultChanging;
-                return activeValue;
-            }
-            catch (InvalidOperationException)
-            {
-                activeValue = new ActiveValue<TResult?>(default, null, rangeActiveExpression, dispose);
-                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged += valueResultChanged;
-                rangeActiveExpression.ValueResultChanging += valueResultChanging;
-                return activeValue;
+                try
+                {
+                    activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Select(kr => kr.result).Aggregate(operations.Add!), null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    rangeActiveExpression.ValueResultChanging += valueResultChanging;
+                    return activeValue;
+                }
+                catch (InvalidOperationException)
+                {
+                    activeValue = new ActiveValue<TResult?>(default, null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                    rangeActiveExpression.ValueResultChanging += valueResultChanging;
+                    return activeValue;
+                }
             }
         });
     }
@@ -2224,6 +2269,7 @@ public static class ActiveDictionaryExtensions
         var sourceKeyToResultKey = source.CreateSimilarDictionary<TSourceKey, TSourceValue, TResultKey>();
         ISynchronizedObservableRangeDictionary<TResultKey, TResultValue> rangeObservableDictionary;
         ActiveDictionary<TResultKey, TResultValue>? activeDictionary = null;
+        var activeDictionaryAccess = new object();
 
         void checkOperationFault()
         {
@@ -2256,70 +2302,73 @@ public static class ActiveDictionaryExtensions
         void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TSourceKey, KeyValuePair<TResultKey, TResultValue>> e) =>
             synchronizedSource.Execute(() =>
             {
-                if (e.Action == NotifyDictionaryChangedAction.Reset)
+                lock (activeDictionaryAccess)
                 {
-                    IDictionary<TResultKey, TResultValue> replacementDictionary;
-                    switch (indexingStrategy)
+                    if (e.Action == NotifyDictionaryChangedAction.Reset)
                     {
-                        case IndexingStrategy.SelfBalancingBinarySearchTree:
-                            duplicateKeys = keyComparer is null ? new SortedDictionary<TResultKey, int>() : new SortedDictionary<TResultKey, int>(keyComparer);
-                            replacementDictionary = keyComparer is null ? new SortedDictionary<TResultKey, TResultValue>() : new SortedDictionary<TResultKey, TResultValue>(keyComparer);
-                            break;
-                        default:
-                            duplicateKeys = keyEqualityComparer is null ? new Dictionary<TResultKey, int>() : new Dictionary<TResultKey, int>(keyEqualityComparer);
-                            replacementDictionary = keyEqualityComparer is null ? new Dictionary<TResultKey, TResultValue>() : new Dictionary<TResultKey, TResultValue>(keyEqualityComparer);
-                            break;
-                    }
-                    var resultsAndFaults = rangeActiveExpression.GetResultsAndFaults();
-                    nullKeys = resultsAndFaults.Count(rfc => rfc.result.Key is null);
-                    var distinctResultsAndFaults = resultsAndFaults.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
-                    foreach (var keyValuePair in distinctResultsAndFaults.Select(g => g.First().result))
-                        replacementDictionary.Add(keyValuePair);
-                    rangeObservableDictionary.Reset(replacementDictionary);
-                    foreach (var (key, duplicateCount) in distinctResultsAndFaults.Select(g => (key: g.Key, duplicateCount: g.Count() - 1)).Where(kc => kc.duplicateCount > 0))
-                        duplicateKeys.Add(key, duplicateCount);
-                    checkOperationFault();
-                }
-                else
-                {
-                    if (e.OldItems is { } && e.OldItems.Count > 0)
-                    {
-                        foreach (var kv in e.OldItems)
+                        IDictionary<TResultKey, TResultValue> replacementDictionary;
+                        switch (indexingStrategy)
                         {
-                            var key = kv.Value.Key;
-                            if (key is null)
-                                --nullKeys;
-                            else if (duplicateKeys.TryGetValue(key, out var duplicates))
-                            {
-                                if (duplicates == 1)
-                                    duplicateKeys.Remove(key);
-                                else
-                                    duplicateKeys[key] = duplicates - 1;
-                            }
-                            else
-                                rangeObservableDictionary.Remove(key);
+                            case IndexingStrategy.SelfBalancingBinarySearchTree:
+                                duplicateKeys = keyComparer is null ? new SortedDictionary<TResultKey, int>() : new SortedDictionary<TResultKey, int>(keyComparer);
+                                replacementDictionary = keyComparer is null ? new SortedDictionary<TResultKey, TResultValue>() : new SortedDictionary<TResultKey, TResultValue>(keyComparer);
+                                break;
+                            default:
+                                duplicateKeys = keyEqualityComparer is null ? new Dictionary<TResultKey, int>() : new Dictionary<TResultKey, int>(keyEqualityComparer);
+                                replacementDictionary = keyEqualityComparer is null ? new Dictionary<TResultKey, TResultValue>() : new Dictionary<TResultKey, TResultValue>(keyEqualityComparer);
+                                break;
                         }
+                        var resultsAndFaults = rangeActiveExpression.GetResultsAndFaults();
+                        nullKeys = resultsAndFaults.Count(rfc => rfc.result.Key is null);
+                        var distinctResultsAndFaults = resultsAndFaults.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
+                        foreach (var keyValuePair in distinctResultsAndFaults.Select(g => g.First().result))
+                            replacementDictionary.Add(keyValuePair);
+                        rangeObservableDictionary.Reset(replacementDictionary);
+                        foreach (var (key, duplicateCount) in distinctResultsAndFaults.Select(g => (key: g.Key, duplicateCount: g.Count() - 1)).Where(kc => kc.duplicateCount > 0))
+                            duplicateKeys.Add(key, duplicateCount);
                         checkOperationFault();
                     }
-                    if (e.NewItems is { } && e.NewItems.Count > 0)
+                    else
                     {
-                        foreach (var kv in e.NewItems)
+                        if (e.OldItems is { } && e.OldItems.Count > 0)
                         {
-                            var resultKv = kv.Value;
-                            var key = resultKv.Key;
-                            if (key is null)
-                                ++nullKeys;
-                            else if (rangeObservableDictionary.ContainsKey(key))
+                            foreach (var kv in e.OldItems)
                             {
-                                if (duplicateKeys.TryGetValue(key, out var duplicates))
-                                    duplicateKeys[key] = duplicates + 1;
+                                var key = kv.Value.Key;
+                                if (key is null)
+                                    --nullKeys;
+                                else if (duplicateKeys.TryGetValue(key, out var duplicates))
+                                {
+                                    if (duplicates == 1)
+                                        duplicateKeys.Remove(key);
+                                    else
+                                        duplicateKeys[key] = duplicates - 1;
+                                }
                                 else
-                                    duplicateKeys.Add(key, 1);
+                                    rangeObservableDictionary.Remove(key);
                             }
-                            else
-                                rangeObservableDictionary.Add(resultKv);
+                            checkOperationFault();
                         }
-                        checkOperationFault();
+                        if (e.NewItems is { } && e.NewItems.Count > 0)
+                        {
+                            foreach (var kv in e.NewItems)
+                            {
+                                var resultKv = kv.Value;
+                                var key = resultKv.Key;
+                                if (key is null)
+                                    ++nullKeys;
+                                else if (rangeObservableDictionary.ContainsKey(key))
+                                {
+                                    if (duplicateKeys.TryGetValue(key, out var duplicates))
+                                        duplicateKeys[key] = duplicates + 1;
+                                    else
+                                        duplicateKeys.Add(key, 1);
+                                }
+                                else
+                                    rangeObservableDictionary.Add(resultKv);
+                            }
+                            checkOperationFault();
+                        }
                     }
                 }
             });
@@ -2327,73 +2376,82 @@ public static class ActiveDictionaryExtensions
         void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSourceKey, KeyValuePair<TResultKey, TResultValue>> e) =>
             synchronizedSource.Execute(() =>
             {
-                var resultKv = e.Result;
-                var key = resultKv.Key;
-                if (key is null)
-                    ++nullKeys;
-                else if (rangeObservableDictionary.ContainsKey(key))
+                lock (activeDictionaryAccess)
                 {
-                    if (duplicateKeys.TryGetValue(key, out var duplicates))
-                        duplicateKeys[key] = duplicates + 1;
+                    var resultKv = e.Result;
+                    var key = resultKv.Key;
+                    if (key is null)
+                        ++nullKeys;
+                    else if (rangeObservableDictionary.ContainsKey(key))
+                    {
+                        if (duplicateKeys.TryGetValue(key, out var duplicates))
+                            duplicateKeys[key] = duplicates + 1;
+                        else
+                            duplicateKeys.Add(key, 1);
+                    }
                     else
-                        duplicateKeys.Add(key, 1);
+                        rangeObservableDictionary.Add(resultKv);
+                    checkOperationFault();
                 }
-                else
-                    rangeObservableDictionary.Add(resultKv);
-                checkOperationFault();
             });
 
         void valueResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSourceKey, KeyValuePair<TResultKey, TResultValue>> e) =>
             synchronizedSource.Execute(() =>
             {
-                var key = e.Result.Key;
-                if (key is null)
-                    --nullKeys;
-                else if (duplicateKeys.TryGetValue(key, out var duplicates))
+                lock (activeDictionaryAccess)
                 {
-                    if (duplicates <= 1)
-                        duplicateKeys.Remove(key);
+                    var key = e.Result.Key;
+                    if (key is null)
+                        --nullKeys;
+                    else if (duplicateKeys.TryGetValue(key, out var duplicates))
+                    {
+                        if (duplicates <= 1)
+                            duplicateKeys.Remove(key);
+                        else
+                            duplicateKeys[key] = duplicates - 1;
+                    }
                     else
-                        duplicateKeys[key] = duplicates - 1;
+                        rangeObservableDictionary.Remove(key);
+                    checkOperationFault();
                 }
-                else
-                    rangeObservableDictionary.Remove(key);
-                checkOperationFault();
             });
 
         return synchronizedSource.Execute(() =>
         {
-            switch (indexingStrategy)
+            lock (activeDictionaryAccess)
             {
-                case IndexingStrategy.SelfBalancingBinarySearchTree:
-                    duplicateKeys = keyComparer is null ? new SortedDictionary<TResultKey, int>() : new SortedDictionary<TResultKey, int>(keyComparer);
-                    rangeObservableDictionary = keyComparer is null ? new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext) : new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext, keyComparer);
-                    break;
-                default:
-                    duplicateKeys = keyEqualityComparer is null ? new Dictionary<TResultKey, int>() : new Dictionary<TResultKey, int>(keyEqualityComparer);
-                    rangeObservableDictionary = keyEqualityComparer is null ? new SynchronizedObservableDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext) : new SynchronizedObservableDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext, keyEqualityComparer);
-                    break;
-            }
+                switch (indexingStrategy)
+                {
+                    case IndexingStrategy.SelfBalancingBinarySearchTree:
+                        duplicateKeys = keyComparer is null ? new SortedDictionary<TResultKey, int>() : new SortedDictionary<TResultKey, int>(keyComparer);
+                        rangeObservableDictionary = keyComparer is null ? new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext) : new SynchronizedObservableSortedDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext, keyComparer);
+                        break;
+                    default:
+                        duplicateKeys = keyEqualityComparer is null ? new Dictionary<TResultKey, int>() : new Dictionary<TResultKey, int>(keyEqualityComparer);
+                        rangeObservableDictionary = keyEqualityComparer is null ? new SynchronizedObservableDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext) : new SynchronizedObservableDictionary<TResultKey, TResultValue>(synchronizedSource?.SynchronizationContext, keyEqualityComparer);
+                        break;
+                }
 
-            rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
-            var resultsAndFaults = rangeActiveExpression.GetResultsAndFaults();
-            nullKeys = resultsAndFaults.Count(rfc => rfc.result.Key is null);
-            var distinctResultsAndFaults = resultsAndFaults.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
-            rangeObservableDictionary.AddRange(distinctResultsAndFaults.Select(g => g.First().result));
-            foreach (var (key, duplicateCount) in distinctResultsAndFaults.Select(g => (key: g.Key, duplicateCount: g.Count() - 1)).Where(kc => kc.duplicateCount > 0))
-                duplicateKeys.Add(key, duplicateCount);
-            activeDictionary = new ActiveDictionary<TResultKey, TResultValue>(rangeObservableDictionary, rangeActiveExpression, () =>
-            {
-                rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged -= valueResultChanged;
-                rangeActiveExpression.ValueResultChanging -= valueResultChanging;
-                rangeActiveExpression.Dispose();
-            });
-            rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-            rangeActiveExpression.ValueResultChanged += valueResultChanged;
-            rangeActiveExpression.ValueResultChanging += valueResultChanging;
-            checkOperationFault();
-            return activeDictionary;
+                rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
+                var resultsAndFaults = rangeActiveExpression.GetResultsAndFaults();
+                nullKeys = resultsAndFaults.Count(rfc => rfc.result.Key is null);
+                var distinctResultsAndFaults = resultsAndFaults.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
+                rangeObservableDictionary.AddRange(distinctResultsAndFaults.Select(g => g.First().result));
+                foreach (var (key, duplicateCount) in distinctResultsAndFaults.Select(g => (key: g.Key, duplicateCount: g.Count() - 1)).Where(kc => kc.duplicateCount > 0))
+                    duplicateKeys.Add(key, duplicateCount);
+                activeDictionary = new ActiveDictionary<TResultKey, TResultValue>(rangeObservableDictionary, rangeActiveExpression, () =>
+                {
+                    rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged -= valueResultChanged;
+                    rangeActiveExpression.ValueResultChanging -= valueResultChanging;
+                    rangeActiveExpression.Dispose();
+                });
+                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                rangeActiveExpression.ValueResultChanging += valueResultChanging;
+                checkOperationFault();
+                return activeDictionary;
+            }
         });
     }
 
@@ -2599,55 +2657,65 @@ public static class ActiveDictionaryExtensions
         var synchronizedSource = source as ISynchronized;
         ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, bool> rangeActiveExpression;
         ISynchronizedObservableRangeDictionary<TKey, TValue>? rangeObservableDictionary = null;
+        var rangeObservableDictionaryAccess = new object();
 
         void rangeActiveExpressionChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, bool> e) =>
             synchronizedSource.Execute(() =>
             {
-                if (e.Action == NotifyDictionaryChangedAction.Reset)
+                lock (rangeObservableDictionaryAccess)
                 {
-                    var newDictionary = source.CreateSimilarDictionary();
-                    foreach (var result in rangeActiveExpression.GetResults().Where(r => r.result))
-                        newDictionary.Add(result.key, source[result.key]);
-                    rangeObservableDictionary!.Reset(newDictionary);
-                }
-                else
-                {
-                    if ((e.OldItems?.Count ?? 0) > 0)
-                        rangeObservableDictionary!.RemoveRange(e.OldItems.Where(kv => kv.Value).Select(kv => kv.Key));
-                    if ((e.NewItems?.Count ?? 0) > 0)
-                        rangeObservableDictionary!.AddRange(e.NewItems.Where(kv => kv.Value).Select(kv =>
-                        {
-                            var key = kv.Key;
-                            return new KeyValuePair<TKey, TValue>(key, source[key]);
-                        }));
+                    if (e.Action == NotifyDictionaryChangedAction.Reset)
+                    {
+                        var newDictionary = source.CreateSimilarDictionary();
+                        foreach (var result in rangeActiveExpression.GetResults().Where(r => r.result))
+                            newDictionary.Add(result.key, source[result.key]);
+                        rangeObservableDictionary!.Reset(newDictionary);
+                    }
+                    else
+                    {
+                        if ((e.OldItems?.Count ?? 0) > 0)
+                            rangeObservableDictionary!.RemoveRange(e.OldItems.Where(kv => kv.Value).Select(kv => kv.Key));
+                        if ((e.NewItems?.Count ?? 0) > 0)
+                            rangeObservableDictionary!.AddRange(e.NewItems.Where(kv => kv.Value).Select(kv =>
+                            {
+                                var key = kv.Key;
+                                return new KeyValuePair<TKey, TValue>(key, source[key]);
+                            }));
+                    }
                 }
             });
 
         void valueResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TKey, bool> e) =>
             synchronizedSource.Execute(() =>
             {
-                if (e.Element is TKey key)
+                lock (rangeObservableDictionaryAccess)
                 {
-                    if (e.Result)
-                        rangeObservableDictionary!.Add(key, source[key]);
-                    else
-                        rangeObservableDictionary!.Remove(key);
+                    if (e.Element is TKey key)
+                    {
+                        if (e.Result)
+                            rangeObservableDictionary!.Add(key, source[key]);
+                        else
+                            rangeObservableDictionary!.Remove(key);
+                    }
                 }
             });
 
         return synchronizedSource.Execute(() =>
         {
-            rangeActiveExpression = RangeActiveExpression.Create(source, predicate, predicateOptions);
-            rangeObservableDictionary = source.CreateSimilarSynchronizedObservableDictionary(synchronizedSource?.SynchronizationContext);
-            rangeObservableDictionary.AddRange(rangeActiveExpression.GetResults().Where(r => r.result).Select(r => new KeyValuePair<TKey, TValue>(r.key, source[r.key])));
-            rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
-            rangeActiveExpression.ValueResultChanged += valueResultChanged;
-            return new ActiveDictionary<TKey, TValue>(rangeObservableDictionary, rangeActiveExpression, () =>
+            lock (rangeObservableDictionaryAccess)
             {
-                rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
-                rangeActiveExpression.ValueResultChanged -= valueResultChanged;
-                rangeActiveExpression.Dispose();
-            });
+                rangeActiveExpression = RangeActiveExpression.Create(source, predicate, predicateOptions);
+                rangeObservableDictionary = source.CreateSimilarSynchronizedObservableDictionary(synchronizedSource?.SynchronizationContext);
+                rangeObservableDictionary.AddRange(rangeActiveExpression.GetResults().Where(r => r.result).Select(r => new KeyValuePair<TKey, TValue>(r.key, source[r.key])));
+                rangeActiveExpression.DictionaryChanged += rangeActiveExpressionChanged;
+                rangeActiveExpression.ValueResultChanged += valueResultChanged;
+                return new ActiveDictionary<TKey, TValue>(rangeObservableDictionary, rangeActiveExpression, () =>
+                {
+                    rangeActiveExpression.DictionaryChanged -= rangeActiveExpressionChanged;
+                    rangeActiveExpression.ValueResultChanged -= valueResultChanged;
+                    rangeActiveExpression.Dispose();
+                });
+            }
         });
     }
 

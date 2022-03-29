@@ -1,1 +1,1 @@
-We increased the resilience of ActiveOrderBy.
+We increased the multi-threading resilience of ActiveDictionary ActiveMax, ActiveMin, ActiveSelect, ActiveSum, ActiveWhere, and ToActiveDictionary, and ActiveEnumerable ActiveAggregate, ActiveGroupBy, ActiveMax, ActiveMin, ActiveOrderBy, ActiveSelect, ActiveSelectMany, ActiveSum, ActiveWhere, and ToActiveDictionary.
