@@ -64,19 +64,7 @@ class EnumerableRangeActiveExpression<TResult> :
         }
     }
 
-    IReadOnlyList<(object? element, TResult? result)>? AddActiveExpressions(int index, IEnumerable<object?> elements)
-    {
-        if (elements.Any())
-        {
-            List<IActiveExpression<object?, TResult>> addedActiveExpressions;
-            using (activeExpressionsAccess.WriterLock())
-                addedActiveExpressions = AddActiveExpressionsUnderLock(index, elements);
-            return addedActiveExpressions.Select(ae => (ae.Arg, ae.Value)).ToImmutableArray();
-        }
-        return null;
-    }
-
-    List<IActiveExpression<object?, TResult>> AddActiveExpressionsUnderLock(int index, IEnumerable<object?> elements)
+    List<IActiveExpression<object?, TResult>> AddActiveExpressionsUnderLock(int index, IReadOnlyList<object?> elements)
     {
         var addedActiveExpressions = new List<IActiveExpression<object?, TResult>>();
         activeExpressions.InsertRange(index, elements.Select(element =>
@@ -135,13 +123,17 @@ class EnumerableRangeActiveExpression<TResult> :
 
     void Initialize()
     {
-        AddActiveExpressions(0, source.Cast<object>());
-        if (source is INotifyCollectionChanged collectionChangedNotifier)
-            collectionChangedNotifier.CollectionChanged += SourceCollectionChanged;
-        if (source is INotifyElementFaultChanges faultNotifier)
+        using (activeExpressionsAccess.WriterLock())
         {
-            faultNotifier.ElementFaultChanged += SourceElementFaultChanged;
-            faultNotifier.ElementFaultChanging += SourceElementFaultChanging;
+            var elements = source.Cast<object>().ToImmutableArray();
+            if (source is INotifyCollectionChanged collectionChangedNotifier)
+                collectionChangedNotifier.CollectionChanged += SourceCollectionChanged;
+            if (source is INotifyElementFaultChanges faultNotifier)
+            {
+                faultNotifier.ElementFaultChanged += SourceElementFaultChanged;
+                faultNotifier.ElementFaultChanging += SourceElementFaultChanging;
+            }
+            AddActiveExpressionsUnderLock(0, elements);
         }
     }
 
@@ -212,7 +204,7 @@ class EnumerableRangeActiveExpression<TResult> :
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add when e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count:
-                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>()).Select(ae => ((object?)ae.Arg, ae.Value)).ToImmutableArray(), e.NewStartingIndex);
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>().ToImmutableArray()).Select(ae => ((object?)ae.Arg, ae.Value)).ToImmutableArray(), e.NewStartingIndex);
                     break;
                 case NotifyCollectionChangedAction.Move when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1) && e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1):
                     var moving = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
@@ -225,12 +217,12 @@ class EnumerableRangeActiveExpression<TResult> :
                     break;
                 case NotifyCollectionChangedAction.Replace when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1) && e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count - (e.NewItems.Count - 1):
                     var removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count).ToImmutableArray();
-                    var added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>()).Select(ae => ((object?)ae.Arg, ae.Value)).ToImmutableArray();
+                    var added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<object?>().ToImmutableArray()).Select(ae => ((object?)ae.Arg, ae.Value)).ToImmutableArray();
                     eventArgs = new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex);
                     break;
                 default:
                     RemoveActiveExpressionsUnderLock(0, activeExpressions.Count);
-                    AddActiveExpressionsUnderLock(0, source.Cast<object>());
+                    AddActiveExpressionsUnderLock(0, source.Cast<object>().ToImmutableArray());
                     eventArgs = new NotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)>(NotifyCollectionChangedAction.Reset);
                     break;
             }
@@ -343,19 +335,7 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
         }
     }
 
-    IReadOnlyList<(TElement element, TResult? result)>? AddActiveExpressions(int index, IEnumerable<TElement> elements)
-    {
-        if (elements.Any())
-        {
-            List<IActiveExpression<TElement, TResult>> addedActiveExpressions;
-            using (activeExpressionsAccess.WriterLock())
-                addedActiveExpressions = AddActiveExpressionsUnderLock(index, elements);
-            return addedActiveExpressions.Select(ae => (ae.Arg, ae.Value)).ToImmutableArray();
-        }
-        return null;
-    }
-
-    List<IActiveExpression<TElement, TResult>> AddActiveExpressionsUnderLock(int index, IEnumerable<TElement> elements)
+    List<IActiveExpression<TElement, TResult>> AddActiveExpressionsUnderLock(int index, IReadOnlyList<TElement> elements)
     {
         var addedActiveExpressions = new List<IActiveExpression<TElement, TResult>>();
         activeExpressions.InsertRange(index, elements.Select(element =>
@@ -423,13 +403,17 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
 
     void Initialize()
     {
-        AddActiveExpressions(0, source);
-        if (source is INotifyCollectionChanged collectionChangedNotifier)
-            collectionChangedNotifier.CollectionChanged += SourceCollectionChanged;
-        if (source is INotifyElementFaultChanges faultNotifier)
+        using (activeExpressionsAccess.WriterLock())
         {
-            faultNotifier.ElementFaultChanged += SourceElementFaultChanged;
-            faultNotifier.ElementFaultChanging += SourceElementFaultChanging;
+            var elements = source.ToImmutableArray();
+            if (source is INotifyCollectionChanged collectionChangedNotifier)
+                collectionChangedNotifier.CollectionChanged += SourceCollectionChanged;
+            if (source is INotifyElementFaultChanges faultNotifier)
+            {
+                faultNotifier.ElementFaultChanged += SourceElementFaultChanged;
+                faultNotifier.ElementFaultChanging += SourceElementFaultChanging;
+            }
+            AddActiveExpressionsUnderLock(0, elements);
         }
     }
 
@@ -506,7 +490,7 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add when e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count:
-                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<TElement>()).Select(ae => (ae.Arg, ae.Value)).ToImmutableArray(), e.NewStartingIndex);
+                    eventArgs = new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Add, AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<TElement>().ToImmutableArray()).Select(ae => (ae.Arg, ae.Value)).ToImmutableArray(), e.NewStartingIndex);
                     break;
                 case NotifyCollectionChangedAction.Move when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1) && e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1):
                     var moving = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
@@ -519,12 +503,12 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
                     break;
                 case NotifyCollectionChangedAction.Replace when e.OldStartingIndex >= 0 && e.OldStartingIndex <= activeExpressions.Count - (e.OldItems.Count - 1) && e.NewStartingIndex >= 0 && e.NewStartingIndex <= activeExpressions.Count - (e.NewItems.Count - 1):
                     var removed = RemoveActiveExpressionsUnderLock(e.OldStartingIndex, e.OldItems.Count).ToImmutableArray();
-                    var added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<TElement>()).Select(ae => (ae.Arg, ae.Value)).ToImmutableArray();
+                    var added = AddActiveExpressionsUnderLock(e.NewStartingIndex, e.NewItems.Cast<TElement>().ToImmutableArray()).Select(ae => (ae.Arg, ae.Value)).ToImmutableArray();
                     eventArgs = new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Replace, added, removed, e.OldStartingIndex);
                     break;
                 default:
                     RemoveActiveExpressionsUnderLock(0, activeExpressions.Count);
-                    AddActiveExpressionsUnderLock(0, source.Cast<TElement>());
+                    AddActiveExpressionsUnderLock(0, source.Cast<TElement>().ToImmutableArray());
                     eventArgs = new NotifyGenericCollectionChangedEventArgs<(TElement element, TResult? result)>(NotifyCollectionChangedAction.Reset);
                     break;
             }

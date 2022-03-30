@@ -63,19 +63,7 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> :
         }
     }
 
-    IReadOnlyList<KeyValuePair<TKey, TResult>> AddActiveExpressions(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs)
-    {
-        if (keyValuePairs.Any())
-        {
-            List<IActiveExpression<TKey, TValue, TResult>> addedActiveExpressions;
-            using (activeExpressionsAccess.WriterLock())
-                addedActiveExpressions = AddActiveExpressionsUnderLock(keyValuePairs);
-            return addedActiveExpressions.Select(ae => new KeyValuePair<TKey, TResult>(ae.Arg1! /* this could be null, but it won't matter if it is */, ae.Value! /* this could be null, but it won't matter if it is */)).ToImmutableArray();
-        }
-        return Enumerable.Empty<KeyValuePair<TKey, TResult>>().ToImmutableArray();
-    }
-
-    List<IActiveExpression<TKey, TValue, TResult>> AddActiveExpressionsUnderLock(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs)
+    List<IActiveExpression<TKey, TValue, TResult>> AddActiveExpressionsUnderLock(IReadOnlyList<KeyValuePair<TKey, TValue>> keyValuePairs)
     {
         var addedActiveExpressions = new List<IActiveExpression<TKey, TValue, TResult>>();
         foreach (var keyValuePair in keyValuePairs)
@@ -137,13 +125,17 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> :
 
     void Initialize()
     {
-        AddActiveExpressions(source);
-        if (source is INotifyDictionaryChanged<TKey, TValue> dictionaryChangedNotifier)
-            dictionaryChangedNotifier.DictionaryChanged += SourceDictionaryChanged;
-        if (source is INotifyElementFaultChanges faultNotifier)
+        using (activeExpressionsAccess.WriterLock())
         {
-            faultNotifier.ElementFaultChanged += SourceFaultChanged;
-            faultNotifier.ElementFaultChanging += SourceFaultChanging;
+            var elements = source.ToImmutableArray();
+            if (source is INotifyDictionaryChanged<TKey, TValue> dictionaryChangedNotifier)
+                dictionaryChangedNotifier.DictionaryChanged += SourceDictionaryChanged;
+            if (source is INotifyElementFaultChanges faultNotifier)
+            {
+                faultNotifier.ElementFaultChanged += SourceFaultChanged;
+                faultNotifier.ElementFaultChanging += SourceFaultChanging;
+            }
+            AddActiveExpressionsUnderLock(elements);
         }
     }
 
@@ -202,32 +194,29 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> :
 
     void SourceDictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e)
     {
-        switch (e.Action)
-        {
-            case NotifyDictionaryChangedAction.Add:
-                OnDictionaryChanged(new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Add, AddActiveExpressions(e.NewItems)));
-                break;
-            case NotifyDictionaryChangedAction.Remove:
-                OnDictionaryChanged(new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Remove, RemoveActiveExpressions(e.OldItems.Select(oldItem => oldItem.Key).ToImmutableArray())));
-                break;
-            case NotifyDictionaryChangedAction.Replace:
-                IReadOnlyList<KeyValuePair<TKey, TResult>> removed, added;
-                using (activeExpressionsAccess.WriterLock())
-                {
+        NotifyDictionaryChangedEventArgs<TKey, TResult> eventArgs;
+        using (activeExpressionsAccess.WriterLock())
+            switch (e.Action)
+            {
+                case NotifyDictionaryChangedAction.Add:
+                    eventArgs = new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Add, AddActiveExpressionsUnderLock(e.NewItems).Select(ae => new KeyValuePair<TKey, TResult>(ae.Arg1! /* this could be null, but it won't matter if it is */, ae.Value! /* this could be null, but it won't matter if it is */)).ToImmutableArray());
+                    break;
+                case NotifyDictionaryChangedAction.Remove:
+                    eventArgs = new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Remove, RemoveActiveExpressionsUnderLock(e.OldItems.Select(oldItem => oldItem.Key).ToImmutableArray()));
+                    break;
+                case NotifyDictionaryChangedAction.Replace:
+                    IReadOnlyList<KeyValuePair<TKey, TResult>> removed, added;
                     removed = RemoveActiveExpressionsUnderLock(e.OldItems.Select(oldItem => oldItem.Key).ToImmutableArray());
                     added = AddActiveExpressionsUnderLock(e.NewItems).Select(ae => new KeyValuePair<TKey, TResult>(ae.Arg1! /* this could be null, but it won't matter if it is */, ae.Value! /* this could be null, but it won't matter if it is */)).ToImmutableArray();
-                }
-                OnDictionaryChanged(new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Replace, added, removed));
-                break;
-            default:
-                using (activeExpressionsAccess.WriterLock())
-                {
+                    eventArgs = new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Replace, added, removed);
+                    break;
+                default:
                     RemoveActiveExpressionsUnderLock(activeExpressions.Keys.ToImmutableArray());
-                    AddActiveExpressionsUnderLock(source);
-                }
-                OnDictionaryChanged(new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Reset));
-                break;
-        }
+                    AddActiveExpressionsUnderLock(source.ToImmutableArray());
+                    eventArgs = new NotifyDictionaryChangedEventArgs<TKey, TResult>(NotifyDictionaryChangedAction.Reset);
+                    break;
+            }
+        OnDictionaryChanged(eventArgs);
     }
 
     void SourceFaultChanged(object sender, ElementFaultChangeEventArgs e) =>
