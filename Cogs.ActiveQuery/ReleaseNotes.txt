@@ -1,1 +1,1 @@
-We increased the multi-threading resilience of all ActiveQuery methods.
+We increased the speed and reduced the resource cost of Enumerable ActiveWhere while also causing it to preserve order, which it was not doing previously.

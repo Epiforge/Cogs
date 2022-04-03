@@ -4125,60 +4125,7 @@ public static class ActiveEnumerableExtensions
     public static IActiveEnumerable<TSource> ActiveWhere<TSource>(this IEnumerable<TSource> source, Expression<Func<TSource, bool>> predicate, ActiveExpressionOptions? predicateOptions)
     {
         ActiveQueryOptions.Optimize(ref predicate);
-
-        var synchronizedSource = source as ISynchronized;
-        EnumerableRangeActiveExpression<TSource, bool> rangeActiveExpression;
-        SynchronizedRangeObservableCollection<TSource>? rangeObservableCollection = null;
-        var rangeObservableCollectionAccess = new object();
-
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, bool> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                lock (rangeObservableCollectionAccess)
-                {
-                    if (e.Result)
-                        rangeObservableCollection!.AddRange(e.Element!.Repeat(e.Count));
-                    else
-                    {
-                        var equalityComparer = EqualityComparer<TSource>.Default;
-                        rangeObservableCollection!.RemoveAll(element => element is null && e.Element is null || element is { } && e.Element is { } && equalityComparer.Equals(element, e.Element));
-                    }
-                }
-            });
-
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, bool included)> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                lock (rangeObservableCollectionAccess)
-                {
-                    if (e.Action == NotifyCollectionChangedAction.Reset)
-                        rangeObservableCollection!.Reset(rangeActiveExpression.GetResults().Where(er => er.result).Select(er => er.element));
-                    else if (e.Action != NotifyCollectionChangedAction.Move)
-                    {
-                        if ((e.OldItems?.Count ?? 0) > 0)
-                            rangeObservableCollection!.RemoveRange(e.OldItems.Where(er => er.included).Select(er => er.element));
-                        if ((e.NewItems?.Count ?? 0) > 0)
-                            rangeObservableCollection!.AddRange(e.NewItems.Where(er => er.included).Select(er => er.element));
-                    }
-                }
-            });
-
-        return synchronizedSource.Execute(() =>
-        {
-            lock (rangeObservableCollectionAccess)
-            {
-                rangeActiveExpression = RangeActiveExpression.Create(source, predicate, predicateOptions);
-                rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().Where(er => er.result).Select(er => er.element));
-                rangeActiveExpression.ElementResultChanged += elementResultChanged;
-                rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
-                return new ActiveEnumerable<TSource>(rangeObservableCollection, rangeActiveExpression, () =>
-                {
-                    rangeActiveExpression.ElementResultChanged -= elementResultChanged;
-                    rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
-                    rangeActiveExpression.Dispose();
-                });
-            }
-        });
+        return new ActiveWhereEnumerable<TSource>(source, predicate, predicateOptions);
     }
 
     #endregion Where
