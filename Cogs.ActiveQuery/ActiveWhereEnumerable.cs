@@ -187,7 +187,8 @@ public sealed class ActiveWhereEnumerable<TElement> :
                     yield return activeExpression.Arg;
     }
 
-    [SuppressMessage("Reliability", "CA2000: Dispose objects before losing scope")]
+    [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
+    [SuppressMessage("Reliability", "CA2000: Dispose objects before losing scope", Justification = "They'll get disposed, chill out")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         lock (access)
@@ -303,7 +304,8 @@ public sealed class ActiveWhereEnumerable<TElement> :
         }
     }
 
-    [SuppressMessage("Reliability", "CA2000: Dispose objects before losing scope")]
+    [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
+    [SuppressMessage("Reliability", "CA2000: Dispose objects before losing scope", Justification = "They'll get disposed, chill out")]
     void SourceChanged(object sender, INotifyGenericCollectionChangedEventArgs<TElement> e)
     {
         lock (access)
