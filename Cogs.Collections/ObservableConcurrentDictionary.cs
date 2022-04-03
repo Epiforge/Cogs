@@ -16,7 +16,6 @@ public class ObservableConcurrentDictionary<TKey, TValue> :
     IDictionary<TKey, TValue>,
     IHashKeys<TKey>,
     INotifyCollectionChanged,
-    INotifyGenericCollectionChanged<KeyValuePair<TKey, TValue>>,
     INotifyDictionaryChanged,
     INotifyDictionaryChanged<TKey, TValue>,
     IReadOnlyCollection<KeyValuePair<TKey, TValue>>,
@@ -233,11 +232,6 @@ public class ObservableConcurrentDictionary<TKey, TValue> :
     }
 
     event EventHandler<NotifyDictionaryChangedEventArgs<object?, object?>>? DictionaryChangedBoxed;
-
-    /// <summary>
-    /// Occurs when the collection changes
-    /// </summary>
-    public event NotifyGenericCollectionChangedEventHandler<KeyValuePair<TKey, TValue>>? GenericCollectionChanged;
 
     void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) =>
         ((IDictionary<TKey, TValue>)this).Add(item.Key, item.Value);
@@ -485,7 +479,7 @@ public class ObservableConcurrentDictionary<TKey, TValue> :
         OnPropertyChanged(nameof(Count));
 
     /// <summary>
-    /// Calls <see cref="OnDictionaryChanged(NotifyDictionaryChangedEventArgs{TKey, TValue})"/> and also calls <see cref="OnCollectionChanged(NotifyCollectionChangedEventArgs)"/>, <see cref="OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs{object, object})"/>, and <see cref="OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs{KeyValuePair{TKey, TValue}})"/> when applicable
+    /// Calls <see cref="OnDictionaryChanged(NotifyDictionaryChangedEventArgs{TKey, TValue})"/> and also calls <see cref="OnCollectionChanged(NotifyCollectionChangedEventArgs)"/>, and <see cref="OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs{object, object})"/> when applicable
     /// </summary>
     /// <param name="e">The event arguments for <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/></param>
     protected virtual void OnChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e)
@@ -506,24 +500,6 @@ public class ObservableConcurrentDictionary<TKey, TValue> :
                     break;
                 case NotifyDictionaryChangedAction.Reset:
                     OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-                    break;
-                default:
-                    throw new NotSupportedException();
-            }
-        if (GenericCollectionChanged is not null)
-            switch (e.Action)
-            {
-                case NotifyDictionaryChangedAction.Add:
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>(NotifyCollectionChangedAction.Add, e.NewItems));
-                    break;
-                case NotifyDictionaryChangedAction.Remove:
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>(NotifyCollectionChangedAction.Remove, e.OldItems));
-                    break;
-                case NotifyDictionaryChangedAction.Replace:
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>(NotifyCollectionChangedAction.Replace, e.NewItems, e.OldItems));
-                    break;
-                case NotifyDictionaryChangedAction.Reset:
-                    OnGenericCollectionChanged(new NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>(NotifyCollectionChangedAction.Reset));
                     break;
                 default:
                     throw new NotSupportedException();
@@ -567,13 +543,6 @@ public class ObservableConcurrentDictionary<TKey, TValue> :
     /// <param name="e">The event arguments</param>
     protected virtual void OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs<object?, object?> e) =>
         DictionaryChangedBoxed?.Invoke(this, e);
-
-    /// <summary>
-    /// Raises the <see cref="INotifyGenericCollectionChanged{T}.GenericCollectionChanged"/> event
-    /// </summary>
-    /// <param name="e">The event arguments</param>
-    protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) =>
-        GenericCollectionChanged?.Invoke(this, e);
 
     bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) =>
         TryGetValue(item.Key, out var value) && EqualityComparer<TValue>.Default.Equals(item.Value, value) && TryRemove(item.Key, out _);

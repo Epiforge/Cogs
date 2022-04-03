@@ -19,7 +19,6 @@ public class ReadOnlyObservableRangeDictionary<TKey, TValue> :
         if (observableRangeDictionary is null)
             throw new ArgumentNullException(nameof(observableRangeDictionary));
         observableRangeDictionary.CollectionChanged += HandleCollectionChanged;
-        observableRangeDictionary.GenericCollectionChanged += HandleGenericCollectionChanged;
         ((INotifyDictionaryChanged)observableRangeDictionary).DictionaryChanged += HandleDictionaryChanged;
         ((INotifyDictionaryChanged<TKey, TValue>)observableRangeDictionary).DictionaryChanged += HandleDictionaryChanged;
     }
@@ -33,11 +32,6 @@ public class ReadOnlyObservableRangeDictionary<TKey, TValue> :
     /// Occurs when the dictionary changes
     /// </summary>
     public event EventHandler<NotifyDictionaryChangedEventArgs<TKey, TValue>>? DictionaryChanged;
-
-    /// <summary>
-    /// Occurs when the dictionary changes
-    /// </summary>
-    public event NotifyGenericCollectionChangedEventHandler<KeyValuePair<TKey, TValue>>? GenericCollectionChanged;
 
     /// <summary>
     /// Occurs when the dictionary changes
@@ -59,9 +53,6 @@ public class ReadOnlyObservableRangeDictionary<TKey, TValue> :
     void HandleDictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
         OnDictionaryChanged(e);
 
-    void HandleGenericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) =>
-        OnGenericCollectionChanged(e);
-
     /// <summary>
     /// Raises the <see cref="INotifyCollectionChanged.CollectionChanged"/> event
     /// </summary>
@@ -82,11 +73,4 @@ public class ReadOnlyObservableRangeDictionary<TKey, TValue> :
     /// <param name="e">The event arguments</param>
     protected virtual void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
         DictionaryChanged?.Invoke(this, e);
-
-    /// <summary>
-    /// Raises the <see cref="INotifyGenericCollectionChanged{T}.GenericCollectionChanged"/> event
-    /// </summary>
-    /// <param name="e">The event arguments</param>
-    protected virtual void OnGenericCollectionChanged(INotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) =>
-        GenericCollectionChanged?.Invoke(this, e);
 }

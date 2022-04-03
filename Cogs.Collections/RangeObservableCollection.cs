@@ -5,8 +5,7 @@ namespace Cogs.Collections;
 /// </summary>
 /// <typeparam name="T">The type of elements in the collection</typeparam>
 public class RangeObservableCollection<T> :
-    ObservableCollection<T>,
-    INotifyGenericCollectionChanged<T>
+    ObservableCollection<T>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="RangeObservableCollection{T}"/>
@@ -46,11 +45,6 @@ public class RangeObservableCollection<T> :
     /// Gets whether this <see cref="RangeObservableCollection{T}"/> will raise individual <see cref="INotifyCollectionChanged.CollectionChanged"/> events for each element operated upon by range methods
     /// </summary>
     public bool RaiseCollectionChangedEventsForIndividualElements { get; }
-
-    /// <summary>
-    /// Occurs when the collection changes
-    /// </summary>
-    public event NotifyGenericCollectionChangedEventHandler<T>? GenericCollectionChanged;
 
     /// <summary>
     /// Adds objects to the end of the <see cref="RangeObservableCollection{T}"/>
@@ -190,23 +184,6 @@ public class RangeObservableCollection<T> :
 
     void NotifyCountChanged() =>
         OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
-
-    /// <summary>
-    /// Raises the <see cref="INotifyCollectionChanged.CollectionChanged"/> event with the provided arguments
-    /// </summary>
-    /// <param name="e">Arguments of the event being raised</param>
-    protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
-    {
-        base.OnCollectionChanged(e);
-        OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<T>.FromNotifyCollectionChangedEventArgs(e));
-    }
-
-    /// <summary>
-    /// Raises the <see cref="INotifyGenericCollectionChanged{T}.GenericCollectionChanged"/> event with the provided arguments
-    /// </summary>
-    /// <param name="e">Arguments of the event being raised</param>
-    protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<T> e) =>
-        GenericCollectionChanged?.Invoke(this, e);
 
     /// <summary>
     /// Removes all object from the <see cref="RangeObservableCollection{T}"/> that satisfy the <paramref name="predicate"/>

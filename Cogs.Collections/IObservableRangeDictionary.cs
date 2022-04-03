@@ -7,7 +7,6 @@ namespace Cogs.Collections;
 /// <typeparam name="TValue">The type of values in the dictionary</typeparam>
 public interface IObservableRangeDictionary<TKey, TValue> :
     INotifyCollectionChanged,
-    INotifyGenericCollectionChanged<KeyValuePair<TKey, TValue>>,
     INotifyDictionaryChanged,
     INotifyDictionaryChanged<TKey, TValue>,
     IRangeDictionary<TKey, TValue>

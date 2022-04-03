@@ -16,7 +16,6 @@ public class ReadOnlyObservableConcurrentDictionary<TKey, TValue> :
     IDictionary<TKey, TValue>,
     IHashKeys<TKey>,
     INotifyCollectionChanged,
-    INotifyGenericCollectionChanged<KeyValuePair<TKey, TValue>>,
     INotifyDictionaryChanged,
     INotifyDictionaryChanged<TKey, TValue>,
     IReadOnlyCollection<KeyValuePair<TKey, TValue>>,
@@ -32,7 +31,6 @@ public class ReadOnlyObservableConcurrentDictionary<TKey, TValue> :
         ocd.CollectionChanged += ObservableConcurrentDictionaryCollectionChanged;
         ((INotifyDictionaryChanged)ocd).DictionaryChanged += ObservableConcurrentDictionaryDictionaryChanged;
         ocd.DictionaryChanged += ObservableConcurrentDictionaryDictionaryChanged;
-        ocd.GenericCollectionChanged += ObservableConcurrentDictionaryGenericCollectionChanged;
         ocd.PropertyChanged += ObservableConcurrentDictionaryPropertyChanged;
         ocd.PropertyChanging += ObservableConcurrentDictionaryPropertyChanging;
     }
@@ -135,11 +133,6 @@ public class ReadOnlyObservableConcurrentDictionary<TKey, TValue> :
 
     event EventHandler<NotifyDictionaryChangedEventArgs<object?, object?>>? DictionaryChangedBoxed;
 
-    /// <summary>
-    /// Occurs when the collection changes
-    /// </summary>
-    public event NotifyGenericCollectionChangedEventHandler<KeyValuePair<TKey, TValue>>? GenericCollectionChanged;
-
     void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) =>
         throw new NotSupportedException();
 
@@ -197,9 +190,6 @@ public class ReadOnlyObservableConcurrentDictionary<TKey, TValue> :
     void ObservableConcurrentDictionaryDictionaryChanged(object sender, NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
         OnDictionaryChanged(e);
 
-    void ObservableConcurrentDictionaryGenericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) =>
-        OnGenericCollectionChanged(e);
-
     void ObservableConcurrentDictionaryPropertyChanged(object sender, PropertyChangedEventArgs e) =>
         OnPropertyChanged(e);
 
@@ -226,13 +216,6 @@ public class ReadOnlyObservableConcurrentDictionary<TKey, TValue> :
     /// <param name="e">The event arguments</param>
     protected void OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs<object?, object?> e) =>
         DictionaryChangedBoxed?.Invoke(this, e);
-
-    /// <summary>
-    /// Raises the <see cref="INotifyGenericCollectionChanged{T}.GenericCollectionChanged"/> event
-    /// </summary>
-    /// <param name="e">The event arguments</param>
-    protected void OnGenericCollectionChanged(INotifyGenericCollectionChangedEventArgs<KeyValuePair<TKey, TValue>> e) =>
-        GenericCollectionChanged?.Invoke(this, e);
 
     bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) =>
         throw new NotSupportedException();
