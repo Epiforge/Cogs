@@ -37,10 +37,7 @@ public sealed class ActiveWhereEnumerable<TElement> :
                         activeExpression.PropertyChanging += ActiveExpressionPropertyChanging;
                     }
                 }
-                var collectionChangedNotifyingSource = source as INotifyCollectionChanged;
-                if (source is INotifyGenericCollectionChanged<TElement> genericCollectionChangeNotifier)
-                    genericCollectionChangeNotifier.GenericCollectionChanged += SourceChanged;
-                else if (source is INotifyCollectionChanged collectionChangeNotifier)
+                if (source is INotifyCollectionChanged collectionChangeNotifier)
                     collectionChangeNotifier.CollectionChanged += SourceChanged;
                 return (activeExpressions, activeExpressionCounts, count);
             }
@@ -91,9 +88,6 @@ public sealed class ActiveWhereEnumerable<TElement> :
     /// <inheritdoc/>
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
 
-    /// <inheritdoc/>
-    public event NotifyGenericCollectionChangedEventHandler<TElement>? GenericCollectionChanged;
-
     void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         var isFaultChange = e.PropertyName == nameof(IActiveExpression<TElement, bool>.Fault);
@@ -118,9 +112,7 @@ public sealed class ActiveWhereEnumerable<TElement> :
                             if (iActiveExpression == activeExpression)
                             {
                                 Count += countIteration;
-                                var eventArgs = new NotifyGenericCollectionChangedEventArgs<TElement>(action, activeExpression.Arg, translatedIndex);
-                                CollectionChanged?.Invoke(this, eventArgs.ToNotifyCollectionChangedEventArgs());
-                                GenericCollectionChanged?.Invoke(this, eventArgs);
+                                CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, activeExpression.Arg, translatedIndex));
                             }
                         }
                     }
@@ -153,6 +145,8 @@ public sealed class ActiveWhereEnumerable<TElement> :
                         activeExpression.PropertyChanging -= ActiveExpressionPropertyChanging;
                         activeExpression.Dispose();
                     }
+                    if (source is INotifyCollectionChanged collectionChangeNotifier)
+                        collectionChangeNotifier.CollectionChanged -= SourceChanged;
                 }
             });
         return true;
@@ -299,124 +293,6 @@ public sealed class ActiveWhereEnumerable<TElement> :
                 if (eventArgs.Action != NotifyCollectionChangedAction.Move)
                     Count = newCount;
                 CollectionChanged?.Invoke(this, eventArgs);
-                GenericCollectionChanged?.Invoke(this, NotifyGenericCollectionChangedEventArgs<TElement>.FromNotifyCollectionChangedEventArgs(eventArgs));
-            }
-        }
-    }
-
-    [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
-    [SuppressMessage("Reliability", "CA2000: Dispose objects before losing scope", Justification = "They'll get disposed, chill out")]
-    void SourceChanged(object sender, INotifyGenericCollectionChangedEventArgs<TElement> e)
-    {
-        lock (access)
-        {
-            INotifyGenericCollectionChangedEventArgs<TElement>? eventArgs = null;
-            var newCount = 0;
-            switch (e.Action)
-            {
-                case NotifyCollectionChangedAction.Add:
-                case NotifyCollectionChangedAction.Replace:
-                case NotifyCollectionChangedAction.Remove:
-                    var oldItems = new List<TElement>();
-                    if (e.OldItems is not null && e.OldStartingIndex >= 0)
-                        for (var i = e.OldItems.Count - 1; i >= 0; --i)
-                        {
-                            var element = e.OldItems[i];
-                            var activeExpression = activeExpressions[e.OldStartingIndex + i];
-                            activeExpressions.RemoveAt(e.OldStartingIndex + i);
-                            var activeExpressionCount = activeExpressionCounts[activeExpression];
-                            if (activeExpressionCount > 1)
-                                activeExpressionCounts[activeExpression] = activeExpressionCount - 1;
-                            else
-                            {
-                                activeExpressionCounts.Remove(activeExpression);
-                                activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
-                                activeExpression.PropertyChanging -= ActiveExpressionPropertyChanging;
-                            }
-                            if (activeExpression.Value)
-                                oldItems.Add(element);
-                            activeExpression.Dispose();
-                        }
-                    var newItems = new List<TElement>();
-                    if (e.NewItems is not null && e.NewStartingIndex >= 0)
-                        for (var i = 0; i < e.NewItems.Count; ++i)
-                        {
-                            var element = e.NewItems[i];
-                            var activeExpression = ActiveExpression.Create(predicate, element, predicateOptions);
-                            activeExpressions.Insert(e.NewStartingIndex + i, activeExpression);
-                            if (activeExpressionCounts.TryGetValue(activeExpression, out var existingCount))
-                                activeExpressionCounts[activeExpression] = existingCount + 1;
-                            else
-                            {
-                                activeExpressionCounts.Add(activeExpression, 1);
-                                activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
-                                activeExpression.PropertyChanging += ActiveExpressionPropertyChanging;
-                            }
-                            if (activeExpression.Value)
-                                newItems.Add(element);
-                        }
-                    if (newItems.Count > 0)
-                    {
-                        if (oldItems.Count > 0)
-                            eventArgs = new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Replace, newItems.AsReadOnly(), oldItems.AsReadOnly(), TranslateIndex(e.NewStartingIndex));
-                        else
-                            eventArgs = new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Add, newItems.AsReadOnly(), TranslateIndex(e.NewStartingIndex));
-                    }
-                    else if (oldItems.Count > 0)
-                        eventArgs = new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Remove, oldItems.AsReadOnly(), TranslateIndex(e.OldStartingIndex));
-                    newCount = count + newItems.Count - oldItems.Count;
-                    break;
-                case NotifyCollectionChangedAction.Move:
-                    if (e.OldItems.Count > 0)
-                    {
-                        var oldStartingIndex = TranslateIndex(e.OldStartingIndex);
-                        var movedActiveExpressions = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
-                        activeExpressions.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
-                        activeExpressions.InsertRange(e.NewStartingIndex, movedActiveExpressions);
-                        var newStartingIndex = TranslateIndex(e.NewStartingIndex);
-                        if (oldStartingIndex != newStartingIndex)
-                        {
-                            var movedItems = movedActiveExpressions.Where(ae => ae.Value).Select(ae => ae.Arg).ToList().AsReadOnly();
-                            if (movedItems.Count > 0)
-                                eventArgs = new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Move, movedItems, newStartingIndex, oldStartingIndex);
-                        }
-                    }
-                    break;
-                case NotifyCollectionChangedAction.Reset:
-                    foreach (var activeExpression in activeExpressionCounts.Keys)
-                    {
-                        activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
-                        activeExpression.PropertyChanging -= ActiveExpressionPropertyChanging;
-                        activeExpression.Dispose();
-                    }
-                    activeExpressions.Clear();
-                    activeExpressionCounts.Clear();
-                    foreach (var element in source)
-                    {
-                        var activeExpression = ActiveExpression.Create(predicate, element, predicateOptions);
-                        activeExpressions.Add(activeExpression);
-                        if (activeExpression.Value)
-                            ++newCount;
-                        if (activeExpressionCounts.TryGetValue(activeExpression, out var existingCount))
-                            activeExpressionCounts[activeExpression] = existingCount + 1;
-                        else
-                        {
-                            activeExpressionCounts.Add(activeExpression, 1);
-                            activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
-                            activeExpression.PropertyChanging += ActiveExpressionPropertyChanging;
-                        }
-                    }
-                    eventArgs = new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Reset);
-                    break;
-                default:
-                    throw new NotSupportedException($"Unknown collection changed action {e.Action}");
-            }
-            if (eventArgs is not null)
-            {
-                if (eventArgs.Action != NotifyCollectionChangedAction.Move)
-                    Count = newCount;
-                CollectionChanged?.Invoke(this, eventArgs.ToNotifyCollectionChangedEventArgs());
-                GenericCollectionChanged?.Invoke(this, eventArgs);
             }
         }
     }

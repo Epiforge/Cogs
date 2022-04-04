@@ -29,7 +29,7 @@ class ActiveOrderingComparer<TElement> :
                 foreach (var (rangeActiveExpression, isDescending) in this.selectors)
                 {
                     rangeActiveExpression.ElementResultChanged += RangeActiveExpressionElementResultChanged;
-                    rangeActiveExpression.GenericCollectionChanged += RangeActiveExpressionGenericCollectionChanged;
+                    rangeActiveExpression.CollectionChanged += RangeActiveExpressionCollectionChanged;
                 }
                 lastSelector = this.selectors[this.selectors.Count - 1];
                 rangeActiveExpressionIndicies = new Dictionary<EnumerableRangeActiveExpression<TElement, IComparable>, int>();
@@ -105,7 +105,7 @@ class ActiveOrderingComparer<TElement> :
             foreach (var (rangeActiveExpression, isDescending) in selectors)
             {
                 rangeActiveExpression.ElementResultChanged -= RangeActiveExpressionElementResultChanged;
-                rangeActiveExpression.GenericCollectionChanged -= RangeActiveExpressionGenericCollectionChanged;
+                rangeActiveExpression.CollectionChanged -= RangeActiveExpressionCollectionChanged;
             }
         return true;
     }
@@ -120,7 +120,7 @@ class ActiveOrderingComparer<TElement> :
                 comparables[e.Element][rangeActiveExpressionIndicies![(EnumerableRangeActiveExpression<TElement, IComparable>)sender]] = e.Result!;
     }
 
-    void RangeActiveExpressionGenericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TElement element, IComparable? comparable)> e)
+    void RangeActiveExpressionCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         lock (comparablesAccess)
         {
@@ -162,7 +162,7 @@ class ActiveOrderingComparer<TElement> :
             {
                 if ((e.OldItems?.Count ?? 0) > 0 && sender == lastSelector.rangeActiveExpression)
                 {
-                    foreach (var elementAndResults in e.OldItems.GroupBy(er => er.element, er => er.comparable))
+                    foreach (var elementAndResults in e.OldItems.Cast<(TElement element, IComparable? comparable)>().GroupBy(er => er.element, er => er.comparable))
                     {
                         var element = elementAndResults.Key;
                         var currentCount = counts![element];
@@ -180,7 +180,7 @@ class ActiveOrderingComparer<TElement> :
                 {
                     var rangeActiveExpressionIndex = rangeActiveExpressionIndicies![(EnumerableRangeActiveExpression<TElement, IComparable>)sender];
                     if (rangeActiveExpressionIndex == 0)
-                        foreach (var elementAndResults in e.NewItems.GroupBy(er => er.element, er => er.comparable))
+                        foreach (var elementAndResults in e.NewItems.Cast<(TElement element, IComparable? comparable)>().GroupBy(er => er.element, er => er.comparable))
                         {
                             var element = elementAndResults.Key;
                             var count = elementAndResults.Count();
@@ -195,7 +195,7 @@ class ActiveOrderingComparer<TElement> :
                                 counts![element] += count;
                         }
                     else
-                        foreach (var elementAndResults in e.NewItems.GroupBy(er => er.element, er => er.comparable))
+                        foreach (var elementAndResults in e.NewItems.Cast<(TElement element, IComparable? comparable)>().GroupBy(er => er.element, er => er.comparable))
                         {
                             var comparablesList = comparables![elementAndResults.Key];
                             if (comparablesList.Count == rangeActiveExpressionIndex)

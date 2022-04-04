@@ -25,15 +25,7 @@ public class ActiveEnumerable<TElement> :
         }
         this.readOnlyList = readOnlyList is ActiveEnumerable<TElement> activeEnumerable ? activeEnumerable.readOnlyList : readOnlyList;
         if (this.readOnlyList is INotifyCollectionChanged collectionNotifier)
-        {
-            isCollectionNotifier = true;
             collectionNotifier.CollectionChanged += CollectionChangedHandler;
-        }
-        if (this.readOnlyList is INotifyGenericCollectionChanged<TElement> genericCollectionNotifier)
-        {
-            isGenericCollectionNotifier = true;
-            genericCollectionNotifier.GenericCollectionChanged += GenericCollectionChangedHandler;
-        }
         this.onDispose = onDispose;
     }
 
@@ -47,8 +39,6 @@ public class ActiveEnumerable<TElement> :
     }
 
     readonly INotifyElementFaultChanges? faultNotifier;
-    readonly bool isCollectionNotifier;
-    readonly bool isGenericCollectionNotifier;
     readonly Action? onDispose;
     readonly IReadOnlyList<TElement> readOnlyList;
     readonly ISynchronized? synchronized;
@@ -68,24 +58,8 @@ public class ActiveEnumerable<TElement> :
     /// </summary>
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
 
-    /// <summary>
-    /// Occurs when the collection changes
-    /// </summary>
-    public event NotifyGenericCollectionChangedEventHandler<TElement>? GenericCollectionChanged;
-
-    void CollectionChangedHandler(object sender, NotifyCollectionChangedEventArgs e)
-    {
+    void CollectionChangedHandler(object sender, NotifyCollectionChangedEventArgs e) =>
         CollectionChanged?.Invoke(this, e);
-        if (!isGenericCollectionNotifier)
-            GenericCollectionChanged?.Invoke(this, NotifyGenericCollectionChangedEventArgs<TElement>.FromNotifyCollectionChangedEventArgs(e));
-    }
-
-    void GenericCollectionChangedHandler(object sender, INotifyGenericCollectionChangedEventArgs<TElement> e)
-    {
-        if (!isCollectionNotifier)
-            CollectionChanged?.Invoke(this, e.ToNotifyCollectionChangedEventArgs());
-        GenericCollectionChanged?.Invoke(this, e);
-    }
 
     /// <summary>
     /// Frees, releases, or resets unmanaged resources
@@ -103,8 +77,6 @@ public class ActiveEnumerable<TElement> :
             }
             if (readOnlyList is INotifyCollectionChanged collectionNotifier)
                 collectionNotifier.CollectionChanged -= CollectionChangedHandler;
-            if (readOnlyList is INotifyGenericCollectionChanged<TElement> genericCollectionNotifier)
-                genericCollectionNotifier.GenericCollectionChanged -= GenericCollectionChangedHandler;
         }
         return true;
     }

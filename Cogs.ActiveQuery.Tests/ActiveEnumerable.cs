@@ -10,13 +10,13 @@ public class ActiveEnumerable
         public SynchronizationContext SynchronizationContext => throw new NotImplementedException();
     }
 
-    class SimpleGenericCollection<T> : Collection<T>, INotifyGenericCollectionChanged<T>, ISynchronized
+    class SimpleGenericCollection<T> : Collection<T>, INotifyCollectionChanged, ISynchronized
     {
-        public event NotifyGenericCollectionChangedEventHandler<T>? GenericCollectionChanged;
+        public event NotifyCollectionChangedEventHandler? CollectionChanged;
         protected override void InsertItem(int index, T item)
         {
             base.InsertItem(index, item);
-            GenericCollectionChanged?.Invoke(this, new NotifyGenericCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Add, item, index));
+            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
         }
 
         public SynchronizationContext SynchronizationContext => throw new NotImplementedException();

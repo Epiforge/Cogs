@@ -1,1 +1,1 @@
-We increased the speed and reduced the resource cost of Enumerable ActiveWhere while also causing it to preserve order, which it was not doing previously.
+We upgraded NuGet references and refactored for compatibility with changes in the Collections library.

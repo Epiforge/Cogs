@@ -12,7 +12,6 @@ public interface IActiveEnumerable<out TElement> :
     INotifyDisposed,
     INotifyDisposing,
     INotifyElementFaultChanges,
-    INotifyGenericCollectionChanged<TElement>,
     INotifyPropertyChanged,
     INotifyPropertyChanging,
     IReadOnlyList<TElement>,

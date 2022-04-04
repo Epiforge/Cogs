@@ -20,7 +20,6 @@ public class NondisposableActiveEnumerable<TElement> :
         this.activeEnumerable.Disposing += ActiveEnumerableDisposing;
         this.activeEnumerable.ElementFaultChanged += ActiveEnumerableElementFaultChanged;
         this.activeEnumerable.ElementFaultChanging += ActiveEnumerableElementFaultChanging;
-        this.activeEnumerable.GenericCollectionChanged += ActiveEnumerableGenericCollectionChanged;
         this.activeEnumerable.PropertyChanged += ActiveEnumerablePropertyChanged;
         this.activeEnumerable.PropertyChanging += ActiveEnumerablePropertyChanging;
     }
@@ -84,11 +83,6 @@ public class NondisposableActiveEnumerable<TElement> :
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
 
     /// <summary>
-    /// Occurs when the collection changes
-    /// </summary>
-    public event NotifyGenericCollectionChangedEventHandler<TElement>? GenericCollectionChanged;
-
-    /// <summary>
     /// Occurs when a property value changes
     /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -110,7 +104,6 @@ public class NondisposableActiveEnumerable<TElement> :
         activeEnumerable.CollectionChanged -= ActiveEnumerableCollectionChanged;
         activeEnumerable.ElementFaultChanged -= ActiveEnumerableElementFaultChanged;
         activeEnumerable.ElementFaultChanging -= ActiveEnumerableElementFaultChanging;
-        activeEnumerable.GenericCollectionChanged -= ActiveEnumerableGenericCollectionChanged;
         activeEnumerable.PropertyChanged -= ActiveEnumerablePropertyChanged;
         activeEnumerable.PropertyChanging -= ActiveEnumerablePropertyChanging;
     }
@@ -123,9 +116,6 @@ public class NondisposableActiveEnumerable<TElement> :
 
     void ActiveEnumerableElementFaultChanging(object sender, ElementFaultChangeEventArgs e) =>
         ElementFaultChanging?.Invoke(this, e);
-
-    void ActiveEnumerableGenericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<TElement> e) =>
-        GenericCollectionChanged?.Invoke(this, e);
 
     void ActiveEnumerablePropertyChanged(object sender, PropertyChangedEventArgs e) =>
         PropertyChanged?.Invoke(this, e);

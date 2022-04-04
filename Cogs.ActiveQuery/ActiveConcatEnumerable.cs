@@ -21,30 +21,14 @@ public sealed class ActiveConcatEnumerable<TElement> :
         SynchronizationContext = synchronizationContext;
         firstCount = this.Execute(() => first.Count());
         if (first is INotifyCollectionChanged firstCollectionNotifier)
-        {
-            firstIsCollectionNotifier = true;
             firstCollectionNotifier.CollectionChanged += FirstCollectionChanged;
-        }
-        if (first is INotifyGenericCollectionChanged<TElement> firstGenericCollectionNotifier)
-        {
-            firstIsGenericCollectionNotifier = true;
-            firstGenericCollectionNotifier.GenericCollectionChanged += FirstGenericCollectionChanged;
-        }
         if (first is INotifyElementFaultChanges firstFaultNotifier)
         {
             firstFaultNotifier.ElementFaultChanged += FaultNotifierElementFaultChanged;
             firstFaultNotifier.ElementFaultChanging += FaultNotifierElementFaultChanging;
         }
         if (second is INotifyCollectionChanged secondCollectionNotifier)
-        {
-            secondIsCollectionNotifier = true;
             secondCollectionNotifier.CollectionChanged += SecondCollectionChanged;
-        }
-        if (second is INotifyGenericCollectionChanged<TElement> secondGenericCollectionNotifier)
-        {
-            secondIsGenericCollectionNotifier = true;
-            secondGenericCollectionNotifier.GenericCollectionChanged += SecondGenericCollectionChanged;
-        }
         if (second is INotifyElementFaultChanges secondFaultNotifier)
         {
             secondFaultNotifier.ElementFaultChanged += FaultNotifierElementFaultChanged;
@@ -54,11 +38,7 @@ public sealed class ActiveConcatEnumerable<TElement> :
 
     readonly IEnumerable<TElement> first;
     int firstCount;
-    readonly bool firstIsCollectionNotifier;
-    readonly bool firstIsGenericCollectionNotifier;
     readonly IEnumerable<TElement> second;
-    readonly bool secondIsCollectionNotifier;
-    readonly bool secondIsGenericCollectionNotifier;
 
     /// <summary>
     /// Gets the number of elements in the collection
@@ -95,11 +75,6 @@ public sealed class ActiveConcatEnumerable<TElement> :
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
 
     /// <summary>
-    /// Occurs when the collection changes
-    /// </summary>
-    public event NotifyGenericCollectionChangedEventHandler<TElement>? GenericCollectionChanged;
-
-    /// <summary>
     /// Frees, releases, or resets unmanaged resources
     /// </summary>
     /// <param name="disposing"><c>false</c> if invoked by the finalizer because the object is being garbage collected; otherwise, <c>true</c></param>
@@ -109,8 +84,6 @@ public sealed class ActiveConcatEnumerable<TElement> :
         {
             if (first is INotifyCollectionChanged firstCollectionNotifier)
                 firstCollectionNotifier.CollectionChanged -= FirstCollectionChanged;
-            if (first is INotifyGenericCollectionChanged<TElement> firstGenericCollectionNotifier)
-                firstGenericCollectionNotifier.GenericCollectionChanged -= FirstGenericCollectionChanged;
             if (first is INotifyElementFaultChanges firstFaultNotifier)
             {
                 firstFaultNotifier.ElementFaultChanged -= FaultNotifierElementFaultChanged;
@@ -118,8 +91,6 @@ public sealed class ActiveConcatEnumerable<TElement> :
             }
             if (second is INotifyCollectionChanged secondCollectionNotifier)
                 secondCollectionNotifier.CollectionChanged -= SecondCollectionChanged;
-            if (second is INotifyGenericCollectionChanged<TElement> secondGenericCollectionNotifier)
-                secondGenericCollectionNotifier.GenericCollectionChanged -= SecondGenericCollectionChanged;
             if (second is INotifyElementFaultChanges secondFaultNotifier)
             {
                 secondFaultNotifier.ElementFaultChanged -= FaultNotifierElementFaultChanged;
@@ -142,21 +113,6 @@ public sealed class ActiveConcatEnumerable<TElement> :
         else
             firstCount += (e.NewItems?.Count ?? 0) - (e.OldItems?.Count ?? 0);
         OnCollectionChanged(e);
-        if (!firstIsGenericCollectionNotifier)
-            OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<TElement>.FromNotifyCollectionChangedEventArgs(e));
-    }
-
-    void FirstGenericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<TElement> e)
-    {
-        OnGenericCollectionChanged(e);
-        if (!firstIsCollectionNotifier)
-        {
-            if (e.Action == NotifyCollectionChangedAction.Reset)
-                firstCount = first.Count();
-            else
-                firstCount += (e.NewItems?.Count ?? 0) - (e.OldItems?.Count ?? 0);
-            OnCollectionChanged(e.ToNotifyCollectionChangedEventArgs());
-        }
     }
 
     /// <summary>
@@ -185,9 +141,6 @@ public sealed class ActiveConcatEnumerable<TElement> :
     void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
         ElementFaultChanging?.Invoke(this, e);
 
-    void OnGenericCollectionChanged(INotifyGenericCollectionChangedEventArgs<TElement> e) =>
-        GenericCollectionChanged?.Invoke(this, e);
-
     void SecondCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         e = e.Action switch
@@ -200,23 +153,5 @@ public sealed class ActiveConcatEnumerable<TElement> :
             _ => throw new NotSupportedException(),
         };
         OnCollectionChanged(e);
-        if (!secondIsGenericCollectionNotifier)
-            OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<TElement>.FromNotifyCollectionChangedEventArgs(e));
-    }
-
-    void SecondGenericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<TElement> e)
-    {
-        e = e.Action switch
-        {
-            NotifyCollectionChangedAction.Add => new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Add, e.NewItems, firstCount + e.NewStartingIndex),
-            NotifyCollectionChangedAction.Move => new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Move, e.NewItems, firstCount + e.NewStartingIndex, firstCount + e.OldStartingIndex),
-            NotifyCollectionChangedAction.Remove => new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Remove, e.OldItems, firstCount + e.OldStartingIndex),
-            NotifyCollectionChangedAction.Replace => new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Replace, e.NewItems, e.OldItems, firstCount + e.NewStartingIndex),
-            NotifyCollectionChangedAction.Reset => new NotifyGenericCollectionChangedEventArgs<TElement>(NotifyCollectionChangedAction.Reset),
-            _ => throw new NotSupportedException(),
-        };
-        OnGenericCollectionChanged(e);
-        if (!secondIsCollectionNotifier)
-            OnCollectionChanged(e.ToNotifyCollectionChangedEventArgs());
     }
 }

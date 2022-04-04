@@ -1037,21 +1037,7 @@ public static class ActiveEnumerableExtensions
             groupingObservableCollection.AddRange(element.Repeat(count));
         }
 
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                lock (collectionAndGroupingDictionaryAccess)
-                    addElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count);
-            });
-
-        void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                lock (collectionAndGroupingDictionaryAccess)
-                    removeElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count);
-            });
-
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TKey? key)> e) =>
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
             {
                 lock (collectionAndGroupingDictionaryAccess)
@@ -1070,14 +1056,28 @@ public static class ActiveEnumerableExtensions
                     }
                     else if (e.Action != NotifyCollectionChangedAction.Move)
                     {
-                        if (e.OldItems is { })
-                            foreach (var (element, key) in e.OldItems)
+                        if (e.OldItems is not null)
+                            foreach (var (element, key) in e.OldItems.Cast<(TSource element, TKey? key)>())
                                 removeElement(element, key);
-                        if (e.NewItems is { })
-                            foreach (var (element, key) in e.NewItems)
+                        if (e.NewItems is not null)
+                            foreach (var (element, key) in e.NewItems.Cast<(TSource element, TKey? key)>())
                                 addElement(element, key);
                     }
                 }
+            });
+
+        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) =>
+            synchronizedSource.Execute(() =>
+            {
+                lock (collectionAndGroupingDictionaryAccess)
+                    addElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count);
+            });
+
+        void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TKey?> e) =>
+            synchronizedSource.Execute(() =>
+            {
+                lock (collectionAndGroupingDictionaryAccess)
+                    removeElement(e.Element! /* this could be null, but it won't matter if it is */, e.Result! /* this could be null, but it won't matter if it is */, e.Count);
             });
 
         void removeElement(TSource element, TKey? key, int count = 1)
@@ -1099,17 +1099,17 @@ public static class ActiveEnumerableExtensions
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, keySelector, keySelectorOptions);
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<ActiveGrouping<TKey?, TSource>>(synchronizedSource?.SynchronizationContext);
+                rangeActiveExpression.CollectionChanged += collectionChanged;
                 rangeActiveExpression.ElementResultChanged += elementResultChanged;
                 rangeActiveExpression.ElementResultChanging += elementResultChanging;
-                rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                 foreach (var (element, key) in rangeActiveExpression.GetResults())
                     addElement(element, key);
 
                 return new ActiveEnumerable<ActiveGrouping<TKey?, TSource>>(rangeObservableCollection, rangeActiveExpression, () =>
                 {
+                    rangeActiveExpression.CollectionChanged -= collectionChanged;
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
                     rangeActiveExpression.ElementResultChanging -= elementResultChanging;
-                    rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
                     rangeActiveExpression.Dispose();
                 });
             }
@@ -1344,32 +1344,12 @@ public static class ActiveEnumerableExtensions
 
         void dispose()
         {
+            rangeActiveExpression.CollectionChanged -= collectionChanged;
             rangeActiveExpression.ElementResultChanged -= elementResultChanged;
-            rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
             rangeActiveExpression.Dispose();
         }
 
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                lock (activeValueAccess)
-                {
-                    var activeValueValue = activeValue!.Value;
-                    var comparison = 0;
-                    if (activeValueValue is { } && e.Result is { })
-                        comparison = comparer!.Compare(activeValueValue, e.Result);
-                    else if (activeValueValue is null)
-                        comparison = -1;
-                    else if (e.Result is null)
-                        comparison = 1;
-                    if (comparison < 0)
-                        activeValue!.Value = e.Result;
-                    else if (comparison > 0)
-                        activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Max(er => er.result);
-                }
-            });
-
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TResult? result)> e) =>
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
             {
                 lock (activeValueAccess)
@@ -1392,7 +1372,7 @@ public static class ActiveEnumerableExtensions
                         var activeValueValue = activeValue!.Value;
                         if ((e.OldItems?.Count ?? 0) > 0)
                         {
-                            var removedMax = e.OldItems.Max(er => er.result);
+                            var removedMax = e.OldItems.Cast<(TSource element, TResult? result)>().Max(er => er.result);
                             if ((activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, removedMax)) == 0)
                             {
                                 try
@@ -1410,7 +1390,7 @@ public static class ActiveEnumerableExtensions
                         activeValueValue = activeValue!.Value;
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
-                            var addedMax = e.NewItems.Max(er => er.result);
+                            var addedMax = e.NewItems.Cast<(TSource element, TResult? result)>().Max(er => er.result);
                             if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, addedMax)) < 0)
                             {
                                 activeValue!.OperationFault = null;
@@ -1418,6 +1398,26 @@ public static class ActiveEnumerableExtensions
                             }
                         }
                     }
+                }
+            });
+
+        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
+            synchronizedSource.Execute(() =>
+            {
+                lock (activeValueAccess)
+                {
+                    var activeValueValue = activeValue!.Value;
+                    var comparison = 0;
+                    if (activeValueValue is { } && e.Result is { })
+                        comparison = comparer!.Compare(activeValueValue, e.Result);
+                    else if (activeValueValue is null)
+                        comparison = -1;
+                    else if (e.Result is null)
+                        comparison = 1;
+                    if (comparison < 0)
+                        activeValue!.Value = e.Result;
+                    else if (comparison > 0)
+                        activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Max(er => er.result);
                 }
             });
 
@@ -1429,15 +1429,15 @@ public static class ActiveEnumerableExtensions
                 try
                 {
                     activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Max(er => er.result), null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.CollectionChanged += collectionChanged;
                     rangeActiveExpression.ElementResultChanged += elementResultChanged;
-                    rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                     return activeValue;
                 }
                 catch (Exception ex)
                 {
                     activeValue = new ActiveValue<TResult?>(default, ex, rangeActiveExpression, dispose);
+                    rangeActiveExpression.CollectionChanged += collectionChanged;
                     rangeActiveExpression.ElementResultChanged += elementResultChanged;
-                    rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                     return activeValue;
                 }
             }
@@ -1489,32 +1489,12 @@ public static class ActiveEnumerableExtensions
 
         void dispose()
         {
+            rangeActiveExpression.CollectionChanged -= collectionChanged;
             rangeActiveExpression.ElementResultChanged -= elementResultChanged;
-            rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
             rangeActiveExpression.Dispose();
         }
 
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                lock (activeValueAccess)
-                {
-                    var activeValueValue = activeValue!.Value;
-                    var comparison = 0;
-                    if (activeValueValue is { } && e.Result is { })
-                        comparison = comparer!.Compare(activeValueValue, e.Result);
-                    else if (activeValueValue is null)
-                        comparison = -1;
-                    else if (e.Result is null)
-                        comparison = 1;
-                    if (comparison > 0)
-                        activeValue!.Value = e.Result;
-                    else if (comparison < 0)
-                        activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Min(er => er.result);
-                }
-            });
-
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TResult? result)> e) =>
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
             {
                 lock (activeValueAccess)
@@ -1537,7 +1517,7 @@ public static class ActiveEnumerableExtensions
                         var activeValueValue = activeValue!.Value;
                         if ((e.OldItems?.Count ?? 0) > 0)
                         {
-                            var removedMin = e.OldItems.Min(er => er.result);
+                            var removedMin = e.OldItems.Cast<(TSource element, TResult? result)>().Min(er => er.result);
                             if ((activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, removedMin)) == 0)
                             {
                                 try
@@ -1555,7 +1535,7 @@ public static class ActiveEnumerableExtensions
                         activeValueValue = activeValue!.Value;
                         if ((e.NewItems?.Count ?? 0) > 0)
                         {
-                            var addedMin = e.NewItems.Min(er => er.result);
+                            var addedMin = e.NewItems.Cast<(TSource element, TResult? result)>().Min(er => er.result);
                             if (activeValue!.OperationFault is { } || (activeValueValue is null ? -1 : comparer!.Compare(activeValueValue, addedMin)) > 0)
                             {
                                 activeValue!.OperationFault = null;
@@ -1563,6 +1543,26 @@ public static class ActiveEnumerableExtensions
                             }
                         }
                     }
+                }
+            });
+
+        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
+            synchronizedSource.Execute(() =>
+            {
+                lock (activeValueAccess)
+                {
+                    var activeValueValue = activeValue!.Value;
+                    var comparison = 0;
+                    if (activeValueValue is { } && e.Result is { })
+                        comparison = comparer!.Compare(activeValueValue, e.Result);
+                    else if (activeValueValue is null)
+                        comparison = -1;
+                    else if (e.Result is null)
+                        comparison = 1;
+                    if (comparison > 0)
+                        activeValue!.Value = e.Result;
+                    else if (comparison < 0)
+                        activeValue!.Value = rangeActiveExpression.GetResultsUnderLock().Min(er => er.result);
                 }
             });
 
@@ -1574,15 +1574,15 @@ public static class ActiveEnumerableExtensions
                 try
                 {
                     activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Min(er => er.result), null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.CollectionChanged += collectionChanged;
                     rangeActiveExpression.ElementResultChanged += elementResultChanged;
-                    rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                     return activeValue;
                 }
                 catch (Exception ex)
                 {
                     activeValue = new ActiveValue<TResult?>(default, ex, rangeActiveExpression, dispose);
+                    rangeActiveExpression.CollectionChanged += collectionChanged;
                     rangeActiveExpression.ElementResultChanged += elementResultChanged;
-                    rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                     return activeValue;
                 }
             }
@@ -1847,23 +1847,7 @@ public static class ActiveEnumerableExtensions
             }
         }
 
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, IComparable?> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                if (startingIndiciesAndCountsAccess is not null)
-                    Monitor.Enter(startingIndiciesAndCountsAccess);
-                try
-                {
-                    repositionElement(e.Element! /* this could be null, but it won't matter if it is */);
-                }
-                finally
-                {
-                    if (startingIndiciesAndCountsAccess is not null)
-                        Monitor.Exit(startingIndiciesAndCountsAccess);
-                }
-            });
-
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, IComparable? comparable)> e) =>
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
             {
                 if (startingIndiciesAndCountsAccess is not null)
@@ -1896,10 +1880,10 @@ public static class ActiveEnumerableExtensions
                                 rangeObservableCollection.Clear();
                             }
                             else if (indexingStrategy == IndexingStrategy.NoneOrInherit)
-                                foreach (var elementAndResults in e.OldItems.GroupBy(er => er.element, er => er.comparable))
+                                foreach (var elementAndResults in e.OldItems.Cast<(TSource element, IComparable? comparable)>().GroupBy(er => er.element, er => er.comparable))
                                     rangeObservableCollection.RemoveRange(rangeObservableCollection.IndexOf(elementAndResults.Key), elementAndResults.Count());
                             else
-                                foreach (var elementAndResults in e.OldItems.GroupBy(er => er.element, er => er.comparable))
+                                foreach (var elementAndResults in e.OldItems.Cast<(TSource element, IComparable? comparable)>().GroupBy(er => er.element, er => er.comparable))
                                 {
                                     var element = elementAndResults.Key;
                                     var (startingIndex, currentCount) = startingIndiciesAndCounts![element];
@@ -1921,14 +1905,14 @@ public static class ActiveEnumerableExtensions
                         {
                             if (rangeObservableCollection!.Count == 0)
                             {
-                                var sorted = e.NewItems.Select(er => er.element).ToList();
+                                var sorted = e.NewItems.Cast<(TSource element, IComparable? comparable)>().Select(er => er.element).ToList();
                                 sorted.Sort(comparer);
                                 if (indexingStrategy != IndexingStrategy.NoneOrInherit)
                                     rebuildStartingIndiciesAndCounts(sorted);
                                 rangeObservableCollection.Reset(sorted);
                             }
                             else
-                                foreach (var elementAndResults in e.NewItems.GroupBy(er => er.element, er => er.comparable))
+                                foreach (var elementAndResults in e.NewItems.Cast<(TSource element, IComparable? comparable)>().GroupBy(er => er.element, er => er.comparable))
                                 {
                                     var element = elementAndResults.Key;
                                     var count = elementAndResults.Count();
@@ -1965,6 +1949,22 @@ public static class ActiveEnumerableExtensions
                 }
             });
 
+        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, IComparable?> e) =>
+            synchronizedSource.Execute(() =>
+            {
+                if (startingIndiciesAndCountsAccess is not null)
+                    Monitor.Enter(startingIndiciesAndCountsAccess);
+                try
+                {
+                    repositionElement(e.Element! /* this could be null, but it won't matter if it is */);
+                }
+                finally
+                {
+                    if (startingIndiciesAndCountsAccess is not null)
+                        Monitor.Exit(startingIndiciesAndCountsAccess);
+                }
+            });
+
         return synchronizedSource.Execute(() =>
         {
             if (startingIndiciesAndCountsAccess is not null)
@@ -1982,13 +1982,13 @@ public static class ActiveEnumerableExtensions
 
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizedSource?.SynchronizationContext, sortedSource);
                 var mergedElementFaultChangeNotifier = new MergedElementFaultChangeNotifier(keySelections.Select(selection => selection.rangeActiveExpression));
-                lastRangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
+                lastRangeActiveExpression.CollectionChanged += collectionChanged;
                 foreach (var (rangeActiveExpression, isDescending) in keySelections)
                     rangeActiveExpression.ElementResultChanged += elementResultChanged;
                 return new ActiveEnumerable<TSource>(rangeObservableCollection, mergedElementFaultChangeNotifier, () =>
                 {
                     comparer.Dispose();
-                    lastRangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
+                    lastRangeActiveExpression.CollectionChanged -= collectionChanged;
                     foreach (var (rangeActiveExpression, isDescending) in keySelections)
                     {
                         rangeActiveExpression.ElementResultChanged -= elementResultChanged;
@@ -2066,28 +2066,7 @@ public static class ActiveEnumerableExtensions
         EnumerableRangeActiveExpression<TResult> rangeActiveExpression;
         SynchronizedRangeObservableCollection<TResult?>? rangeObservableCollection = null;
 
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<object?, TResult?> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                if (sourceToIndiciesAccess is not null)
-                    Monitor.Enter(sourceToIndiciesAccess);
-                try
-                {
-                    var sourceElement = e.Element;
-                    var newResultElement = e.Result;
-                    var indicies = indexingStrategy != IndexingStrategy.NoneOrInherit ? sourceToIndicies![sourceElement!] : source.Cast<object>().IndiciesOf(sourceElement).ToList();
-                    rangeObservableCollection!.Replace(indicies[0], newResultElement! /* this could be null, but it won't matter if it is */);
-                    foreach (var remainingIndex in indicies.Skip(1))
-                        rangeObservableCollection[remainingIndex] = newResultElement! /* this could be null, but it won't matter if it is */;
-                }
-                finally
-                {
-                    if (sourceToIndiciesAccess is not null)
-                        Monitor.Exit(sourceToIndiciesAccess);
-                }
-            });
-
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(object? element, TResult? result)> e) =>
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
             {
                 if (sourceToIndiciesAccess is not null)
@@ -2179,7 +2158,7 @@ public static class ActiveEnumerableExtensions
                             if (e.NewItems is { } && e.NewItems.Count > 0)
                             {
                                 if (indexingStrategy == IndexingStrategy.NoneOrInherit)
-                                    rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Select(er => er.result));
+                                    rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Cast<(object? element, TResult? result)>().Select(er => er.result));
                                 else
                                 {
                                     foreach (var indiciesList in sourceToIndicies!.Values)
@@ -2189,7 +2168,7 @@ public static class ActiveEnumerableExtensions
                                             if (listIndex >= e.NewStartingIndex)
                                                 indiciesList[i] = listIndex + e.NewItems.Count;
                                         }
-                                    rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Select((er, sIndex) =>
+                                    rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Cast<(object? element, TResult? result)>().Select((er, sIndex) =>
                                     {
                                         var (element, result) = er;
                                         if (!sourceToIndicies.TryGetValue(element!, out var indiciesList))
@@ -2206,6 +2185,27 @@ public static class ActiveEnumerableExtensions
                         default:
                             throw new NotSupportedException();
                     }
+                }
+                finally
+                {
+                    if (sourceToIndiciesAccess is not null)
+                        Monitor.Exit(sourceToIndiciesAccess);
+                }
+            });
+
+        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<object?, TResult?> e) =>
+            synchronizedSource.Execute(() =>
+            {
+                if (sourceToIndiciesAccess is not null)
+                    Monitor.Enter(sourceToIndiciesAccess);
+                try
+                {
+                    var sourceElement = e.Element;
+                    var newResultElement = e.Result;
+                    var indicies = indexingStrategy != IndexingStrategy.NoneOrInherit ? sourceToIndicies![sourceElement!] : source.Cast<object>().IndiciesOf(sourceElement).ToList();
+                    rangeObservableCollection!.Replace(indicies[0], newResultElement! /* this could be null, but it won't matter if it is */);
+                    foreach (var remainingIndex in indicies.Skip(1))
+                        rangeObservableCollection[remainingIndex] = newResultElement! /* this could be null, but it won't matter if it is */;
                 }
                 finally
                 {
@@ -2233,14 +2233,14 @@ public static class ActiveEnumerableExtensions
             try
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
+                rangeActiveExpression.CollectionChanged += collectionChanged;
                 rangeActiveExpression.ElementResultChanged += elementResultChanged;
-                rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
 
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult?>(synchronizedSource?.SynchronizationContext, indexingStrategy != IndexingStrategy.NoneOrInherit ? rangeActiveExpression.GetResults().Select(indexedInitializer) : rangeActiveExpression.GetResults().Select(er => er.result));
                 return new ActiveEnumerable<TResult?>(rangeObservableCollection, rangeActiveExpression, () =>
                 {
+                    rangeActiveExpression.CollectionChanged -= collectionChanged;
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
-                    rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
 
                     rangeActiveExpression.Dispose();
                 });
@@ -2314,28 +2314,7 @@ public static class ActiveEnumerableExtensions
         EnumerableRangeActiveExpression<TSource, TResult> rangeActiveExpression;
         SynchronizedRangeObservableCollection<TResult?>? rangeObservableCollection = null;
 
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                if (sourceToIndiciesAccess is not null)
-                    Monitor.Enter(sourceToIndiciesAccess);
-                try
-                {
-                    var sourceElement = e.Element;
-                    var newResultElement = e.Result;
-                    var indicies = indexingStrategy != IndexingStrategy.NoneOrInherit ? (IReadOnlyList<int>)sourceToIndicies![sourceElement] : source.IndiciesOf(sourceElement! /* this could be null, but it won't matter if it is */).ToImmutableArray();
-                    rangeObservableCollection!.Replace(indicies[0], newResultElement! /* this could be null, but it won't matter if it is */);
-                    foreach (var remainingIndex in indicies.Skip(1))
-                        rangeObservableCollection[remainingIndex] = newResultElement! /* this could be null, but it won't matter if it is */;
-                }
-                finally
-                {
-                    if (sourceToIndiciesAccess is not null)
-                        Monitor.Exit(sourceToIndiciesAccess);
-                }
-            });
-
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TResult? result)> e) =>
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
             {
                 if (sourceToIndiciesAccess is not null)
@@ -2425,7 +2404,7 @@ public static class ActiveEnumerableExtensions
                             if (e.NewItems is { } && e.NewItems.Count > 0)
                             {
                                 if (indexingStrategy == IndexingStrategy.NoneOrInherit)
-                                    rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Select(er => er.result));
+                                    rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Cast<(TSource element, TResult? result)>().Select(er => er.result));
                                 else
                                 {
                                     foreach (var indiciesList in sourceToIndicies!.Values)
@@ -2435,7 +2414,7 @@ public static class ActiveEnumerableExtensions
                                             if (listIndex >= e.NewStartingIndex)
                                                 indiciesList[i] = listIndex + e.NewItems.Count;
                                         }
-                                    rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Select((er, sIndex) =>
+                                    rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems.Cast<(TSource element, TResult? result)>().Select((er, sIndex) =>
                                     {
                                         var (element, result) = er;
                                         if (!sourceToIndicies.TryGetValue(element, out var indiciesList))
@@ -2452,6 +2431,27 @@ public static class ActiveEnumerableExtensions
                         default:
                             throw new NotSupportedException();
                     }
+                }
+                finally
+                {
+                    if (sourceToIndiciesAccess is not null)
+                        Monitor.Exit(sourceToIndiciesAccess);
+                }
+            });
+
+        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
+            synchronizedSource.Execute(() =>
+            {
+                if (sourceToIndiciesAccess is not null)
+                    Monitor.Enter(sourceToIndiciesAccess);
+                try
+                {
+                    var sourceElement = e.Element;
+                    var newResultElement = e.Result;
+                    var indicies = indexingStrategy != IndexingStrategy.NoneOrInherit ? (IReadOnlyList<int>)sourceToIndicies![sourceElement] : source.IndiciesOf(sourceElement! /* this could be null, but it won't matter if it is */).ToImmutableArray();
+                    rangeObservableCollection!.Replace(indicies[0], newResultElement! /* this could be null, but it won't matter if it is */);
+                    foreach (var remainingIndex in indicies.Skip(1))
+                        rangeObservableCollection[remainingIndex] = newResultElement! /* this could be null, but it won't matter if it is */;
                 }
                 finally
                 {
@@ -2480,12 +2480,12 @@ public static class ActiveEnumerableExtensions
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult?>(synchronizedSource?.SynchronizationContext, indexingStrategy != IndexingStrategy.NoneOrInherit ? rangeActiveExpression.GetResults().Select(indexedInitializer) : rangeActiveExpression.GetResults().Select(er => er.result));
+                rangeActiveExpression.CollectionChanged += collectionChanged;
                 rangeActiveExpression.ElementResultChanged += elementResultChanged;
-                rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                 return new ActiveEnumerable<TResult?>(rangeObservableCollection, rangeActiveExpression, () =>
                 {
+                    rangeActiveExpression.CollectionChanged -= collectionChanged;
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
-                    rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
                     rangeActiveExpression.Dispose();
                 });
             }
@@ -2578,7 +2578,7 @@ public static class ActiveEnumerableExtensions
         EnumerableRangeActiveExpression<TSource, IEnumerable<TResult>> rangeActiveExpression;
         SynchronizedRangeObservableCollection<TResult>? rangeObservableCollection = null;
 
-        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+        void changingResultCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
             {
                 if (dictionariesAccess is not null)
@@ -2662,7 +2662,7 @@ public static class ActiveEnumerableExtensions
                     {
                         changingResultToSource!.Remove(previousChangingResult);
                         sourceToChangingResult.Remove(element);
-                        previousChangingResult.CollectionChanged -= collectionChanged;
+                        previousChangingResult.CollectionChanged -= changingResultCollectionChanged;
                     }
                     var previousCount = sourceToCount[element];
                     var result = e.Result;
@@ -2696,7 +2696,7 @@ public static class ActiveEnumerableExtensions
                     }
                     if (result is INotifyCollectionChanged newChangingResult)
                     {
-                        newChangingResult.CollectionChanged += collectionChanged;
+                        newChangingResult.CollectionChanged += changingResultCollectionChanged;
                         changingResultToSource!.Add(newChangingResult, element);
                         sourceToChangingResult.Add(element, newChangingResult);
                     }
@@ -2708,7 +2708,7 @@ public static class ActiveEnumerableExtensions
                 }
             });
 
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, IEnumerable<TResult>? results)> e) =>
+        void rangeActiveExpressionCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
             {
                 if (dictionariesAccess is not null)
@@ -2719,7 +2719,7 @@ public static class ActiveEnumerableExtensions
                     {
                         case NotifyCollectionChangedAction.Reset:
                             foreach (var changingResult in changingResultToSource!.Keys)
-                                changingResult.CollectionChanged -= collectionChanged;
+                                changingResult.CollectionChanged -= changingResultCollectionChanged;
                             switch (indexingStrategy)
                             {
                                 case IndexingStrategy.HashTable:
@@ -2737,7 +2737,7 @@ public static class ActiveEnumerableExtensions
                             break;
                         case NotifyCollectionChangedAction.Move:
                             {
-                                var count = e.NewItems.SelectMany(er => er.results).Count();
+                                var count = e.NewItems.Cast<(TSource element, IEnumerable<TResult>? results)>().SelectMany(er => er.results).Count();
                                 if (count > 0 && e.OldStartingIndex != e.NewStartingIndex)
                                 {
                                     var indexTranslation = sourceToStartingIndicies.SelectMany(kv => kv.Value).OrderBy(resultIndex => resultIndex).ToImmutableArray();
@@ -2777,7 +2777,7 @@ public static class ActiveEnumerableExtensions
                         case NotifyCollectionChangedAction.Replace:
                             if ((e.OldItems?.Count ?? 0) > 0)
                             {
-                                var count = e.OldItems.SelectMany(er => er.results).Count();
+                                var count = e.OldItems.Cast<(TSource element, IEnumerable<TResult>? results)>().SelectMany(er => er.results).Count();
                                 if (count > 0)
                                 {
                                     var startIndex = e.OldStartingIndex == 0 ? 0 : sourceToStartingIndicies.SelectMany(kv => kv.Value).OrderBy(resultIndex => resultIndex).ElementAt(e.OldStartingIndex);
@@ -2810,7 +2810,7 @@ public static class ActiveEnumerableExtensions
                                             {
                                                 changingResultToSource!.Remove(changingResult);
                                                 sourceToChangingResult.Remove(element);
-                                                changingResult.CollectionChanged -= collectionChanged;
+                                                changingResult.CollectionChanged -= changingResultCollectionChanged;
                                             }
                                         }
                                     }
@@ -2848,14 +2848,14 @@ public static class ActiveEnumerableExtensions
                                         sourceToCount.Add(element, resultCount);
                                     if (result is INotifyCollectionChanged changingResult && !changingResultToSource!.ContainsKey(changingResult))
                                     {
-                                        changingResult.CollectionChanged += collectionChanged;
+                                        changingResult.CollectionChanged += changingResultCollectionChanged;
                                         changingResultToSource.Add(changingResult, element);
                                         sourceToChangingResult.Add(element, changingResult);
                                     }
                                     return er.result;
                                 }
 
-                                var results = e.NewItems.SelectMany(indexingSelector).ToList();
+                                var results = e.NewItems.Cast<(TSource element, IEnumerable<TResult>? results)>().SelectMany(indexingSelector).ToList();
                                 var count = results.Count;
                                 if (count > 0)
                                 {
@@ -2909,7 +2909,7 @@ public static class ActiveEnumerableExtensions
                 sourceToCount.Add(element, result.Count());
             if (result is INotifyCollectionChanged changingResult)
             {
-                changingResult.CollectionChanged += collectionChanged;
+                changingResult.CollectionChanged += changingResultCollectionChanged;
                 changingResultToSource!.Add(changingResult, element);
                 sourceToChangingResult.Add(element, changingResult);
             }
@@ -2924,14 +2924,14 @@ public static class ActiveEnumerableExtensions
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, selector, selectorOptions);
                 rangeObservableCollection = new SynchronizedRangeObservableCollection<TResult>(synchronizedSource?.SynchronizationContext, rangeActiveExpression.GetResults().SelectMany(initializer));
+                rangeActiveExpression.CollectionChanged += rangeActiveExpressionCollectionChanged;
                 rangeActiveExpression.ElementResultChanged += elementResultChanged;
-                rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                 return new ActiveEnumerable<TResult>(rangeObservableCollection, onDispose: () =>
                 {
                     foreach (var changingResult in changingResultToSource.Keys)
-                        changingResult.CollectionChanged -= collectionChanged;
+                        changingResult.CollectionChanged -= changingResultCollectionChanged;
+                    rangeActiveExpression.CollectionChanged -= rangeActiveExpressionCollectionChanged;
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
-                    rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
                     rangeActiveExpression.Dispose();
                 });
             }
@@ -3230,26 +3230,7 @@ public static class ActiveEnumerableExtensions
         var activeValueAccess = new object();
         var resultsChanging = new NullableKeyDictionary<TSource, (TResult? result, int instances)>();
 
-        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                lock (activeValueAccess)
-                {
-                    var (result, instances) = resultsChanging![e.Element];
-                    resultsChanging.Remove(e.Element);
-                    if (operations!.Subtract(e.Result, result) is TResult difference)
-                        activeValue!.Value = operations.Add(activeValue!.Value, difference.Repeat(instances).Aggregate(operations.Add!));
-                }
-            });
-
-        void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                lock (activeValueAccess)
-                    resultsChanging!.Add(e.Element! /* this could be null, but it won't matter if it is */, (e.Result, e.Count));
-            });
-
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, TResult? result)> e) =>
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
             synchronizedSource.Execute(() =>
             {
                 lock (activeValueAccess)
@@ -3269,12 +3250,31 @@ public static class ActiveEnumerableExtensions
                     {
                         var sum = activeValue!.Value;
                         if ((e.OldItems?.Count ?? 0) > 0)
-                            sum = (sum is null ? Enumerable.Empty<TResult?>() : new TResult?[] { sum }).Concat(e.OldItems.Select(er => er.result)).Aggregate(operations!.Subtract!);
+                            sum = (sum is null ? Enumerable.Empty<TResult?>() : new TResult?[] { sum }).Concat(e.OldItems.Cast<(TSource element, TResult? result)>().Select(er => er.result)).Aggregate(operations!.Subtract!);
                         if ((e.NewItems?.Count ?? 0) > 0)
-                            sum = (sum is null ? Enumerable.Empty<TResult?>() : new TResult?[] { sum }).Concat(e.NewItems.Select(er => er.result)).Aggregate(operations!.Add!);
+                            sum = (sum is null ? Enumerable.Empty<TResult?>() : new TResult?[] { sum }).Concat(e.NewItems.Cast<(TSource element, TResult? result)>().Select(er => er.result)).Aggregate(operations!.Add!);
                         activeValue!.Value = sum;
                     }
                 }
+            });
+
+        void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
+            synchronizedSource.Execute(() =>
+            {
+                lock (activeValueAccess)
+                {
+                    var (result, instances) = resultsChanging![e.Element];
+                    resultsChanging.Remove(e.Element);
+                    if (operations!.Subtract(e.Result, result) is TResult difference)
+                        activeValue!.Value = operations.Add(activeValue!.Value, difference.Repeat(instances).Aggregate(operations.Add!));
+                }
+            });
+
+        void elementResultChanging(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, TResult?> e) =>
+            synchronizedSource.Execute(() =>
+            {
+                lock (activeValueAccess)
+                    resultsChanging!.Add(e.Element! /* this could be null, but it won't matter if it is */, (e.Result, e.Count));
             });
 
         return synchronizedSource.Execute(() =>
@@ -3285,9 +3285,9 @@ public static class ActiveEnumerableExtensions
 
                 void dispose()
                 {
+                    rangeActiveExpression.CollectionChanged -= collectionChanged;
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
                     rangeActiveExpression.ElementResultChanging -= elementResultChanging;
-                    rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
 
                     rangeActiveExpression.Dispose();
                 }
@@ -3295,17 +3295,17 @@ public static class ActiveEnumerableExtensions
                 try
                 {
                     activeValue = new ActiveValue<TResult?>(rangeActiveExpression.GetResults().Select(er => er.result).Aggregate(operations.Add!), null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.CollectionChanged += collectionChanged;
                     rangeActiveExpression.ElementResultChanged += elementResultChanged;
                     rangeActiveExpression.ElementResultChanging += elementResultChanging;
-                    rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                     return activeValue;
                 }
                 catch (InvalidOperationException)
                 {
                     activeValue = new ActiveValue<TResult?>(default!, null, rangeActiveExpression, dispose);
+                    rangeActiveExpression.CollectionChanged += collectionChanged;
                     rangeActiveExpression.ElementResultChanged += elementResultChanged;
                     rangeActiveExpression.ElementResultChanging += elementResultChanging;
-                    rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                     return activeValue;
                 }
             }
@@ -3396,7 +3396,7 @@ public static class ActiveEnumerableExtensions
     }
 
     /// <summary>
-    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource})"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
+    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource})"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
     /// </summary>
     /// <typeparam name="TSource">The type of the elements of source</typeparam>
     /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3405,7 +3405,7 @@ public static class ActiveEnumerableExtensions
         SwitchContext(source, SynchronizationContext.Current);
 
     /// <summary>
-    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
+    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
     /// </summary>
     /// <typeparam name="TSource">The type of the elements of source</typeparam>
     /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3415,7 +3415,7 @@ public static class ActiveEnumerableExtensions
         SwitchContext(source, synchronizationContext, false);
 
     /// <summary>
-    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource})"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
+    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource})"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
     /// </summary>
     /// <typeparam name="TSource">The type of the elements of source</typeparam>
     /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3425,7 +3425,7 @@ public static class ActiveEnumerableExtensions
         SwitchContext(source, SynchronizationContext.Current, raiseCollectionChangedEventsForIndividualElements);
 
     /// <summary>
-    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
+    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is kept consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> (use <see cref="SwitchContextEventually{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> instead when this method may produce a deadlock and/or only eventual consistency is required)
     /// </summary>
     /// <typeparam name="TSource">The type of the elements of source</typeparam>
     /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3464,48 +3464,15 @@ public static class ActiveEnumerableExtensions
             }).ConfigureAwait(false);
         }
 
-        async void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<TSource> e)
-        {
-            IReadOnlyList<TSource>? resetValues = null;
-            if (e.Action == NotifyCollectionChangedAction.Reset)
-                resetValues = source.ToImmutableArray();
-            await rangeObservableCollection.ExecuteAsync(() =>
-            {
-                switch (e.Action)
-                {
-                    case NotifyCollectionChangedAction.Add:
-                        rangeObservableCollection!.InsertRange(e.NewStartingIndex, e.NewItems);
-                        break;
-                    case NotifyCollectionChangedAction.Move:
-                        rangeObservableCollection!.MoveRange(e.OldStartingIndex, e.NewStartingIndex, e.OldItems.Count);
-                        break;
-                    case NotifyCollectionChangedAction.Remove:
-                        rangeObservableCollection!.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
-                        break;
-                    case NotifyCollectionChangedAction.Replace:
-                        rangeObservableCollection!.ReplaceRange(e.OldStartingIndex, e.OldItems.Count, e.NewItems);
-                        break;
-                    case NotifyCollectionChangedAction.Reset:
-                        rangeObservableCollection!.Reset(resetValues!);
-                        break;
-                }
-            }).ConfigureAwait(false);
-        }
-
         return (source as ISynchronized).Execute(() =>
         {
             var notifier = source as INotifyCollectionChanged;
-            var genericNotifier = source as INotifyGenericCollectionChanged<TSource>;
             rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizationContext, source, raiseCollectionChangedEventsForIndividualElements);
-            if (genericNotifier is { })
-                genericNotifier.GenericCollectionChanged += genericCollectionChanged;
-            else if (notifier is { })
+            if (notifier is not null)
                 notifier.CollectionChanged += collectionChanged;
             return new ActiveEnumerable<TSource>(rangeObservableCollection, source as INotifyElementFaultChanges, () =>
             {
-                if (genericNotifier is { })
-                    genericNotifier.GenericCollectionChanged -= genericCollectionChanged;
-                else if (notifier is { })
+                if (notifier is not null)
                     notifier.CollectionChanged -= collectionChanged;
             });
         });
@@ -3602,7 +3569,7 @@ public static class ActiveEnumerableExtensions
     }
 
     /// <summary>
-    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource})"/> when the same may produce a deadlock and/or only eventual consistency is required)
+    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource})"/> when the same may produce a deadlock and/or only eventual consistency is required)
     /// </summary>
     /// <typeparam name="TSource">The type of the elements of source</typeparam>
     /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3611,7 +3578,7 @@ public static class ActiveEnumerableExtensions
         SwitchContextEventually(source, SynchronizationContext.Current);
 
     /// <summary>
-    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> when the same may produce a deadlock and/or only eventual consistency is required)
+    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> when the same may produce a deadlock and/or only eventual consistency is required)
     /// </summary>
     /// <typeparam name="TSource">The type of the elements of source</typeparam>
     /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3621,7 +3588,7 @@ public static class ActiveEnumerableExtensions
         SwitchContextEventually(source, synchronizationContext, false);
 
     /// <summary>
-    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource})"/> when the same may produce a deadlock and/or only eventual consistency is required)
+    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on the current thread's <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource})"/> when the same may produce a deadlock and/or only eventual consistency is required)
     /// </summary>
     /// <typeparam name="TSource">The type of the elements of source</typeparam>
     /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3631,7 +3598,7 @@ public static class ActiveEnumerableExtensions
         SwitchContextEventually(source, SynchronizationContext.Current, raiseCollectionChangedEventsForIndividualElements);
 
     /// <summary>
-    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> when the same may produce a deadlock and/or only eventual consistency is required)
+    /// Creates an <see cref="IActiveEnumerable{TElement}"/> that is eventually made consistent on a specified <see cref="SynchronizationContext"/> with a specified <see cref="IEnumerable{T}"/> that implements <see cref="INotifyCollectionChanged"/> (use this method instead of <see cref="SwitchContext{TSource}(IEnumerable{TSource}, SynchronizationContext)"/> when the same may produce a deadlock and/or only eventual consistency is required)
     /// </summary>
     /// <typeparam name="TSource">The type of the elements of source</typeparam>
     /// <param name="source">An <see cref="IEnumerable{T}"/></param>
@@ -3641,13 +3608,12 @@ public static class ActiveEnumerableExtensions
     [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope")]
     public static IActiveEnumerable<TSource> SwitchContextEventually<TSource>(this IEnumerable<TSource> source, SynchronizationContext synchronizationContext, bool raiseCollectionChangedEventsForIndividualElements)
     {
-        var genericNotifier = source as INotifyGenericCollectionChanged<TSource>;
         var notifier = source as INotifyCollectionChanged;
         var queue = new AsyncProcessingQueue<Func<Task>>(async asyncAction => await asyncAction().ConfigureAwait(false));
         var rangeObservableCollection = new SynchronizedRangeObservableCollection<TSource>(synchronizationContext, raiseCollectionChangedEventsForIndividualElements);
 
         void unhandledException(object sender, ProcessingQueueUnhandledExceptionEventArgs<Func<Task>> e) =>
-            genericCollectionChanged(source, new NotifyGenericCollectionChangedEventArgs<TSource>(NotifyCollectionChangedAction.Reset));
+            collectionChanged(source, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
         queue.UnhandledException += unhandledException;
 
@@ -3681,48 +3647,14 @@ public static class ActiveEnumerableExtensions
             }
         }
 
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<TSource> e)
-        {
-            var oldStartingIndex = e.OldStartingIndex;
-            var oldItems = (e.OldItems ?? Enumerable.Empty<TSource>()).ToImmutableArray();
-            var newStartingIndex = e.NewStartingIndex;
-            var newItems = (e.NewItems ?? Enumerable.Empty<TSource>()).ToImmutableArray();
-            switch (e.Action)
-            {
-                case NotifyCollectionChangedAction.Add:
-                    queue.Enqueue(() => rangeObservableCollection.InsertRangeAsync(newStartingIndex, newItems));
-                    break;
-                case NotifyCollectionChangedAction.Move:
-                    queue.Enqueue(() => rangeObservableCollection.MoveRangeAsync(oldStartingIndex, newStartingIndex, oldItems.Length));
-                    break;
-                case NotifyCollectionChangedAction.Remove:
-                    queue.Enqueue(() => rangeObservableCollection.RemoveRangeAsync(oldStartingIndex, oldItems.Length));
-                    break;
-                case NotifyCollectionChangedAction.Replace:
-                    queue.Enqueue(() => rangeObservableCollection.ReplaceRangeAsync(oldStartingIndex, oldItems.Length, newItems));
-                    break;
-                case NotifyCollectionChangedAction.Reset:
-                    queue.Enqueue(async () =>
-                    {
-                        var resetItems = await (source as ISynchronized).ExecuteAsync(() => source.ToImmutableArray()).ConfigureAwait(false);
-                        await rangeObservableCollection.ResetAsync(resetItems).ConfigureAwait(false);
-                    });
-                    break;
-            }
-        }
+        collectionChanged(source, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
-        genericCollectionChanged(source, new NotifyGenericCollectionChangedEventArgs<TSource>(NotifyCollectionChangedAction.Reset));
-
-        if (genericNotifier is { })
-            genericNotifier.GenericCollectionChanged += genericCollectionChanged;
-        else if (notifier is { })
+        if (notifier is { })
             notifier.CollectionChanged += collectionChanged;
 
         return new ActiveEnumerable<TSource>(rangeObservableCollection, source as INotifyElementFaultChanges, () =>
         {
-            if (genericNotifier is { })
-                genericNotifier.GenericCollectionChanged -= genericCollectionChanged;
-            else if (notifier is { })
+            if (notifier is { })
                 notifier.CollectionChanged -= collectionChanged;
             queue.UnhandledException -= unhandledException;
             queue.Dispose();
@@ -3738,7 +3670,7 @@ public static class ActiveEnumerableExtensions
     /// </summary>
     /// <typeparam name="TSource">The type of the elements of <paramref name="source"/></typeparam>
     /// <param name="source">An <see cref="IEnumerable{T}"/> to convert</param>
-    /// <returns>An <see cref="IActiveEnumerable{TElement}"/> equivalent to <paramref name="source"/> (and mutates with it so long as <paramref name="source"/> implements <see cref="INotifyCollectionChanged"/> or <see cref="INotifyGenericCollectionChanged{T}"/>)</returns>
+    /// <returns>An <see cref="IActiveEnumerable{TElement}"/> equivalent to <paramref name="source"/> (and mutates with it so long as <paramref name="source"/> implements <see cref="INotifyCollectionChanged"/>)</returns>
     public static IActiveEnumerable<TSource> ToActiveEnumerable<TSource>(this IEnumerable<TSource> source)
     {
         if (source is IReadOnlyList<TSource> readOnlyList and ISynchronized)
@@ -3940,6 +3872,78 @@ public static class ActiveEnumerableExtensions
             }
         }
 
+        void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+            synchronizedSource.Execute(() =>
+            {
+                lock (activeDictionaryAccess)
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Reset)
+                    {
+                        IDictionary<TKey, TValue> replacementDictionary;
+                        if (indexingStategy == IndexingStrategy.SelfBalancingBinarySearchTree)
+                        {
+                            duplicateKeys = keyComparer is null ? new SortedDictionary<TKey, int>() : new SortedDictionary<TKey, int>(keyComparer);
+                            replacementDictionary = keyComparer is null ? new SortedDictionary<TKey, TValue>() : new SortedDictionary<TKey, TValue>(keyComparer);
+                        }
+                        else
+                        {
+                            duplicateKeys = keyEqualityComparer is null ? new Dictionary<TKey, int>() : new Dictionary<TKey, int>(keyEqualityComparer);
+                            replacementDictionary = keyEqualityComparer is null ? new Dictionary<TKey, TValue>() : new Dictionary<TKey, TValue>(keyEqualityComparer);
+                        }
+                        var resultsFaultsAndCounts = rangeActiveExpression.GetResultsFaultsAndCounts();
+                        nullKeys = resultsFaultsAndCounts.Count(rfc => rfc.result.Key is null);
+                        var distinctResultsFaultsAndCounts = resultsFaultsAndCounts.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
+                        foreach (var keyValuePair in distinctResultsFaultsAndCounts.Select(g => g.First().result))
+                            replacementDictionary.Add(keyValuePair);
+                        rangeObservableDictionary.Reset(replacementDictionary);
+                        foreach (var (key, duplicateCount) in distinctResultsFaultsAndCounts.Select(g => (key: g.Key, duplicateCount: g.Sum(rfc => rfc.count) - 1)).Where(kc => kc.duplicateCount > 0))
+                            duplicateKeys.Add(key, duplicateCount);
+                        checkOperationFault();
+                    }
+                    else if (e.Action != NotifyCollectionChangedAction.Move)
+                    {
+                        if (e.OldItems is { } && e.OldItems.Count > 0)
+                        {
+                            foreach (var (element, result) in e.OldItems.Cast<(TSource element, KeyValuePair<TKey, TValue> keyValuePair)>())
+                            {
+                                var key = result.Key;
+                                if (key is null)
+                                    --nullKeys;
+                                else if (duplicateKeys.TryGetValue(key, out var duplicates))
+                                {
+                                    if (duplicates == 1)
+                                        duplicateKeys.Remove(key);
+                                    else
+                                        duplicateKeys[key] = duplicates - 1;
+                                }
+                                else
+                                    rangeObservableDictionary.Remove(key);
+                            }
+                            checkOperationFault();
+                        }
+                        if (e.NewItems is { } && e.NewItems.Count > 0)
+                        {
+                            foreach (var (element, result) in e.NewItems.Cast<(TSource element, KeyValuePair<TKey, TValue> keyValuePair)>())
+                            {
+                                var key = result.Key;
+                                if (key is null)
+                                    ++nullKeys;
+                                else if (rangeObservableDictionary.ContainsKey(key))
+                                {
+                                    if (duplicateKeys.TryGetValue(key, out var duplicates))
+                                        duplicateKeys[key] = duplicates + 1;
+                                    else
+                                        duplicateKeys.Add(key, 1);
+                                }
+                                else
+                                    rangeObservableDictionary.Add(key, result.Value);
+                            }
+                            checkOperationFault();
+                        }
+                    }
+                }
+            });
+
         void elementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TSource, KeyValuePair<TKey, TValue>> e) =>
             synchronizedSource.Execute(() =>
             {
@@ -3989,78 +3993,6 @@ public static class ActiveEnumerableExtensions
                 }
             });
 
-        void genericCollectionChanged(object sender, INotifyGenericCollectionChangedEventArgs<(TSource element, KeyValuePair<TKey, TValue> keyValuePair)> e) =>
-            synchronizedSource.Execute(() =>
-            {
-                lock (activeDictionaryAccess)
-                {
-                    if (e.Action == NotifyCollectionChangedAction.Reset)
-                    {
-                        IDictionary<TKey, TValue> replacementDictionary;
-                        if (indexingStategy == IndexingStrategy.SelfBalancingBinarySearchTree)
-                        {
-                            duplicateKeys = keyComparer is null ? new SortedDictionary<TKey, int>() : new SortedDictionary<TKey, int>(keyComparer);
-                            replacementDictionary = keyComparer is null ? new SortedDictionary<TKey, TValue>() : new SortedDictionary<TKey, TValue>(keyComparer);
-                        }
-                        else
-                        {
-                            duplicateKeys = keyEqualityComparer is null ? new Dictionary<TKey, int>() : new Dictionary<TKey, int>(keyEqualityComparer);
-                            replacementDictionary = keyEqualityComparer is null ? new Dictionary<TKey, TValue>() : new Dictionary<TKey, TValue>(keyEqualityComparer);
-                        }
-                        var resultsFaultsAndCounts = rangeActiveExpression.GetResultsFaultsAndCounts();
-                        nullKeys = resultsFaultsAndCounts.Count(rfc => rfc.result.Key is null);
-                        var distinctResultsFaultsAndCounts = resultsFaultsAndCounts.Where(rfc => rfc.result.Key is { }).GroupBy(rfc => rfc.result.Key).ToList();
-                        foreach (var keyValuePair in distinctResultsFaultsAndCounts.Select(g => g.First().result))
-                            replacementDictionary.Add(keyValuePair);
-                        rangeObservableDictionary.Reset(replacementDictionary);
-                        foreach (var (key, duplicateCount) in distinctResultsFaultsAndCounts.Select(g => (key: g.Key, duplicateCount: g.Sum(rfc => rfc.count) - 1)).Where(kc => kc.duplicateCount > 0))
-                            duplicateKeys.Add(key, duplicateCount);
-                        checkOperationFault();
-                    }
-                    else if (e.Action != NotifyCollectionChangedAction.Move)
-                    {
-                        if (e.OldItems is { } && e.OldItems.Count > 0)
-                        {
-                            foreach (var (element, result) in e.OldItems)
-                            {
-                                var key = result.Key;
-                                if (key is null)
-                                    --nullKeys;
-                                else if (duplicateKeys.TryGetValue(key, out var duplicates))
-                                {
-                                    if (duplicates == 1)
-                                        duplicateKeys.Remove(key);
-                                    else
-                                        duplicateKeys[key] = duplicates - 1;
-                                }
-                                else
-                                    rangeObservableDictionary.Remove(key);
-                            }
-                            checkOperationFault();
-                        }
-                        if (e.NewItems is { } && e.NewItems.Count > 0)
-                        {
-                            foreach (var (element, result) in e.NewItems)
-                            {
-                                var key = result.Key;
-                                if (key is null)
-                                    ++nullKeys;
-                                else if (rangeObservableDictionary.ContainsKey(key))
-                                {
-                                    if (duplicateKeys.TryGetValue(key, out var duplicates))
-                                        duplicateKeys[key] = duplicates + 1;
-                                    else
-                                        duplicateKeys.Add(key, 1);
-                                }
-                                else
-                                    rangeObservableDictionary.Add(key, result.Value);
-                            }
-                            checkOperationFault();
-                        }
-                    }
-                }
-            });
-
         return synchronizedSource.Execute(() =>
         {
             lock (activeDictionaryAccess)
@@ -4086,14 +4018,14 @@ public static class ActiveEnumerableExtensions
                     duplicateKeys.Add(key, duplicateCount);
                 activeDictionary = new ActiveDictionary<TKey, TValue>(rangeObservableDictionary, rangeActiveExpression, () =>
                 {
+                    rangeActiveExpression.CollectionChanged -= collectionChanged;
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
                     rangeActiveExpression.ElementResultChanging -= elementResultChanging;
-                    rangeActiveExpression.GenericCollectionChanged -= genericCollectionChanged;
                     rangeActiveExpression.Dispose();
                 });
+                rangeActiveExpression.CollectionChanged += collectionChanged;
                 rangeActiveExpression.ElementResultChanged += elementResultChanged;
                 rangeActiveExpression.ElementResultChanging += elementResultChanging;
-                rangeActiveExpression.GenericCollectionChanged += genericCollectionChanged;
                 checkOperationFault();
                 return activeDictionary;
             }
