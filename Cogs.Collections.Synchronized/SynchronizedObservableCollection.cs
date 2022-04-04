@@ -6,7 +6,6 @@ namespace Cogs.Collections.Synchronized;
 /// <typeparam name="T">The type of elements in the collection</typeparam>
 public class SynchronizedObservableCollection<T> :
     ObservableCollection<T>,
-    INotifyGenericCollectionChanged<T>,
     ISynchronized
 {
     /// <summary>
@@ -64,11 +63,6 @@ public class SynchronizedObservableCollection<T> :
     /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
     /// </summary>
     public SynchronizationContext? SynchronizationContext { get; }
-
-    /// <summary>
-    /// Occurs when the collection changes
-    /// </summary>
-    public event NotifyGenericCollectionChangedEventHandler<T>? GenericCollectionChanged;
 
     /// <summary>
     /// Adds an object to the end of the <see cref="SynchronizedObservableCollection{T}"/>
@@ -185,23 +179,6 @@ public class SynchronizedObservableCollection<T> :
     /// <param name="newIndex">The zero-based index specifying the new location of the item</param>
     protected override void MoveItem(int oldIndex, int newIndex) =>
         this.Execute(() => base.MoveItem(oldIndex, newIndex));
-
-    /// <summary>
-    /// Raises the <see cref="INotifyCollectionChanged.CollectionChanged"/> event with the provided arguments
-    /// </summary>
-    /// <param name="e">Arguments of the event being raised</param>
-    protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
-    {
-        base.OnCollectionChanged(e);
-        OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<T>.FromNotifyCollectionChangedEventArgs(e));
-    }
-
-    /// <summary>
-    /// Raises the <see cref="INotifyGenericCollectionChanged{T}.GenericCollectionChanged"/> event with the provided arguments
-    /// </summary>
-    /// <param name="e">Arguments of the event being raised</param>
-    protected virtual void OnGenericCollectionChanged(NotifyGenericCollectionChangedEventArgs<T> e) =>
-        GenericCollectionChanged?.Invoke(this, e);
 
     /// <summary>
     /// Removes the first occurrence of a specific object from the <see cref="SynchronizedObservableCollection{T}"/>

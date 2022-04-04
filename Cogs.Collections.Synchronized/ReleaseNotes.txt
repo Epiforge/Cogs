@@ -1,1 +1,1 @@
-We upgraded NuGet references.
+We upgraded NuGet references and refactored for compatibility with changes in the Collections library.
