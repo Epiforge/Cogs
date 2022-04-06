@@ -256,9 +256,9 @@ But all of the base classes feature:
 * a protected `ThrowIfDisposed` method you can call to before doing anything that requires you haven't been disposed
 * an `IsDisposed` property the value (and change notifications) of which are handled for you
 
-This library provides the `IDisposalStatus` interface, which defines the `IsDisposed` property and all the base classes implement it.
+This library provides the `IDisposalStatus` interface, which defines the `IsDisposed` property and all the base classes implement it. This library also provides the `INotifyDisposing`, `INotifyDisposed`, and `INotifyDisposalOverridden` interfaces, which add events that notify of these occurrences.
 
-Lastly, it provides the `INotifyDisposing`, `INotifyDisposed`, and `INotifyDisposalOverridden` interfaces, which add events that notify of these occurrences.
+Lastly, this library provides `DisposableValuesCache` and `AsyncDisposableValuesCache`, which each represents a cache of key-value pairs which, once disposed by all retrievers, are removed.
 
 ## Exceptions
 

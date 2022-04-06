@@ -1,1 +1,1 @@
-SyncDisposable, AsyncDisposable, and Disposable no longer remove all event handlers when being disposed. We upgraded some NuGet references. We enabled NuGet symbol packages.
+We added DisposableValuesCache and AsyncDisposableValuesCache, which each represents a cache of key-value pairs which, once disposed by all retrievers, are removed. We upgraded some NuGet references.
