@@ -12,20 +12,36 @@ public class AsyncDisposableValuesCache<TKey, TValue>
     /// <summary>
     /// Instantiates a new instance of <see cref="AsyncDisposableValuesCache{TKey, TValue}"/>
     /// </summary>
-    public AsyncDisposableValuesCache()
-    {
-    }
+    public AsyncDisposableValuesCache() =>
+        values = new();
 
     /// <summary>
     /// Instantiates a new instance of <see cref="AsyncDisposableValuesCache{TKey, TValue}"/>, specifying the time to live for values which have been disposed by all retrievers
     /// </summary>
     /// <param name="orphanTtl">The time to live for values which have been disposed by all retrievers; if retrieved again before expiration, termination is cancelled</param>
-    public AsyncDisposableValuesCache(TimeSpan orphanTtl) =>
+    public AsyncDisposableValuesCache(TimeSpan orphanTtl) :
+        this() =>
+        this.orphanTtl = orphanTtl;
+
+    /// <summary>
+    /// Instantiates a new instance of <see cref="AsyncDisposableValuesCache{TKey, TValue}"/> using the specified <paramref name="comparer"/>
+    /// </summary>
+    /// <param name="comparer">The equality comparison implementation to use when comparing keys</param>
+    public AsyncDisposableValuesCache(IEqualityComparer<TKey> comparer) =>
+        values = new(comparer);
+
+    /// <summary>
+    /// Instantiates a new instance of <see cref="AsyncDisposableValuesCache{TKey, TValue}"/> using the specified <paramref name="comparer"/>, specifying the time to live for values which have been disposed by all retrievers
+    /// </summary>
+    /// <param name="comparer">The equality comparison implementation to use when comparing keys</param>
+    /// <param name="orphanTtl">The time to live for values which have been disposed by all retrievers; if retrieved again before expiration, termination is cancelled</param>
+    public AsyncDisposableValuesCache(IEqualityComparer<TKey> comparer, TimeSpan orphanTtl) :
+        this(comparer) =>
         this.orphanTtl = orphanTtl;
 
     readonly AsyncReaderWriterLock access = new();
     readonly TimeSpan? orphanTtl;
-    readonly ConcurrentDictionary<TKey, TValue> values = new();
+    readonly ConcurrentDictionary<TKey, TValue> values;
 
     /// <summary>
     /// Gets a value from the cache, generating it if necessary -- dispose of the value when done with it!

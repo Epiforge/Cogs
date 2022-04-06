@@ -1,1 +1,1 @@
-We added DisposableValuesCache and AsyncDisposableValuesCache, which each represents a cache of key-value pairs which, once disposed by all retrievers, are removed. We upgraded some NuGet references.
+We added constructor overloads to DisposableValuesCache and AsyncDisposableValuesCache allowing the caller to supply an equality comparison implementation to be used by the cache.
