@@ -4,7 +4,7 @@
         <Authors>Epiforge</Authors>
         <CodeAnalysisRuleSet>..\.ruleset</CodeAnalysisRuleSet>
         <Company>Epiforge</Company>
-        <Description>Cogs for collections. Includes EquatableList, INotifyDictionaryChanged, INotifyGenericCollectionChanged, IObservableRangeDictionary, IRangeDictionary, NullableKeyDictionary, NullableKeySortedDictionary, ObservableConcurrentDictionary, ObservableDictionary, ObservableSortedDictionary, ReadOnlyDictionary, ReadOnlyObservableDictionary, ReadOnlyObservableRangeDictionary.</Description>
+        <Description>Cogs for collections. Includes EquatableList, INotifyDictionaryChanged, IObservableRangeDictionary, IRangeDictionary, NullableKeyDictionary, NullableKeySortedDictionary, ObservableConcurrentDictionary, ObservableDictionary, ObservableSortedDictionary, ReadOnlyDictionary, ReadOnlyObservableDictionary, ReadOnlyObservableRangeDictionary.</Description>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
