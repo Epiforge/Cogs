@@ -5,7 +5,8 @@ namespace Cogs.Disposal;
 /// </summary>
 /// <typeparam name="TKey">The type of the keys</typeparam>
 /// <typeparam name="TValue">The type of the values</typeparam>
-public class DisposableValuesCache<TKey, TValue>
+public class DisposableValuesCache<TKey, TValue> :
+    IDisposable
     where TKey : notnull
     where TValue : DisposableValuesCache<TKey, TValue>.Value, new()
 {
@@ -71,6 +72,25 @@ public class DisposableValuesCache<TKey, TValue>
     /// </summary>
     public int Count =>
         values.Count;
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        access.EnterWriteLock();
+        try
+        {
+            var values = this.values.Values.ToImmutableArray();
+            this.values.Clear();
+            foreach (var value in values)
+                value.Terminate();
+        }
+        finally
+        {
+            access.ExitWriteLock();
+        }
+        access.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     static TValue ValueFactory(TKey key) =>
         new();
@@ -138,6 +158,9 @@ public class DisposableValuesCache<TKey, TValue>
                 }
             }
         }
+
+        internal void Terminate() =>
+            OnTerminated();
 
         /// <summary>
         /// Invoked when the <see cref="Key"/> property has been set and the value is being initialized

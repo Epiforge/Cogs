@@ -1,1 +1,1 @@
-We added constructor overloads to DisposableValuesCache and AsyncDisposableValuesCache allowing the caller to supply an equality comparison implementation to be used by the cache.
+DisposableValuesCache and AsyncDisposableValuesCache are now disposable, forcing all cached values to be terminated.

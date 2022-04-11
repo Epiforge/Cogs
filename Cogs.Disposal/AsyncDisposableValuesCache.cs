@@ -5,7 +5,8 @@ namespace Cogs.Disposal;
 /// </summary>
 /// <typeparam name="TKey">The type of the keys</typeparam>
 /// <typeparam name="TValue">The type of the values</typeparam>
-public class AsyncDisposableValuesCache<TKey, TValue>
+public class AsyncDisposableValuesCache<TKey, TValue> :
+    IAsyncDisposable
     where TKey : notnull
     where TValue : AsyncDisposableValuesCache<TKey, TValue>.Value, new()
 {
@@ -77,6 +78,19 @@ public class AsyncDisposableValuesCache<TKey, TValue>
     public int Count =>
         values.Count;
 
+    /// <inheritdoc/>
+    public async ValueTask DisposeAsync()
+    {
+        using (await access.WriterLockAsync().ConfigureAwait(false))
+        {
+            var values = this.values.Values.ToImmutableArray();
+            this.values.Clear();
+            foreach (var value in values)
+                await value.TerminateAsync().ConfigureAwait(false);
+        }
+        GC.SuppressFinalize(this);
+    }
+
     static TValue ValueFactory(TKey key) =>
         new();
 
@@ -143,6 +157,9 @@ public class AsyncDisposableValuesCache<TKey, TValue>
                 }
             }
         }
+
+        internal Task TerminateAsync() =>
+            OnTerminatedAsync();
 
         /// <summary>
         /// Invoked when the <see cref="Key"/> property has been set and the value is being initialized
