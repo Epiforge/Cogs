@@ -14,8 +14,10 @@ class ActiveNewArrayInitExpression :
         try
         {
             elementType = instancesKey.Expression.Type.GetElementType();
-            foreach (var newArrayExpressionInitializer in instancesKey.Expression.Expressions)
+            var newArrayExpressionInitializers = instancesKey.Expression.Expressions;
+            for (int i = 0, ii = newArrayExpressionInitializers.Count; i < ii; ++i)
             {
+                var newArrayExpressionInitializer = newArrayExpressionInitializers[i];
                 var initializer = Create(newArrayExpressionInitializer, options, IsDeferringEvaluation);
                 initializer.PropertyChanged += InitializerPropertyChanged;
                 initializersList.Add(initializer);
@@ -25,8 +27,9 @@ class ActiveNewArrayInitExpression :
         }
         catch (Exception ex)
         {
-            foreach (var initializer in initializersList)
+            for (int i = 0, ii = initializersList.Count; i < ii; ++i)
             {
+                var initializer = initializersList[i];
                 initializer.PropertyChanged -= InitializerPropertyChanged;
                 initializer.Dispose();
             }
@@ -49,9 +52,10 @@ class ActiveNewArrayInitExpression :
                 instances.Remove(instancesKey);
                 result = true;
             }
-        if (result && initializers is not null)
-            foreach (var initializer in initializers)
+        if (result && initializers is { } nonNullInitializers)
+            for (int i = 0, ii = nonNullInitializers.Count; i < ii; ++i)
             {
+                var initializer = nonNullInitializers[i];
                 initializer.PropertyChanged -= InitializerPropertyChanged;
                 initializer.Dispose();
             }

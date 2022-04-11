@@ -91,8 +91,9 @@ class ActiveInvocationExpression :
                 activeDelegateExpression.Dispose();
             }
             if (activeArguments is not null)
-                foreach (var activeArgument in activeArguments)
+                for (int i = 0, ii = activeArguments.Count; i < ii; ++i)
                 {
+                    var activeArgument = activeArguments[i];
                     activeArgument.PropertyChanged -= ActiveArgumentPropertyChanged;
                     activeArgument.Dispose();
                 }
@@ -126,8 +127,10 @@ class ActiveInvocationExpression :
         {
             if (instancesKey.Expression.Expression is LambdaExpression)
             {
-                foreach (var invocationExpressionArgument in instancesKey.Expression.Arguments)
+                var invocationExpressionArguments = instancesKey.Expression.Arguments;
+                for (int i = 0, ii = invocationExpressionArguments.Count; i < ii; ++i)
                 {
+                    var invocationExpressionArgument = invocationExpressionArguments[i];
                     var activeArgument = Create(invocationExpressionArgument, options, IsDeferringEvaluation);
                     activeArgument.PropertyChanged += ActiveArgumentPropertyChanged;
                     activeArgumentsList.Add(activeArgument);
@@ -148,8 +151,9 @@ class ActiveInvocationExpression :
                 activeDelegateExpression.PropertyChanged -= ActiveDelegateExpressionPropertyChanged;
                 activeDelegateExpression.Dispose();
             }
-            foreach (var activeArgument in activeArgumentsList)
+            for (int i = 0, ii = activeArgumentsList.Count; i < ii; ++i)
             {
+                var activeArgument = activeArgumentsList[i];
                 activeArgument.PropertyChanged -= ActiveArgumentPropertyChanged;
                 activeArgument.Dispose();
             }

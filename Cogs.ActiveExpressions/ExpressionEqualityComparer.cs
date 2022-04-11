@@ -32,8 +32,8 @@ public class ExpressionEqualityComparer :
     {
         var elements = new ExpressionDiagramVisitor(obj).Elements;
         var hashCode = elements[0]?.GetHashCode() ?? 0;
-        foreach (var subsequentElement in elements.Skip(1))
-            hashCode = HashCode.Combine(hashCode, subsequentElement);
+        for (int i = 1, ii = elements.Count; i < ii; ++i)
+            hashCode = HashCode.Combine(hashCode, elements[i]);
         return hashCode;
     }
 }

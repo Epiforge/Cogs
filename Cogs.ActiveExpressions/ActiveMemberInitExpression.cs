@@ -103,8 +103,10 @@ class ActiveMemberInitExpression :
         {
             newExpression = Create(memberInitExpression.NewExpression, options, IsDeferringEvaluation);
             newExpression.PropertyChanged += NewExpressionPropertyChanged;
-            foreach (var binding in memberInitExpression.Bindings)
+            var bindings = memberInitExpression.Bindings;
+            for (int i = 0, ii = bindings.Count; i < ii; ++i)
             {
+                var binding = bindings[i];
                 if (binding is MemberAssignment memberAssignmentBinding)
                 {
                     var memberAssignmentExpression = Create(memberAssignmentBinding.Expression, options, IsDeferringEvaluation);

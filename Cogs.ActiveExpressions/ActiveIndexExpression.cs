@@ -38,9 +38,10 @@ class ActiveIndexExpression :
                 @object.PropertyChanged -= ObjectPropertyChanged;
                 @object.Dispose();
             }
-            if (arguments is not null)
-                foreach (var argument in arguments)
+            if (arguments is { } nonNullArguments)
+                for (int i = 0, ii = nonNullArguments.Count; i < ii; ++i)
                 {
+                    var argument = nonNullArguments[i];
                     argument.PropertyChanged -= ArgumentPropertyChanged;
                     argument.Dispose();
                 }
@@ -98,8 +99,10 @@ class ActiveIndexExpression :
             fastGetter = FastMethodInfo.Get(getMethod);
             @object = Create(instancesKey.Expression.Object, options, IsDeferringEvaluation);
             @object.PropertyChanged += ObjectPropertyChanged;
-            foreach (var indexExpressionArgument in instancesKey.Expression.Arguments)
+            var indexExpressionArguments = instancesKey.Expression.Arguments;
+            for (int i = 0, ii = indexExpressionArguments.Count; i < ii; ++i)
             {
+                var indexExpressionArgument = indexExpressionArguments[i];
                 var argument = Create(indexExpressionArgument, options, IsDeferringEvaluation);
                 argument.PropertyChanged += ArgumentPropertyChanged;
                 argumentsList.Add(argument);
@@ -116,8 +119,9 @@ class ActiveIndexExpression :
                 @object.PropertyChanged -= ObjectPropertyChanged;
                 @object.Dispose();
             }
-            foreach (var argument in argumentsList)
+            for (int i = 0, ii = argumentsList.Count; i < ii; ++i)
             {
+                var argument = argumentsList[i];
                 argument.PropertyChanged -= ArgumentPropertyChanged;
                 argument.Dispose();
             }

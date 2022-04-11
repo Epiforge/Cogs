@@ -1,1 +1,1 @@
-Active expression property change events now use cached arguments (significant performance increase).
+We converted every foreach loop over objects with indexers into for loops to increase performance and reduce allocations.

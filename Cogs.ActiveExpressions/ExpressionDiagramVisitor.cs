@@ -204,9 +204,9 @@ public class ExpressionDiagramVisitor :
         elements.Add(node.ReturnType);
         elements.Add(node.TailCall);
         ++parameterSet;
-        var index = -1;
-        foreach (var parameter in node.Parameters)
-            parameters.Add(parameter, (parameterSet, ++index));
+        var nodeParameters = node.Parameters;
+        for (int i = 0, ii = nodeParameters.Count; i < ii; ++i)
+            parameters.Add(nodeParameters[i], (parameterSet, i));
         return base.VisitLambda(node);
     }
 

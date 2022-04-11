@@ -15,8 +15,10 @@ class ActiveNewExpression :
         {
             if (instancesKey.Expression.Constructor is { } constructor)
                 fastConstructor = FastConstructorInfo.Get(constructor);
-            foreach (var newExpressionArgument in instancesKey.Expression.Arguments)
+            var newExpressionArguments = instancesKey.Expression.Arguments;
+            for (int i = 0, ii = newExpressionArguments.Count; i < ii; ++i)
             {
+                var newExpressionArgument = newExpressionArguments[i];
                 var argument = Create(newExpressionArgument, options, IsDeferringEvaluation);
                 argument.PropertyChanged += ArgumentPropertyChanged;
                 argumentsList.Add(argument);
@@ -28,8 +30,9 @@ class ActiveNewExpression :
         catch (Exception ex)
         {
             DisposeValueIfNecessaryAndPossible();
-            foreach (var argument in argumentsList)
+            for (int i = 0, ii = argumentsList.Count; i < ii; ++i)
             {
+                var argument = argumentsList[i];
                 argument.PropertyChanged -= ArgumentPropertyChanged;
                 argument.Dispose();
             }
@@ -59,8 +62,9 @@ class ActiveNewExpression :
         if (result)
         {
             DisposeValueIfNecessaryAndPossible();
-            foreach (var argument in arguments)
+            for (int i = 0, ii = arguments.Count; i < ii; ++i)
             {
+                var argument = arguments[i];
                 argument.PropertyChanged -= ArgumentPropertyChanged;
                 argument.Dispose();
             }

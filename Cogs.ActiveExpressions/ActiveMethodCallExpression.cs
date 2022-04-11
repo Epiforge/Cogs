@@ -35,9 +35,10 @@ class ActiveMethodCallExpression :
                 @object.PropertyChanged -= ObjectPropertyChanged;
                 @object.Dispose();
             }
-            if (arguments is not null)
-                foreach (var argument in arguments)
+            if (arguments is { } nonNullArguments)
+                for (int i = 0, ii = nonNullArguments.Count; i < ii; ++i)
                 {
+                    var argument = nonNullArguments[i];
                     argument.PropertyChanged -= ArgumentPropertyChanged;
                     argument.Dispose();
                 }
@@ -88,8 +89,10 @@ class ActiveMethodCallExpression :
                 @object = Create(instancesKey.Expression.Object, options, IsDeferringEvaluation);
                 @object.PropertyChanged += ObjectPropertyChanged;
             }
-            foreach (var methodCallExpressionArgument in instancesKey.Expression.Arguments)
+            var methodCallExpressionArguments = instancesKey.Expression.Arguments;
+            for (int i = 0, ii = methodCallExpressionArguments.Count; i < ii; ++i)
             {
+                var methodCallExpressionArgument = methodCallExpressionArguments[i];
                 var argument = Create(methodCallExpressionArgument, options, IsDeferringEvaluation);
                 argument.PropertyChanged += ArgumentPropertyChanged;
                 argumentsList.Add(argument);
@@ -105,8 +108,9 @@ class ActiveMethodCallExpression :
                 @object.PropertyChanged -= ObjectPropertyChanged;
                 @object.Dispose();
             }
-            foreach (var argument in argumentsList)
+            for (int i = 0, ii = argumentsList.Count; i < ii; ++i)
             {
+                var argument = argumentsList[i];
                 argument.PropertyChanged -= ArgumentPropertyChanged;
                 argument.Dispose();
             }
