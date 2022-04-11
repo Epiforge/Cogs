@@ -1,1 +1,1 @@
-We fixed a bug in the disposal of DisposableValuesCache and AsyncDisposableValuesCache.
+We removed disposal of DisposableValuesCache and AsyncDisposableValuesCache.

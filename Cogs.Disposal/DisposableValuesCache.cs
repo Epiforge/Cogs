@@ -5,8 +5,7 @@ namespace Cogs.Disposal;
 /// </summary>
 /// <typeparam name="TKey">The type of the keys</typeparam>
 /// <typeparam name="TValue">The type of the values</typeparam>
-public class DisposableValuesCache<TKey, TValue> :
-    IDisposable
+public class DisposableValuesCache<TKey, TValue>
     where TKey : notnull
     where TValue : DisposableValuesCache<TKey, TValue>.Value, new()
 {
@@ -73,31 +72,6 @@ public class DisposableValuesCache<TKey, TValue> :
     public int Count =>
         values.Count;
 
-    /// <summary>
-    /// Gets whether the whole cache has been disposed
-    /// </summary>
-    public bool IsDispsoed { get; private set; }
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        access.EnterWriteLock();
-        try
-        {
-            var values = this.values.Values.ToImmutableArray();
-            this.values.Clear();
-            foreach (var value in values)
-                value.Terminate();
-            IsDispsoed = true;
-        }
-        finally
-        {
-            access.ExitWriteLock();
-        }
-        access.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
     static TValue ValueFactory(TKey key) =>
         new();
 
@@ -133,8 +107,6 @@ public class DisposableValuesCache<TKey, TValue> :
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
                 await Task.Delay(orphanTtl).ConfigureAwait(false);
-            if (cache.IsDispsoed)
-                return;
             var isRemoving = false;
             try
             {

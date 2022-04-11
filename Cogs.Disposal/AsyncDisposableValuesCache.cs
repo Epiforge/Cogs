@@ -5,8 +5,7 @@ namespace Cogs.Disposal;
 /// </summary>
 /// <typeparam name="TKey">The type of the keys</typeparam>
 /// <typeparam name="TValue">The type of the values</typeparam>
-public class AsyncDisposableValuesCache<TKey, TValue> :
-    IAsyncDisposable
+public class AsyncDisposableValuesCache<TKey, TValue>
     where TKey : notnull
     where TValue : AsyncDisposableValuesCache<TKey, TValue>.Value, new()
 {
@@ -45,29 +44,10 @@ public class AsyncDisposableValuesCache<TKey, TValue> :
     readonly ConcurrentDictionary<TKey, TValue> values;
 
     /// <summary>
-    /// Gets whether the whole cache has been disposed
-    /// </summary>
-    public bool IsDispsoed { get; private set; }
-
-    /// <summary>
     /// Gets the number of key-value pairs currently in the cache
     /// </summary>
     public int Count =>
         values.Count;
-
-    /// <inheritdoc/>
-    public async ValueTask DisposeAsync()
-    {
-        using (await access.WriterLockAsync().ConfigureAwait(false))
-        {
-            var values = this.values.Values.ToImmutableArray();
-            this.values.Clear();
-            foreach (var value in values)
-                await value.TerminateAsync().ConfigureAwait(false);
-            IsDispsoed = true;
-        }
-        GC.SuppressFinalize(this);
-    }
 
     /// <summary>
     /// Gets a value from the cache, generating it if necessary -- dispose of the value when done with it!
@@ -132,8 +112,6 @@ public class AsyncDisposableValuesCache<TKey, TValue> :
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
                 await Task.Delay(orphanTtl).ConfigureAwait(false);
-            if (cache.IsDispsoed)
-                return;
             var isRemoving = false;
             var grant = await cache.access.WriterLockAsync();
             try
