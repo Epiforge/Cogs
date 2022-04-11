@@ -73,6 +73,11 @@ public class DisposableValuesCache<TKey, TValue> :
     public int Count =>
         values.Count;
 
+    /// <summary>
+    /// Gets whether the whole cache has been disposed
+    /// </summary>
+    public bool IsDispsoed { get; private set; }
+
     /// <inheritdoc/>
     public void Dispose()
     {
@@ -83,6 +88,7 @@ public class DisposableValuesCache<TKey, TValue> :
             this.values.Clear();
             foreach (var value in values)
                 value.Terminate();
+            IsDispsoed = true;
         }
         finally
         {
@@ -107,7 +113,6 @@ public class DisposableValuesCache<TKey, TValue> :
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         DisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        bool isTerminated;
 
         internal object Access = new();
         internal int ReferenceCount;
@@ -128,8 +133,18 @@ public class DisposableValuesCache<TKey, TValue> :
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
                 await Task.Delay(orphanTtl).ConfigureAwait(false);
+            if (cache.IsDispsoed)
+                return;
             var isRemoving = false;
-            cache.access.EnterWriteLock();
+            try
+            {
+                cache.access.EnterWriteLock();
+            }
+            catch (ObjectDisposedException)
+            {
+                // termination already ran because the whole cache was disposed
+                return;
+            }
             try
             {
                 isRemoving = --ReferenceCount == 0;
@@ -142,12 +157,6 @@ public class DisposableValuesCache<TKey, TValue> :
             }
             if (isRemoving)
             {
-                lock (Access)
-                {
-                    if (isTerminated)
-                        return;
-                    isTerminated = true;
-                }
                 OnTerminated();
                 GC.SuppressFinalize(this);
             }
@@ -168,12 +177,6 @@ public class DisposableValuesCache<TKey, TValue> :
 
         internal void Terminate()
         {
-            lock (Access)
-            {
-                if (isTerminated)
-                    return;
-                isTerminated = true;
-            }
             OnTerminated();
             GC.SuppressFinalize(this);
         }

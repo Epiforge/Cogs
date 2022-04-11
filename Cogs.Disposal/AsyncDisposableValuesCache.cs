@@ -45,6 +45,31 @@ public class AsyncDisposableValuesCache<TKey, TValue> :
     readonly ConcurrentDictionary<TKey, TValue> values;
 
     /// <summary>
+    /// Gets whether the whole cache has been disposed
+    /// </summary>
+    public bool IsDispsoed { get; private set; }
+
+    /// <summary>
+    /// Gets the number of key-value pairs currently in the cache
+    /// </summary>
+    public int Count =>
+        values.Count;
+
+    /// <inheritdoc/>
+    public async ValueTask DisposeAsync()
+    {
+        using (await access.WriterLockAsync().ConfigureAwait(false))
+        {
+            var values = this.values.Values.ToImmutableArray();
+            this.values.Clear();
+            foreach (var value in values)
+                await value.TerminateAsync().ConfigureAwait(false);
+            IsDispsoed = true;
+        }
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
     /// Gets a value from the cache, generating it if necessary -- dispose of the value when done with it!
     /// </summary>
     /// <param name="key">The key of the value</param>
@@ -72,25 +97,6 @@ public class AsyncDisposableValuesCache<TKey, TValue> :
         return value;
     }
 
-    /// <summary>
-    /// Gets the number of key-value pairs currently in the cache
-    /// </summary>
-    public int Count =>
-        values.Count;
-
-    /// <inheritdoc/>
-    public async ValueTask DisposeAsync()
-    {
-        using (await access.WriterLockAsync().ConfigureAwait(false))
-        {
-            var values = this.values.Values.ToImmutableArray();
-            this.values.Clear();
-            foreach (var value in values)
-                await value.TerminateAsync().ConfigureAwait(false);
-        }
-        GC.SuppressFinalize(this);
-    }
-
     static TValue ValueFactory(TKey key) =>
         new();
 
@@ -106,7 +112,6 @@ public class AsyncDisposableValuesCache<TKey, TValue> :
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         AsyncDisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        bool isTerminated;
 
         internal AsyncLock Access = new();
         internal int ReferenceCount;
@@ -127,6 +132,8 @@ public class AsyncDisposableValuesCache<TKey, TValue> :
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
                 await Task.Delay(orphanTtl).ConfigureAwait(false);
+            if (cache.IsDispsoed)
+                return;
             var isRemoving = false;
             var grant = await cache.access.WriterLockAsync();
             try
@@ -161,12 +168,6 @@ public class AsyncDisposableValuesCache<TKey, TValue> :
 
         internal async Task TerminateAsync()
         {
-            using (await Access.LockAsync().ConfigureAwait(false))
-            {
-                if (isTerminated)
-                    return;
-                isTerminated = true;
-            }
             await OnTerminatedAsync().ConfigureAwait(false);
             GC.SuppressFinalize(this);
         }
