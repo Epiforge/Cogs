@@ -1,1 +1,1 @@
-DisposableValuesCache and AsyncDisposableValuesCache are now disposable, forcing all cached values to be terminated.
+We fixed a bug in the disposal of DisposableValuesCache and AsyncDisposableValuesCache.

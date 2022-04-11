@@ -106,6 +106,7 @@ public class AsyncDisposableValuesCache<TKey, TValue> :
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         AsyncDisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        bool isTerminated;
 
         internal AsyncLock Access = new();
         internal int ReferenceCount;
@@ -158,8 +159,17 @@ public class AsyncDisposableValuesCache<TKey, TValue> :
             }
         }
 
-        internal Task TerminateAsync() =>
-            OnTerminatedAsync();
+        internal async Task TerminateAsync()
+        {
+            using (await Access.LockAsync().ConfigureAwait(false))
+            {
+                if (isTerminated)
+                    return;
+                isTerminated = true;
+            }
+            await OnTerminatedAsync().ConfigureAwait(false);
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         /// Invoked when the <see cref="Key"/> property has been set and the value is being initialized

@@ -107,6 +107,7 @@ public class DisposableValuesCache<TKey, TValue> :
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         DisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        bool isTerminated;
 
         internal object Access = new();
         internal int ReferenceCount;
@@ -141,6 +142,12 @@ public class DisposableValuesCache<TKey, TValue> :
             }
             if (isRemoving)
             {
+                lock (Access)
+                {
+                    if (isTerminated)
+                        return;
+                    isTerminated = true;
+                }
                 OnTerminated();
                 GC.SuppressFinalize(this);
             }
@@ -159,8 +166,17 @@ public class DisposableValuesCache<TKey, TValue> :
             }
         }
 
-        internal void Terminate() =>
+        internal void Terminate()
+        {
+            lock (Access)
+            {
+                if (isTerminated)
+                    return;
+                isTerminated = true;
+            }
             OnTerminated();
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         /// Invoked when the <see cref="Key"/> property has been set and the value is being initialized
