@@ -19,6 +19,6 @@ class AsyncPrimesToInt :
             Primes = primes.ToImmutableArray();
         });
 
-    protected override Task OnTerminatedAsync() =>
-        Task.CompletedTask;
+    protected override ValueTask OnTerminatedAsync() =>
+        ValueTask.CompletedTask;
 }

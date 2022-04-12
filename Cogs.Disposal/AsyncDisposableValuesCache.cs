@@ -158,6 +158,6 @@ public class AsyncDisposableValuesCache<TKey, TValue>
         /// <summary>
         /// Invoked when the value has been removed from the cache but before the finalizer has been suppressed
         /// </summary>
-        protected abstract Task OnTerminatedAsync();
+        protected abstract ValueTask OnTerminatedAsync();
     }
 }
