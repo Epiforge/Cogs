@@ -4,7 +4,7 @@ namespace Cogs.ActiveExpressions;
 /// Represents an observer of active expressions
 /// </summary>
 /// <typeparam name="TValue"></typeparam>
-public interface IObserveActiveExpressions<TValue>
+public interface IObserveActiveExpressions<in TValue>
 {
     /// <summary>
     /// An observed active expression has changed
