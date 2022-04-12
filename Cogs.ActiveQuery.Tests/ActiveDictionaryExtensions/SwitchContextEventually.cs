@@ -4,7 +4,7 @@ namespace Cogs.ActiveQuery.Tests.ActiveDictionaryExtensions;
 public class SwitchContextEventually
 {
     [TestMethod]
-    public async Task SourceManipulation()
+    public async Task SourceManipulationAsync()
     {
         var context1 = new AsyncSynchronizationContext();
         var context2 = new AsyncSynchronizationContext();
@@ -30,7 +30,7 @@ public class SwitchContextEventually
     }
 
     [TestMethod]
-    public async Task SourceManipulationSorted()
+    public async Task SourceManipulationSortedAsync()
     {
         var context1 = new AsyncSynchronizationContext();
         var context2 = new AsyncSynchronizationContext();

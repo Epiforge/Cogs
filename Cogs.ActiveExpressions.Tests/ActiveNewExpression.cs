@@ -77,7 +77,7 @@ public class ActiveNewExpression
     }
 
     [TestMethod]
-    public async Task ValueAsyncDisposal()
+    public async Task ValueAsyncDisposalAsync()
     {
         var john = AsyncDisposableTestPerson.CreateJohn();
         var options = new ActiveExpressionOptions();

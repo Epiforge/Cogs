@@ -128,7 +128,7 @@ public class ActiveUnaryExpression
     }
 
     [TestMethod]
-    public async Task ValueAsyncDisposal()
+    public async Task ValueAsyncDisposalAsync()
     {
         var people = new ObservableCollection<AsyncDisposableTestPerson>
         {

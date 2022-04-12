@@ -127,7 +127,7 @@ public class ActiveMemberInitExpression
     }
 
     [TestMethod]
-    public async Task ValueAsyncDisposal()
+    public async Task ValueAsyncDisposalAsync()
     {
         var options = new ActiveExpressionOptions();
         options.AddExpressionValueDisposal(() => new AsyncDisposableTestPerson());

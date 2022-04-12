@@ -232,7 +232,7 @@ public class Options
     }
 
     [TestMethod]
-    public async Task PreferAsyncDisposalDisabled()
+    public async Task PreferAsyncDisposalDisabledAsync()
     {
         DisposableTestPerson? person;
         var disposedTcs = new TaskCompletionSource<object?>();

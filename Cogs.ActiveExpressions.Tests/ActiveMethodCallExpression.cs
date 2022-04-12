@@ -120,7 +120,7 @@ public class ActiveMethodCallExpression
     }
 
     [TestMethod]
-    public async Task ValueAsyncDisposal()
+    public async Task ValueAsyncDisposalAsync()
     {
         var john = AsyncDisposableTestPerson.CreateJohn();
         var emily = AsyncDisposableTestPerson.CreateEmily();

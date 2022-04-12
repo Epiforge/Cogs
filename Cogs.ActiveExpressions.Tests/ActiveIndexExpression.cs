@@ -238,7 +238,7 @@ public class ActiveIndexExpression
     }
 
     [TestMethod]
-    public async Task ValueAsyncDisposal()
+    public async Task ValueAsyncDisposalAsync()
     {
         var john = AsyncDisposableTestPerson.CreateJohn();
         var emily = AsyncDisposableTestPerson.CreateEmily();
