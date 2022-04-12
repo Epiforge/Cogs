@@ -143,7 +143,8 @@ public sealed class ActiveWhereEnumerable<TElement> :
                     {
                         activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
                         activeExpression.PropertyChanging -= ActiveExpressionPropertyChanging;
-                        activeExpression.Dispose();
+                        for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
+                            activeExpression.Dispose();
                     }
                     if (source is INotifyCollectionChanged collectionChangeNotifier)
                         collectionChangeNotifier.CollectionChanged -= SourceChanged;
