@@ -56,6 +56,8 @@ public abstract class ActiveExpression :
     bool isInitialized = false;
     readonly List<IObserveActiveExpressions<object?>> observers = new();
     readonly object observersAccess = new();
+    IReadOnlyList<IObserveActiveExpressions<object?>> observersCopy = Array.Empty<IObserveActiveExpressions<object?>>();
+    bool observersCopyIsValid = true;
     object? val;
     readonly FastEqualityComparer valueEqualityComparer;
 
@@ -140,14 +142,24 @@ public abstract class ActiveExpression :
     public void AddActiveExpressionOserver(IObserveActiveExpressions<object?> observer)
     {
         lock (observersAccess)
+        {
             observers.Add(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     void NotifyObservers(object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
     {
         lock (observersAccess)
-            for (int i = 0, ii = observers.Count; i < ii; ++i)
-                observers[i].ActiveExpressionChanged(this, oldValue, newValue, oldFault, newFault);
+        {
+            if (!observersCopyIsValid)
+            {
+                observersCopy = observers.ToImmutableArray();
+                observersCopyIsValid = true;
+            }
+        }
+        for (int i = 0, ii = observersCopy.Count; i < ii; ++i)
+            observersCopy[i].ActiveExpressionChanged(this, oldValue, newValue, oldFault, newFault);
     }
 
     void DisposeIfNecessaryAndPossible(object? value)
@@ -234,7 +246,10 @@ public abstract class ActiveExpression :
     public void RemoveActiveExpressionObserver(IObserveActiveExpressions<object?> observer)
     {
         lock (observersAccess)
+        {
             observers.Remove(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     /// <summary>
@@ -702,6 +717,8 @@ public sealed class ActiveExpression<TResult> :
     Exception? fault;
     readonly List<IObserveActiveExpressions<TResult>> observers = new();
     readonly object observersAccess = new();
+    IReadOnlyList<IObserveActiveExpressions<TResult>> observersCopy = Array.Empty<IObserveActiveExpressions<TResult>>();
+    bool observersCopyIsValid = true;
     TResult? val;
 
     /// <summary>
@@ -742,8 +759,15 @@ public sealed class ActiveExpression<TResult> :
             var myNewValue = newValue is TResult typedValue ? typedValue : default;
             Value = myNewValue;
             lock (observersAccess)
-                for (int i = 0, ii = observers.Count; i < ii; ++i)
-                    observers[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
+            {
+                if (!observersCopyIsValid)
+                {
+                    observersCopy = observers.ToImmutableArray();
+                    observersCopyIsValid = true;
+                }
+            }
+            for (int i = 0, ii = observersCopy.Count; i < ii; ++i)
+                observersCopy[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
         }
     }
 
@@ -751,7 +775,10 @@ public sealed class ActiveExpression<TResult> :
     public void AddActiveExpressionOserver(IObserveActiveExpressions<TResult> observer)
     {
         lock (observersAccess)
+        {
             observers.Add(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     /// <summary>
@@ -799,7 +826,10 @@ public sealed class ActiveExpression<TResult> :
     public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
     {
         lock (observersAccess)
+        {
             observers.Remove(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     /// <summary>
@@ -879,6 +909,8 @@ public sealed class ActiveExpression<TArg, TResult> :
     Exception? fault;
     readonly List<IObserveActiveExpressions<TResult>> observers = new();
     readonly object observersAccess = new();
+    IReadOnlyList<IObserveActiveExpressions<TResult>> observersCopy = Array.Empty<IObserveActiveExpressions<TResult>>();
+    bool observersCopyIsValid = true;
     TResult? val;
 
     /// <summary>
@@ -924,8 +956,15 @@ public sealed class ActiveExpression<TArg, TResult> :
             var myNewValue = newValue is TResult typedValue ? typedValue : default;
             Value = myNewValue;
             lock (observersAccess)
-                for (int i = 0, ii = observers.Count; i < ii; ++i)
-                    observers[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
+            {
+                if (!observersCopyIsValid)
+                {
+                    observersCopy = observers.ToImmutableArray();
+                    observersCopyIsValid = true;
+                }
+            }
+            for (int i = 0, ii = observersCopy.Count; i < ii; ++i)
+                observersCopy[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
         }
     }
 
@@ -933,7 +972,10 @@ public sealed class ActiveExpression<TArg, TResult> :
     public void AddActiveExpressionOserver(IObserveActiveExpressions<TResult> observer)
     {
         lock (observersAccess)
+        {
             observers.Add(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     /// <summary>
@@ -981,7 +1023,10 @@ public sealed class ActiveExpression<TArg, TResult> :
     public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
     {
         lock (observersAccess)
+        {
             observers.Remove(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     /// <summary>
@@ -1063,6 +1108,8 @@ public sealed class ActiveExpression<TArg1, TArg2, TResult> :
     Exception? fault;
     readonly List<IObserveActiveExpressions<TResult>> observers = new();
     readonly object observersAccess = new();
+    IReadOnlyList<IObserveActiveExpressions<TResult>> observersCopy = Array.Empty<IObserveActiveExpressions<TResult>>();
+    bool observersCopyIsValid = true;
     TResult? val;
 
     /// <summary>
@@ -1113,8 +1160,15 @@ public sealed class ActiveExpression<TArg1, TArg2, TResult> :
             var myNewValue = newValue is TResult typedValue ? typedValue : default;
             Value = myNewValue;
             lock (observersAccess)
-                for (int i = 0, ii = observers.Count; i < ii; ++i)
-                    observers[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
+            {
+                if (!observersCopyIsValid)
+                {
+                    observersCopy = observers.ToImmutableArray();
+                    observersCopyIsValid = true;
+                }
+            }
+            for (int i = 0, ii = observersCopy.Count; i < ii; ++i)
+                observersCopy[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
         }
     }
 
@@ -1122,7 +1176,10 @@ public sealed class ActiveExpression<TArg1, TArg2, TResult> :
     public void AddActiveExpressionOserver(IObserveActiveExpressions<TResult> observer)
     {
         lock (observersAccess)
+        {
             observers.Add(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     /// <summary>
@@ -1170,7 +1227,10 @@ public sealed class ActiveExpression<TArg1, TArg2, TResult> :
     public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
     {
         lock (observersAccess)
+        {
             observers.Remove(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     /// <summary>
@@ -1254,6 +1314,8 @@ public sealed class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
     Exception? fault;
     readonly List<IObserveActiveExpressions<TResult>> observers = new();
     readonly object observersAccess = new();
+    IReadOnlyList<IObserveActiveExpressions<TResult>> observersCopy = Array.Empty<IObserveActiveExpressions<TResult>>();
+    bool observersCopyIsValid = true;
     TResult? val;
 
     /// <summary>
@@ -1309,8 +1371,15 @@ public sealed class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
             var myNewValue = newValue is TResult typedValue ? typedValue : default;
             Value = myNewValue;
             lock (observersAccess)
-                for (int i = 0, ii = observers.Count; i < ii; ++i)
-                    observers[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
+            {
+                if (!observersCopyIsValid)
+                {
+                    observersCopy = observers.ToImmutableArray();
+                    observersCopyIsValid = true;
+                }
+            }
+            for (int i = 0, ii = observersCopy.Count; i < ii; ++i)
+                observersCopy[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
         }
     }
 
@@ -1318,7 +1387,10 @@ public sealed class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
     public void AddActiveExpressionOserver(IObserveActiveExpressions<TResult> observer)
     {
         lock (observersAccess)
+        {
             observers.Add(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     /// <summary>
@@ -1366,7 +1438,10 @@ public sealed class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
     public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
     {
         lock (observersAccess)
+        {
             observers.Remove(observer);
+            observersCopyIsValid = false;
+        }
     }
 
     /// <summary>
