@@ -5,15 +5,14 @@ public class ActiveMethodCallExpression
 {
     #region TestMethod Methods
 
-    static AsyncDisposableTestPerson CombineAsyncDisposablePeople(AsyncDisposableTestPerson a, AsyncDisposableTestPerson b) => new AsyncDisposableTestPerson { Name = $"{a.Name} {b.Name}" };
-
+    static AsyncDisposableTestPerson CombineAsyncDisposablePeople(AsyncDisposableTestPerson a, AsyncDisposableTestPerson b) => new() { Name = $"{a.Name} {b.Name}" };
 
     [SuppressMessage("Performance", "CA1822:Mark members as static")]
-    TestPerson CombinePeople(TestPerson a, TestPerson b) => new TestPerson { Name = $"{a.Name} {b.Name}" };
+    TestPerson CombinePeople(TestPerson a, TestPerson b) => new() { Name = $"{a.Name} {b.Name}" };
 
-    static SyncDisposableTestPerson CombineSyncDisposablePeople(SyncDisposableTestPerson a, SyncDisposableTestPerson b) => new SyncDisposableTestPerson { Name = $"{a.Name} {b.Name}" };
+    static SyncDisposableTestPerson CombineSyncDisposablePeople(SyncDisposableTestPerson a, SyncDisposableTestPerson b) => new() { Name = $"{a.Name} {b.Name}" };
 
-    static TestPerson ReversedCombinePeople(TestPerson a, TestPerson b) => new TestPerson { Name = $"{b.Name} {a.Name}" };
+    static TestPerson ReversedCombinePeople(TestPerson a, TestPerson b) => new() { Name = $"{b.Name} {a.Name}" };
 
     #endregion TestMethod Methods
 
