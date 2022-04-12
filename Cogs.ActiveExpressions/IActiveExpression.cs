@@ -11,7 +11,8 @@ public interface IActiveExpression<out TResult> :
     INotifyDisposed,
     INotifyDisposing,
     INotifyPropertyChanged,
-    INotifyPropertyChanging
+    INotifyPropertyChanging,
+    IObservableActiveExpression<TResult>
 {
     /// <summary>
     /// Gets the arguments that were passed to the lambda expression

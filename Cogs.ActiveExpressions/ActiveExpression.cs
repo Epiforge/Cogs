@@ -698,7 +698,6 @@ public sealed class ActiveExpression<TResult> :
     SyncDisposable,
     IActiveExpression<TResult>,
     IEquatable<ActiveExpression<TResult>>,
-    IObservableActiveExpression<TResult>,
     IObserveActiveExpressions<object?>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, EquatableList<object?> arguments)
@@ -889,7 +888,6 @@ public sealed class ActiveExpression<TArg, TResult> :
     SyncDisposable,
     IActiveExpression<TArg, TResult>,
     IEquatable<ActiveExpression<TArg, TResult>>,
-    IObservableActiveExpression<TResult>,
     IObserveActiveExpressions<object?>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg arg)
@@ -1087,7 +1085,6 @@ public sealed class ActiveExpression<TArg1, TArg2, TResult> :
     SyncDisposable,
     IActiveExpression<TArg1, TArg2, TResult>,
     IEquatable<ActiveExpression<TArg1, TArg2, TResult>>,
-    IObservableActiveExpression<TResult>,
     IObserveActiveExpressions<object?>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2)
@@ -1292,7 +1289,6 @@ public sealed class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
     SyncDisposable,
     IActiveExpression<TArg1, TArg2, TArg3, TResult>,
     IEquatable<ActiveExpression<TArg1, TArg2, TArg3, TResult>>,
-    IObservableActiveExpression<TResult>,
     IObserveActiveExpressions<object?>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2, TArg3 arg3)
