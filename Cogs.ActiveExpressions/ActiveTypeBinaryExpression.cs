@@ -2,7 +2,8 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveTypeBinaryExpression :
     ActiveExpression,
-    IEquatable<ActiveTypeBinaryExpression>
+    IEquatable<ActiveTypeBinaryExpression>,
+    IObserveActiveExpressions<object?>
 {
     protected ActiveTypeBinaryExpression(CachedInstancesKey<TypeBinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation) =>
@@ -13,6 +14,9 @@ class ActiveTypeBinaryExpression :
     ActiveExpression? expression;
     readonly CachedInstancesKey<TypeBinaryExpression> instancesKey;
     Type? typeOperand;
+
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>
+        Evaluate();
 
     protected override bool Dispose(bool disposing)
     {
@@ -25,7 +29,7 @@ class ActiveTypeBinaryExpression :
             }
         if (result && expression is not null)
         {
-            expression.PropertyChanged -= ExpressionPropertyChanged;
+            expression.RemoveActiveExpressionObserver(this);
             expression.Dispose();
         }
         return result;
@@ -45,9 +49,6 @@ class ActiveTypeBinaryExpression :
             Value = @delegate?.Invoke(expression?.Value);
     }
 
-    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
-
     public override int GetHashCode() =>
         HashCode.Combine(typeof(ActiveTypeBinaryExpression), expression, typeOperand, options);
 
@@ -56,7 +57,7 @@ class ActiveTypeBinaryExpression :
         try
         {
             expression = Create(instancesKey.Expression.Expression, options, IsDeferringEvaluation);
-            expression.PropertyChanged += ExpressionPropertyChanged;
+            expression.AddActiveExpressionOserver(this);
             typeOperand = instancesKey.Expression.TypeOperand;
             var parameter = Expression.Parameter(typeof(object));
             @delegate = delegates.GetOrAdd(typeOperand, CreateDelegate);
@@ -66,7 +67,7 @@ class ActiveTypeBinaryExpression :
         {
             if (expression is not null)
             {
-                expression.PropertyChanged -= ExpressionPropertyChanged;
+                expression.RemoveActiveExpressionObserver(this);
                 expression.Dispose();
             }
             ExceptionDispatchInfo.Capture(ex).Throw();

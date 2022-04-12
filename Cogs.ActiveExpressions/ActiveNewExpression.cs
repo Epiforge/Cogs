@@ -2,44 +2,12 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveNewExpression :
     ActiveExpression,
-    IEquatable<ActiveNewExpression>
+    IEquatable<ActiveNewExpression>,
+    IObserveActiveExpressions<object?>
 {
     ActiveNewExpression(CachedInstancesKey<NewExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
-
-    protected override void Initialize()
-    {
-        var argumentsList = new List<ActiveExpression>();
-        try
-        {
-            if (instancesKey.Expression.Constructor is { } constructor)
-                fastConstructor = FastConstructorInfo.Get(constructor);
-            var newExpressionArguments = instancesKey.Expression.Arguments;
-            for (int i = 0, ii = newExpressionArguments.Count; i < ii; ++i)
-            {
-                var newExpressionArgument = newExpressionArguments[i];
-                var argument = Create(newExpressionArgument, options, IsDeferringEvaluation);
-                argument.PropertyChanged += ArgumentPropertyChanged;
-                argumentsList.Add(argument);
-            }
-            arguments = new EquatableList<ActiveExpression>(argumentsList);
-            constructorParameterTypes = new EquatableList<Type>(arguments.Select(argument => argument.Type).ToList());
-            EvaluateIfNotDeferred();
-        }
-        catch (Exception ex)
-        {
-            DisposeValueIfNecessaryAndPossible();
-            for (int i = 0, ii = argumentsList.Count; i < ii; ++i)
-            {
-                var argument = argumentsList[i];
-                argument.PropertyChanged -= ArgumentPropertyChanged;
-                argument.Dispose();
-            }
-            ExceptionDispatchInfo.Capture(ex).Throw();
-            throw;
-        }
-    }
 
     EquatableList<ActiveExpression> arguments;
     EquatableList<Type> constructorParameterTypes;
@@ -47,7 +15,7 @@ class ActiveNewExpression :
     FastConstructorInfo? fastConstructor;
     readonly CachedInstancesKey<NewExpression> instancesKey;
 
-    void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>
         Evaluate();
 
     protected override bool Dispose(bool disposing)
@@ -65,7 +33,7 @@ class ActiveNewExpression :
             for (int i = 0, ii = arguments.Count; i < ii; ++i)
             {
                 var argument = arguments[i];
-                argument.PropertyChanged -= ArgumentPropertyChanged;
+                argument.RemoveActiveExpressionObserver(this);
                 argument.Dispose();
             }
         }
@@ -99,6 +67,39 @@ class ActiveNewExpression :
 
     protected override bool GetShouldValueBeDisposed() =>
         ApplicableOptions.IsConstructedTypeDisposed(Type, constructorParameterTypes);
+
+    protected override void Initialize()
+    {
+        var argumentsList = new List<ActiveExpression>();
+        try
+        {
+            if (instancesKey.Expression.Constructor is { } constructor)
+                fastConstructor = FastConstructorInfo.Get(constructor);
+            var newExpressionArguments = instancesKey.Expression.Arguments;
+            for (int i = 0, ii = newExpressionArguments.Count; i < ii; ++i)
+            {
+                var newExpressionArgument = newExpressionArguments[i];
+                var argument = Create(newExpressionArgument, options, IsDeferringEvaluation);
+                argument.AddActiveExpressionOserver(this);
+                argumentsList.Add(argument);
+            }
+            arguments = new EquatableList<ActiveExpression>(argumentsList);
+            constructorParameterTypes = new EquatableList<Type>(arguments.Select(argument => argument.Type).ToList());
+            EvaluateIfNotDeferred();
+        }
+        catch (Exception ex)
+        {
+            DisposeValueIfNecessaryAndPossible();
+            for (int i = 0, ii = argumentsList.Count; i < ii; ++i)
+            {
+                var argument = argumentsList[i];
+                argument.RemoveActiveExpressionObserver(this);
+                argument.Dispose();
+            }
+            ExceptionDispatchInfo.Capture(ex).Throw();
+            throw;
+        }
+    }
 
     public override string ToString() =>
         $"new {Type.FullName}({string.Join(", ", arguments.Select(argument => $"{argument}"))}) {ToStringSuffix}";

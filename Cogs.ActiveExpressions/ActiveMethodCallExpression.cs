@@ -2,7 +2,8 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveMethodCallExpression :
     ActiveExpression,
-    IEquatable<ActiveMethodCallExpression>
+    IEquatable<ActiveMethodCallExpression>,
+    IObserveActiveExpressions<object?>
 {
     ActiveMethodCallExpression(CachedInstancesKey<MethodCallExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation) =>
@@ -15,7 +16,7 @@ class ActiveMethodCallExpression :
     MethodInfo? method;
     ActiveExpression? @object;
 
-    void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>
         Evaluate();
 
     protected override bool Dispose(bool disposing)
@@ -32,14 +33,14 @@ class ActiveMethodCallExpression :
             DisposeValueIfNecessaryAndPossible();
             if (@object is not null)
             {
-                @object.PropertyChanged -= ObjectPropertyChanged;
+                @object.RemoveActiveExpressionObserver(this);
                 @object.Dispose();
             }
             if (arguments is { } nonNullArguments)
                 for (int i = 0, ii = nonNullArguments.Count; i < ii; ++i)
                 {
                     var argument = nonNullArguments[i];
-                    argument.PropertyChanged -= ArgumentPropertyChanged;
+                    argument.RemoveActiveExpressionObserver(this);
                     argument.Dispose();
                 }
         }
@@ -87,14 +88,14 @@ class ActiveMethodCallExpression :
             if (instancesKey.Expression.Object is not null)
             {
                 @object = Create(instancesKey.Expression.Object, options, IsDeferringEvaluation);
-                @object.PropertyChanged += ObjectPropertyChanged;
+                @object.AddActiveExpressionOserver(this);
             }
             var methodCallExpressionArguments = instancesKey.Expression.Arguments;
             for (int i = 0, ii = methodCallExpressionArguments.Count; i < ii; ++i)
             {
                 var methodCallExpressionArgument = methodCallExpressionArguments[i];
                 var argument = Create(methodCallExpressionArgument, options, IsDeferringEvaluation);
-                argument.PropertyChanged += ArgumentPropertyChanged;
+                argument.AddActiveExpressionOserver(this);
                 argumentsList.Add(argument);
             }
             arguments = new EquatableList<ActiveExpression>(argumentsList);
@@ -105,22 +106,19 @@ class ActiveMethodCallExpression :
             DisposeValueIfNecessaryAndPossible();
             if (@object is not null)
             {
-                @object.PropertyChanged -= ObjectPropertyChanged;
+                @object.RemoveActiveExpressionObserver(this);
                 @object.Dispose();
             }
             for (int i = 0, ii = argumentsList.Count; i < ii; ++i)
             {
                 var argument = argumentsList[i];
-                argument.PropertyChanged -= ArgumentPropertyChanged;
+                argument.RemoveActiveExpressionObserver(this);
                 argument.Dispose();
             }
             ExceptionDispatchInfo.Capture(ex).Throw();
             throw;
         }
     }
-
-    void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
 
     public override string ToString() =>
         $"{@object?.ToString() ?? method?.DeclaringType.FullName}.{method?.Name}({string.Join(", ", arguments?.Select(argument => $"{argument}"))}) {ToStringSuffix}";

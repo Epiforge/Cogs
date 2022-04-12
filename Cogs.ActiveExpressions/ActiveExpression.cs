@@ -5,7 +5,8 @@ namespace Cogs.ActiveExpressions;
 /// Provides the base class from which the classes that represent active expression tree nodes are derived; use <see cref="Create{TResult}(LambdaExpression, object[])"/> or one of its overloads to create an active expression
 /// </summary>
 public abstract class ActiveExpression :
-    SyncDisposable
+    SyncDisposable,
+    IObservableActiveExpression<object?>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ActiveExpression"/> class
@@ -53,6 +54,8 @@ public abstract class ActiveExpression :
     readonly object initializationAccess = new();
     Exception? initializationException;
     bool isInitialized = false;
+    readonly List<IObserveActiveExpressions<object?>> observers = new();
+    readonly object observersAccess = new();
     object? val;
     readonly FastEqualityComparer valueEqualityComparer;
 
@@ -71,10 +74,14 @@ public abstract class ActiveExpression :
             EvaluateIfDeferred();
             return fault;
         }
-        protected set
+        set
         {
-            SetBackedProperty(ref val, in defaultValue, valueChangingEventArgs, valueChangedEventArgs);
-            SetBackedProperty(ref fault, in value, faultChangingEventArgs, faultChangedEventArgs);
+            var oldValue = val;
+            var oldFault = fault;
+            var valueChanged = SetBackedProperty(ref val, in defaultValue, valueChangingEventArgs, valueChangedEventArgs);
+            var faultChanged = SetBackedProperty(ref fault, in value, faultChangingEventArgs, faultChangedEventArgs);
+            if (valueChanged || faultChanged)
+                NotifyObservers(oldValue, val, oldFault, fault);
         }
     }
 
@@ -110,10 +117,13 @@ public abstract class ActiveExpression :
             EvaluateIfDeferred();
             return val;
         }
-        protected set
+        set
         {
-            SetBackedProperty(ref fault, null, faultChangingEventArgs, faultChangedEventArgs);
-            if (!valueEqualityComparer.Equals(value, val))
+            var oldValue = val;
+            var oldFault = fault;
+            var faultChanged = SetBackedProperty(ref fault, null, faultChangingEventArgs, faultChangedEventArgs);
+            var valueChanged = !valueEqualityComparer.Equals(value, val);
+            if (valueChanged)
             {
                 var previousValue = val;
                 OnPropertyChanging(valueChangingEventArgs);
@@ -121,7 +131,23 @@ public abstract class ActiveExpression :
                 OnPropertyChanged(valueChangedEventArgs);
                 DisposeIfNecessaryAndPossible(previousValue);
             }
+            if (valueChanged || faultChanged)
+                NotifyObservers(oldValue, val, oldFault, fault);
         }
+    }
+
+    /// <inheritdoc/>
+    public void AddActiveExpressionOserver(IObserveActiveExpressions<object?> observer)
+    {
+        lock (observersAccess)
+            observers.Add(observer);
+    }
+
+    void NotifyObservers(object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
+    {
+        lock (observersAccess)
+            for (int i = 0, ii = observers.Count; i < ii; ++i)
+                observers[i].ActiveExpressionChanged(this, oldValue, newValue, oldFault, newFault);
     }
 
     void DisposeIfNecessaryAndPossible(object? value)
@@ -203,6 +229,13 @@ public abstract class ActiveExpression :
     /// Called after an active expression is created in order to initialize it
     /// </summary>
     protected abstract void Initialize();
+
+    /// <inheritdoc/>
+    public void RemoveActiveExpressionObserver(IObserveActiveExpressions<object?> observer)
+    {
+        lock (observersAccess)
+            observers.Remove(observer);
+    }
 
     /// <summary>
     /// Attempts to get this node's value if its evaluation is not deferred
@@ -646,10 +679,12 @@ public abstract class ActiveExpression :
 /// Represents an active evaluation of a lambda expression
 /// </summary>
 /// <typeparam name="TResult">The type of the value returned by the lambda expression upon which this active expression is based</typeparam>
-public class ActiveExpression<TResult> :
+public sealed class ActiveExpression<TResult> :
     SyncDisposable,
     IActiveExpression<TResult>,
-    IEquatable<ActiveExpression<TResult>>
+    IEquatable<ActiveExpression<TResult>>,
+    IObservableActiveExpression<TResult>,
+    IObserveActiveExpressions<object?>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, EquatableList<object?> arguments)
     {
@@ -658,13 +693,15 @@ public class ActiveExpression<TResult> :
         this.arguments = arguments;
         fault = this.activeExpression.Fault;
         val = this.activeExpression.Value is TResult value ? value : default;
-        this.activeExpression.PropertyChanged += ExpressionPropertyChanged;
+        this.activeExpression.AddActiveExpressionOserver(this);
     }
 
     readonly ActiveExpression activeExpression;
     readonly EquatableList<object?> arguments;
     int disposalCount;
     Exception? fault;
+    readonly List<IObserveActiveExpressions<TResult>> observers = new();
+    readonly object observersAccess = new();
     TResult? val;
 
     /// <summary>
@@ -696,6 +733,27 @@ public class ActiveExpression<TResult> :
         private set => SetBackedProperty(ref val, in value);
     }
 
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
+    {
+        if (ReferenceEquals(activeExpression, this.activeExpression))
+        {
+            Fault = newFault;
+            var myOldValue = val;
+            var myNewValue = newValue is TResult typedValue ? typedValue : default;
+            Value = myNewValue;
+            lock (observersAccess)
+                for (int i = 0, ii = observers.Count; i < ii; ++i)
+                    observers[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void AddActiveExpressionOserver(IObserveActiveExpressions<TResult> observer)
+    {
+        lock (observersAccess)
+            observers.Add(observer);
+    }
+
     /// <summary>
     /// Frees, releases, or resets unmanaged resources
     /// </summary>
@@ -709,7 +767,7 @@ public class ActiveExpression<TResult> :
                 return false;
             instances.Remove(new InstancesKey(activeExpression, arguments));
         }
-        activeExpression.PropertyChanged -= ExpressionPropertyChanged;
+        activeExpression.RemoveActiveExpressionObserver(this);
         activeExpression.Dispose();
         return true;
     }
@@ -730,20 +788,19 @@ public class ActiveExpression<TResult> :
     public bool Equals(ActiveExpression<TResult> other) =>
         other is null ? throw new ArgumentNullException(nameof(other)) : activeExpression == other.activeExpression;
 
-    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(Fault))
-            Fault = activeExpression.Fault;
-        else if (e.PropertyName == nameof(Value))
-            Value = activeExpression.Value is TResult typedValue ? typedValue : default;
-    }
-
     /// <summary>
     /// Gets the hash code for this active expression
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
     public override int GetHashCode() =>
         HashCode.Combine(typeof(ActiveExpression<TResult>), activeExpression);
+
+    /// <inheritdoc/>
+    public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
+    {
+        lock (observersAccess)
+            observers.Remove(observer);
+    }
 
     /// <summary>
     /// Returns a string that represents this active expression
@@ -798,10 +855,12 @@ public class ActiveExpression<TResult> :
 /// </summary>
 /// <typeparam name="TArg">The type of the argument passed to the lambda expression</typeparam>
 /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
-public class ActiveExpression<TArg, TResult> :
+public sealed class ActiveExpression<TArg, TResult> :
     SyncDisposable,
     IActiveExpression<TArg, TResult>,
-    IEquatable<ActiveExpression<TArg, TResult>>
+    IEquatable<ActiveExpression<TArg, TResult>>,
+    IObservableActiveExpression<TResult>,
+    IObserveActiveExpressions<object?>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg arg)
     {
@@ -811,13 +870,15 @@ public class ActiveExpression<TArg, TResult> :
         Arg = arg;
         fault = this.activeExpression.Fault;
         val = this.activeExpression.Value is TResult value ? value : default;
-        this.activeExpression.PropertyChanged += ExpressionPropertyChanged;
+        this.activeExpression.AddActiveExpressionOserver(this);
     }
 
     readonly ActiveExpression activeExpression;
     readonly EquatableList<object?> arguments;
     int disposalCount;
     Exception? fault;
+    readonly List<IObserveActiveExpressions<TResult>> observers = new();
+    readonly object observersAccess = new();
     TResult? val;
 
     /// <summary>
@@ -854,6 +915,27 @@ public class ActiveExpression<TArg, TResult> :
         private set => SetBackedProperty(ref val, in value);
     }
 
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
+    {
+        if (ReferenceEquals(activeExpression, this.activeExpression))
+        {
+            Fault = newFault;
+            var myOldValue = val;
+            var myNewValue = newValue is TResult typedValue ? typedValue : default;
+            Value = myNewValue;
+            lock (observersAccess)
+                for (int i = 0, ii = observers.Count; i < ii; ++i)
+                    observers[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void AddActiveExpressionOserver(IObserveActiveExpressions<TResult> observer)
+    {
+        lock (observersAccess)
+            observers.Add(observer);
+    }
+
     /// <summary>
     /// Frees, releases, or resets unmanaged resources
     /// </summary>
@@ -867,7 +949,7 @@ public class ActiveExpression<TArg, TResult> :
                 return false;
             instances.Remove(new InstancesKey(activeExpression, Arg));
         }
-        activeExpression.PropertyChanged -= ExpressionPropertyChanged;
+        activeExpression.RemoveActiveExpressionObserver(this);
         activeExpression.Dispose();
         return true;
     }
@@ -888,20 +970,19 @@ public class ActiveExpression<TArg, TResult> :
     public bool Equals(ActiveExpression<TArg, TResult> other) =>
         other is null ? throw new ArgumentNullException(nameof(other)) : activeExpression == other.activeExpression;
 
-    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(Fault))
-            Fault = activeExpression.Fault;
-        else if (e.PropertyName == nameof(Value))
-            Value = activeExpression.Value is TResult typedValue ? typedValue : default;
-    }
-
     /// <summary>
     /// Gets the hash code for this active expression
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
     public override int GetHashCode() =>
         HashCode.Combine(typeof(ActiveExpression<TArg, TResult>), activeExpression);
+
+    /// <inheritdoc/>
+    public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
+    {
+        lock (observersAccess)
+            observers.Remove(observer);
+    }
 
     /// <summary>
     /// Returns a string that represents this active expression
@@ -957,10 +1038,12 @@ public class ActiveExpression<TArg, TResult> :
 /// <typeparam name="TArg2">The type of the second argument passed to the lambda expression</typeparam>
 /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
 [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
-public class ActiveExpression<TArg1, TArg2, TResult> :
+public sealed class ActiveExpression<TArg1, TArg2, TResult> :
     SyncDisposable,
     IActiveExpression<TArg1, TArg2, TResult>,
-    IEquatable<ActiveExpression<TArg1, TArg2, TResult>>
+    IEquatable<ActiveExpression<TArg1, TArg2, TResult>>,
+    IObservableActiveExpression<TResult>,
+    IObserveActiveExpressions<object?>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2)
     {
@@ -971,13 +1054,15 @@ public class ActiveExpression<TArg1, TArg2, TResult> :
         Arg2 = arg2;
         fault = this.activeExpression.Fault;
         val = this.activeExpression.Value is TResult value ? value : default;
-        this.activeExpression.PropertyChanged += ExpressionPropertyChanged;
+        this.activeExpression.AddActiveExpressionOserver(this);
     }
 
     readonly ActiveExpression activeExpression;
     readonly EquatableList<object?> arguments;
     int disposalCount;
     Exception? fault;
+    readonly List<IObserveActiveExpressions<TResult>> observers = new();
+    readonly object observersAccess = new();
     TResult? val;
 
     /// <summary>
@@ -1019,6 +1104,27 @@ public class ActiveExpression<TArg1, TArg2, TResult> :
         private set => SetBackedProperty(ref val, in value);
     }
 
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
+    {
+        if (ReferenceEquals(activeExpression, this.activeExpression))
+        {
+            Fault = newFault;
+            var myOldValue = val;
+            var myNewValue = newValue is TResult typedValue ? typedValue : default;
+            Value = myNewValue;
+            lock (observersAccess)
+                for (int i = 0, ii = observers.Count; i < ii; ++i)
+                    observers[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void AddActiveExpressionOserver(IObserveActiveExpressions<TResult> observer)
+    {
+        lock (observersAccess)
+            observers.Add(observer);
+    }
+
     /// <summary>
     /// Frees, releases, or resets unmanaged resources
     /// </summary>
@@ -1032,7 +1138,7 @@ public class ActiveExpression<TArg1, TArg2, TResult> :
                 return false;
             instances.Remove(new InstancesKey(activeExpression, Arg1, Arg2));
         }
-        activeExpression.PropertyChanged -= ExpressionPropertyChanged;
+        activeExpression.RemoveActiveExpressionObserver(this);
         activeExpression.Dispose();
         return true;
     }
@@ -1053,20 +1159,19 @@ public class ActiveExpression<TArg1, TArg2, TResult> :
     public bool Equals(ActiveExpression<TArg1, TArg2, TResult> other) =>
         other is null ? throw new ArgumentNullException(nameof(other)) : activeExpression == other.activeExpression;
 
-    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(Fault))
-            Fault = activeExpression.Fault;
-        else if (e.PropertyName == nameof(Value))
-            Value = activeExpression.Value is TResult typedValue ? typedValue : default;
-    }
-
     /// <summary>
     /// Gets the hash code for this active expression
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
     public override int GetHashCode() =>
         HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TResult>), activeExpression);
+
+    /// <inheritdoc/>
+    public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
+    {
+        lock (observersAccess)
+            observers.Remove(observer);
+    }
 
     /// <summary>
     /// Returns a string that represents this active expression
@@ -1123,10 +1228,12 @@ public class ActiveExpression<TArg1, TArg2, TResult> :
 /// <typeparam name="TArg3">The type of the third argument passed to the lambda expression</typeparam>
 /// <typeparam name="TResult">The type of the value returned by the expression upon which this active expression is based</typeparam>
 [SuppressMessage("Code Analysis", "CA1005: Avoid excessive parameters on generic types")]
-public class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
+public sealed class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
     SyncDisposable,
     IActiveExpression<TArg1, TArg2, TArg3, TResult>,
-    IEquatable<ActiveExpression<TArg1, TArg2, TArg3, TResult>>
+    IEquatable<ActiveExpression<TArg1, TArg2, TArg3, TResult>>,
+    IObservableActiveExpression<TResult>,
+    IObserveActiveExpressions<object?>
 {
     ActiveExpression(ActiveExpression activeExpression, ActiveExpressionOptions? options, TArg1 arg1, TArg2 arg2, TArg3 arg3)
     {
@@ -1138,13 +1245,15 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
         Arg3 = arg3;
         fault = this.activeExpression.Fault;
         val = this.activeExpression.Value is TResult value ? value : default;
-        this.activeExpression.PropertyChanged += ExpressionPropertyChanged;
+        this.activeExpression.AddActiveExpressionOserver(this);
     }
 
     readonly ActiveExpression activeExpression;
     readonly EquatableList<object?> arguments;
     int disposalCount;
     Exception? fault;
+    readonly List<IObserveActiveExpressions<TResult>> observers = new();
+    readonly object observersAccess = new();
     TResult? val;
 
     /// <summary>
@@ -1191,6 +1300,27 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
         private set => SetBackedProperty(ref val, in value);
     }
 
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
+    {
+        if (ReferenceEquals(activeExpression, this.activeExpression))
+        {
+            Fault = newFault;
+            var myOldValue = val;
+            var myNewValue = newValue is TResult typedValue ? typedValue : default;
+            Value = myNewValue;
+            lock (observersAccess)
+                for (int i = 0, ii = observers.Count; i < ii; ++i)
+                    observers[i].ActiveExpressionChanged(this, myOldValue, myNewValue, oldFault, newFault);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void AddActiveExpressionOserver(IObserveActiveExpressions<TResult> observer)
+    {
+        lock (observersAccess)
+            observers.Add(observer);
+    }
+
     /// <summary>
     /// Frees, releases, or resets unmanaged resources
     /// </summary>
@@ -1204,7 +1334,7 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
                 return false;
             instances.Remove(new InstancesKey(activeExpression, Arg1, Arg2, Arg3));
         }
-        activeExpression.PropertyChanged -= ExpressionPropertyChanged;
+        activeExpression.RemoveActiveExpressionObserver(this);
         activeExpression.Dispose();
         return true;
     }
@@ -1225,20 +1355,19 @@ public class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
     public bool Equals(ActiveExpression<TArg1, TArg2, TArg3, TResult> other) =>
         other is null ? throw new ArgumentNullException(nameof(other)) : activeExpression == other.activeExpression;
 
-    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(Fault))
-            Fault = activeExpression.Fault;
-        else if (e.PropertyName == nameof(Value))
-            Value = activeExpression.Value is TResult typedValue ? typedValue : default;
-    }
-
     /// <summary>
     /// Gets the hash code for this active expression
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
     public override int GetHashCode() =>
         HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TArg3, TResult>), activeExpression);
+
+    /// <inheritdoc/>
+    public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
+    {
+        lock (observersAccess)
+            observers.Remove(observer);
+    }
 
     /// <summary>
     /// Returns a string that represents this active expression

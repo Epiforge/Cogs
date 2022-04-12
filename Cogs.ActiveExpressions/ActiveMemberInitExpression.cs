@@ -2,7 +2,8 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveMemberInitExpression :
     ActiveExpression,
-    IEquatable<ActiveMemberInitExpression>
+    IEquatable<ActiveMemberInitExpression>,
+    IObserveActiveExpressions<object?>
 {
     public ActiveMemberInitExpression(CachedInstancesKey<MemberInitExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation)
@@ -31,13 +32,13 @@ class ActiveMemberInitExpression :
             DisposeValueIfNecessaryAndPossible();
             if (newExpression is not null)
             {
-                newExpression.PropertyChanged -= NewExpressionPropertyChanged;
+                newExpression.RemoveActiveExpressionObserver(this);
                 newExpression.Dispose();
             }
             if (memberAssignmentExpressions is not null)
                 foreach (var memberAssignmentExpression in memberAssignmentExpressions.Keys)
                 {
-                    memberAssignmentExpression.PropertyChanged -= MemberAssignmentExpressionPropertyChanged;
+                    memberAssignmentExpression.RemoveActiveExpressionObserver(this);
                     memberAssignmentExpression.Dispose();
                 }
         }
@@ -102,7 +103,7 @@ class ActiveMemberInitExpression :
         try
         {
             newExpression = Create(memberInitExpression.NewExpression, options, IsDeferringEvaluation);
-            newExpression.PropertyChanged += NewExpressionPropertyChanged;
+            newExpression.AddActiveExpressionOserver(this);
             var bindings = memberInitExpression.Bindings;
             for (int i = 0, ii = bindings.Count; i < ii; ++i)
             {
@@ -111,7 +112,7 @@ class ActiveMemberInitExpression :
                 {
                     var memberAssignmentExpression = Create(memberAssignmentBinding.Expression, options, IsDeferringEvaluation);
                     memberAssignmentExpressions.Add(memberAssignmentExpression, memberAssignmentBinding.Member);
-                    memberAssignmentExpression.PropertyChanged += MemberAssignmentExpressionPropertyChanged;
+                    memberAssignmentExpression.AddActiveExpressionOserver(this);
                 }
                 else
                     throw new NotSupportedException("Only member assignment bindings are supported in member init expressions");
@@ -124,12 +125,12 @@ class ActiveMemberInitExpression :
             DisposeValueIfNecessaryAndPossible();
             if (newExpression is not null)
             {
-                newExpression.PropertyChanged -= NewExpressionPropertyChanged;
+                newExpression.RemoveActiveExpressionObserver(this);
                 newExpression.Dispose();
             }
             foreach (var memberAssignmentExpression in memberAssignmentExpressions.Keys)
             {
-                memberAssignmentExpression.PropertyChanged -= MemberAssignmentExpressionPropertyChanged;
+                memberAssignmentExpression.RemoveActiveExpressionObserver(this);
                 memberAssignmentExpression.Dispose();
             }
             ExceptionDispatchInfo.Capture(ex).Throw();
@@ -137,29 +138,33 @@ class ActiveMemberInitExpression :
         }
     }
 
-    void MemberAssignmentExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
     {
-        if (e.PropertyName == nameof(Fault))
+        if (ReferenceEquals(activeExpression, newExpression))
             Evaluate();
-        else if (e.PropertyName == nameof(Value))
+        else if (activeExpression is ActiveExpression memberAssignmentExpression && (memberAssignmentExpressions?.TryGetValue(memberAssignmentExpression, out var member) ?? false))
         {
-            if (TryGetUndeferredValue(out var val) && val is not null && sender is ActiveExpression memberAssignmentExpression)
-            {
-                var member = memberAssignmentExpressions?[memberAssignmentExpression];
-                if (member is FieldInfo field)
-                    field.SetValue(val, memberAssignmentExpression.Value);
-                else if (member is PropertyInfo property)
-                    FastMethodInfo.Get(property.SetMethod).Invoke(val, new object?[] { memberAssignmentExpression.Value });
-                else
-                    throw new NotSupportedException("Cannot handle member that is not a field or property");
-            }
+            if (newFault is not null)
+                Fault = newFault;
             else
-                Evaluate();
+            {
+                var intactValue = TryGetUndeferredValue(out var val) && val is not null;
+                if (!intactValue)
+                    val = newExpression?.Value;
+                if (val is not null)
+                {
+                    if (member is FieldInfo field)
+                        field.SetValue(val, memberAssignmentExpression.Value);
+                    else if (member is PropertyInfo property)
+                        FastMethodInfo.Get(property.SetMethod).Invoke(val, new object?[] { memberAssignmentExpression.Value });
+                    else
+                        throw new NotSupportedException("Cannot handle member that is not a field or property");
+                }
+                if (!intactValue)
+                    Value = val;
+            }
         }
     }
-
-    void NewExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
 
     public override string ToString() =>
         $"{newExpression} {{ {string.Join(", ", memberAssignmentExpressions.Select(kv => $"{kv.Value.Name} = {kv.Key}"))} }} {ToStringSuffix}";

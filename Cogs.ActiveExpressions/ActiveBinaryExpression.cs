@@ -2,7 +2,8 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveBinaryExpression :
     ActiveExpression,
-    IEquatable<ActiveBinaryExpression>
+    IEquatable<ActiveBinaryExpression>,
+    IObserveActiveExpressions<object?>
 {
     protected ActiveBinaryExpression(CachedInstancesKey<BinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation, bool getDelegate = true, bool evaluateIfNotDeferred = true) :
         base(instancesKey.Expression, options, deferEvaluation)
@@ -22,6 +23,9 @@ class ActiveBinaryExpression :
     MethodInfo? method;
     protected ActiveExpression? right;
 
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>
+        Evaluate();
+
     protected override bool Dispose(bool disposing)
     {
         var result = false;
@@ -36,12 +40,12 @@ class ActiveBinaryExpression :
             DisposeValueIfNecessaryAndPossible();
             if (left is not null)
             {
-                left.PropertyChanged -= LeftPropertyChanged;
+                left.RemoveActiveExpressionObserver(this);
                 left.Dispose();
             }
             if (right is not null)
             {
-                right.PropertyChanged -= RightPropertyChanged;
+                right.RemoveActiveExpressionObserver(this);
                 right.Dispose();
             }
         }
@@ -86,7 +90,7 @@ class ActiveBinaryExpression :
         try
         {
             left = Create(instancesKey.Expression.Left, options, IsDeferringEvaluation);
-            left.PropertyChanged += LeftPropertyChanged;
+            left.AddActiveExpressionOserver(this);
             switch (instancesKey.Expression.NodeType)
             {
                 case ExpressionType.AndAlso when instancesKey.Expression.Type == typeof(bool):
@@ -98,7 +102,7 @@ class ActiveBinaryExpression :
                     right = Create(instancesKey.Expression.Right, options, IsDeferringEvaluation);
                     break;
             }
-            right.PropertyChanged += RightPropertyChanged;
+            right.AddActiveExpressionOserver(this);
             isLiftedToNull = instancesKey.Expression.IsLiftedToNull;
             method = instancesKey.Expression.Method;
             if (getDelegate)
@@ -111,24 +115,18 @@ class ActiveBinaryExpression :
             DisposeValueIfNecessaryAndPossible();
             if (left is not null)
             {
-                left.PropertyChanged -= LeftPropertyChanged;
+                left.RemoveActiveExpressionObserver(this);
                 left.Dispose();
             }
             if (right is not null)
             {
-                right.PropertyChanged -= RightPropertyChanged;
+                right.RemoveActiveExpressionObserver(this);
                 right.Dispose();
             }
             ExceptionDispatchInfo.Capture(ex).Throw();
             throw;
         }
     }
-
-    void LeftPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
-
-    void RightPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
 
     public override string ToString() =>
         $"{GetOperatorExpressionSyntax(NodeType, Type, left, right)} {ToStringSuffix}";

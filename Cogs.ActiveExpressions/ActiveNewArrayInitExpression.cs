@@ -2,46 +2,20 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveNewArrayInitExpression :
     ActiveExpression,
-    IEquatable<ActiveNewArrayInitExpression>
+    IEquatable<ActiveNewArrayInitExpression>,
+    IObserveActiveExpressions<object?>
 {
     ActiveNewArrayInitExpression(CachedInstancesKey<NewArrayExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
-    protected override void Initialize()
-    {
-        var initializersList = new List<ActiveExpression>();
-        try
-        {
-            elementType = instancesKey.Expression.Type.GetElementType();
-            var newArrayExpressionInitializers = instancesKey.Expression.Expressions;
-            for (int i = 0, ii = newArrayExpressionInitializers.Count; i < ii; ++i)
-            {
-                var newArrayExpressionInitializer = newArrayExpressionInitializers[i];
-                var initializer = Create(newArrayExpressionInitializer, options, IsDeferringEvaluation);
-                initializer.PropertyChanged += InitializerPropertyChanged;
-                initializersList.Add(initializer);
-            }
-            initializers = new EquatableList<ActiveExpression>(initializersList);
-            EvaluateIfNotDeferred();
-        }
-        catch (Exception ex)
-        {
-            for (int i = 0, ii = initializersList.Count; i < ii; ++i)
-            {
-                var initializer = initializersList[i];
-                initializer.PropertyChanged -= InitializerPropertyChanged;
-                initializer.Dispose();
-            }
-            ExceptionDispatchInfo.Capture(ex).Throw();
-            throw;
-        }
-    }
-
     int disposalCount;
     Type? elementType;
     EquatableList<ActiveExpression>? initializers;
     readonly CachedInstancesKey<NewArrayExpression> instancesKey;
+
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>
+        Evaluate();
 
     protected override bool Dispose(bool disposing)
     {
@@ -56,7 +30,7 @@ class ActiveNewArrayInitExpression :
             for (int i = 0, ii = nonNullInitializers.Count; i < ii; ++i)
             {
                 var initializer = nonNullInitializers[i];
-                initializer.PropertyChanged -= InitializerPropertyChanged;
+                initializer.RemoveActiveExpressionObserver(this);
                 initializer.Dispose();
             }
         return result;
@@ -85,8 +59,35 @@ class ActiveNewArrayInitExpression :
     public override int GetHashCode() =>
         HashCode.Combine(typeof(ActiveNewArrayInitExpression), elementType, initializers, options);
 
-    void InitializerPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
+    protected override void Initialize()
+    {
+        var initializersList = new List<ActiveExpression>();
+        try
+        {
+            elementType = instancesKey.Expression.Type.GetElementType();
+            var newArrayExpressionInitializers = instancesKey.Expression.Expressions;
+            for (int i = 0, ii = newArrayExpressionInitializers.Count; i < ii; ++i)
+            {
+                var newArrayExpressionInitializer = newArrayExpressionInitializers[i];
+                var initializer = Create(newArrayExpressionInitializer, options, IsDeferringEvaluation);
+                initializer.AddActiveExpressionOserver(this);
+                initializersList.Add(initializer);
+            }
+            initializers = new EquatableList<ActiveExpression>(initializersList);
+            EvaluateIfNotDeferred();
+        }
+        catch (Exception ex)
+        {
+            for (int i = 0, ii = initializersList.Count; i < ii; ++i)
+            {
+                var initializer = initializersList[i];
+                initializer.RemoveActiveExpressionObserver(this);
+                initializer.Dispose();
+            }
+            ExceptionDispatchInfo.Capture(ex).Throw();
+            throw;
+        }
+    }
 
     public override string ToString() =>
         $"new {elementType?.FullName}[] {{{string.Join(", ", initializers?.Select(initializer => $"{initializer}"))}}} {ToStringSuffix}";

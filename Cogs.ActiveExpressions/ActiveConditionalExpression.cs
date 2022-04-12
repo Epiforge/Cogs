@@ -2,7 +2,8 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveConditionalExpression :
     ActiveExpression,
-    IEquatable<ActiveConditionalExpression>
+    IEquatable<ActiveConditionalExpression>,
+    IObserveActiveExpressions<object?>
 {
     ActiveConditionalExpression(CachedInstancesKey<ConditionalExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation) =>
@@ -13,6 +14,39 @@ class ActiveConditionalExpression :
     ActiveExpression? ifTrue;
     readonly CachedInstancesKey<ConditionalExpression> instancesKey;
     ActiveExpression? test;
+
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
+    {
+        if (ReferenceEquals(activeExpression, test))
+        {
+            if (newFault is not null)
+                Fault = newFault;
+            else if (newValue is bool testValue)
+            {
+                if (testValue)
+                {
+                    if (ifTrue?.Fault is { } trueFault)
+                        Fault = trueFault;
+                    else
+                        Value = ifTrue?.Value;
+                }
+                else
+                {
+                    if (ifFalse?.Fault is { } falseFault)
+                        Fault = falseFault;
+                    else
+                        Value = ifFalse?.Value;
+                }
+            }
+        }
+        else if (test?.Fault is null && test?.Value is bool testValue && testValue == ReferenceEquals(activeExpression, ifTrue))
+        {
+            if (newFault is { } nonNullFault)
+                Fault = nonNullFault;
+            else
+                Value = newValue;
+        }
+    }
 
     protected override bool Dispose(bool disposing)
     {
@@ -27,17 +61,17 @@ class ActiveConditionalExpression :
         {
             if (test is not null)
             {
-                test.PropertyChanged -= TestPropertyChanged;
+                test.RemoveActiveExpressionObserver(this);
                 test.Dispose();
             }
             if (ifTrue is not null)
             {
-                ifTrue.PropertyChanged -= IfTruePropertyChanged;
+                ifTrue.RemoveActiveExpressionObserver(this);
                 ifTrue.Dispose();
             }
             if (ifFalse is not null)
             {
-                ifFalse.PropertyChanged -= IfFalsePropertyChanged;
+                ifFalse.RemoveActiveExpressionObserver(this);
                 ifFalse.Dispose();
             }
         }
@@ -76,84 +110,37 @@ class ActiveConditionalExpression :
     public override int GetHashCode() =>
         HashCode.Combine(typeof(ActiveConditionalExpression), ifFalse, ifTrue, test, options);
 
-    void IfFalsePropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        if (test?.Fault is null && !(test?.Value is bool testBool && testBool))
-        {
-            if (e.PropertyName == nameof(Fault))
-                Fault = ifFalse?.Fault;
-            else if (e.PropertyName == nameof(Value) && ifFalse?.Fault is null)
-                Value = ifFalse?.Value;
-        }
-    }
-
-    void IfTruePropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        if (test?.Fault is null && test?.Value is bool testBool && testBool)
-        {
-            if (e.PropertyName == nameof(Fault))
-                Fault = ifTrue?.Fault;
-            else if (e.PropertyName == nameof(Value) && ifTrue?.Fault is null)
-                Value = ifTrue?.Value;
-        }
-    }
-
     protected override void Initialize()
     {
         try
         {
             test = Create(instancesKey.Expression.Test, options, IsDeferringEvaluation);
-            test.PropertyChanged += TestPropertyChanged;
+            test.AddActiveExpressionOserver(this);
             ifTrue = Create(instancesKey.Expression.IfTrue, options, true);
-            ifTrue.PropertyChanged += IfTruePropertyChanged;
+            ifTrue.AddActiveExpressionOserver(this);
             ifFalse = Create(instancesKey.Expression.IfFalse, options, true);
-            ifFalse.PropertyChanged += IfFalsePropertyChanged;
+            ifFalse.AddActiveExpressionOserver(this);
             EvaluateIfNotDeferred();
         }
         catch (Exception ex)
         {
             if (test is not null)
             {
-                test.PropertyChanged -= TestPropertyChanged;
+                test.RemoveActiveExpressionObserver(this);
                 test.Dispose();
             }
             if (ifTrue is not null)
             {
-                ifTrue.PropertyChanged -= IfTruePropertyChanged;
+                ifTrue.RemoveActiveExpressionObserver(this);
                 ifTrue.Dispose();
             }
             if (ifFalse is not null)
             {
-                ifFalse.PropertyChanged -= IfFalsePropertyChanged;
+                ifFalse.RemoveActiveExpressionObserver(this);
                 ifFalse.Dispose();
             }
             ExceptionDispatchInfo.Capture(ex).Throw();
             throw;
-        }
-    }
-
-    void TestPropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(Fault))
-            Fault = test?.Fault;
-        else if (e.PropertyName == nameof(Value) && test?.Fault is null)
-        {
-            if (test?.Value is bool testBool && testBool)
-            {
-                var ifTrueFault = ifTrue?.Fault;
-                if (ifTrueFault is not null)
-                    Fault = ifTrueFault;
-                else
-                    Value = ifTrue?.Value;
-            }
-            else
-            {
-                var ifFalseFault = ifFalse?.Fault;
-                if (ifFalseFault is not null)
-                    Fault = ifFalseFault;
-                else
-                    Value = ifFalse?.Value;
-            }
         }
     }
 

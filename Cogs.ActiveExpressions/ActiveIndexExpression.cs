@@ -2,7 +2,8 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveIndexExpression :
     ActiveExpression,
-    IEquatable<ActiveIndexExpression>
+    IEquatable<ActiveIndexExpression>,
+    IObserveActiveExpressions<object?>
 {
     ActiveIndexExpression(CachedInstancesKey<IndexExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation) =>
@@ -17,7 +18,7 @@ class ActiveIndexExpression :
     ActiveExpression? @object;
     object? objectValue;
 
-    void ArgumentPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>
         Evaluate();
 
     protected override bool Dispose(bool disposing)
@@ -35,14 +36,14 @@ class ActiveIndexExpression :
             UnsubscribeFromObjectValueNotifications();
             if (@object is not null)
             {
-                @object.PropertyChanged -= ObjectPropertyChanged;
+                @object.RemoveActiveExpressionObserver(this);
                 @object.Dispose();
             }
             if (arguments is { } nonNullArguments)
                 for (int i = 0, ii = nonNullArguments.Count; i < ii; ++i)
                 {
                     var argument = nonNullArguments[i];
-                    argument.PropertyChanged -= ArgumentPropertyChanged;
+                    argument.RemoveActiveExpressionObserver(this);
                     argument.Dispose();
                 }
         }
@@ -98,13 +99,13 @@ class ActiveIndexExpression :
             getMethod = indexer.GetMethod;
             fastGetter = FastMethodInfo.Get(getMethod);
             @object = Create(instancesKey.Expression.Object, options, IsDeferringEvaluation);
-            @object.PropertyChanged += ObjectPropertyChanged;
+            @object.AddActiveExpressionOserver(this);
             var indexExpressionArguments = instancesKey.Expression.Arguments;
             for (int i = 0, ii = indexExpressionArguments.Count; i < ii; ++i)
             {
                 var indexExpressionArgument = indexExpressionArguments[i];
                 var argument = Create(indexExpressionArgument, options, IsDeferringEvaluation);
-                argument.PropertyChanged += ArgumentPropertyChanged;
+                argument.AddActiveExpressionOserver(this);
                 argumentsList.Add(argument);
             }
             arguments = new EquatableList<ActiveExpression>(argumentsList);
@@ -116,22 +117,19 @@ class ActiveIndexExpression :
             UnsubscribeFromObjectValueNotifications();
             if (@object is not null)
             {
-                @object.PropertyChanged -= ObjectPropertyChanged;
+                @object.RemoveActiveExpressionObserver(this);
                 @object.Dispose();
             }
             for (int i = 0, ii = argumentsList.Count; i < ii; ++i)
             {
                 var argument = argumentsList[i];
-                argument.PropertyChanged -= ArgumentPropertyChanged;
+                argument.RemoveActiveExpressionObserver(this);
                 argument.Dispose();
             }
             ExceptionDispatchInfo.Capture(ex).Throw();
             throw;
         }
     }
-
-    void ObjectPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
 
     [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
     void ObjectValueCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)

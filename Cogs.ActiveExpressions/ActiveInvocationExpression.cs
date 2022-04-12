@@ -2,7 +2,8 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveInvocationExpression :
     ActiveExpression,
-    IEquatable<ActiveInvocationExpression>
+    IEquatable<ActiveInvocationExpression>,
+    IObserveActiveExpressions<object?>
 {
     ActiveInvocationExpression(CachedInstancesKey<InvocationExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression.Type, ExpressionType.Invoke, options, deferEvaluation) =>
@@ -14,33 +15,34 @@ class ActiveInvocationExpression :
     int disposalCount;
     readonly CachedInstancesKey<InvocationExpression> instancesKey;
 
-    void ActiveArgumentPropertyChanged(object sender, PropertyChangedEventArgs e)
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
     {
-        if (activeExpression is not null)
-        {
-            activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
-            activeExpression.Dispose();
-            activeExpression = null;
-        }
-        if (activeArguments.All(activeArgument => activeArgument.Fault is null))
-            CreateActiveExpression();
-        else if (!IsDeferringEvaluation)
+        if (ReferenceEquals(activeExpression, this.activeExpression))
             Evaluate();
-    }
-
-    void ActiveDelegateExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        if (activeExpression is not null)
+        else if (ReferenceEquals(activeExpression, activeDelegateExpression))
         {
-            activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
-            activeExpression.Dispose();
-            activeExpression = null;
+            if (this.activeExpression is not null)
+            {
+                this.activeExpression.RemoveActiveExpressionObserver(this);
+                this.activeExpression.Dispose();
+                this.activeExpression = null;
+            }
+            CreateActiveExpression();
         }
-        CreateActiveExpression();
+        else if (activeArguments?.Contains(activeExpression) ?? false)
+        {
+            if (this.activeExpression is not null)
+            {
+                this.activeExpression.RemoveActiveExpressionObserver(this);
+                this.activeExpression.Dispose();
+                this.activeExpression = null;
+            }
+            if (activeArguments.All(activeArgument => activeArgument.Fault is null))
+                CreateActiveExpression();
+            else if (!IsDeferringEvaluation)
+                Evaluate();
+        }
     }
-
-    void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
 
     void CreateActiveExpression()
     {
@@ -59,13 +61,13 @@ class ActiveInvocationExpression :
                 if (activeDelegateExpression.Value is Delegate @delegate)
                     activeExpression = Create(@delegate.Target is null ? Expression.Call(@delegate.Method, instancesKey.Expression.Arguments) : Expression.Call(Expression.Constant(@delegate.Target), @delegate.Method, instancesKey.Expression.Arguments), options, IsDeferringEvaluation);
                 if (activeDelegateExpressionCreated)
-                    activeDelegateExpression.PropertyChanged += ActiveDelegateExpressionPropertyChanged;
+                    activeDelegateExpression.AddActiveExpressionOserver(this);
                 break;
             default:
                 throw new NotSupportedException();
         }
         if (activeExpression is not null)
-            activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
+            activeExpression.AddActiveExpressionOserver(this);
         EvaluateIfNotDeferred();
     }
 
@@ -82,19 +84,19 @@ class ActiveInvocationExpression :
         {
             if (activeExpression is not null)
             {
-                activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
+                activeExpression.RemoveActiveExpressionObserver(this);
                 activeExpression.Dispose();
             }
             if (activeDelegateExpression is not null)
             {
-                activeDelegateExpression.PropertyChanged -= ActiveDelegateExpressionPropertyChanged;
+                activeDelegateExpression.RemoveActiveExpressionObserver(this);
                 activeDelegateExpression.Dispose();
             }
             if (activeArguments is not null)
                 for (int i = 0, ii = activeArguments.Count; i < ii; ++i)
                 {
                     var activeArgument = activeArguments[i];
-                    activeArgument.PropertyChanged -= ActiveArgumentPropertyChanged;
+                    activeArgument.RemoveActiveExpressionObserver(this);
                     activeArgument.Dispose();
                 }
         }
@@ -132,7 +134,7 @@ class ActiveInvocationExpression :
                 {
                     var invocationExpressionArgument = invocationExpressionArguments[i];
                     var activeArgument = Create(invocationExpressionArgument, options, IsDeferringEvaluation);
-                    activeArgument.PropertyChanged += ActiveArgumentPropertyChanged;
+                    activeArgument.AddActiveExpressionOserver(this);
                     activeArgumentsList.Add(activeArgument);
                 }
                 activeArguments = activeArgumentsList.ToImmutableArray();
@@ -143,18 +145,18 @@ class ActiveInvocationExpression :
         {
             if (activeExpression is not null)
             {
-                activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
+                activeExpression.RemoveActiveExpressionObserver(this);
                 activeExpression.Dispose();
             }
             if (activeDelegateExpression is not null)
             {
-                activeDelegateExpression.PropertyChanged -= ActiveDelegateExpressionPropertyChanged;
+                activeDelegateExpression.RemoveActiveExpressionObserver(this);
                 activeDelegateExpression.Dispose();
             }
             for (int i = 0, ii = activeArgumentsList.Count; i < ii; ++i)
             {
                 var activeArgument = activeArgumentsList[i];
-                activeArgument.PropertyChanged -= ActiveArgumentPropertyChanged;
+                activeArgument.RemoveActiveExpressionObserver(this);
                 activeArgument.Dispose();
             }
             ExceptionDispatchInfo.Capture(ex).Throw();

@@ -2,7 +2,8 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveMemberExpression :
     ActiveExpression,
-    IEquatable<ActiveMemberExpression>
+    IEquatable<ActiveMemberExpression>,
+    IObserveActiveExpressions<object?>
 {
     ActiveMemberExpression(CachedInstancesKey<MemberExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation) =>
@@ -18,6 +19,9 @@ class ActiveMemberExpression :
     readonly CachedInstancesKey<MemberExpression> instancesKey;
     bool isFieldOfCompilerGeneratedType;
     MemberInfo? member;
+
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>
+        Evaluate();
 
     protected override bool Dispose(bool disposing)
     {
@@ -37,7 +41,7 @@ class ActiveMemberExpression :
                 UnsubscribeFromValueNotifications();
             if (expression is not null)
             {
-                expression.PropertyChanged -= ExpressionPropertyChanged;
+                expression.RemoveActiveExpressionObserver(this);
                 expression.Dispose();
             }
         }
@@ -84,9 +88,6 @@ class ActiveMemberExpression :
         }
     }
 
-    void ExpressionPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
-
     void ExpressionValuePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == member?.Name)
@@ -106,7 +107,7 @@ class ActiveMemberExpression :
             if (instancesKey.Expression.Expression is not null)
             {
                 expression = Create(instancesKey.Expression.Expression, options, IsDeferringEvaluation);
-                expression.PropertyChanged += ExpressionPropertyChanged;
+                expression.AddActiveExpressionOserver(this);
             }
             member = instancesKey.Expression.Member;
             switch (member)
@@ -133,7 +134,7 @@ class ActiveMemberExpression :
                 UnsubscribeFromValueNotifications();
             if (expression is not null)
             {
-                expression.PropertyChanged -= ExpressionPropertyChanged;
+                expression.RemoveActiveExpressionObserver(this);
                 expression.Dispose();
             }
             ExceptionDispatchInfo.Capture(ex).Throw();

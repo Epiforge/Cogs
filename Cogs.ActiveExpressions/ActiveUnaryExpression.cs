@@ -2,7 +2,8 @@ namespace Cogs.ActiveExpressions;
 
 class ActiveUnaryExpression :
     ActiveExpression,
-    IEquatable<ActiveUnaryExpression>
+    IEquatable<ActiveUnaryExpression>,
+    IObserveActiveExpressions<object?>
 {
     ActiveUnaryExpression(CachedInstancesKey<UnaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation) =>
@@ -13,6 +14,9 @@ class ActiveUnaryExpression :
     readonly CachedInstancesKey<UnaryExpression> instancesKey;
     MethodInfo? method;
     ActiveExpression? operand;
+
+    void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>
+        Evaluate();
 
     protected override bool Dispose(bool disposing)
     {
@@ -28,7 +32,7 @@ class ActiveUnaryExpression :
             DisposeValueIfNecessaryAndPossible();
             if (operand is not null)
             {
-                operand.PropertyChanged -= OperandPropertyChanged;
+                operand.RemoveActiveExpressionObserver(this);
                 operand.Dispose();
             }
         }
@@ -68,7 +72,7 @@ class ActiveUnaryExpression :
         try
         {
             operand = Create(instancesKey.Expression.Operand, options, IsDeferringEvaluation);
-            operand.PropertyChanged += OperandPropertyChanged;
+            operand.AddActiveExpressionOserver(this);
             method = instancesKey.Expression.Method;
             @delegate = implementations.GetOrAdd(new ImplementationsKey(NodeType, operand.Type, Type, method), ImplementationsValueFactory).Value;
             EvaluateIfNotDeferred();
@@ -78,16 +82,13 @@ class ActiveUnaryExpression :
             DisposeValueIfNecessaryAndPossible();
             if (operand is not null)
             {
-                operand.PropertyChanged -= OperandPropertyChanged;
+                operand.RemoveActiveExpressionObserver(this);
                 operand.Dispose();
             }
             ExceptionDispatchInfo.Capture(ex).Throw();
             throw;
         }
     }
-
-    void OperandPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-        Evaluate();
 
     public override string ToString() =>
         $"{GetOperatorExpressionSyntax(NodeType, Type, operand)} {ToStringSuffix}";
