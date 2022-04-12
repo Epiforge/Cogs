@@ -49,7 +49,7 @@ class ActiveMemberInitExpression :
         obj is ActiveMemberInitExpression other && Equals(other);
 
     public bool Equals(ActiveMemberInitExpression other) =>
-        newExpression == other.newExpression && memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName).SequenceEqual(other.memberAssignmentExpressions.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)).OrderBy(t => t.memberName)) && Equals(options, other.options);
+        newExpression == other.newExpression && (memberAssignmentExpressions?.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)) ?? Enumerable.Empty<(string memberName, ActiveExpression key)>()).OrderBy(t => t.memberName).SequenceEqual((other.memberAssignmentExpressions?.Select(kv => (memberName: kv.Value.Name, expression: kv.Key)) ?? Enumerable.Empty<(string memberName, ActiveExpression key)>()).OrderBy(t => t.memberName)) && Equals(options, other.options);
 
     protected override void Evaluate()
     {
