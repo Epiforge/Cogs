@@ -15,56 +15,44 @@ sealed class ActiveWhereEnumerable<TElement> :
     int count;
     bool isDisposed;
 
-    /// <inheritdoc/>
-    public TElement this[int index]
-    {
-        get
+    public TElement this[int index] =>
+        this.Execute(() =>
         {
-            for (var i = 0; i < activeExpressions!.Count; ++i)
+            lock (access!)
             {
-                var activeExpression = activeExpressions[i];
-                if (!activeExpression.Value)
-                    continue;
-                if (--index == -1)
-                    return activeExpression.Arg;
+                for (var i = 0; i < activeExpressions!.Count; ++i)
+                {
+                    var activeExpression = activeExpressions[i];
+                    if (!activeExpression.Value)
+                        continue;
+                    if (--index == -1)
+                        return activeExpression.Arg;
+                }
+                throw new ArgumentOutOfRangeException(nameof(index));
             }
-            throw new ArgumentOutOfRangeException(nameof(index));
-        }
-    }
+        });
 
-    /// <inheritdoc/>
     public int Count
     {
         get => count;
         private set => SetBackedProperty(ref count, in value);
     }
 
-    /// <inheritdoc/>
     public bool IsDisposed
     {
         get => isDisposed;
         private set => SetBackedProperty(ref isDisposed, in value);
     }
 
-    /// <inheritdoc/>
     public SynchronizationContext? SynchronizationContext { get; private set; }
 
-    /// <inheritdoc/>
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
-
-    /// <inheritdoc/>
+#pragma warning disable CS0067
     public event EventHandler<DisposalNotificationEventArgs>? DisposalOverridden;
-
-    /// <inheritdoc/>
+#pragma warning restore CS0067
     public event EventHandler<DisposalNotificationEventArgs>? Disposed;
-
-    /// <inheritdoc/>
     public event EventHandler<DisposalNotificationEventArgs>? Disposing;
-
-    /// <inheritdoc/>
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
-
-    /// <inheritdoc/>
 #pragma warning disable CS0067
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
 #pragma warning restore CS0067
@@ -99,7 +87,6 @@ sealed class ActiveWhereEnumerable<TElement> :
             });
     }
 
-    /// <inheritdoc/>
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         this.Execute(() =>
         {
@@ -113,7 +100,6 @@ sealed class ActiveWhereEnumerable<TElement> :
             }
         });
 
-    /// <inheritdoc/>
     public IEnumerator<TElement> GetEnumerator() =>
         this.Execute(() => GetEnumeratorInContext());
 
@@ -128,7 +114,6 @@ sealed class ActiveWhereEnumerable<TElement> :
                     yield return activeExpression.Arg;
     }
 
-    /// <inheritdoc/>
     protected override void OnInitialized()
     {
         access = new object();
@@ -170,7 +155,6 @@ sealed class ActiveWhereEnumerable<TElement> :
         });
     }
 
-    /// <inheritdoc/>
     protected override void OnTerminated() =>
         this.Execute(() =>
         {
@@ -272,17 +256,19 @@ sealed class ActiveWhereEnumerable<TElement> :
                     foreach (var activeExpression in activeExpressionCounts!.Keys)
                     {
                         activeExpression.RemoveActiveExpressionObserver(this);
-                        activeExpression.Dispose();
+                        for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
+                            activeExpression.Dispose();
                     }
                     activeExpressions!.Clear();
                     activeExpressionCounts.Clear();
-                    foreach (var element in source)
+
+                    void processElement(TElement element)
                     {
-                        var activeExpression = ActiveExpression.Create(predicate, element, predicateOptions);
-                        activeExpressions.Add(activeExpression);
+                        var activeExpression = ActiveExpression.Create(predicate!, element, predicateOptions);
+                        activeExpressions!.Add(activeExpression);
                         if (activeExpression.Value)
                             ++newCount;
-                        if (activeExpressionCounts.TryGetValue(activeExpression, out var existingCount))
+                        if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
                             activeExpressionCounts[activeExpression] = existingCount + 1;
                         else
                         {
@@ -290,6 +276,13 @@ sealed class ActiveWhereEnumerable<TElement> :
                             activeExpression.AddActiveExpressionOserver(this);
                         }
                     }
+
+                    if (source is IList<TElement> sourceList)
+                        for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                            processElement(sourceList[i]);
+                    else
+                        foreach (var element in source)
+                            processElement(element);
                     eventArgs = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
                     break;
                 default:
