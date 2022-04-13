@@ -1,1 +1,1 @@
-We updated NuGet references and corrected a rather silly memory leak in ActiveWhereEnumerable.
+We approximately doubled the performance of Enumerable ActiveSelect, but it no longer uses indexing strategies. ActiveWhere's performance pass accidentally removed its query caching, which has been restored.
