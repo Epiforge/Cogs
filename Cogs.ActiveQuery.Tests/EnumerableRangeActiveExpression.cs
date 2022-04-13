@@ -40,40 +40,6 @@ public class EnumerableRangeActiveExpression
     }
 
     [TestMethod]
-    public void NonGenericElementFaults()
-    {
-        var people = TestPerson.CreatePeopleCollection();
-        using var query = ((IEnumerable)people).ActiveSelect(person => 3 / (person as TestPerson)!.Name!.Length);
-        var changing = false;
-
-        void elementFaultChanging(object? sender, ElementFaultChangeEventArgs e)
-        {
-            Assert.IsFalse(changing);
-            Assert.AreSame(people[0], e.Element);
-            Assert.AreEqual(1, e.Count);
-            Assert.IsNull(e.Fault);
-            changing = true;
-        }
-
-        void elementFaultChanged(object? sender, ElementFaultChangeEventArgs e)
-        {
-            Assert.IsTrue(changing);
-            Assert.AreSame(people[0], e.Element);
-            Assert.AreEqual(1, e.Count);
-            Assert.IsInstanceOfType(e.Fault, typeof(DivideByZeroException));
-            changing = false;
-        }
-
-        query.ElementFaultChanging += elementFaultChanging;
-        query.ElementFaultChanged += elementFaultChanged;
-        people[0].Name = string.Empty;
-        Assert.IsFalse(changing);
-        Assert.AreEqual(1, query.GetElementFaults().Count);
-        query.ElementFaultChanging -= elementFaultChanging;
-        query.ElementFaultChanged -= elementFaultChanged;
-    }
-
-    [TestMethod]
     public void NonGenericEmpty()
     {
         var people = new SynchronizedRangeObservableCollection<TestPerson>();
