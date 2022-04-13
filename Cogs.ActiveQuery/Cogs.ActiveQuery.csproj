@@ -36,7 +36,7 @@
     </Target>
 
     <ItemGroup>
-        <PackageReference Include="Cogs.ActiveExpressions" Version="1.14.4" />
+        <PackageReference Include="Cogs.ActiveExpressions" Version="1.15.2" />
         <PackageReference Include="Cogs.Collections" Version="1.11.0" />
         <PackageReference Include="Cogs.Collections.Synchronized" Version="1.6.3" />
         <PackageReference Include="Cogs.Components" Version="1.1.0" />

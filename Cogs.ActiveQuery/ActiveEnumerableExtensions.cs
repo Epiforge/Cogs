@@ -4057,7 +4057,7 @@ public static class ActiveEnumerableExtensions
     public static IActiveEnumerable<TSource> ActiveWhere<TSource>(this IEnumerable<TSource> source, Expression<Func<TSource, bool>> predicate, ActiveExpressionOptions? predicateOptions)
     {
         ActiveQueryOptions.Optimize(ref predicate);
-        return new ActiveWhereEnumerable<TSource>(source, predicate, predicateOptions);
+        return ActiveWhereEnumerable<TSource>.Get(source, predicate, predicateOptions);
     }
 
     #endregion Where

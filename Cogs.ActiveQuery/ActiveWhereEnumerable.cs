@@ -4,60 +4,23 @@ namespace Cogs.ActiveQuery;
 /// Represents a read-only collection of elements that is the result of calling <see cref="ActiveEnumerableExtensions.ActiveWhere{TSource}(IEnumerable{TSource}, Expression{Func{TSource, bool}})"/> or <see cref="ActiveEnumerableExtensions.ActiveWhere{TSource}(IEnumerable{TSource}, Expression{Func{TSource, bool}}, ActiveExpressionOptions?)"/>
 /// </summary>
 /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
-public sealed class ActiveWhereEnumerable<TElement> :
-    SyncDisposable,
-    IActiveEnumerable<TElement>
+sealed class ActiveWhereEnumerable<TElement> :
+    DisposableValuesCache<(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions), ActiveWhereEnumerable<TElement>>.Value,
+    IActiveEnumerable<TElement>,
+    IObserveActiveExpressions<bool>
 {
-    internal ActiveWhereEnumerable(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions)
-    {
-        access = new object();
-        this.source = source ?? throw new ArgumentNullException(nameof(source));
-        this.predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
-        this.predicateOptions = predicateOptions;
-        SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
-        (activeExpressions, activeExpressionCounts, count) = this.Execute(() =>
-        {
-            lock (access)
-            {
-                var activeExpressions = new List<IActiveExpression<TElement, bool>>();
-                var activeExpressionCounts = new Dictionary<IActiveExpression<TElement, bool>, int>();
-                var count = 0;
-                foreach (var element in source)
-                {
-                    var activeExpression = ActiveExpression.Create(this.predicate, element, this.predicateOptions);
-                    activeExpressions.Add(activeExpression);
-                    if (activeExpression.Value)
-                        ++count;
-                    if (activeExpressionCounts.TryGetValue(activeExpression, out var existingCount))
-                        activeExpressionCounts[activeExpression] = existingCount + 1;
-                    else
-                    {
-                        activeExpressionCounts.Add(activeExpression, 1);
-                        activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
-                        activeExpression.PropertyChanging += ActiveExpressionPropertyChanging;
-                    }
-                }
-                if (source is INotifyCollectionChanged collectionChangeNotifier)
-                    collectionChangeNotifier.CollectionChanged += SourceChanged;
-                return (activeExpressions, activeExpressionCounts, count);
-            }
-        });
-    }
-
-    readonly object access;
-    readonly Dictionary<IActiveExpression<TElement, bool>, int> activeExpressionCounts;
-    readonly List<IActiveExpression<TElement, bool>> activeExpressions;
+    object? access;
+    Dictionary<IActiveExpression<TElement, bool>, int>? activeExpressionCounts;
+    List<IActiveExpression<TElement, bool>>? activeExpressions;
     int count;
-    readonly Expression<Func<TElement, bool>> predicate;
-    readonly ActiveExpressionOptions? predicateOptions;
-    readonly IEnumerable<TElement> source;
+    bool isDisposed;
 
     /// <inheritdoc/>
     public TElement this[int index]
     {
         get
         {
-            for (var i = 0; i < activeExpressions.Count; ++i)
+            for (var i = 0; i < activeExpressions!.Count; ++i)
             {
                 var activeExpression = activeExpressions[i];
                 if (!activeExpression.Value)
@@ -77,34 +40,50 @@ public sealed class ActiveWhereEnumerable<TElement> :
     }
 
     /// <inheritdoc/>
-    public SynchronizationContext? SynchronizationContext { get; }
+    public bool IsDisposed
+    {
+        get => isDisposed;
+        private set => SetBackedProperty(ref isDisposed, in value);
+    }
+
+    /// <inheritdoc/>
+    public SynchronizationContext? SynchronizationContext { get; private set; }
 
     /// <inheritdoc/>
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
     /// <inheritdoc/>
+    public event EventHandler<DisposalNotificationEventArgs>? DisposalOverridden;
+
+    /// <inheritdoc/>
+    public event EventHandler<DisposalNotificationEventArgs>? Disposed;
+
+    /// <inheritdoc/>
+    public event EventHandler<DisposalNotificationEventArgs>? Disposing;
+
+    /// <inheritdoc/>
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
 
     /// <inheritdoc/>
+#pragma warning disable CS0067
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
+#pragma warning restore CS0067
 
-    void ActiveExpressionPropertyChanged(object sender, PropertyChangedEventArgs e)
+    void IObserveActiveExpressions<bool>.ActiveExpressionChanged(IObservableActiveExpression<bool> activeExpression, bool oldValue, bool newValue, Exception? oldFault, Exception? newFault)
     {
-        var isFaultChange = e.PropertyName == nameof(IActiveExpression<TElement, bool>.Fault);
-        var isValueChange = e.PropertyName == nameof(IActiveExpression<TElement, bool>.Value);
-        if (sender is IActiveExpression<TElement, bool> activeExpression && (isFaultChange || isValueChange))
+        if (activeExpression is IActiveExpression<TElement, bool> typedActiveExpression)
             this.Execute(() =>
             {
-                lock (access)
+                lock (access!)
                 {
-                    if (isFaultChange)
-                        ElementFaultChanged?.Invoke(this, new ElementFaultChangeEventArgs(activeExpression.Arg, activeExpression.Fault, activeExpressionCounts[activeExpression]));
-                    else if (isValueChange)
+                    if (!ReferenceEquals(oldFault, newFault))
+                        ElementFaultChanged?.Invoke(this, new ElementFaultChangeEventArgs(typedActiveExpression.Arg, newFault, activeExpressionCounts![typedActiveExpression]));
+                    if (oldValue != newValue)
                     {
-                        var action = activeExpression.Value ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Remove;
-                        var countIteration = activeExpression.Value ? 1 : -1;
+                        var action = newValue ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Remove;
+                        var countIteration = newValue ? 1 : -1;
                         var translatedIndex = -1;
-                        for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                        for (int i = 0, ii = activeExpressions!.Count; i < ii; ++i)
                         {
                             var iActiveExpression = activeExpressions[i];
                             if (iActiveExpression.Value)
@@ -112,7 +91,7 @@ public sealed class ActiveWhereEnumerable<TElement> :
                             if (iActiveExpression == activeExpression)
                             {
                                 Count += countIteration;
-                                CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, activeExpression.Arg, translatedIndex));
+                                CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, typedActiveExpression.Arg, translatedIndex));
                             }
                         }
                     }
@@ -120,47 +99,14 @@ public sealed class ActiveWhereEnumerable<TElement> :
             });
     }
 
-    void ActiveExpressionPropertyChanging(object sender, PropertyChangingEventArgs e)
-    {
-        var isFaultChange = e.PropertyName == nameof(IActiveExpression<TElement, bool>.Fault);
-        if (sender is IActiveExpression<TElement, bool> activeExpression && isFaultChange)
-            this.Execute(() =>
-            {
-                lock (access)
-                    ElementFaultChanging?.Invoke(this, new ElementFaultChangeEventArgs(activeExpression.Arg, activeExpression.Fault, activeExpressionCounts[activeExpression]));
-            });
-    }
-
-    /// <inheritdoc/>
-    protected override bool Dispose(bool disposing)
-    {
-        if (disposing)
-            this.Execute(() =>
-            {
-                lock (access)
-                {
-                    foreach (var activeExpression in activeExpressionCounts.Keys)
-                    {
-                        activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
-                        activeExpression.PropertyChanging -= ActiveExpressionPropertyChanging;
-                        for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
-                            activeExpression.Dispose();
-                    }
-                    if (source is INotifyCollectionChanged collectionChangeNotifier)
-                        collectionChangeNotifier.CollectionChanged -= SourceChanged;
-                }
-            });
-        return true;
-    }
-
     /// <inheritdoc/>
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         this.Execute(() =>
         {
-            lock (access)
+            lock (access!)
             {
                 var result = new List<(object? element, Exception? fault)>();
-                foreach (var activeExpression in activeExpressionCounts.Keys)
+                foreach (var activeExpression in activeExpressionCounts!.Keys)
                     if (activeExpression.Fault is { } fault)
                         result.Add((activeExpression.Arg, fault));
                 return result.AsReadOnly();
@@ -176,17 +122,81 @@ public sealed class ActiveWhereEnumerable<TElement> :
 
     IEnumerator<TElement> GetEnumeratorInContext()
     {
-        lock (access)
-            foreach (var activeExpression in activeExpressions)
+        lock (access!)
+            foreach (var activeExpression in activeExpressions!)
                 if (activeExpression.Value)
                     yield return activeExpression.Arg;
     }
+
+    /// <inheritdoc/>
+    protected override void OnInitialized()
+    {
+        access = new object();
+        var (source, predicate, predicateOptions) = Key;
+        SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
+        (activeExpressions, activeExpressionCounts, count) = this.Execute(() =>
+        {
+            lock (access)
+            {
+                var activeExpressions = new List<IActiveExpression<TElement, bool>>();
+                var activeExpressionCounts = new Dictionary<IActiveExpression<TElement, bool>, int>();
+                var count = 0;
+
+                void processElement(TElement element)
+                {
+                    var activeExpression = ActiveExpression.Create(predicate, element, predicateOptions);
+                    activeExpressions!.Add(activeExpression);
+                    if (activeExpression.Value)
+                        ++count;
+                    if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
+                        activeExpressionCounts[activeExpression] = existingCount + 1;
+                    else
+                    {
+                        activeExpressionCounts.Add(activeExpression, 1);
+                        activeExpression.AddActiveExpressionOserver(this);
+                    }
+                }
+
+                if (source is IList<TElement> sourceList)
+                    for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                        processElement(sourceList[i]);
+                else
+                    foreach (var element in source)
+                        processElement(element);
+                if (source is INotifyCollectionChanged collectionChangeNotifier)
+                    collectionChangeNotifier.CollectionChanged += SourceChanged;
+                return (activeExpressions, activeExpressionCounts, count);
+            }
+        });
+    }
+
+    /// <inheritdoc/>
+    protected override void OnTerminated() =>
+        this.Execute(() =>
+        {
+            var disposalEventArgs = new DisposalNotificationEventArgs(false);
+            Disposing?.Invoke(this, disposalEventArgs);
+            lock (access!)
+            {
+                foreach (var activeExpression in activeExpressionCounts!.Keys)
+                {
+                    activeExpression.RemoveActiveExpressionObserver(this);
+                    for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
+                        activeExpression.Dispose();
+                }
+                if (Key.source is INotifyCollectionChanged collectionChangeNotifier)
+                    collectionChangeNotifier.CollectionChanged -= SourceChanged;
+            }
+            IsDisposed = true;
+            Disposed?.Invoke(this, disposalEventArgs);
+        });
 
     [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     [SuppressMessage("Reliability", "CA2000: Dispose objects before losing scope", Justification = "They'll get disposed, chill out")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
-        lock (access)
+        var (source, predicate, predicateOptions) = Key;
+        lock (access!)
         {
             NotifyCollectionChangedEventArgs? eventArgs = null;
             var newCount = 0;
@@ -200,16 +210,15 @@ public sealed class ActiveWhereEnumerable<TElement> :
                         for (var i = e.OldItems.Count - 1; i >= 0; --i)
                         {
                             var element = (TElement)e.OldItems[i];
-                            var activeExpression = activeExpressions[e.OldStartingIndex + i];
+                            var activeExpression = activeExpressions![e.OldStartingIndex + i];
                             activeExpressions.RemoveAt(e.OldStartingIndex + i);
-                            var activeExpressionCount = activeExpressionCounts[activeExpression];
+                            var activeExpressionCount = activeExpressionCounts![activeExpression];
                             if (activeExpressionCount > 1)
                                 activeExpressionCounts[activeExpression] = activeExpressionCount - 1;
                             else
                             {
                                 activeExpressionCounts.Remove(activeExpression);
-                                activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
-                                activeExpression.PropertyChanging -= ActiveExpressionPropertyChanging;
+                                activeExpression.RemoveActiveExpressionObserver(this);
                             }
                             if (activeExpression.Value)
                                 oldItems.Add(element);
@@ -221,14 +230,13 @@ public sealed class ActiveWhereEnumerable<TElement> :
                         {
                             var element = (TElement)e.NewItems[i];
                             var activeExpression = ActiveExpression.Create(predicate, element, predicateOptions);
-                            activeExpressions.Insert(e.NewStartingIndex + i, activeExpression);
-                            if (activeExpressionCounts.TryGetValue(activeExpression, out var existingCount))
+                            activeExpressions!.Insert(e.NewStartingIndex + i, activeExpression);
+                            if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
                                 activeExpressionCounts[activeExpression] = existingCount + 1;
                             else
                             {
                                 activeExpressionCounts.Add(activeExpression, 1);
-                                activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
-                                activeExpression.PropertyChanging += ActiveExpressionPropertyChanging;
+                                activeExpression.AddActiveExpressionOserver(this);
                             }
                             if (activeExpression.Value)
                                 newItems.Add(element);
@@ -248,7 +256,7 @@ public sealed class ActiveWhereEnumerable<TElement> :
                     if (e.OldItems.Count > 0)
                     {
                         var oldStartingIndex = TranslateIndex(e.OldStartingIndex);
-                        var movedActiveExpressions = activeExpressions.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                        var movedActiveExpressions = activeExpressions!.GetRange(e.OldStartingIndex, e.OldItems.Count);
                         activeExpressions.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
                         activeExpressions.InsertRange(e.NewStartingIndex, movedActiveExpressions);
                         var newStartingIndex = TranslateIndex(e.NewStartingIndex);
@@ -261,13 +269,12 @@ public sealed class ActiveWhereEnumerable<TElement> :
                     }
                     break;
                 case NotifyCollectionChangedAction.Reset:
-                    foreach (var activeExpression in activeExpressionCounts.Keys)
+                    foreach (var activeExpression in activeExpressionCounts!.Keys)
                     {
-                        activeExpression.PropertyChanged -= ActiveExpressionPropertyChanged;
-                        activeExpression.PropertyChanging -= ActiveExpressionPropertyChanging;
+                        activeExpression.RemoveActiveExpressionObserver(this);
                         activeExpression.Dispose();
                     }
-                    activeExpressions.Clear();
+                    activeExpressions!.Clear();
                     activeExpressionCounts.Clear();
                     foreach (var element in source)
                     {
@@ -280,8 +287,7 @@ public sealed class ActiveWhereEnumerable<TElement> :
                         else
                         {
                             activeExpressionCounts.Add(activeExpression, 1);
-                            activeExpression.PropertyChanged += ActiveExpressionPropertyChanged;
-                            activeExpression.PropertyChanging += ActiveExpressionPropertyChanging;
+                            activeExpression.AddActiveExpressionOserver(this);
                         }
                     }
                     eventArgs = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
@@ -300,4 +306,25 @@ public sealed class ActiveWhereEnumerable<TElement> :
 
     int TranslateIndex(int index) =>
         index - activeExpressions.Take(index).Count(ae => !ae.Value);
+
+    static readonly DisposableValuesCache<(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions), ActiveWhereEnumerable<TElement>> cache = new(new EqualityComparer());
+
+    internal static IActiveEnumerable<TElement> Get(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions)
+    {
+        if (source is null)
+            throw new ArgumentNullException(nameof(source));
+        if (predicate is null)
+            throw new ArgumentNullException(nameof(predicate));
+        return cache[(source, predicate, predicateOptions)];
+    }
+
+    class EqualityComparer :
+        IEqualityComparer<(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions)>
+    {
+        public bool Equals((IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions) x, (IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions) y) =>
+            ReferenceEquals(x.source, y.source) && ExpressionEqualityComparer.Default.Equals(x.predicate, y.predicate) && (x.predicateOptions is null && y.predicateOptions is null || x.predicateOptions is not null && y.predicateOptions is not null && x.predicateOptions.Equals(y.predicateOptions));
+
+        public int GetHashCode((IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions) obj) =>
+            HashCode.Combine(obj.source, ExpressionEqualityComparer.Default.GetHashCode(obj.predicate), obj.predicateOptions);
+    }
 }
