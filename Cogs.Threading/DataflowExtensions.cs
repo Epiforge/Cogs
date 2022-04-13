@@ -5,12 +5,12 @@ namespace Cogs.Threading;
 /// </summary>
 public static class DataflowExtensions
 {
-    static readonly ExecutionDataflowBlockOptions cpuBoundBlock = new() { MaxDegreeOfParallelism = Environment.ProcessorCount };
+    static readonly ExecutionDataflowBlockOptions cpuBoundBlock = new() { MaxDegreeOfParallelism = DataflowBlockOptions.Unbounded };
     static readonly DataflowLinkOptions propagateLink = new() { PropagateCompletion = true };
     static readonly ExecutionDataflowBlockOptions singleThreadBlock = new() { MaxDegreeOfParallelism = 1 };
 
     /// <summary>
-    /// Performs a specified action for each element of a sequence in parallel utilizing all hardware threads
+    /// Performs a specified action for each element of a sequence in unbounded parallel
     /// </summary>
     /// <typeparam name="TSource">The type of the elements in the sequence</typeparam>
     /// <param name="source">The sequence</param>
@@ -19,7 +19,7 @@ public static class DataflowExtensions
         DataflowForAllAsync(source, action, cpuBoundBlock);
 
     /// <summary>
-    /// Performs a specified asynchronous action for each element of a sequence in parallel utilizing all hardware threads
+    /// Performs a specified asynchronous action for each element of a sequence in unbounded parallel
     /// </summary>
     /// <typeparam name="TSource">The type of the elements in the sequence</typeparam>
     /// <param name="source">The sequence</param>
@@ -64,25 +64,25 @@ public static class DataflowExtensions
     }
 
     /// <summary>
-    /// Performs a specified transform on each element of a sequence in parallel utilizing all hardware threads
+    /// Performs a specified transform on each element of a sequence in unbounded parallel
     /// </summary>
     /// <typeparam name="TSource">The type of the elements in the sequence</typeparam>
     /// <typeparam name="TResult">The type rendered by the transform</typeparam>
     /// <param name="source">The sequence</param>
     /// <param name="selector">The transform</param>
-    /// <returns>The results of the transform on each element in no particular order</returns>
-    public static Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) =>
+    /// <returns>The results of the transform on each element</returns>
+    public static Task<IReadOnlyList<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) =>
         DataflowSelectAsync(source, selector, cpuBoundBlock);
 
     /// <summary>
-    /// Performs a specified asynchronous transform on each element of a sequence in parallel utilizing all hardware threads
+    /// Performs a specified asynchronous transform on each element of a sequence in unbounded parallel
     /// </summary>
     /// <typeparam name="TSource">The type of the elements in the sequence</typeparam>
     /// <typeparam name="TResult">The type rendered by the asynchronous transform</typeparam>
     /// <param name="source">The sequence</param>
     /// <param name="asyncSelector">The asynchronous transform</param>
-    /// <returns>The results of the asynchronous transform on each element in no particular order</returns>
-    public static Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> asyncSelector) =>
+    /// <returns>The results of the asynchronous transform on each element</returns>
+    public static Task<IReadOnlyList<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> asyncSelector) =>
         DataflowSelectAsync(source, asyncSelector, cpuBoundBlock);
 
     /// <summary>
@@ -93,12 +93,12 @@ public static class DataflowExtensions
     /// <param name="source">The sequence</param>
     /// <param name="selector">The transform</param>
     /// <param name="options">Manual Dataflow options</param>
-    /// <returns>The results of the transform on each element in no particular order</returns>
-    public static async Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector, ExecutionDataflowBlockOptions options)
+    /// <returns>The results of the transform on each element</returns>
+    public static async Task<IReadOnlyList<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector, ExecutionDataflowBlockOptions options)
     {
         if (source is null)
             throw new ArgumentNullException(nameof(source));
-        var results = new BlockingCollection<TResult>();
+        var results = new List<TResult>();
         var transformBlock = new TransformBlock<TSource, TResult>(selector, options);
         var actionBlock = new ActionBlock<TResult>(result => results.Add(result), singleThreadBlock);
         transformBlock.LinkTo(actionBlock, propagateLink);
@@ -106,7 +106,7 @@ public static class DataflowExtensions
             transformBlock.Post(element);
         transformBlock.Complete();
         await actionBlock.Completion.ConfigureAwait(false);
-        return results;
+        return results.ToImmutableArray();
     }
 
     /// <summary>
@@ -117,12 +117,12 @@ public static class DataflowExtensions
     /// <param name="source">The sequence</param>
     /// <param name="asyncSelector">The asynchronous transform</param>
     /// <param name="options">Manual Dataflow options</param>
-    /// <returns>The results of the asynchronous transform on each element in no particular order</returns>
-    public static async Task<IEnumerable<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> asyncSelector, ExecutionDataflowBlockOptions options)
+    /// <returns>The results of the asynchronous transform on each element</returns>
+    public static async Task<IReadOnlyList<TResult>> DataflowSelectAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> asyncSelector, ExecutionDataflowBlockOptions options)
     {
         if (source is null)
             throw new ArgumentNullException(nameof(source));
-        var results = new BlockingCollection<TResult>();
+        var results = new List<TResult>();
         var transformBlock = new TransformBlock<TSource, TResult>(asyncSelector, options);
         var actionBlock = new ActionBlock<TResult>(result => results.Add(result), singleThreadBlock);
         transformBlock.LinkTo(actionBlock, propagateLink);
@@ -130,6 +130,6 @@ public static class DataflowExtensions
             transformBlock.Post(element);
         transformBlock.Complete();
         await actionBlock.Completion.ConfigureAwait(false);
-        return results;
+        return results.ToImmutableArray();
     }
 }
