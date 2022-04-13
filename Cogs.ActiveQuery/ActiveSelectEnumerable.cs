@@ -148,6 +148,7 @@ sealed class ActiveSelectEnumerable<TResult> :
             Disposed?.Invoke(this, disposalEventArgs);
         });
 
+    [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         var (source, selector, selectorOptions) = Key;
@@ -433,6 +434,7 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
             Disposed?.Invoke(this, disposalEventArgs);
         });
 
+    [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         var (source, selector, selectorOptions) = Key;
