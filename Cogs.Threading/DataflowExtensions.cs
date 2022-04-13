@@ -39,8 +39,12 @@ public static class DataflowExtensions
         if (source is null)
             throw new ArgumentNullException(nameof(source));
         var block = new ActionBlock<TSource>(action, options);
-        foreach (var element in source)
-            block.Post(element);
+        if (source is IList<TSource> sourceList)
+            for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                block.Post(sourceList[i]);
+        else
+            foreach (var element in source)
+                block.Post(element);
         block.Complete();
         return block.Completion;
     }
@@ -57,8 +61,12 @@ public static class DataflowExtensions
         if (source is null)
             throw new ArgumentNullException(nameof(source));
         var block = new ActionBlock<TSource>(asyncAction, options);
-        foreach (var element in source)
-            block.Post(element);
+        if (source is IList<TSource> sourceList)
+            for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                block.Post(sourceList[i]);
+        else
+            foreach (var element in source)
+                block.Post(element);
         block.Complete();
         return block.Completion;
     }
@@ -102,8 +110,12 @@ public static class DataflowExtensions
         var transformBlock = new TransformBlock<TSource, TResult>(selector, options);
         var actionBlock = new ActionBlock<TResult>(result => results.Add(result), singleThreadBlock);
         transformBlock.LinkTo(actionBlock, propagateLink);
-        foreach (var element in source)
-            transformBlock.Post(element);
+        if (source is IList<TSource> sourceList)
+            for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                transformBlock.Post(sourceList[i]);
+        else
+            foreach (var element in source)
+                transformBlock.Post(element);
         transformBlock.Complete();
         await actionBlock.Completion.ConfigureAwait(false);
         return results.ToImmutableArray();
@@ -126,8 +138,12 @@ public static class DataflowExtensions
         var transformBlock = new TransformBlock<TSource, TResult>(asyncSelector, options);
         var actionBlock = new ActionBlock<TResult>(result => results.Add(result), singleThreadBlock);
         transformBlock.LinkTo(actionBlock, propagateLink);
-        foreach (var element in source)
-            transformBlock.Post(element);
+        if (source is IList<TSource> sourceList)
+            for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                transformBlock.Post(sourceList[i]);
+        else
+            foreach (var element in source)
+                transformBlock.Post(element);
         transformBlock.Complete();
         await actionBlock.Completion.ConfigureAwait(false);
         return results.ToImmutableArray();

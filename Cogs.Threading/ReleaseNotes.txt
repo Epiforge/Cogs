@@ -1,1 +1,1 @@
-We revised the Intellisense documentation for DataFlow extension methods and made some performance adjustments.
+We made some performance adjustments to DataFlow extensions.
