@@ -1,7 +1,7 @@
 namespace Cogs.ActiveQuery;
 
 sealed class ActiveSelectEnumerable<TResult> :
-    DisposableValuesCache<(IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions), ActiveSelectEnumerable<TResult>>.Value,
+    DisposableValuesCache<(IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel), ActiveSelectEnumerable<TResult>>.Value,
     IActiveEnumerable<TResult>,
     IObserveActiveExpressions<TResult>
 {
@@ -92,19 +92,31 @@ sealed class ActiveSelectEnumerable<TResult> :
     protected override void OnInitialized()
     {
         access = new object();
-        var (source, selector, selectorOptions) = Key;
+        var (source, selector, selectorOptions, parallel) = Key;
         SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
         (activeExpressions, activeExpressionCounts, count) = this.Execute(() =>
         {
             lock (access)
             {
-                var activeExpressions = new List<IActiveExpression<object?, TResult>>();
-                var activeExpressionCounts = new Dictionary<IActiveExpression<object?, TResult>, int>();
-
-                void processElement(object? element)
+                List<IActiveExpression<object?, TResult>> activeExpressions;
+                if (parallel)
+                    activeExpressions = source.Cast<object?>().DataflowSelectAsync(element => (IActiveExpression<object?, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
+                else if (source is IList sourceList)
                 {
-                    var activeExpression = ActiveExpression.Create(selector, element, selectorOptions);
-                    activeExpressions!.Add(activeExpression);
+                    activeExpressions = new List<IActiveExpression<object?, TResult>>(sourceList.Count);
+                    for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                        activeExpressions.Add(ActiveExpression.Create(selector, sourceList[i], selectorOptions));
+                }
+                else
+                {
+                    activeExpressions = new List<IActiveExpression<object?, TResult>>();
+                    foreach (var element in source)
+                        activeExpressions.Add(ActiveExpression.Create(selector, element, selectorOptions));
+                }
+                var activeExpressionCounts = new Dictionary<IActiveExpression<object?, TResult>, int>();
+                for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                {
+                    var activeExpression = activeExpressions[i];
                     if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
                         activeExpressionCounts[activeExpression] = existingCount + 1;
                     else
@@ -113,16 +125,8 @@ sealed class ActiveSelectEnumerable<TResult> :
                         activeExpression.AddActiveExpressionOserver(this);
                     }
                 }
-
-                if (source is IList sourceList)
-                    for (int i = 0, ii = sourceList.Count; i < ii; ++i)
-                        processElement(sourceList[i]);
-                else
-                    foreach (var element in source)
-                        processElement(element);
                 if (source is INotifyCollectionChanged collectionChangeNotifier)
                     collectionChangeNotifier.CollectionChanged += SourceChanged;
-                ;
                 return (activeExpressions, activeExpressionCounts, activeExpressions.Count);
             }
         });
@@ -151,7 +155,7 @@ sealed class ActiveSelectEnumerable<TResult> :
     [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
-        var (source, selector, selectorOptions) = Key;
+        var (source, selector, selectorOptions, parallel) = Key;
         lock (access!)
         {
             NotifyCollectionChangedEventArgs? eventArgs = null;
@@ -228,13 +232,25 @@ sealed class ActiveSelectEnumerable<TResult> :
                         for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
                             activeExpression.Dispose();
                     }
-                    activeExpressions!.Clear();
-                    activeExpressionCounts.Clear();
 
-                    void processElement(object? element)
+                    if (parallel)
+                        activeExpressions = source.Cast<object?>().DataflowSelectAsync(element => (IActiveExpression<object?, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
+                    else if (source is IList sourceList)
                     {
-                        var activeExpression = ActiveExpression.Create(selector!, element, selectorOptions);
-                        activeExpressions!.Add(activeExpression);
+                        activeExpressions = new List<IActiveExpression<object?, TResult>>(sourceList.Count);
+                        for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                            activeExpressions.Add(ActiveExpression.Create(selector, sourceList[i], selectorOptions));
+                    }
+                    else
+                    {
+                        activeExpressions = new List<IActiveExpression<object?, TResult>>();
+                        foreach (var element in source)
+                            activeExpressions.Add(ActiveExpression.Create(selector, element, selectorOptions));
+                    }
+                    activeExpressionCounts = new Dictionary<IActiveExpression<object?, TResult>, int>();
+                    for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                    {
+                        var activeExpression = activeExpressions[i];
                         if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
                             activeExpressionCounts[activeExpression] = existingCount + 1;
                         else
@@ -243,13 +259,6 @@ sealed class ActiveSelectEnumerable<TResult> :
                             activeExpression.AddActiveExpressionOserver(this);
                         }
                     }
-
-                    if (source is IList sourceList)
-                        for (int i = 0, ii = sourceList.Count; i < ii; ++i)
-                            processElement(sourceList[i]);
-                    else
-                        foreach (var element in source)
-                            processElement(element);
                     newCount = activeExpressions.Count;
                     eventArgs = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
                     break;
@@ -265,29 +274,29 @@ sealed class ActiveSelectEnumerable<TResult> :
         }
     }
 
-    static readonly DisposableValuesCache<(IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions), ActiveSelectEnumerable<TResult>> cache = new(new EqualityComparer());
+    static readonly DisposableValuesCache<(IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel), ActiveSelectEnumerable<TResult>> cache = new(new EqualityComparer());
 
-    internal static IActiveEnumerable<TResult> Get(IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions)
+    internal static IActiveEnumerable<TResult> Get(IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel)
     {
         if (source is null)
             throw new ArgumentNullException(nameof(source));
         if (selector is null)
             throw new ArgumentNullException(nameof(selector));
-        return cache[(source, selector, selectorOptions)];
+        return cache[(source, selector, selectorOptions, parallel)];
     }
 
     class EqualityComparer :
-        IEqualityComparer<(IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions)>
+        IEqualityComparer<(IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel)>
     {
-        public bool Equals((IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions) x, (IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions) y) =>
+        public bool Equals((IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel) x, (IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel) y) =>
             ReferenceEquals(x.source, y.source) && ExpressionEqualityComparer.Default.Equals(x.selector, y.selector) && (x.selectorOptions is null && y.selectorOptions is null || x.selectorOptions is not null && y.selectorOptions is not null && x.selectorOptions.Equals(y.selectorOptions));
 
-        public int GetHashCode((IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions) obj) =>
+        public int GetHashCode((IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel) obj) =>
             HashCode.Combine(obj.source, ExpressionEqualityComparer.Default.GetHashCode(obj.selector), obj.selectorOptions);
     }
 }
 sealed class ActiveSelectEnumerable<TSource, TResult> :
-    DisposableValuesCache<(IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions), ActiveSelectEnumerable<TSource, TResult>>.Value,
+    DisposableValuesCache<(IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel), ActiveSelectEnumerable<TSource, TResult>>.Value,
     IActiveEnumerable<TResult>,
     IObserveActiveExpressions<TResult>
 {
@@ -378,19 +387,31 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
     protected override void OnInitialized()
     {
         access = new object();
-        var (source, selector, selectorOptions) = Key;
+        var (source, selector, selectorOptions, parallel) = Key;
         SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
         (activeExpressions, activeExpressionCounts, count) = this.Execute(() =>
         {
             lock (access)
             {
-                var activeExpressions = new List<IActiveExpression<TSource, TResult>>();
-                var activeExpressionCounts = new Dictionary<IActiveExpression<TSource, TResult>, int>();
-
-                void processElement(TSource element)
+                List<IActiveExpression<TSource, TResult>> activeExpressions;
+                if (parallel)
+                    activeExpressions = source.DataflowSelectAsync(element => (IActiveExpression<TSource, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
+                else if (source is IList<TSource> sourceList)
                 {
-                    var activeExpression = ActiveExpression.Create(selector, element, selectorOptions);
-                    activeExpressions!.Add(activeExpression);
+                    activeExpressions = new List<IActiveExpression<TSource, TResult>>(sourceList.Count);
+                    for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                        activeExpressions.Add(ActiveExpression.Create(selector, sourceList[i], selectorOptions));
+                }
+                else
+                {
+                    activeExpressions = new List<IActiveExpression<TSource, TResult>>();
+                    foreach (var element in source)
+                        activeExpressions.Add(ActiveExpression.Create(selector, element, selectorOptions));
+                }
+                var activeExpressionCounts = new Dictionary<IActiveExpression<TSource, TResult>, int>();
+                for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                {
+                    var activeExpression = activeExpressions[i];
                     if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
                         activeExpressionCounts[activeExpression] = existingCount + 1;
                     else
@@ -399,16 +420,8 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
                         activeExpression.AddActiveExpressionOserver(this);
                     }
                 }
-
-                if (source is IList<TSource> sourceList)
-                    for (int i = 0, ii = sourceList.Count; i < ii; ++i)
-                        processElement(sourceList[i]);
-                else
-                    foreach (var element in source)
-                        processElement(element);
                 if (source is INotifyCollectionChanged collectionChangeNotifier)
                     collectionChangeNotifier.CollectionChanged += SourceChanged;
-                ;
                 return (activeExpressions, activeExpressionCounts, activeExpressions.Count);
             }
         });
@@ -437,7 +450,7 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
     [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
-        var (source, selector, selectorOptions) = Key;
+        var (source, selector, selectorOptions, parallel) = Key;
         lock (access!)
         {
             NotifyCollectionChangedEventArgs? eventArgs = null;
@@ -514,13 +527,25 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
                         for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
                             activeExpression.Dispose();
                     }
-                    activeExpressions!.Clear();
-                    activeExpressionCounts.Clear();
 
-                    void processElement(TSource element)
+                    if (parallel)
+                        activeExpressions = source.DataflowSelectAsync(element => (IActiveExpression<TSource, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
+                    else if (source is IList<TSource> sourceList)
                     {
-                        var activeExpression = ActiveExpression.Create(selector!, element, selectorOptions);
-                        activeExpressions!.Add(activeExpression);
+                        activeExpressions = new List<IActiveExpression<TSource, TResult>>(sourceList.Count);
+                        for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                            activeExpressions.Add(ActiveExpression.Create(selector, sourceList[i], selectorOptions));
+                    }
+                    else
+                    {
+                        activeExpressions = new List<IActiveExpression<TSource, TResult>>();
+                        foreach (var element in source)
+                            activeExpressions.Add(ActiveExpression.Create(selector, element, selectorOptions));
+                    }
+                    activeExpressionCounts = new Dictionary<IActiveExpression<TSource, TResult>, int>();
+                    for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                    {
+                        var activeExpression = activeExpressions[i];
                         if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
                             activeExpressionCounts[activeExpression] = existingCount + 1;
                         else
@@ -529,13 +554,6 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
                             activeExpression.AddActiveExpressionOserver(this);
                         }
                     }
-
-                    if (source is IList<TSource> sourceList)
-                        for (int i = 0, ii = sourceList.Count; i < ii; ++i)
-                            processElement(sourceList[i]);
-                    else
-                        foreach (var element in source)
-                            processElement(element);
                     newCount = activeExpressions.Count;
                     eventArgs = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
                     break;
@@ -551,24 +569,24 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
         }
     }
 
-    static readonly DisposableValuesCache<(IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions), ActiveSelectEnumerable<TSource, TResult>> cache = new(new EqualityComparer());
+    static readonly DisposableValuesCache<(IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel), ActiveSelectEnumerable<TSource, TResult>> cache = new(new EqualityComparer());
 
-    internal static IActiveEnumerable<TResult> Get(IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions)
+    internal static IActiveEnumerable<TResult> Get(IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel)
     {
         if (source is null)
             throw new ArgumentNullException(nameof(source));
         if (selector is null)
             throw new ArgumentNullException(nameof(selector));
-        return cache[(source, selector, selectorOptions)];
+        return cache[(source, selector, selectorOptions, parallel)];
     }
 
     class EqualityComparer :
-        IEqualityComparer<(IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions)>
+        IEqualityComparer<(IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel)>
     {
-        public bool Equals((IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions) x, (IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions) y) =>
+        public bool Equals((IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel) x, (IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel) y) =>
             ReferenceEquals(x.source, y.source) && ExpressionEqualityComparer.Default.Equals(x.selector, y.selector) && (x.selectorOptions is null && y.selectorOptions is null || x.selectorOptions is not null && y.selectorOptions is not null && x.selectorOptions.Equals(y.selectorOptions));
 
-        public int GetHashCode((IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions) obj) =>
+        public int GetHashCode((IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel) obj) =>
             HashCode.Combine(obj.source, ExpressionEqualityComparer.Default.GetHashCode(obj.selector), obj.selectorOptions);
     }
 }

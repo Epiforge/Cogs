@@ -2006,10 +2006,33 @@ public static class ActiveEnumerableExtensions
     /// <param name="selector">A transform function to apply to each element</param>
     /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> the elements of which are the result of invoking the transform function on each element of <paramref name="source"/></returns>
-    public static IActiveEnumerable<TResult?> ActiveSelect<TResult>(this IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions)
+    public static IActiveEnumerable<TResult?> ActiveSelect<TResult>(this IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions) =>
+        ActiveSelect(source, selector, selectorOptions, false);
+
+    /// <summary>
+    /// Actively projects each element of a sequence into a new form using the specified indexing strategy
+    /// </summary>
+    /// <typeparam name="TResult">The type of the value returned by <paramref name="selector"/></typeparam>
+    /// <param name="source">A sequence of values to invoke a transform function on</param>
+    /// <param name="selector">A transform function to apply to each element</param>
+    /// <param name="parallel"><c>true</c> if the query should be initialized in parallel; otherwise, <c>false</c> (default)</param>
+    /// <returns>An <see cref="IActiveEnumerable{TElement}"/> the elements of which are the result of invoking the transform function on each element of <paramref name="source"/></returns>
+    public static IActiveEnumerable<TResult?> ActiveSelect<TResult>(this IEnumerable source, Expression<Func<object?, TResult>> selector, bool parallel) =>
+        ActiveSelect(source, selector, null, parallel);
+
+    /// <summary>
+    /// Actively projects each element of a sequence into a new form using the specified indexing strategy
+    /// </summary>
+    /// <typeparam name="TResult">The type of the value returned by <paramref name="selector"/></typeparam>
+    /// <param name="source">A sequence of values to invoke a transform function on</param>
+    /// <param name="selector">A transform function to apply to each element</param>
+    /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
+    /// <param name="parallel"><c>true</c> if the query should be initialized in parallel; otherwise, <c>false</c> (default)</param>
+    /// <returns>An <see cref="IActiveEnumerable{TElement}"/> the elements of which are the result of invoking the transform function on each element of <paramref name="source"/></returns>
+    public static IActiveEnumerable<TResult?> ActiveSelect<TResult>(this IEnumerable source, Expression<Func<object?, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel)
     {
         ActiveQueryOptions.Optimize(ref selector);
-        return ActiveSelectEnumerable<TResult>.Get(source, selector, selectorOptions);
+        return ActiveSelectEnumerable<TResult>.Get(source, selector, selectorOptions, parallel);
     }
 
     /// <summary>
@@ -2032,10 +2055,35 @@ public static class ActiveEnumerableExtensions
     /// <param name="selector">A transform function to apply to each element</param>
     /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> the elements of which are the result of invoking the transform function on each element of <paramref name="source"/></returns>
-    public static IActiveEnumerable<TResult?> ActiveSelect<TSource, TResult>(this IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions)
+    public static IActiveEnumerable<TResult?> ActiveSelect<TSource, TResult>(this IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions) =>
+        ActiveSelect(source, selector, selectorOptions, false);
+
+    /// <summary>
+    /// Actively projects each element of a sequence into a new form using the <see cref="IndexingStrategy.HashTable"/> indexing strategy
+    /// </summary>
+    /// <typeparam name="TSource">The type of the elements of <paramref name="source"/></typeparam>
+    /// <typeparam name="TResult">The type of the value returned by <paramref name="selector"/></typeparam>
+    /// <param name="source">A sequence of values to invoke a transform function on</param>
+    /// <param name="selector">A transform function to apply to each element</param>
+    /// <param name="parallel"><c>true</c> if the query should be initialized in parallel; otherwise, <c>false</c> (default)</param>
+    /// <returns>An <see cref="IActiveEnumerable{TElement}"/> the elements of which are the result of invoking the transform function on each element of <paramref name="source"/></returns>
+    public static IActiveEnumerable<TResult?> ActiveSelect<TSource, TResult>(this IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, bool parallel) =>
+        ActiveSelect(source, selector, null, parallel);
+
+    /// <summary>
+    /// Actively projects each element of a sequence into a new form using the specified indexing strategy
+    /// </summary>
+    /// <typeparam name="TSource">The type of the elements of <paramref name="source"/></typeparam>
+    /// <typeparam name="TResult">The type of the value returned by <paramref name="selector"/></typeparam>
+    /// <param name="source">A sequence of values to invoke a transform function on</param>
+    /// <param name="selector">A transform function to apply to each element</param>
+    /// <param name="selectorOptions">Options governing the behavior of active expressions created using <paramref name="selector"/></param>
+    /// <param name="parallel"><c>true</c> if the query should be initialized in parallel; otherwise, <c>false</c> (default)</param>
+    /// <returns>An <see cref="IActiveEnumerable{TElement}"/> the elements of which are the result of invoking the transform function on each element of <paramref name="source"/></returns>
+    public static IActiveEnumerable<TResult?> ActiveSelect<TSource, TResult>(this IEnumerable<TSource> source, Expression<Func<TSource, TResult>> selector, ActiveExpressionOptions? selectorOptions, bool parallel)
     {
         ActiveQueryOptions.Optimize(ref selector);
-        return ActiveSelectEnumerable<TSource, TResult>.Get(source, selector, selectorOptions);
+        return ActiveSelectEnumerable<TSource, TResult>.Get(source, selector, selectorOptions, parallel);
     }
 
     #endregion Select
