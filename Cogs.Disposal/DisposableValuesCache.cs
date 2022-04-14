@@ -82,14 +82,26 @@ public class DisposableValuesCache<TKey, TValue>
     public abstract class Value :
         PropertyChangeNotifier,
         IAsyncDisposable,
-        IDisposable
+        IDisposalStatus,
+        IDisposable,
+        INotifyDisposalOverridden,
+        INotifyDisposed,
+        INotifyDisposing
     {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         DisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        bool isDisposed;
 
         internal object Access = new();
         internal int ReferenceCount;
+
+        /// <inheritdoc/>
+        public bool IsDisposed
+        {
+            get => isDisposed;
+            private set => SetBackedProperty(ref isDisposed, in value);
+        }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         /// <summary>
@@ -99,24 +111,49 @@ public class DisposableValuesCache<TKey, TValue>
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         /// <inheritdoc/>
-        public void Dispose() =>
-            Task.Run(async () => await DisposeAsync().ConfigureAwait(false));
+        public event EventHandler<DisposalNotificationEventArgs>? DisposalOverridden;
+        /// <inheritdoc/>
+        public event EventHandler<DisposalNotificationEventArgs>? Disposed;
+        /// <inheritdoc/>
+        public event EventHandler<DisposalNotificationEventArgs>? Disposing;
 
         /// <inheritdoc/>
-        public async ValueTask DisposeAsync()
+        public void Dispose()
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
-                await Task.Delay(orphanTtl).ConfigureAwait(false);
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(orphanTtl).ConfigureAwait(false);
+                    DisposalLogic();
+                });
+            }
+            else
+                DisposalLogic();
+        }
+
+        /// <inheritdoc/>
+        public ValueTask DisposeAsync()
+        {
+            if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(orphanTtl).ConfigureAwait(false);
+                    DisposalLogic();
+                });
+            }
+            else
+                DisposalLogic();
+            return new ValueTask(Task.CompletedTask);
+        }
+
+        void DisposalLogic()
+        {
+            var e = DisposalNotificationEventArgs.ByCallingDispose;
+            Disposing?.Invoke(this, e);
             var isRemoving = false;
-            try
-            {
-                cache.access.EnterWriteLock();
-            }
-            catch (ObjectDisposedException)
-            {
-                // termination already ran because the whole cache was disposed
-                return;
-            }
+            cache.access.EnterWriteLock();
             try
             {
                 isRemoving = --ReferenceCount == 0;
@@ -131,7 +168,11 @@ public class DisposableValuesCache<TKey, TValue>
             {
                 OnTerminated();
                 GC.SuppressFinalize(this);
+                IsDisposed = true;
+                Disposed?.Invoke(this, e);
             }
+            else
+                DisposalOverridden?.Invoke(this, e);
         }
 
         internal void InitializeIfNew(DisposableValuesCache<TKey, TValue> cache, TKey key)

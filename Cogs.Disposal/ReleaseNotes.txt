@@ -1,1 +1,1 @@
-We removed disposal of DisposableValuesCache and AsyncDisposableValuesCache.
+We made it so that DisposableValuesCache and AsyncDisposableValuesCache will no longer call disposers to wait for the orphan TTL when it applies. We also made it so their values implement IDisposalStatus, INotifyDiposing, INotifyDisposalOverriden, and INotifyDisposed. We also internally cached the two basic instances of DisposalNotificationEventArgs to cut down on allocations.

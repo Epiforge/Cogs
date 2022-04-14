@@ -16,7 +16,7 @@ public abstract class AsyncDisposable :
     /// </summary>
     ~AsyncDisposable()
     {
-        var e = new DisposalNotificationEventArgs(true);
+        var e = DisposalNotificationEventArgs.ByFinalizer;
         OnDisposing(e);
         DisposeAsync(false).AsTask().Wait();
         IsDisposed = true;
@@ -58,7 +58,7 @@ public abstract class AsyncDisposable :
         using (await disposalAccess.LockAsync().ConfigureAwait(false))
             if (!IsDisposed)
             {
-                var e = new DisposalNotificationEventArgs(false);
+                var e = DisposalNotificationEventArgs.ByCallingDispose;
                 OnDisposing(e);
                 if (IsDisposed = await DisposeAsync(true).ConfigureAwait(false))
                 {
@@ -81,19 +81,22 @@ public abstract class AsyncDisposable :
     /// Raises the <see cref="DisposalOverridden"/> event with the specified arguments
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnDisposalOverridden(DisposalNotificationEventArgs e) => DisposalOverridden?.Invoke(this, e);
+    protected virtual void OnDisposalOverridden(DisposalNotificationEventArgs e) =>
+        DisposalOverridden?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="Disposed"/> event with the specified arguments
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnDisposed(DisposalNotificationEventArgs e) => Disposed?.Invoke(this, e);
+    protected virtual void OnDisposed(DisposalNotificationEventArgs e) =>
+        Disposed?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="Disposing"/> event with the specified arguments
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnDisposing(DisposalNotificationEventArgs e) => Disposing?.Invoke(this, e);
+    protected virtual void OnDisposing(DisposalNotificationEventArgs e) =>
+        Disposing?.Invoke(this, e);
 
     /// <summary>
     /// Ensure the object has not been disposed

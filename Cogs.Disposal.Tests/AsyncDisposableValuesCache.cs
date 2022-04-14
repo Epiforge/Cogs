@@ -12,11 +12,6 @@ public class AsyncDisposableValuesCache
         var items = itemTasks.Select(itemTask => itemTask.Result).ToList();
         var disposalTasks = items.Select(item => Task.Run(async () => await item.DisposeAsync().ConfigureAwait(false)));
         await Task.WhenAll(disposalTasks);
-        var cacheCount = cache.Count;
-        while (cacheCount > 0)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(0.1));
-            cacheCount = cache.Count;
-        }
+        Assert.AreEqual(0, cache.Count);
     }
 }

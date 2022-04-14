@@ -13,11 +13,6 @@ public class DisposableValuesCache
         var items = itemTasks.Select(itemTask => itemTask.Result).ToList();
         var disposalTasks = items.Select(item => Task.Run(() => item.Dispose()));
         await Task.WhenAll(disposalTasks);
-        var cacheCount = cache.Count;
-        while (cacheCount > 0)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(0.1));
-            cacheCount = cache.Count;
-        }
+        Assert.AreEqual(0, cache.Count);
     }
 }

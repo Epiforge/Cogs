@@ -87,14 +87,26 @@ public class AsyncDisposableValuesCache<TKey, TValue>
     public abstract class Value :
         PropertyChangeNotifier,
         IAsyncDisposable,
-        IDisposable
+        IDisposalStatus,
+        IDisposable,
+        INotifyDisposalOverridden,
+        INotifyDisposed,
+        INotifyDisposing
     {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         AsyncDisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        bool isDisposed;
 
         internal AsyncLock Access = new();
         internal int ReferenceCount;
+
+        /// <inheritdoc/>
+        public bool IsDisposed
+        {
+            get => isDisposed;
+            private set => SetBackedProperty(ref isDisposed, in value);
+        }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         /// <summary>
@@ -104,31 +116,62 @@ public class AsyncDisposableValuesCache<TKey, TValue>
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         /// <inheritdoc/>
-        public void Dispose() =>
-            Task.Run(async () => await DisposeAsync().ConfigureAwait(false));
+        public event EventHandler<DisposalNotificationEventArgs>? DisposalOverridden;
+        /// <inheritdoc/>
+        public event EventHandler<DisposalNotificationEventArgs>? Disposed;
+        /// <inheritdoc/>
+        public event EventHandler<DisposalNotificationEventArgs>? Disposing;
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(orphanTtl).ConfigureAwait(false);
+                    await DisposalLogicAsync().ConfigureAwait(false);
+                });
+            }
+            else
+                DisposalLogicAsync().AsTask().Wait();
+        }
 
         /// <inheritdoc/>
         public async ValueTask DisposeAsync()
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
-                await Task.Delay(orphanTtl).ConfigureAwait(false);
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(orphanTtl).ConfigureAwait(false);
+                    await DisposalLogicAsync().ConfigureAwait(false);
+                });
+            }
+            else
+                await DisposalLogicAsync().ConfigureAwait(false);
+        }
+
+        async ValueTask DisposalLogicAsync()
+        {
+            var e = DisposalNotificationEventArgs.ByCallingDispose;
+            Disposing?.Invoke(this, e);
             var isRemoving = false;
-            var grant = await cache.access.WriterLockAsync();
-            try
+            using (await cache.access.WriterLockAsync().ConfigureAwait(false))
             {
                 isRemoving = --ReferenceCount == 0;
                 if (isRemoving)
                     cache.values.TryRemove(Key, out _);
             }
-            finally
-            {
-                grant.Dispose();
-            }
             if (isRemoving)
             {
                 await OnTerminatedAsync().ConfigureAwait(false);
                 GC.SuppressFinalize(this);
+                IsDisposed = true;
+                Disposed?.Invoke(this, e);
             }
+            else
+                DisposalOverridden?.Invoke(this, e);
         }
 
         internal async Task InitializeIfNewAsync(AsyncDisposableValuesCache<TKey, TValue> cache, TKey key)
@@ -142,12 +185,6 @@ public class AsyncDisposableValuesCache<TKey, TValue>
                     await OnInitializedAsync().ConfigureAwait(false);
                 }
             }
-        }
-
-        internal async Task TerminateAsync()
-        {
-            await OnTerminatedAsync().ConfigureAwait(false);
-            GC.SuppressFinalize(this);
         }
 
         /// <summary>

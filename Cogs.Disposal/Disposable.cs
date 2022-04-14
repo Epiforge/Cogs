@@ -17,7 +17,7 @@ public abstract class Disposable :
     /// </summary>
     ~Disposable()
     {
-        var e = new DisposalNotificationEventArgs(true);
+        var e = DisposalNotificationEventArgs.ByFinalizer;
         OnDisposing(e);
         Dispose(false);
         IsDisposed = true;
@@ -59,7 +59,7 @@ public abstract class Disposable :
         using (disposalAccess.Lock())
             if (!IsDisposed)
             {
-                var e = new DisposalNotificationEventArgs(false);
+                var e = DisposalNotificationEventArgs.ByCallingDispose;
                 OnDisposing(e);
                 if (IsDisposed = Dispose(true))
                 {
@@ -86,7 +86,7 @@ public abstract class Disposable :
         using (await disposalAccess.LockAsync().ConfigureAwait(false))
             if (!IsDisposed)
             {
-                var e = new DisposalNotificationEventArgs(false);
+                var e = DisposalNotificationEventArgs.ByCallingDispose;
                 OnDisposing(e);
                 if (IsDisposed = await DisposeAsync(true).ConfigureAwait(false))
                 {

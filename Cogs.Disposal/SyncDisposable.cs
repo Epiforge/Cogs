@@ -16,7 +16,7 @@ public abstract class SyncDisposable :
     /// </summary>
     ~SyncDisposable()
     {
-        var e = new DisposalNotificationEventArgs(true);
+        var e = DisposalNotificationEventArgs.ByFinalizer;
         OnDisposing(e);
         Dispose(false);
         IsDisposed = true;
@@ -58,7 +58,7 @@ public abstract class SyncDisposable :
         lock (disposalAccess)
             if (!IsDisposed)
             {
-                var e = new DisposalNotificationEventArgs(false);
+                var e = DisposalNotificationEventArgs.ByCallingDispose;
                 OnDisposing(e);
                 if (IsDisposed = Dispose(true))
                 {
