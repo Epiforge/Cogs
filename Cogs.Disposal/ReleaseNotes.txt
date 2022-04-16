@@ -1,1 +1,1 @@
-We fixed a defect in orphan TTL for DisposableValuesCache and AsyncDisposableValuesCache.
+We consolidated protected paths in value disposal for DisposableValuesCache and AsyncDisposableValuesCache.

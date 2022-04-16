@@ -88,15 +88,13 @@ public class DisposableValuesCache<TKey, TValue>
         INotifyDisposed,
         INotifyDisposing
     {
+        readonly object access = new();
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         DisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         bool isDisposed;
         CancellationTokenSource? orphanTtlCts;
-        readonly object orphanTtlCtsAccess = new();
-
-        internal object Access = new();
-        internal int ReferenceCount;
+        int referenceCount;
 
         /// <inheritdoc/>
         public bool IsDisposed
@@ -126,7 +124,7 @@ public class DisposableValuesCache<TKey, TValue>
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
                 CancellationToken token;
-                lock (orphanTtlCtsAccess)
+                lock (access)
                 {
                     if (orphanTtlCts is not null)
                     {
@@ -141,7 +139,7 @@ public class DisposableValuesCache<TKey, TValue>
                     try
                     {
                         await Task.Delay(orphanTtl, token).ConfigureAwait(false);
-                        lock (orphanTtlCtsAccess)
+                        lock (access)
                         {
                             try
                             {
@@ -172,7 +170,7 @@ public class DisposableValuesCache<TKey, TValue>
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
                 CancellationToken token;
-                lock (orphanTtlCtsAccess)
+                lock (access)
                 {
                     if (orphanTtlCts is not null)
                     {
@@ -187,7 +185,7 @@ public class DisposableValuesCache<TKey, TValue>
                     try
                     {
                         await Task.Delay(orphanTtl, token).ConfigureAwait(false);
-                        lock (orphanTtlCtsAccess)
+                        lock (access)
                         {
                             try
                             {
@@ -221,7 +219,7 @@ public class DisposableValuesCache<TKey, TValue>
             cache.access.EnterWriteLock();
             try
             {
-                isRemoving = --ReferenceCount == 0;
+                isRemoving = --referenceCount == 0;
                 if (isRemoving)
                     cache.values.TryRemove(Key, out _);
             }
@@ -242,7 +240,7 @@ public class DisposableValuesCache<TKey, TValue>
 
         internal void InitializeIfNew(DisposableValuesCache<TKey, TValue> cache, TKey key)
         {
-            lock (orphanTtlCtsAccess)
+            lock (access)
             {
                 if (orphanTtlCts is not null)
                 {
@@ -250,10 +248,7 @@ public class DisposableValuesCache<TKey, TValue>
                     orphanTtlCts.Dispose();
                     orphanTtlCts = null;
                 }
-            }
-            lock (Access)
-            {
-                if (++ReferenceCount == 1)
+                if (++referenceCount == 1)
                 {
                     this.cache = cache;
                     Key = key;

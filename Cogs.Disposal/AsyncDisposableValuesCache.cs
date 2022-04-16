@@ -93,15 +93,13 @@ public class AsyncDisposableValuesCache<TKey, TValue>
         INotifyDisposed,
         INotifyDisposing
     {
+        readonly AsyncLock access = new();
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         AsyncDisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         bool isDisposed;
         CancellationTokenSource? orphanTtlCts;
-        readonly object orphanTtlCtsAccess = new();
-
-        internal AsyncLock Access = new();
-        internal int ReferenceCount;
+        int referenceCount;
 
         /// <inheritdoc/>
         public bool IsDisposed
@@ -131,7 +129,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
                 CancellationToken token;
-                lock (orphanTtlCtsAccess)
+                using (access.Lock())
                 {
                     if (orphanTtlCts is not null)
                     {
@@ -146,7 +144,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
                     try
                     {
                         await Task.Delay(orphanTtl, token).ConfigureAwait(false);
-                        lock (orphanTtlCtsAccess)
+                        using (await access.LockAsync().ConfigureAwait(false))
                         {
                             try
                             {
@@ -177,7 +175,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
                 CancellationToken token;
-                lock (orphanTtlCtsAccess)
+                using (await access.LockAsync().ConfigureAwait(false))
                 {
                     if (orphanTtlCts is not null)
                     {
@@ -192,7 +190,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
                     try
                     {
                         await Task.Delay(orphanTtl, token).ConfigureAwait(false);
-                        lock (orphanTtlCtsAccess)
+                        using (await access.LockAsync().ConfigureAwait(false))
                         {
                             try
                             {
@@ -224,7 +222,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
             var isRemoving = false;
             using (await cache.access.WriterLockAsync().ConfigureAwait(false))
             {
-                isRemoving = --ReferenceCount == 0;
+                isRemoving = --referenceCount == 0;
                 if (isRemoving)
                     cache.values.TryRemove(Key, out _);
             }
@@ -241,7 +239,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
 
         internal async Task InitializeIfNewAsync(AsyncDisposableValuesCache<TKey, TValue> cache, TKey key)
         {
-            lock (orphanTtlCtsAccess)
+            using (await access.LockAsync().ConfigureAwait(false))
             {
                 if (orphanTtlCts is not null)
                 {
@@ -249,10 +247,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
                     orphanTtlCts.Dispose();
                     orphanTtlCts = null;
                 }
-            }
-            using (await Access.LockAsync().ConfigureAwait(false))
-            {
-                if (++ReferenceCount == 1)
+                if (++referenceCount == 1)
                 {
                     this.cache = cache;
                     Key = key;
