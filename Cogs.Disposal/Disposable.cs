@@ -33,7 +33,7 @@ public abstract class Disposable :
 	public bool IsDisposed
     {
         get => isDisposed;
-        private set => SetBackedProperty(ref isDisposed, in value);
+        private set => SetBackedProperty(ref isDisposed, in value, IsDisposedPropertyChanging, IsDisposedPropertyChanged);
     }
 
     /// <summary>
@@ -132,4 +132,7 @@ public abstract class Disposable :
         if (isDisposed)
             throw new ObjectDisposedException(GetType().Name);
     }
+
+    internal static readonly PropertyChangedEventArgs IsDisposedPropertyChanged = new(nameof(IsDisposed));
+    internal static readonly PropertyChangingEventArgs IsDisposedPropertyChanging = new(nameof(IsDisposed));
 }

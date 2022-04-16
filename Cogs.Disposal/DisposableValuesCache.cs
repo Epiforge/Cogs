@@ -92,6 +92,7 @@ public class DisposableValuesCache<TKey, TValue>
         DisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         bool isDisposed;
+        CancellationTokenSource? orphanTtlCts;
 
         internal object Access = new();
         internal int ReferenceCount;
@@ -100,7 +101,7 @@ public class DisposableValuesCache<TKey, TValue>
         public bool IsDisposed
         {
             get => isDisposed;
-            private set => SetBackedProperty(ref isDisposed, in value);
+            private set => SetBackedProperty(ref isDisposed, in value, Disposable.IsDisposedPropertyChanging, Disposable.IsDisposedPropertyChanged);
         }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -118,14 +119,26 @@ public class DisposableValuesCache<TKey, TValue>
         public event EventHandler<DisposalNotificationEventArgs>? Disposing;
 
         /// <inheritdoc/>
+        [SuppressMessage("Usage", "CA1816: Dispose methods should call SuppressFinalize", Justification = "Another method is doing the work")]
         public void Dispose()
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
+                orphanTtlCts?.Cancel();
+                orphanTtlCts?.Dispose();
                 _ = Task.Run(async () =>
                 {
-                    await Task.Delay(orphanTtl).ConfigureAwait(false);
-                    DisposalLogic();
+                    orphanTtlCts = new CancellationTokenSource();
+                    try
+                    {
+                        await Task.Delay(orphanTtl, orphanTtlCts.Token).ConfigureAwait(false);
+                        orphanTtlCts?.Dispose();
+                        DisposalLogic();
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // we're still needed!
+                    }
                 });
             }
             else
@@ -133,14 +146,26 @@ public class DisposableValuesCache<TKey, TValue>
         }
 
         /// <inheritdoc/>
+        [SuppressMessage("Usage", "CA1816: Dispose methods should call SuppressFinalize", Justification = "Another method is doing the work")]
         public ValueTask DisposeAsync()
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
+                orphanTtlCts?.Cancel();
+                orphanTtlCts?.Dispose();
                 _ = Task.Run(async () =>
                 {
-                    await Task.Delay(orphanTtl).ConfigureAwait(false);
-                    DisposalLogic();
+                    orphanTtlCts = new CancellationTokenSource();
+                    try
+                    {
+                        await Task.Delay(orphanTtl, orphanTtlCts.Token).ConfigureAwait(false);
+                        orphanTtlCts?.Dispose();
+                        DisposalLogic();
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // we're still needed!
+                    }
                 });
             }
             else
@@ -148,6 +173,7 @@ public class DisposableValuesCache<TKey, TValue>
             return new ValueTask(Task.CompletedTask);
         }
 
+        [SuppressMessage("Usage", "CA1816: Dispose methods should call SuppressFinalize", Justification = "This method is doing the work for the others")]
         void DisposalLogic()
         {
             var e = DisposalNotificationEventArgs.ByCallingDispose;
@@ -177,6 +203,8 @@ public class DisposableValuesCache<TKey, TValue>
 
         internal void InitializeIfNew(DisposableValuesCache<TKey, TValue> cache, TKey key)
         {
+            orphanTtlCts?.Cancel();
+            orphanTtlCts?.Dispose();
             lock (Access)
             {
                 if (++ReferenceCount == 1)
@@ -186,12 +214,6 @@ public class DisposableValuesCache<TKey, TValue>
                     OnInitialized();
                 }
             }
-        }
-
-        internal void Terminate()
-        {
-            OnTerminated();
-            GC.SuppressFinalize(this);
         }
 
         /// <summary>

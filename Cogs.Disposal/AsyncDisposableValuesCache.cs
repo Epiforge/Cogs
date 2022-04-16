@@ -97,6 +97,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
         AsyncDisposableValuesCache<TKey, TValue> cache;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         bool isDisposed;
+        CancellationTokenSource? orphanTtlCts;
 
         internal AsyncLock Access = new();
         internal int ReferenceCount;
@@ -105,7 +106,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
         public bool IsDisposed
         {
             get => isDisposed;
-            private set => SetBackedProperty(ref isDisposed, in value);
+            private set => SetBackedProperty(ref isDisposed, in value, Disposable.IsDisposedPropertyChanging, Disposable.IsDisposedPropertyChanged);
         }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -123,14 +124,26 @@ public class AsyncDisposableValuesCache<TKey, TValue>
         public event EventHandler<DisposalNotificationEventArgs>? Disposing;
 
         /// <inheritdoc/>
+        [SuppressMessage("Usage", "CA1816: Dispose methods should call SuppressFinalize", Justification = "Another method is doing the work")]
         public void Dispose()
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
+                orphanTtlCts?.Cancel();
+                orphanTtlCts?.Dispose();
                 _ = Task.Run(async () =>
                 {
-                    await Task.Delay(orphanTtl).ConfigureAwait(false);
-                    await DisposalLogicAsync().ConfigureAwait(false);
+                    orphanTtlCts = new CancellationTokenSource();
+                    try
+                    {
+                        await Task.Delay(orphanTtl, orphanTtlCts.Token).ConfigureAwait(false);
+                        orphanTtlCts?.Dispose();
+                        await DisposalLogicAsync().ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // we're still needed!
+                    }
                 });
             }
             else
@@ -138,20 +151,33 @@ public class AsyncDisposableValuesCache<TKey, TValue>
         }
 
         /// <inheritdoc/>
+        [SuppressMessage("Usage", "CA1816: Dispose methods should call SuppressFinalize", Justification = "Another method is doing the work")]
         public async ValueTask DisposeAsync()
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
+                orphanTtlCts?.Cancel();
+                orphanTtlCts?.Dispose();
                 _ = Task.Run(async () =>
                 {
-                    await Task.Delay(orphanTtl).ConfigureAwait(false);
-                    await DisposalLogicAsync().ConfigureAwait(false);
+                    orphanTtlCts = new CancellationTokenSource();
+                    try
+                    {
+                        await Task.Delay(orphanTtl, orphanTtlCts.Token).ConfigureAwait(false);
+                        orphanTtlCts?.Dispose();
+                        await DisposalLogicAsync().ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // we're still needed!
+                    }
                 });
             }
             else
                 await DisposalLogicAsync().ConfigureAwait(false);
         }
 
+        [SuppressMessage("Usage", "CA1816: Dispose methods should call SuppressFinalize", Justification = "This method is doing the work for the others")]
         async ValueTask DisposalLogicAsync()
         {
             var e = DisposalNotificationEventArgs.ByCallingDispose;
@@ -176,6 +202,8 @@ public class AsyncDisposableValuesCache<TKey, TValue>
 
         internal async Task InitializeIfNewAsync(AsyncDisposableValuesCache<TKey, TValue> cache, TKey key)
         {
+            orphanTtlCts?.Cancel();
+            orphanTtlCts?.Dispose();
             using (await Access.LockAsync().ConfigureAwait(false))
             {
                 if (++ReferenceCount == 1)

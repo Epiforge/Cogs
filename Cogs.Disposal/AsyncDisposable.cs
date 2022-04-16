@@ -32,7 +32,7 @@ public abstract class AsyncDisposable :
     public bool IsDisposed
     {
         get => isDisposed;
-        private set => SetBackedProperty(ref isDisposed, in value);
+        private set => SetBackedProperty(ref isDisposed, in value, Disposable.IsDisposedPropertyChanging, Disposable.IsDisposedPropertyChanged);
     }
 
     /// <summary>
