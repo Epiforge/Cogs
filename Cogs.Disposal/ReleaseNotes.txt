@@ -1,1 +1,1 @@
-We fixed a race condition in orphan TTL for DisposableValuesCache and AsyncDisposableValuesCache. We also cached the property change notification event arguments for IsDisposed to cut down on allocations.
+We fixed a defect in orphan TTL for DisposableValuesCache and AsyncDisposableValuesCache.

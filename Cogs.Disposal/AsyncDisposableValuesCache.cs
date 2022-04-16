@@ -98,6 +98,7 @@ public class AsyncDisposableValuesCache<TKey, TValue>
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         bool isDisposed;
         CancellationTokenSource? orphanTtlCts;
+        readonly object orphanTtlCtsAccess = new();
 
         internal AsyncLock Access = new();
         internal int ReferenceCount;
@@ -129,15 +130,34 @@ public class AsyncDisposableValuesCache<TKey, TValue>
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
-                orphanTtlCts?.Cancel();
-                orphanTtlCts?.Dispose();
+                CancellationToken token;
+                lock (orphanTtlCtsAccess)
+                {
+                    if (orphanTtlCts is not null)
+                    {
+                        orphanTtlCts.Cancel();
+                        orphanTtlCts.Dispose();
+                    }
+                    orphanTtlCts = new CancellationTokenSource();
+                    token = orphanTtlCts.Token;
+                }
                 _ = Task.Run(async () =>
                 {
-                    orphanTtlCts = new CancellationTokenSource();
                     try
                     {
-                        await Task.Delay(orphanTtl, orphanTtlCts.Token).ConfigureAwait(false);
-                        orphanTtlCts?.Dispose();
+                        await Task.Delay(orphanTtl, token).ConfigureAwait(false);
+                        lock (orphanTtlCtsAccess)
+                        {
+                            try
+                            {
+                                orphanTtlCts?.Dispose();
+                                orphanTtlCts = null;
+                            }
+                            catch (ObjectDisposedException)
+                            {
+                                return;
+                            }
+                        }
                         await DisposalLogicAsync().ConfigureAwait(false);
                     }
                     catch (OperationCanceledException)
@@ -156,15 +176,34 @@ public class AsyncDisposableValuesCache<TKey, TValue>
         {
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
-                orphanTtlCts?.Cancel();
-                orphanTtlCts?.Dispose();
+                CancellationToken token;
+                lock (orphanTtlCtsAccess)
+                {
+                    if (orphanTtlCts is not null)
+                    {
+                        orphanTtlCts.Cancel();
+                        orphanTtlCts.Dispose();
+                    }
+                    orphanTtlCts = new CancellationTokenSource();
+                    token = orphanTtlCts.Token;
+                }
                 _ = Task.Run(async () =>
                 {
-                    orphanTtlCts = new CancellationTokenSource();
                     try
                     {
-                        await Task.Delay(orphanTtl, orphanTtlCts.Token).ConfigureAwait(false);
-                        orphanTtlCts?.Dispose();
+                        await Task.Delay(orphanTtl, token).ConfigureAwait(false);
+                        lock (orphanTtlCtsAccess)
+                        {
+                            try
+                            {
+                                orphanTtlCts?.Dispose();
+                                orphanTtlCts = null;
+                            }
+                            catch (ObjectDisposedException)
+                            {
+                                return;
+                            }
+                        }
                         await DisposalLogicAsync().ConfigureAwait(false);
                     }
                     catch (OperationCanceledException)
@@ -202,8 +241,15 @@ public class AsyncDisposableValuesCache<TKey, TValue>
 
         internal async Task InitializeIfNewAsync(AsyncDisposableValuesCache<TKey, TValue> cache, TKey key)
         {
-            orphanTtlCts?.Cancel();
-            orphanTtlCts?.Dispose();
+            lock (orphanTtlCtsAccess)
+            {
+                if (orphanTtlCts is not null)
+                {
+                    orphanTtlCts.Cancel();
+                    orphanTtlCts.Dispose();
+                    orphanTtlCts = null;
+                }
+            }
             using (await Access.LockAsync().ConfigureAwait(false))
             {
                 if (++ReferenceCount == 1)
