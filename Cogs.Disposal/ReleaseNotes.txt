@@ -1,1 +1,1 @@
-We consolidated protected paths in value disposal for DisposableValuesCache and AsyncDisposableValuesCache.
+We added `DynamicSyncDisposable`, `DynamicAsyncDisposable`, and `DynamicDisposable`.
