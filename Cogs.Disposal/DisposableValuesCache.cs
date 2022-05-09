@@ -121,6 +121,8 @@ public class DisposableValuesCache<TKey, TValue>
         [SuppressMessage("Usage", "CA1816: Dispose methods should call SuppressFinalize", Justification = "Another method is doing the work")]
         public void Dispose()
         {
+            if (cache is null)
+                return;
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
                 CancellationToken token;
@@ -167,6 +169,8 @@ public class DisposableValuesCache<TKey, TValue>
         [SuppressMessage("Usage", "CA1816: Dispose methods should call SuppressFinalize", Justification = "Another method is doing the work")]
         public ValueTask DisposeAsync()
         {
+            if (cache is null)
+                return default;
             if (cache.orphanTtl is { } orphanTtl && orphanTtl > TimeSpan.Zero)
             {
                 CancellationToken token;

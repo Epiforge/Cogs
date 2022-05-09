@@ -1,1 +1,1 @@
-We added `DynamicSyncDisposable`, `DynamicAsyncDisposable`, and `DynamicDisposable`.
+We fixed a defect in which creating instances of disposable cache values manually caused NRE's when the instances were disposed.
