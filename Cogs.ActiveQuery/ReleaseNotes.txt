@@ -1,1 +1,1 @@
-The IActiveEnumerable and INondisposableActiveEnumerable interfaces now implement IList (this update will be breaking if you have implemented these interfaces yourself). Mutating methods will throw NotSupportedException.
+We corrected a property overload resolution conflict that could arise in client code using the INondisposableActiveEnumerable interface.

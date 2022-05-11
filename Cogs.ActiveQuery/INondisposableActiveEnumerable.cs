@@ -16,4 +16,14 @@ public interface INondisposableActiveEnumerable<out TElement> :
     IReadOnlyList<TElement>,
     ISynchronized
 {
+    /// <summary>
+    /// Gets the element at the specified index in the read-only list
+    /// </summary>
+    /// <param name="index">The zero-based index of the element to get</param>
+    new TElement this[int index] { get; }
+
+    /// <summary>
+    /// Gets the number of elements in the collection
+    /// </summary>
+    new int Count { get; }
 }
