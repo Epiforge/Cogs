@@ -6,6 +6,7 @@ namespace Cogs.ActiveQuery;
 /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
 public interface INondisposableActiveEnumerable<out TElement> :
     IDisposalStatus,
+    IList,
     INotifyCollectionChanged,
     INotifyDisposed,
     INotifyDisposing,

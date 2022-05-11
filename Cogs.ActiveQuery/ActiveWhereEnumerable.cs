@@ -13,7 +13,6 @@ sealed class ActiveWhereEnumerable<TElement> :
     Dictionary<IActiveExpression<TElement, bool>, int>? activeExpressionCounts;
     List<IActiveExpression<TElement, bool>>? activeExpressions;
     int count;
-    bool isDisposed;
 
     public TElement this[int index] =>
         this.Execute(() =>
@@ -32,26 +31,29 @@ sealed class ActiveWhereEnumerable<TElement> :
             }
         });
 
+    object? IList.this[int index]
+    {
+        get => this[index];
+        set => throw new NotSupportedException();
+    }
+
     public int Count
     {
         get => count;
         private set => SetBackedProperty(ref count, in value);
     }
 
-    public bool IsDisposed
-    {
-        get => isDisposed;
-        private set => SetBackedProperty(ref isDisposed, in value);
-    }
+    bool IList.IsFixedSize { get; } = false;
+
+    bool IList.IsReadOnly { get; } = true;
+
+    bool ICollection.IsSynchronized { get; } = false;
 
     public SynchronizationContext? SynchronizationContext { get; private set; }
 
+    object? ICollection.SyncRoot { get; } = null;
+
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
-#pragma warning disable CS0067
-    public event EventHandler<DisposalNotificationEventArgs>? DisposalOverridden;
-#pragma warning restore CS0067
-    public event EventHandler<DisposalNotificationEventArgs>? Disposed;
-    public event EventHandler<DisposalNotificationEventArgs>? Disposing;
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
 #pragma warning disable CS0067
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
@@ -87,6 +89,27 @@ sealed class ActiveWhereEnumerable<TElement> :
             });
     }
 
+    int IList.Add(object value) =>
+        throw new NotSupportedException();
+
+    void IList.Clear() =>
+        throw new NotSupportedException();
+
+    bool IList.Contains(object? value) =>
+        this.Execute(() => value is TElement element && this.Contains(element));
+
+    void ICollection.CopyTo(Array array, int index) =>
+        this.Execute(() =>
+        {
+            --index;
+            foreach (var item in this)
+            {
+                if (++index >= array.Length)
+                    break;
+                array.SetValue(item, index);
+            }
+        });
+
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         this.Execute(() =>
         {
@@ -113,6 +136,12 @@ sealed class ActiveWhereEnumerable<TElement> :
                 if (activeExpression.Value)
                     yield return activeExpression.Arg;
     }
+
+    int IList.IndexOf(object value) =>
+        this.Execute(() => value is TElement element ? this.IndexOf(element) : -1);
+
+    void IList.Insert(int index, object value) =>
+        throw new NotSupportedException();
 
     protected override void OnInitialized()
     {
@@ -158,8 +187,6 @@ sealed class ActiveWhereEnumerable<TElement> :
     protected override void OnTerminated() =>
         this.Execute(() =>
         {
-            var disposalEventArgs = new DisposalNotificationEventArgs(false);
-            Disposing?.Invoke(this, disposalEventArgs);
             lock (access!)
             {
                 foreach (var activeExpression in activeExpressionCounts!.Keys)
@@ -171,9 +198,13 @@ sealed class ActiveWhereEnumerable<TElement> :
                 if (Key.source is INotifyCollectionChanged collectionChangeNotifier)
                     collectionChangeNotifier.CollectionChanged -= SourceChanged;
             }
-            IsDisposed = true;
-            Disposed?.Invoke(this, disposalEventArgs);
         });
+
+    void IList.Remove(object value) =>
+        throw new NotSupportedException();
+
+    void IList.RemoveAt(int index) =>
+        throw new NotSupportedException();
 
     [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     [SuppressMessage("Reliability", "CA2000: Dispose objects before losing scope", Justification = "They'll get disposed, chill out")]

@@ -9,7 +9,6 @@ sealed class ActiveSelectEnumerable<TResult> :
     Dictionary<IActiveExpression<object?, TResult>, int>? activeExpressionCounts;
     List<IActiveExpression<object?, TResult>>? activeExpressions;
     int count;
-    bool isDisposed;
 
     public TResult this[int index] =>
         this.Execute(() =>
@@ -18,26 +17,29 @@ sealed class ActiveSelectEnumerable<TResult> :
                 return activeExpressions![index].Value!;
         });
 
+    object? IList.this[int index]
+    {
+        get => this[index];
+        set => throw new NotSupportedException();
+    }
+
     public int Count
     {
         get => count;
         private set => SetBackedProperty(ref count, in value);
     }
 
-    public bool IsDisposed
-    {
-        get => isDisposed;
-        private set => SetBackedProperty(ref isDisposed, in value);
-    }
+    bool IList.IsFixedSize { get; } = false;
+
+    bool IList.IsReadOnly { get; } = true;
+
+    bool ICollection.IsSynchronized { get; } = false;
 
     public SynchronizationContext? SynchronizationContext { get; private set; }
 
+    object? ICollection.SyncRoot { get; } = null;
+
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
-#pragma warning disable CS0067
-    public event EventHandler<DisposalNotificationEventArgs>? DisposalOverridden;
-#pragma warning restore CS0067
-    public event EventHandler<DisposalNotificationEventArgs>? Disposed;
-    public event EventHandler<DisposalNotificationEventArgs>? Disposing;
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
 #pragma warning disable CS0067
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
@@ -62,6 +64,27 @@ sealed class ActiveSelectEnumerable<TResult> :
                 }
             });
     }
+
+    int IList.Add(object value) =>
+        throw new NotSupportedException();
+
+    void IList.Clear() =>
+        throw new NotSupportedException();
+
+    bool IList.Contains(object? value) =>
+        this.Execute(() => value is TResult result && this.Contains(result));
+
+    void ICollection.CopyTo(Array array, int index) =>
+        this.Execute(() =>
+        {
+            --index;
+            foreach (var item in this)
+            {
+                if (++index >= array.Length)
+                    break;
+                array.SetValue(item, index);
+            }
+        });
 
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         this.Execute(() =>
@@ -88,6 +111,12 @@ sealed class ActiveSelectEnumerable<TResult> :
             foreach (var activeExpression in activeExpressions!)
                 yield return activeExpression.Value!;
     }
+
+    int IList.IndexOf(object value) =>
+        this.Execute(() => value is TResult result ? this.IndexOf(result) : -1);
+
+    void IList.Insert(int index, object value) =>
+        throw new NotSupportedException();
 
     protected override void OnInitialized()
     {
@@ -135,8 +164,6 @@ sealed class ActiveSelectEnumerable<TResult> :
     protected override void OnTerminated() =>
         this.Execute(() =>
         {
-            var disposalEventArgs = new DisposalNotificationEventArgs(false);
-            Disposing?.Invoke(this, disposalEventArgs);
             lock (access!)
             {
                 foreach (var activeExpression in activeExpressionCounts!.Keys)
@@ -148,9 +175,13 @@ sealed class ActiveSelectEnumerable<TResult> :
                 if (Key.source is INotifyCollectionChanged collectionChangeNotifier)
                     collectionChangeNotifier.CollectionChanged -= SourceChanged;
             }
-            IsDisposed = true;
-            Disposed?.Invoke(this, disposalEventArgs);
         });
+
+    void IList.Remove(object value) =>
+        throw new NotSupportedException();
+
+    void IList.RemoveAt(int index) =>
+        throw new NotSupportedException();
 
     [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -304,7 +335,6 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
     Dictionary<IActiveExpression<TSource, TResult>, int>? activeExpressionCounts;
     List<IActiveExpression<TSource, TResult>>? activeExpressions;
     int count;
-    bool isDisposed;
 
     public TResult this[int index] =>
         this.Execute(() =>
@@ -313,26 +343,29 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
                 return activeExpressions![index].Value!;
         });
 
+    object? IList.this[int index]
+    {
+        get => this[index];
+        set => throw new NotSupportedException();
+    }
+
     public int Count
     {
         get => count;
         private set => SetBackedProperty(ref count, in value);
     }
 
-    public bool IsDisposed
-    {
-        get => isDisposed;
-        private set => SetBackedProperty(ref isDisposed, in value);
-    }
+    bool IList.IsFixedSize { get; } = false;
+
+    bool IList.IsReadOnly { get; } = true;
+
+    bool ICollection.IsSynchronized { get; } = false;
 
     public SynchronizationContext? SynchronizationContext { get; private set; }
 
+    object? ICollection.SyncRoot { get; } = null;
+
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
-#pragma warning disable CS0067
-    public event EventHandler<DisposalNotificationEventArgs>? DisposalOverridden;
-#pragma warning restore CS0067
-    public event EventHandler<DisposalNotificationEventArgs>? Disposed;
-    public event EventHandler<DisposalNotificationEventArgs>? Disposing;
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanged;
 #pragma warning disable CS0067
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
@@ -357,6 +390,27 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
                 }
             });
     }
+
+    int IList.Add(object value) =>
+        throw new NotSupportedException();
+
+    void IList.Clear() =>
+        throw new NotSupportedException();
+
+    bool IList.Contains(object? value) =>
+        this.Execute(() => value is TResult result && this.Contains(result));
+
+    void ICollection.CopyTo(Array array, int index) =>
+        this.Execute(() =>
+        {
+            --index;
+            foreach (var item in this)
+            {
+                if (++index >= array.Length)
+                    break;
+                array.SetValue(item, index);
+            }
+        });
 
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         this.Execute(() =>
@@ -383,6 +437,12 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
             foreach (var activeExpression in activeExpressions!)
                 yield return activeExpression.Value!;
     }
+
+    int IList.IndexOf(object value) =>
+        this.Execute(() => value is TResult result ? this.IndexOf(result) : -1);
+
+    void IList.Insert(int index, object value) =>
+        throw new NotSupportedException();
 
     protected override void OnInitialized()
     {
@@ -430,8 +490,6 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
     protected override void OnTerminated() =>
         this.Execute(() =>
         {
-            var disposalEventArgs = new DisposalNotificationEventArgs(false);
-            Disposing?.Invoke(this, disposalEventArgs);
             lock (access!)
             {
                 foreach (var activeExpression in activeExpressionCounts!.Keys)
@@ -443,9 +501,13 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
                 if (Key.source is INotifyCollectionChanged collectionChangeNotifier)
                     collectionChangeNotifier.CollectionChanged -= SourceChanged;
             }
-            IsDisposed = true;
-            Disposed?.Invoke(this, disposalEventArgs);
         });
+
+    void IList.Remove(object value) =>
+        throw new NotSupportedException();
+
+    void IList.RemoveAt(int index) =>
+        throw new NotSupportedException();
 
     [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)

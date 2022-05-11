@@ -34,6 +34,12 @@ public class NondisposableActiveEnumerable<TElement> :
     public TElement this[int index] =>
         activeEnumerable[index];
 
+    object? IList.this[int index]
+    {
+        get => this[index];
+        set => throw new NotSupportedException();
+    }
+
     /// <summary>
     /// Gets the number of elements in the collection
     /// </summary>
@@ -46,11 +52,19 @@ public class NondisposableActiveEnumerable<TElement> :
     public bool IsDisposed =>
         activeEnumerable.IsDisposed;
 
+    bool IList.IsFixedSize { get; } = false;
+
+    bool IList.IsReadOnly { get; } = true;
+
+    bool ICollection.IsSynchronized { get; } = false;
+
     /// <summary>
     /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
     /// </summary>
     public SynchronizationContext? SynchronizationContext =>
         activeEnumerable.SynchronizationContext;
+
+    object? ICollection.SyncRoot { get; } = null;
 
     /// <summary>
     /// Occurs when the collection changes
@@ -123,6 +137,29 @@ public class NondisposableActiveEnumerable<TElement> :
     void ActiveEnumerablePropertyChanging(object sender, PropertyChangingEventArgs e) =>
         PropertyChanging?.Invoke(this, e);
 
+    int IList.Add(object value) =>
+        throw new NotSupportedException();
+
+    void IList.Clear() =>
+        throw new NotSupportedException();
+
+    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
+    bool IList.Contains(object? value) =>
+        this.Execute(() => value is TElement element && this.Contains(element));
+
+    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
+    void ICollection.CopyTo(Array array, int index) =>
+        this.Execute(() =>
+        {
+            --index;
+            foreach (var item in this)
+            {
+                if (++index >= array.Length)
+                    break;
+                array.SetValue(item, index);
+            }
+        });
+
     /// <summary>
     /// Gets a list of all faulted elements
     /// </summary>
@@ -139,4 +176,17 @@ public class NondisposableActiveEnumerable<TElement> :
     /// <returns>An enumerator that can be used to iterate through the collection</returns>
     public IEnumerator<TElement> GetEnumerator() =>
         activeEnumerable.GetEnumerator();
+
+    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
+    int IList.IndexOf(object value) =>
+        this.Execute(() => value is TElement element ? this.IndexOf(element) : -1);
+
+    void IList.Insert(int index, object value) =>
+        throw new NotSupportedException();
+
+    void IList.Remove(object value) =>
+        throw new NotSupportedException();
+
+    void IList.RemoveAt(int index) =>
+        throw new NotSupportedException();
 }

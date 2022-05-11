@@ -41,23 +41,37 @@ public sealed class ActiveConcatEnumerable<TElement> :
     readonly IEnumerable<TElement> second;
 
     /// <summary>
-    /// Gets the number of elements in the collection
-    /// </summary>
-    public int Count =>
-        this.Execute(() => firstCount + second.Count());
-
-    /// <summary>
-    /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
-    /// </summary>
-    public SynchronizationContext? SynchronizationContext { get; }
-
-    /// <summary>
     /// Gets the element at the specified index in the read-only list
     /// </summary>
     /// <param name="index">The zero-based index of the element to get</param>
     /// <returns>The element at the specified index in the read-only list</returns>
     public TElement this[int index] =>
         this.Execute(() => index >= firstCount ? second.ElementAt(index - firstCount) : first.ElementAt(index));
+
+    object? IList.this[int index]
+    {
+        get => this[index];
+        set => throw new NotSupportedException();
+    }
+
+    /// <summary>
+    /// Gets the number of elements in the collection
+    /// </summary>
+    public int Count =>
+        this.Execute(() => firstCount + second.Count());
+
+    bool IList.IsFixedSize { get; } = false;
+
+    bool IList.IsReadOnly { get; } = true;
+
+    bool ICollection.IsSynchronized { get; } = false;
+
+    /// <summary>
+    /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
+    /// </summary>
+    public SynchronizationContext? SynchronizationContext { get; }
+
+    object? ICollection.SyncRoot { get; } = null;
 
     /// <summary>
     /// Occurs when the collection changes
@@ -73,6 +87,27 @@ public sealed class ActiveConcatEnumerable<TElement> :
     /// Occurs when the fault for an element is changing
     /// </summary>
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
+
+    int IList.Add(object value) =>
+        throw new NotSupportedException();
+
+    void IList.Clear() =>
+        throw new NotSupportedException();
+
+    bool IList.Contains(object? value) =>
+        this.Execute(() => value is TElement element && this.Contains(element));
+
+    void ICollection.CopyTo(Array array, int index) =>
+        this.Execute(() =>
+        {
+            --index;
+            foreach (var item in first.Concat(second))
+            {
+                if (++index >= array.Length)
+                    break;
+                array.SetValue(item, index);
+            }
+        });
 
     /// <summary>
     /// Frees, releases, or resets unmanaged resources
@@ -132,6 +167,12 @@ public sealed class ActiveConcatEnumerable<TElement> :
     public IEnumerator<TElement> GetEnumerator() =>
         this.Execute(() => first.Concat(second).GetEnumerator());
 
+    int IList.IndexOf(object value) =>
+        this.Execute(() => value is TElement element ? first.Concat(second).IndexOf(element) : -1);
+
+    void IList.Insert(int index, object value) =>
+        throw new NotSupportedException();
+
     void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
         CollectionChanged?.Invoke(this, e);
 
@@ -140,6 +181,12 @@ public sealed class ActiveConcatEnumerable<TElement> :
 
     void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
         ElementFaultChanging?.Invoke(this, e);
+
+    void IList.Remove(object value) =>
+        throw new NotSupportedException();
+
+    void IList.RemoveAt(int index) =>
+        throw new NotSupportedException();
 
     void SecondCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {

@@ -44,6 +44,40 @@ public class ActiveEnumerable<TElement> :
     readonly ISynchronized? synchronized;
 
     /// <summary>
+    /// Gets the element at the specified index in the read-only list
+    /// </summary>
+    /// <param name="index">The zero-based index of the element to get</param>
+    /// <returns>The element at the specified index in the read-only list</returns>
+    public TElement this[int index] =>
+        readOnlyList[index];
+
+    object? IList.this[int index]
+    {
+        get => this[index];
+        set => throw new NotSupportedException();
+    }
+
+    /// <summary>
+    /// Gets the number of elements in the collection
+    /// </summary>
+    public int Count =>
+        readOnlyList.Count;
+
+    bool IList.IsFixedSize { get; } = false;
+
+    bool IList.IsReadOnly { get; } = true;
+
+    bool ICollection.IsSynchronized { get; } = false;
+
+    /// <summary>
+    /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
+    /// </summary>
+    public SynchronizationContext? SynchronizationContext =>
+        synchronized?.SynchronizationContext;
+
+    object? ICollection.SyncRoot { get; } = null;
+
+    /// <summary>
     /// Occurs when the collection changes
     /// </summary>
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
@@ -58,8 +92,31 @@ public class ActiveEnumerable<TElement> :
     /// </summary>
     public event EventHandler<ElementFaultChangeEventArgs>? ElementFaultChanging;
 
+    int IList.Add(object value) =>
+        throw new NotSupportedException();
+
+    void IList.Clear() =>
+        throw new NotSupportedException();
+
     void CollectionChangedHandler(object sender, NotifyCollectionChangedEventArgs e) =>
         CollectionChanged?.Invoke(this, e);
+
+    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
+    bool IList.Contains(object? value) =>
+        value is TElement element && readOnlyList.Contains(element);
+
+    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
+    void ICollection.CopyTo(Array array, int index) =>
+        this.Execute(() =>
+        {
+            --index;
+            foreach (var item in this)
+            {
+                if (++index >= array.Length)
+                    break;
+                array.SetValue(item, index);
+            }
+        });
 
     /// <summary>
     /// Frees, releases, or resets unmanaged resources
@@ -104,23 +161,16 @@ public class ActiveEnumerable<TElement> :
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         faultNotifier?.GetElementFaults() ?? Enumerable.Empty<(object? element, Exception? fault)>().ToImmutableArray();
 
-    /// <summary>
-    /// Gets the element at the specified index in the read-only list
-    /// </summary>
-    /// <param name="index">The zero-based index of the element to get</param>
-    /// <returns>The element at the specified index in the read-only list</returns>
-    public TElement this[int index] =>
-        readOnlyList[index];
+    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
+    int IList.IndexOf(object value) =>
+        this.Execute(() => value is TElement element ? this.IndexOf(element) : -1);
 
-    /// <summary>
-    /// Gets the number of elements in the collection
-    /// </summary>
-    public int Count =>
-        readOnlyList.Count;
+    void IList.Insert(int index, object value) =>
+        throw new NotSupportedException();
 
-    /// <summary>
-    /// Gets the <see cref="System.Threading.SynchronizationContext"/> on which this object's operations occur
-    /// </summary>
-    public SynchronizationContext? SynchronizationContext =>
-        synchronized?.SynchronizationContext;
+    void IList.Remove(object value) =>
+        throw new NotSupportedException();
+
+    void IList.RemoveAt(int index) =>
+        throw new NotSupportedException();
 }

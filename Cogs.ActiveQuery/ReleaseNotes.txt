@@ -1,1 +1,1 @@
-We added the ability to initialize Enumerable ActiveSelect queries in parallel.
+The IActiveEnumerable and INondisposableActiveEnumerable interfaces now implement IList (this update will be breaking if you have implemented these interfaces yourself). Mutating methods will throw NotSupportedException.
