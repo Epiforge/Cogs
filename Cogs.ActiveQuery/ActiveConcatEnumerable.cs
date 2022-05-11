@@ -95,13 +95,23 @@ public sealed class ActiveConcatEnumerable<TElement> :
         throw new NotSupportedException();
 
     bool IList.Contains(object? value) =>
-        this.Execute(() => value is TElement element && this.Contains(element));
+        this.Execute(() =>
+        {
+            if (value is TElement element)
+            {
+                var comparer = EqualityComparer<TElement>.Default;
+                foreach (var item in this)
+                    if (comparer.Equals(item, element))
+                        return true;
+            }
+            return false;
+        });
 
     void ICollection.CopyTo(Array array, int index) =>
         this.Execute(() =>
         {
             --index;
-            foreach (var item in first.Concat(second))
+            foreach (var item in this)
             {
                 if (++index >= array.Length)
                     break;
@@ -168,7 +178,21 @@ public sealed class ActiveConcatEnumerable<TElement> :
         this.Execute(() => first.Concat(second).GetEnumerator());
 
     int IList.IndexOf(object value) =>
-        this.Execute(() => value is TElement element ? first.Concat(second).IndexOf(element) : -1);
+        this.Execute(() =>
+        {
+            if (value is TElement element)
+            {
+                var index = -1;
+                var comparer = EqualityComparer<TElement>.Default;
+                foreach (var item in this)
+                {
+                    ++index;
+                    if (comparer.Equals(element, item))
+                        return index;
+                }
+            }
+            return -1;
+        });
 
     void IList.Insert(int index, object value) =>
         throw new NotSupportedException();

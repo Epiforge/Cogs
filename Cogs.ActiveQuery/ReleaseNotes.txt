@@ -1,1 +1,1 @@
-We corrected a property overload resolution conflict that could arise in client code using the INondisposableActiveEnumerable interface.
+We corrected a few possible StackOverflowExceptions in implementations of IActiveEnumerable.

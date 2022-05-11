@@ -145,18 +145,27 @@ public class NondisposableActiveEnumerable<TElement> :
 
     [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
     bool IList.Contains(object? value) =>
-        this.Execute(() => value is TElement element && this.Contains(element));
+        this.Execute(() =>
+        {
+            if (value is TElement element)
+            {
+                var comparer = EqualityComparer<TElement>.Default;
+                for (int i = 0, ii = activeEnumerable.Count; i < ii; ++i)
+                    if (comparer.Equals(activeEnumerable[i], element))
+                        return true;
+            }
+            return false;
+        });
 
     [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
     void ICollection.CopyTo(Array array, int index) =>
         this.Execute(() =>
         {
-            --index;
-            foreach (var item in this)
+            for (int i = 0, ii = activeEnumerable.Count; i < ii; ++i)
             {
-                if (++index >= array.Length)
+                if (index + i >= array.Length)
                     break;
-                array.SetValue(item, index);
+                array.SetValue(activeEnumerable[i], index + i);
             }
         });
 
@@ -179,7 +188,17 @@ public class NondisposableActiveEnumerable<TElement> :
 
     [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
     int IList.IndexOf(object value) =>
-        this.Execute(() => value is TElement element ? this.IndexOf(element) : -1);
+        this.Execute(() =>
+        {
+            if (value is TElement element)
+            {
+                var comparer = EqualityComparer<TElement>.Default;
+                for (int i = 0, ii = activeEnumerable.Count; i < ii; ++i)
+                    if (comparer.Equals(activeEnumerable[i], element))
+                        return i;
+            }
+            return -1;
+        });
 
     void IList.Insert(int index, object value) =>
         throw new NotSupportedException();

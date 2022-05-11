@@ -72,17 +72,28 @@ sealed class ActiveSelectEnumerable<TResult> :
         throw new NotSupportedException();
 
     bool IList.Contains(object? value) =>
-        this.Execute(() => value is TResult result && this.Contains(result));
+        this.Execute(() =>
+        {
+            if (activeExpressions is not null && value is TResult result)
+            {
+                var comparer = EqualityComparer<TResult>.Default;
+                for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                    if (comparer.Equals(activeExpressions[i].Value!, result))
+                        return true;
+            }
+            return false;
+        });
 
     void ICollection.CopyTo(Array array, int index) =>
         this.Execute(() =>
         {
-            --index;
-            foreach (var item in this)
+            if (activeExpressions is null)
+                return;
+            for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
             {
-                if (++index >= array.Length)
+                if (index + i >= array.Length)
                     break;
-                array.SetValue(item, index);
+                array.SetValue(activeExpressions[i].Value, index + i);
             }
         });
 
@@ -113,7 +124,17 @@ sealed class ActiveSelectEnumerable<TResult> :
     }
 
     int IList.IndexOf(object value) =>
-        this.Execute(() => value is TResult result ? this.IndexOf(result) : -1);
+        this.Execute(() =>
+        {
+            if (activeExpressions is not null && value is TResult result)
+            {
+                var comparer = EqualityComparer<TResult>.Default;
+                for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                    if (comparer.Equals(activeExpressions[i].Value!, result))
+                        return i;
+            }
+            return -1;
+        });
 
     void IList.Insert(int index, object value) =>
         throw new NotSupportedException();
@@ -398,17 +419,28 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
         throw new NotSupportedException();
 
     bool IList.Contains(object? value) =>
-        this.Execute(() => value is TResult result && this.Contains(result));
+        this.Execute(() =>
+        {
+            if (activeExpressions is not null && value is TResult result)
+            {
+                var comparer = EqualityComparer<TResult>.Default;
+                for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                    if (comparer.Equals(activeExpressions[i].Value!, result))
+                        return true;
+            }
+            return false;
+        });
 
     void ICollection.CopyTo(Array array, int index) =>
         this.Execute(() =>
         {
-            --index;
-            foreach (var item in this)
+            if (activeExpressions is null)
+                return;
+            for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
             {
-                if (++index >= array.Length)
+                if (index + i >= array.Length)
                     break;
-                array.SetValue(item, index);
+                array.SetValue(activeExpressions[i].Value, index + i);
             }
         });
 
@@ -439,7 +471,17 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
     }
 
     int IList.IndexOf(object value) =>
-        this.Execute(() => value is TResult result ? this.IndexOf(result) : -1);
+        this.Execute(() =>
+        {
+            if (activeExpressions is not null && value is TResult result)
+            {
+                var comparer = EqualityComparer<TResult>.Default;
+                for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                    if (comparer.Equals(activeExpressions[i].Value!, result))
+                        return i;
+            }
+            return -1;
+        });
 
     void IList.Insert(int index, object value) =>
         throw new NotSupportedException();
