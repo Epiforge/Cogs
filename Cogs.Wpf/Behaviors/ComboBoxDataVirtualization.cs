@@ -13,7 +13,7 @@ public class ComboBoxDataVirtualization :
         if (scrollViewer is null)
         {
             scrollViewer = await AssociatedObject.Dispatcher.InvokeAsync(() => GetScrollViewer(), DispatcherPriority.ContextIdle);
-            LinkScrollViewer();
+            InitializeList();
         }
     }
 

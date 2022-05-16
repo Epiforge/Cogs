@@ -1,6 +1,4 @@
 using Cogs.Disposal;
-using Cogs.Reflection;
-using System.Reflection;
 
 namespace Cogs.Wpf.Behaviors;
 
@@ -12,9 +10,14 @@ public abstract class ItemsControlDataVirtualization<TControl> :
     Behavior<TControl>
     where TControl : ItemsControl
 {
-    FastMethodInfo? loadCapacitySelectorSetter;
-    FastMethodInfo? refreshLoadCapacity;
-    FastMethodInfo? setLoadCapacity;
+    /// <summary>
+    /// Gets/sets the number of additional items to load before and after the visible items
+    /// </summary>
+    public int AdditionalItems
+    {
+        get => (int)GetValue(AdditionalItemsProperty);
+        set => SetValue(AdditionalItemsProperty, value);
+    }
 
     /// <summary>
     /// Gets the data virtualization list
@@ -36,21 +39,15 @@ public abstract class ItemsControlDataVirtualization<TControl> :
 
     void AssociatedObjectLoaded(object sender, RoutedEventArgs e)
     {
-        if (List is { } list)
-            refreshLoadCapacity?.Invoke(list);
         if (List is null || List is IDisposalStatus disposalStatus && disposalStatus.IsDisposed)
         {
+            List = null;
             InitializeList();
-            if (GetScrollViewer() is { } scrollViewer)
-                scrollViewer.SizeChanged += ScrollViewerSizeChanged;
         }
     }
 
-    void AssociatedObjectUnloaded(object sender, RoutedEventArgs e)
-    {
-        if (List is { } list)
-            list.Dispose();
-    }
+    void AssociatedObjectUnloaded(object sender, RoutedEventArgs e) =>
+        TerminateList();
 
     /// <summary>
     /// Gets the scroll viewer control the viewport size of which will be used to manage the data virtualization list's load capacity
@@ -58,54 +55,25 @@ public abstract class ItemsControlDataVirtualization<TControl> :
     /// <returns>The scroll viewer control or <c>null</c></returns>
     protected abstract ScrollViewer? GetScrollViewer();
 
-    void InitializeList()
-    {
-        if (AssociatedObject is { } associatedObject && CreateList(Source) is { } list)
-        {
-            List = list;
-            var listType = list.GetType();
-            loadCapacitySelectorSetter =
-                listType.GetProperty("LoadCapacitySelector", BindingFlags.NonPublic | BindingFlags.Instance) is { } loadCapacitySelectorProperty &&
-                loadCapacitySelectorProperty.SetMethod is { } loadCapacitySelectorPropertySetMethodInfo
-                ?
-                FastMethodInfo.Get(loadCapacitySelectorPropertySetMethodInfo)
-                :
-                throw new Exception("Could not find list LoadCapacitySelector property setter");
-            refreshLoadCapacity =
-                listType.GetMethod("RefreshLoadCapacity", BindingFlags.NonPublic | BindingFlags.Instance) is { } refreshLoadCapacityMethodInfo
-                ?
-                FastMethodInfo.Get(refreshLoadCapacityMethodInfo)
-                :
-                throw new Exception("Could not find list RefreshLoadCapacity method");
-            setLoadCapacity =
-                listType.GetMethod("SetLoadCapacity", BindingFlags.NonPublic | BindingFlags.Instance) is { } setLoadCapacityMethodInfo
-                ?
-                FastMethodInfo.Get(setLoadCapacityMethodInfo)
-                :
-                throw new Exception("Could not find list SetLoadCapacity method");
-            LinkScrollViewer();
-        }
-        else if (List is { } listToDispose)
-        {
-            loadCapacitySelectorSetter = null;
-            refreshLoadCapacity = null;
-            setLoadCapacity = null;
-            listToDispose.Dispose();
-        }
-    }
-
     /// <summary>
-    /// Causes the associated object's scroll viewer's viewport to determine the load capacity of the data virtualization list
+    /// Attempts to initialize the load-managed list
     /// </summary>
-    protected void LinkScrollViewer()
+    protected void InitializeList()
     {
-        if (AssociatedObject is { } associatedObject && List is { } list && loadCapacitySelectorSetter is not null && GetScrollViewer() is { } scrollViewer && refreshLoadCapacity is not null)
+        if (List is null && AssociatedObject is { } associatedObject && Source is IList sourceList)
         {
-            loadCapacitySelectorSetter.Invoke(list, new[] { () => (int)scrollViewer.ViewportHeight * 3 + 1 });
-            if (scrollViewer.ViewportHeight == 0)
-                associatedObject.Dispatcher.InvokeAsync(() => refreshLoadCapacity?.Invoke(list), DispatcherPriority.ContextIdle);
+            if (GetScrollViewer() is { } scrollViewer)
+                List = new ScrollViewerDataVirtualizationList(scrollViewer, sourceList, AdditionalItems);
             else
-                refreshLoadCapacity.Invoke(list);
+                _ = Task.Run(async () =>
+                {
+                    await associatedObject.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background).Task.ConfigureAwait(false);
+                    await associatedObject.Dispatcher.InvokeAsync(() =>
+                    {
+                        if (GetScrollViewer() is { } scrollViewer)
+                            List = new ScrollViewerDataVirtualizationList(scrollViewer, sourceList, AdditionalItems);
+                    }, DispatcherPriority.Normal).Task.ConfigureAwait(false);
+                });
         }
     }
 
@@ -123,8 +91,6 @@ public abstract class ItemsControlDataVirtualization<TControl> :
         });
         AssociatedObject.Loaded += AssociatedObjectLoaded;
         AssociatedObject.Unloaded += AssociatedObjectUnloaded;
-        if (GetScrollViewer() is { } scrollViewer)
-            scrollViewer.SizeChanged += ScrollViewerSizeChanged;
     }
 
     /// <summary>
@@ -135,52 +101,45 @@ public abstract class ItemsControlDataVirtualization<TControl> :
         base.OnDetaching();
         AssociatedObject.Loaded -= AssociatedObjectLoaded;
         AssociatedObject.Unloaded -= AssociatedObjectUnloaded;
-        if (GetScrollViewer() is { } scrollViewer)
-            scrollViewer.SizeChanged -= ScrollViewerSizeChanged;
         BindingOperations.ClearBinding(AssociatedObject, ItemsControl.ItemsSourceProperty);
-        InitializeList();
+        TerminateList();
     }
 
-    void ScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
+    void TerminateList()
     {
-        if (List is { } list)
+        if (List is not null)
         {
-            setLoadCapacity?.Invoke(list, int.MaxValue);
-            AssociatedObject?.Dispatcher.InvokeAsync(() => refreshLoadCapacity?.Invoke(list), DispatcherPriority.ContextIdle);
+            List.Dispose();
+            List = null;
         }
     }
 
     static readonly DependencyPropertyKey listPropertyKey = DependencyProperty.RegisterReadOnly(nameof(List), typeof(IDisposable), typeof(ItemsControlDataVirtualization<TControl>), new PropertyMetadata(defaultValue: null));
 
     /// <summary>
+    /// Identifies the <see cref="AdditionalItems"/> dependency property
+    /// </summary>
+    public static readonly DependencyProperty AdditionalItemsProperty = DependencyProperty.Register(nameof(AdditionalItems), typeof(int), typeof(ItemsControlDataVirtualization<TControl>), new PropertyMetadata(0, OnAdditionalItemsChanged));
+
+    /// <summary>
     /// Identifies the <see cref="Source"/> dependency property
     /// </summary>
     public static readonly DependencyProperty SourceProperty = DependencyProperty.Register(nameof(Source), typeof(object), typeof(ItemsControlDataVirtualization<TControl>), new PropertyMetadata(null, OnSourceChanged));
 
-    static IDisposable? CreateList(object? source) =>
-        source?.GetType() is { } sourceType &&
-        sourceType.GetInterfaces() is { } sourceInterfaces &&
-        sourceInterfaces.FirstOrDefault
-        (
-            sourceInterface
-            =>
-            sourceInterface.IsGenericType &&
-            sourceInterface.GetGenericTypeDefinition() is { } sourceInterfaceGenericTypeDefinition &&
-            sourceInterfaceGenericTypeDefinition == typeof(IReadOnlyList<>)
-        ) is { } sourceReadOnlyListInterface &&
-        typeof(DataVirtualizationList<>) is { } listGenericTypeDefinition &&
-        listGenericTypeDefinition.MakeGenericType(sourceReadOnlyListInterface.GenericTypeArguments) is { } listType &&
-        listType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { sourceReadOnlyListInterface }, null) is { } listConstructor
-        ?
-        (IDisposable?)listConstructor.Invoke(new[] { source })
-        :
-        null;
+    static void OnAdditionalItemsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (sender is ItemsControlDataVirtualization<TControl> virtualization &&
+            e.NewValue is int additionalItems &&
+            virtualization.List is ScrollViewerDataVirtualizationList list)
+            list.AdditionalItems = additionalItems;
+    }
 
     static void OnSourceChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
     {
         if (sender is ItemsControlDataVirtualization<TControl> virtualization)
         {
             var oldList = virtualization.List;
+            virtualization.List = null;
             virtualization.InitializeList();
             oldList?.Dispose();
         }

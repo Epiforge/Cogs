@@ -1,1 +1,1 @@
-We upgraded NuGet references and refactored for compatibility with changes in the Collections library.
+We added the Xaml static class, which allows syntactically simplified Xaml parsing. We also improved data virtualization.
