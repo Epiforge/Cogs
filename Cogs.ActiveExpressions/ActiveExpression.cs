@@ -1,4 +1,3 @@
-
 namespace Cogs.ActiveExpressions;
 
 /// <summary>
@@ -67,6 +66,12 @@ public abstract class ActiveExpression :
     protected readonly ActiveExpressionOptions? options;
 
     /// <summary>
+    /// Gets the currently applicable instance of <see cref="ActiveExpressionOptions"/> for this node
+    /// </summary>
+    protected ActiveExpressionOptions ApplicableOptions =>
+        options ?? ActiveExpressionOptions.Default;
+
+    /// <summary>
     /// Gets/sets the current fault for this node
     /// </summary>
     public Exception? Fault
@@ -103,6 +108,12 @@ public abstract class ActiveExpression :
     /// Gets the <see cref="ExpressionType"/> for this node
     /// </summary>
     public ExpressionType NodeType { get; }
+
+    /// <summary>
+    /// Gets the suffix of the string representation of this node
+    /// </summary>
+    protected string ToStringSuffix =>
+        $"/* {GetValueString(fault, !TryGetUndeferredValue(out var value), value)} */";
 
     /// <summary>
     /// Gets the <see cref="System.Type"/> for possible values of this node
@@ -271,37 +282,90 @@ public abstract class ActiveExpression :
         return true;
     }
 
-    /// <summary>
-    /// Gets the currently applicable instance of <see cref="ActiveExpressionOptions"/> for this node
-    /// </summary>
-    protected ActiveExpressionOptions ApplicableOptions => options ?? ActiveExpressionOptions.Default;
-
-    /// <summary>
-    /// Gets the suffix of the string representation of this node
-    /// </summary>
-    protected string ToStringSuffix => $"/* {GetValueString(fault, !TryGetUndeferredValue(out var value), value)} */";
-
-    /// <summary>
-    /// Cached <see cref="PropertyChangedEventArgs"/> instance for <see cref="Fault"/> value changes
-    /// </summary>
     static readonly PropertyChangedEventArgs faultChangedEventArgs = new(nameof(Fault));
-
-    /// <summary>
-    /// Cached <see cref="PropertyChangingEventArgs"/> instance for <see cref="Fault"/> value changes
-    /// </summary>
     static readonly PropertyChangingEventArgs faultChangingEventArgs = new(nameof(Fault));
-
-    /// <summary>
-    /// Cached <see cref="PropertyChangedEventArgs"/> instance for <see cref="Fault"/> value changes
-    /// </summary>
+    static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyGetMethodToProperty = new(); // NCrunch: no coverage
     static readonly PropertyChangedEventArgs valueChangedEventArgs = new(nameof(Value));
-
-    /// <summary>
-    /// Cached <see cref="PropertyChangingEventArgs"/> instance for <see cref="Fault"/> value changes
-    /// </summary>
     static readonly PropertyChangingEventArgs valueChangingEventArgs = new(nameof(Value));
 
-    static readonly ConcurrentDictionary<MethodInfo, PropertyInfo> propertyGetMethodToProperty = new(); // NCrunch: no coverage
+    /// <summary>
+    /// Gets/sets the method that will be invoked during the active expression creation process to optimize expressions (default is null)
+    /// </summary>
+    public static Func<Expression, Expression>? Optimizer { get; set; }
+
+    /// <summary>
+    /// Returns a task which is only completed when the specified condition evaluates to <c>true</c>
+    /// </summary>
+    /// <param name="condition">The condition</param>
+    public static Task ConditionAsync(Expression<Func<bool>> condition) =>
+        ConditionAsync(condition, null, CancellationToken.None);
+
+    /// <summary>
+    /// Returns a task which is only completed when the specified condition evaluates to <c>true</c>
+    /// </summary>
+    /// <param name="condition">The condition</param>
+    /// <param name="cancellationToken">A token which may cancel awaiting the condition</param>
+    public static Task ConditionAsync(Expression<Func<bool>> condition, CancellationToken cancellationToken) =>
+        ConditionAsync(condition, null, cancellationToken);
+
+    /// <summary>
+    /// Returns a task which is only completed when the specified condition evaluates to <c>true</c>
+    /// </summary>
+    /// <param name="condition">The condition</param>
+    /// <param name="options">Options to use when creating the active expression of the condition</param>
+    public static Task ConditionAsync(Expression<Func<bool>> condition, ActiveExpressionOptions? options) =>
+        ConditionAsync(condition, options, CancellationToken.None);
+
+    /// <summary>
+    /// Returns a task which is only completed when the specified condition evaluates to <c>true</c>
+    /// </summary>
+    /// <param name="condition">The condition</param>
+    /// <param name="options">Options to use when creating the active expression of the condition</param>
+    /// <param name="cancellationToken">A token which may cancel awaiting the condition</param>
+    [SuppressMessage("Reliability", "CA2000: Dispose objects before losing scope")]
+    public static Task ConditionAsync(Expression<Func<bool>> condition, ActiveExpressionOptions? options, CancellationToken cancellationToken)
+    {
+        var taskCompletionSource = new TaskCompletionSource<object?>();
+        IActiveExpression<bool>? activeExpression = null;
+        void cancellationTokenCancelled()
+        {
+            activeExpression.PropertyChanged -= propertyChangedHandler;
+            activeExpression.Dispose();
+            taskCompletionSource.SetCanceled();
+        }
+        void propertyChangedHandler(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(IActiveExpression<bool>.Value) && activeExpression!.Value)
+            {
+                activeExpression.PropertyChanged -= propertyChangedHandler;
+                activeExpression.Dispose();
+                taskCompletionSource!.SetResult(null);
+            }
+            else if (e.PropertyName == nameof(IActiveExpression<bool>.Fault) && activeExpression!.Fault is { } fault)
+            {
+                activeExpression.PropertyChanged -= propertyChangedHandler;
+                activeExpression.Dispose();
+                taskCompletionSource!.SetException(fault);
+            }
+        }
+        if (cancellationToken.CanBeCanceled && cancellationToken.IsCancellationRequested)
+            return Task.FromCanceled(cancellationToken);
+        activeExpression = Create(condition, options);
+        if (activeExpression.Value)
+        {
+            activeExpression.Dispose();
+            return Task.CompletedTask;
+        }
+        else if (activeExpression.Fault is { } fault)
+        {
+            activeExpression.Dispose();
+            return Task.FromException(fault);
+        }
+        if (cancellationToken.CanBeCanceled)
+            cancellationToken.Register(cancellationTokenCancelled);
+        activeExpression.PropertyChanged += propertyChangedHandler;
+        return taskCompletionSource.Task;
+    }
 
     [SuppressMessage("Code Analysis", "CA2000: Dispose objects before losing scope", Justification = "True, but it will be disposed elsewhere")]
     internal static ActiveExpression Create(Expression? expression, ActiveExpressionOptions? options, bool deferEvaluation)
@@ -358,60 +422,6 @@ public abstract class ActiveExpression :
             activeExpression.EvaluateIfDeferred();
         return activeExpression;
     }
-
-    /// <summary>
-    /// Produces a human-readable representation of an expression
-    /// </summary>
-    /// <param name="expressionType">The type of expression</param>
-    /// <param name="resultType">The type of the result when the expression is evaluated</param>
-    /// <param name="operands">The operands (or arguments) of the expression</param>
-    /// <returns>A human-readable representation of the expression</returns>
-    public static string GetOperatorExpressionSyntax(ExpressionType expressionType, Type resultType, params object?[] operands) =>
-        resultType is null
-        ?
-        throw new ArgumentNullException(nameof(resultType))
-        :
-        operands is null
-        ?
-        throw new ArgumentNullException(nameof(operands))
-        :
-        expressionType switch
-        {
-            ExpressionType.Add => $"({operands[0]} + {operands[1]})",
-            ExpressionType.AddChecked => $"checked({operands[0]} + {operands[1]})",
-            ExpressionType.And => $"({operands[0]} & {operands[1]})",
-            ExpressionType.Convert => $"(({resultType.FullName}){operands[0]})",
-            ExpressionType.ConvertChecked => $"checked(({resultType.FullName}){operands[0]})",
-            ExpressionType.Decrement => $"({operands[0]} - 1)",
-            ExpressionType.Divide => $"({operands[0]} / {operands[1]})",
-            ExpressionType.Equal => $"({operands[0]} == {operands[1]})",
-            ExpressionType.ExclusiveOr => $"({operands[0]} ^ {operands[1]})",
-            ExpressionType.GreaterThan => $"({operands[0]} > {operands[1]})",
-            ExpressionType.GreaterThanOrEqual => $"({operands[0]} >= {operands[1]})",
-            ExpressionType.Increment => $"({operands[0]} + 1)",
-            ExpressionType.LeftShift => $"({operands[0]} << {operands[1]})",
-            ExpressionType.LessThan => $"({operands[0]} < {operands[1]})",
-            ExpressionType.LessThanOrEqual => $"({operands[0]} <= {operands[1]})",
-            ExpressionType.Modulo => $"({operands[0]} % {operands[1]})",
-            ExpressionType.Multiply => $"({operands[0]} * {operands[1]})",
-            ExpressionType.MultiplyChecked => $"checked({operands[0]} * {operands[1]})",
-            ExpressionType.Negate => $"(-{operands[0]})",
-            ExpressionType.NegateChecked => $"checked(-{operands[0]})",
-            ExpressionType.Not when operands[0] is bool || operands[0] is ActiveExpression notOperand && (notOperand.Type == typeof(bool) || notOperand.Type == typeof(bool?)) => $"(!{operands[0]})",
-            ExpressionType.Not or ExpressionType.OnesComplement => $"(~{operands[0]})",
-            ExpressionType.NotEqual => $"({operands[0]} != {operands[1]})",
-            ExpressionType.Or => $"({operands[0]} | {operands[1]})",
-            ExpressionType.Power => $"{nameof(Math)}.{nameof(Math.Pow)}({operands[0]}, {operands[1]})",
-            ExpressionType.RightShift => $"({operands[0]} >> {operands[1]})",
-            ExpressionType.Subtract => $"({operands[0]} - {operands[1]})",
-            ExpressionType.SubtractChecked => $"checked({operands[0]} - {operands[1]})",
-            ExpressionType.TypeIs => $"({operands[0]} is {operands[1]})",
-            ExpressionType.UnaryPlus => $"(+{operands[0]})",
-            _ => throw new ArgumentOutOfRangeException(nameof(expressionType)),
-        };
-
-    static PropertyInfo GetPropertyFromGetMethod(MethodInfo getMethod) =>
-        getMethod.DeclaringType.GetRuntimeProperties().FirstOrDefault(property => property.GetMethod == getMethod);
 
     /// <summary>
     /// Creates an active expression using a specified lambda expression and arguments
@@ -500,6 +510,60 @@ public abstract class ActiveExpression :
         options?.Freeze();
         return ActiveExpression<TArg1, TArg2, TArg3, TResult>.Create(expression, arg1, arg2, arg3, options);
     }
+
+    /// <summary>
+    /// Produces a human-readable representation of an expression
+    /// </summary>
+    /// <param name="expressionType">The type of expression</param>
+    /// <param name="resultType">The type of the result when the expression is evaluated</param>
+    /// <param name="operands">The operands (or arguments) of the expression</param>
+    /// <returns>A human-readable representation of the expression</returns>
+    public static string GetOperatorExpressionSyntax(ExpressionType expressionType, Type resultType, params object?[] operands) =>
+        resultType is null
+        ?
+        throw new ArgumentNullException(nameof(resultType))
+        :
+        operands is null
+        ?
+        throw new ArgumentNullException(nameof(operands))
+        :
+        expressionType switch
+        {
+            ExpressionType.Add => $"({operands[0]} + {operands[1]})",
+            ExpressionType.AddChecked => $"checked({operands[0]} + {operands[1]})",
+            ExpressionType.And => $"({operands[0]} & {operands[1]})",
+            ExpressionType.Convert => $"(({resultType.FullName}){operands[0]})",
+            ExpressionType.ConvertChecked => $"checked(({resultType.FullName}){operands[0]})",
+            ExpressionType.Decrement => $"({operands[0]} - 1)",
+            ExpressionType.Divide => $"({operands[0]} / {operands[1]})",
+            ExpressionType.Equal => $"({operands[0]} == {operands[1]})",
+            ExpressionType.ExclusiveOr => $"({operands[0]} ^ {operands[1]})",
+            ExpressionType.GreaterThan => $"({operands[0]} > {operands[1]})",
+            ExpressionType.GreaterThanOrEqual => $"({operands[0]} >= {operands[1]})",
+            ExpressionType.Increment => $"({operands[0]} + 1)",
+            ExpressionType.LeftShift => $"({operands[0]} << {operands[1]})",
+            ExpressionType.LessThan => $"({operands[0]} < {operands[1]})",
+            ExpressionType.LessThanOrEqual => $"({operands[0]} <= {operands[1]})",
+            ExpressionType.Modulo => $"({operands[0]} % {operands[1]})",
+            ExpressionType.Multiply => $"({operands[0]} * {operands[1]})",
+            ExpressionType.MultiplyChecked => $"checked({operands[0]} * {operands[1]})",
+            ExpressionType.Negate => $"(-{operands[0]})",
+            ExpressionType.NegateChecked => $"checked(-{operands[0]})",
+            ExpressionType.Not when operands[0] is bool || operands[0] is ActiveExpression notOperand && (notOperand.Type == typeof(bool) || notOperand.Type == typeof(bool?)) => $"(!{operands[0]})",
+            ExpressionType.Not or ExpressionType.OnesComplement => $"(~{operands[0]})",
+            ExpressionType.NotEqual => $"({operands[0]} != {operands[1]})",
+            ExpressionType.Or => $"({operands[0]} | {operands[1]})",
+            ExpressionType.Power => $"{nameof(Math)}.{nameof(Math.Pow)}({operands[0]}, {operands[1]})",
+            ExpressionType.RightShift => $"({operands[0]} >> {operands[1]})",
+            ExpressionType.Subtract => $"({operands[0]} - {operands[1]})",
+            ExpressionType.SubtractChecked => $"checked({operands[0]} - {operands[1]})",
+            ExpressionType.TypeIs => $"({operands[0]} is {operands[1]})",
+            ExpressionType.UnaryPlus => $"(+{operands[0]})",
+            _ => throw new ArgumentOutOfRangeException(nameof(expressionType)),
+        };
+
+    static PropertyInfo GetPropertyFromGetMethod(MethodInfo getMethod) =>
+        getMethod.DeclaringType.GetRuntimeProperties().FirstOrDefault(property => property.GetMethod == getMethod);
 
     /// <summary>
     /// Gets the string representation for the value of a node
@@ -683,11 +747,6 @@ public abstract class ActiveExpression :
     [ExcludeFromCodeCoverage]
     public static bool operator !=(ActiveExpression? a, ActiveExpression? b) =>
         !(a == b);
-
-    /// <summary>
-    /// Gets/sets the method that will be invoked during the active expression creation process to optimize expressions (default is null)
-    /// </summary>
-    public static Func<Expression, Expression>? Optimizer { get; set; }
 }
 
 /// <summary>

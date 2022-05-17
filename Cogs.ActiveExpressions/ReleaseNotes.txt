@@ -1,1 +1,1 @@
-We moved the specification of the IObservableActiveExpression interface from the ActiveExpression classes to the IActiveExpression interfaces.
+We added the ConditionAsync static method to ActiveExpression, allowing the caller to easily await a certain condition.
