@@ -36,7 +36,7 @@ public class NondisposableActiveEnumerable<TElement> :
 
     object? IList.this[int index]
     {
-        get => this[index];
+        get => activeEnumerable[index];
         set => throw new NotSupportedException();
     }
 

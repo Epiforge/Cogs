@@ -1,1 +1,1 @@
-We corrected a few possible StackOverflowExceptions in implementations of IActiveEnumerable.
+We increased the resilience of ActiveSelectEnumerable.

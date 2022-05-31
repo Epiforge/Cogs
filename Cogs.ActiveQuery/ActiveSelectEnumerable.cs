@@ -204,6 +204,45 @@ sealed class ActiveSelectEnumerable<TResult> :
     void IList.RemoveAt(int index) =>
         throw new NotSupportedException();
 
+    (int newCount, NotifyCollectionChangedEventArgs eventArgs) ResetUnderLock()
+    {
+        var (source, selector, selectorOptions, parallel) = Key;
+        foreach (var activeExpression in activeExpressionCounts!.Keys)
+        {
+            activeExpression.RemoveActiveExpressionObserver(this);
+            for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
+                activeExpression.Dispose();
+        }
+
+        if (parallel)
+            activeExpressions = source.Cast<object?>().DataflowSelectAsync(element => (IActiveExpression<object?, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
+        else if (source is IList sourceList)
+        {
+            activeExpressions = new List<IActiveExpression<object?, TResult>>(sourceList.Count);
+            for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                activeExpressions.Add(ActiveExpression.Create(selector, sourceList[i], selectorOptions));
+        }
+        else
+        {
+            activeExpressions = new List<IActiveExpression<object?, TResult>>();
+            foreach (var element in source)
+                activeExpressions.Add(ActiveExpression.Create(selector, element, selectorOptions));
+        }
+        activeExpressionCounts = new Dictionary<IActiveExpression<object?, TResult>, int>();
+        for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+        {
+            var activeExpression = activeExpressions[i];
+            if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
+                activeExpressionCounts[activeExpression] = existingCount + 1;
+            else
+            {
+                activeExpressionCounts.Add(activeExpression, 1);
+                activeExpression.AddActiveExpressionOserver(this);
+            }
+        }
+        return (activeExpressions.Count, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+    }
+
     [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
@@ -212,6 +251,8 @@ sealed class ActiveSelectEnumerable<TResult> :
         {
             NotifyCollectionChangedEventArgs? eventArgs = null;
             var newCount = 0;
+
+
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
@@ -220,7 +261,16 @@ sealed class ActiveSelectEnumerable<TResult> :
                     var oldItems = new List<TResult>();
                     if (e.OldItems is not null && e.OldStartingIndex >= 0)
                     {
-                        var removedActiveExpressions = activeExpressions!.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                        List<IActiveExpression<object?, TResult>>? removedActiveExpressions = null;
+                        try
+                        {
+                            removedActiveExpressions = activeExpressions!.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                        }
+                        catch (ArgumentException)
+                        {
+                            (newCount, eventArgs) = ResetUnderLock();
+                            break;
+                        }
                         activeExpressions.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
                         for (int i = 0, ii = removedActiveExpressions.Count; i < ii; ++i)
                         {
@@ -278,41 +328,7 @@ sealed class ActiveSelectEnumerable<TResult> :
                     }
                     break;
                 case NotifyCollectionChangedAction.Reset:
-                    foreach (var activeExpression in activeExpressionCounts!.Keys)
-                    {
-                        activeExpression.RemoveActiveExpressionObserver(this);
-                        for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
-                            activeExpression.Dispose();
-                    }
-
-                    if (parallel)
-                        activeExpressions = source.Cast<object?>().DataflowSelectAsync(element => (IActiveExpression<object?, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
-                    else if (source is IList sourceList)
-                    {
-                        activeExpressions = new List<IActiveExpression<object?, TResult>>(sourceList.Count);
-                        for (int i = 0, ii = sourceList.Count; i < ii; ++i)
-                            activeExpressions.Add(ActiveExpression.Create(selector, sourceList[i], selectorOptions));
-                    }
-                    else
-                    {
-                        activeExpressions = new List<IActiveExpression<object?, TResult>>();
-                        foreach (var element in source)
-                            activeExpressions.Add(ActiveExpression.Create(selector, element, selectorOptions));
-                    }
-                    activeExpressionCounts = new Dictionary<IActiveExpression<object?, TResult>, int>();
-                    for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
-                    {
-                        var activeExpression = activeExpressions[i];
-                        if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
-                            activeExpressionCounts[activeExpression] = existingCount + 1;
-                        else
-                        {
-                            activeExpressionCounts.Add(activeExpression, 1);
-                            activeExpression.AddActiveExpressionOserver(this);
-                        }
-                    }
-                    newCount = activeExpressions.Count;
-                    eventArgs = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
+                    (newCount, eventArgs) = ResetUnderLock();
                     break;
                 default:
                     throw new NotSupportedException($"Unknown collection changed action {e.Action}");
