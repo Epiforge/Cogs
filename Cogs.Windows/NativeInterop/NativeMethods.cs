@@ -12,6 +12,12 @@ static class NativeMethods
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
+    [DllImport("user32.dll")]
+    public static extern bool GetLastInputInfo(ref LastInputInfo lastInputInfo);
+
+    [DllImport("kernel32.dll")]
+    public static extern uint GetTickCount();
+
     [DllImport("ntdll.dll")]
     public static extern int NtQueryInformationProcess(IntPtr processHandle, int processInformationClass, ref ProcessBasicInformation processInformation, int processInformationLength, out int returnLength);
 

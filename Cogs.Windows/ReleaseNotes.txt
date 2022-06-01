@@ -1,1 +1,1 @@
-We added the WindowingSystem class.
+We added the User class.
