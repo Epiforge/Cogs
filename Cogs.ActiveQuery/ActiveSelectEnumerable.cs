@@ -252,7 +252,6 @@ sealed class ActiveSelectEnumerable<TResult> :
             NotifyCollectionChangedEventArgs? eventArgs = null;
             var newCount = 0;
 
-
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
@@ -321,7 +320,16 @@ sealed class ActiveSelectEnumerable<TResult> :
                 case NotifyCollectionChangedAction.Move:
                     if (e.OldItems.Count > 0 && e.OldStartingIndex != e.NewStartingIndex)
                     {
-                        var movedActiveExpressions = activeExpressions!.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                        List<IActiveExpression<object?, TResult>>? movedActiveExpressions = null;
+                        try
+                        {
+                            movedActiveExpressions = activeExpressions!.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                        }
+                        catch (ArgumentException)
+                        {
+                            (newCount, eventArgs) = ResetUnderLock();
+                            break;
+                        }
                         activeExpressions.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
                         activeExpressions.InsertRange(e.NewStartingIndex, movedActiveExpressions);
                         eventArgs = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, movedActiveExpressions.Select(ae => ae.Value).ToImmutableArray(), e.NewStartingIndex, e.OldStartingIndex);
