@@ -1,1 +1,1 @@
-We added the User class.
+We added the ForegroundWindow and ForegroundWindowPosition properties to the WindowingSystem class.
