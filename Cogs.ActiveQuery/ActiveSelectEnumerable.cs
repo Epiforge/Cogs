@@ -141,7 +141,7 @@ sealed class ActiveSelectEnumerable<TResult> :
 
     protected override void OnInitialized()
     {
-        access = new object();
+        access = new();
         var (source, selector, selectorOptions, parallel) = Key;
         SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
         (activeExpressions, activeExpressionCounts, count) = this.Execute(() =>
@@ -445,26 +445,32 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
     bool IList.Contains(object? value) =>
         this.Execute(() =>
         {
-            if (activeExpressions is not null && value is TResult result)
+            lock (access!)
             {
-                var comparer = EqualityComparer<TResult>.Default;
-                for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
-                    if (comparer.Equals(activeExpressions[i].Value!, result))
-                        return true;
+                if (activeExpressions is not null && value is TResult result)
+                {
+                    var comparer = EqualityComparer<TResult>.Default;
+                    for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                        if (comparer.Equals(activeExpressions[i].Value!, result))
+                            return true;
+                }
+                return false;
             }
-            return false;
         });
 
     void ICollection.CopyTo(Array array, int index) =>
         this.Execute(() =>
         {
-            if (activeExpressions is null)
-                return;
-            for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+            lock (access!)
             {
-                if (index + i >= array.Length)
-                    break;
-                array.SetValue(activeExpressions[i].Value, index + i);
+                if (activeExpressions is null)
+                    return;
+                for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                {
+                    if (index + i >= array.Length)
+                        break;
+                    array.SetValue(activeExpressions[i].Value, index + i);
+                }
             }
         });
 
@@ -497,14 +503,17 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
     int IList.IndexOf(object value) =>
         this.Execute(() =>
         {
-            if (activeExpressions is not null && value is TResult result)
+            lock (access!)
             {
-                var comparer = EqualityComparer<TResult>.Default;
-                for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
-                    if (comparer.Equals(activeExpressions[i].Value!, result))
-                        return i;
+                if (activeExpressions is not null && value is TResult result)
+                {
+                    var comparer = EqualityComparer<TResult>.Default;
+                    for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+                        if (comparer.Equals(activeExpressions[i].Value!, result))
+                            return i;
+                }
+                return -1;
             }
-            return -1;
         });
 
     void IList.Insert(int index, object value) =>
@@ -512,7 +521,7 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
 
     protected override void OnInitialized()
     {
-        access = new object();
+        access = new();
         var (source, selector, selectorOptions, parallel) = Key;
         SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
         (activeExpressions, activeExpressionCounts, count) = this.Execute(() =>
@@ -575,6 +584,45 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
     void IList.RemoveAt(int index) =>
         throw new NotSupportedException();
 
+    (int newCount, NotifyCollectionChangedEventArgs eventArgs) ResetUnderLock()
+    {
+        var (source, selector, selectorOptions, parallel) = Key;
+        foreach (var activeExpression in activeExpressionCounts!.Keys)
+        {
+            activeExpression.RemoveActiveExpressionObserver(this);
+            for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
+                activeExpression.Dispose();
+        }
+
+        if (parallel)
+            activeExpressions = source.DataflowSelectAsync(element => (IActiveExpression<TSource, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
+        else if (source is IList<TSource> sourceList)
+        {
+            activeExpressions = new List<IActiveExpression<TSource, TResult>>(sourceList.Count);
+            for (int i = 0, ii = sourceList.Count; i < ii; ++i)
+                activeExpressions.Add(ActiveExpression.Create(selector, sourceList[i], selectorOptions));
+        }
+        else
+        {
+            activeExpressions = new List<IActiveExpression<TSource, TResult>>();
+            foreach (var element in source)
+                activeExpressions.Add(ActiveExpression.Create(selector, element, selectorOptions));
+        }
+        activeExpressionCounts = new Dictionary<IActiveExpression<TSource, TResult>, int>();
+        for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
+        {
+            var activeExpression = activeExpressions[i];
+            if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
+                activeExpressionCounts[activeExpression] = existingCount + 1;
+            else
+            {
+                activeExpressionCounts.Add(activeExpression, 1);
+                activeExpression.AddActiveExpressionOserver(this);
+            }
+        }
+        return (activeExpressions.Count, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+    }
+
     [SuppressMessage("Maintainability", "CA1502: Avoid excessive complexity", Justification = @"Splitting this up into more methods is ¯\_(ツ)_/¯")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
@@ -591,7 +639,16 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
                     var oldItems = new List<TResult>();
                     if (e.OldItems is not null && e.OldStartingIndex >= 0)
                     {
-                        var removedActiveExpressions = activeExpressions!.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                        List<IActiveExpression<TSource, TResult>>? removedActiveExpressions = null;
+                        try
+                        {
+                            removedActiveExpressions = activeExpressions!.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                        }
+                        catch (ArgumentException)
+                        {
+                            (newCount, eventArgs) = ResetUnderLock();
+                            break;
+                        }
                         activeExpressions.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
                         for (int i = 0, ii = removedActiveExpressions.Count; i < ii; ++i)
                         {
@@ -642,48 +699,23 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
                 case NotifyCollectionChangedAction.Move:
                     if (e.OldItems.Count > 0 && e.OldStartingIndex != e.NewStartingIndex)
                     {
-                        var movedActiveExpressions = activeExpressions!.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                        List<IActiveExpression<TSource, TResult>>? movedActiveExpressions = null;
+                        try
+                        {
+                            movedActiveExpressions = activeExpressions!.GetRange(e.OldStartingIndex, e.OldItems.Count);
+                        }
+                        catch (ArgumentException)
+                        {
+                            (newCount, eventArgs) = ResetUnderLock();
+                            break;
+                        }
                         activeExpressions.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
                         activeExpressions.InsertRange(e.NewStartingIndex, movedActiveExpressions);
                         eventArgs = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, movedActiveExpressions.Select(ae => ae.Value).ToImmutableArray(), e.NewStartingIndex, e.OldStartingIndex);
                     }
                     break;
                 case NotifyCollectionChangedAction.Reset:
-                    foreach (var activeExpression in activeExpressionCounts!.Keys)
-                    {
-                        activeExpression.RemoveActiveExpressionObserver(this);
-                        for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
-                            activeExpression.Dispose();
-                    }
-
-                    if (parallel)
-                        activeExpressions = source.DataflowSelectAsync(element => (IActiveExpression<TSource, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
-                    else if (source is IList<TSource> sourceList)
-                    {
-                        activeExpressions = new List<IActiveExpression<TSource, TResult>>(sourceList.Count);
-                        for (int i = 0, ii = sourceList.Count; i < ii; ++i)
-                            activeExpressions.Add(ActiveExpression.Create(selector, sourceList[i], selectorOptions));
-                    }
-                    else
-                    {
-                        activeExpressions = new List<IActiveExpression<TSource, TResult>>();
-                        foreach (var element in source)
-                            activeExpressions.Add(ActiveExpression.Create(selector, element, selectorOptions));
-                    }
-                    activeExpressionCounts = new Dictionary<IActiveExpression<TSource, TResult>, int>();
-                    for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
-                    {
-                        var activeExpression = activeExpressions[i];
-                        if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
-                            activeExpressionCounts[activeExpression] = existingCount + 1;
-                        else
-                        {
-                            activeExpressionCounts.Add(activeExpression, 1);
-                            activeExpression.AddActiveExpressionOserver(this);
-                        }
-                    }
-                    newCount = activeExpressions.Count;
-                    eventArgs = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
+                    (newCount, eventArgs) = ResetUnderLock();
                     break;
                 default:
                     throw new NotSupportedException($"Unknown collection changed action {e.Action}");
