@@ -1,1 +1,1 @@
-We upgraded some NuGet references. We enabled NuGet symbol packages.
+We corrected some defects in method substitution.
