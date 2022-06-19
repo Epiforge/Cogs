@@ -17,6 +17,7 @@ Supports `netstandard2.1`.
   - [Components](#components)
   - [Disposal](#disposal)
   - [Exceptions](#exceptions)
+  - [Expressions](#expressions)
   - [Reflection](#reflection)
   - [Synchronized Collections](#synchronized-collections)
   - [Threading](#threading)
@@ -270,6 +271,14 @@ Lastly, this library provides `DisposableValuesCache` and `AsyncDisposableValues
 This library provides extension methods for dealing with exceptions:
 
 * `GetFullDetails` - creates a representation of an exception and all of its inner exceptions, including exception types, messages, and stack traces, and traversing multiple inner exceptions in the case of `AggregateException`
+
+## Expressions
+
+[![Cogs.Expressions Nuget](https://img.shields.io/nuget/v/Cogs.Expressions.svg)](https://www.nuget.org/packages/Cogs.Expressions)
+
+This library has useful tools for dealing with expressions:
+
+* `SubstituteMethods` - recursively scans an expression tree to replace invocations of specific methods with replacement methods
 
 ## Reflection
 
