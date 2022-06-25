@@ -1,5 +1,3 @@
-using System.Runtime.ExceptionServices;
-
 namespace Cogs.Expressions;
 
 /// <summary>
@@ -34,6 +32,7 @@ public static class Extensions
         return SubstituteMethodsImplementation(expression, substitutions);
     }
 
+    [SuppressMessage("Code Analysis", "CA1506: Avoid excessive class coupling")]
     static Expression SubstituteMethodsImplementation(Expression expression, (MethodInfo replace, MethodInfo substitution)[] substitutions)
     {
         try
