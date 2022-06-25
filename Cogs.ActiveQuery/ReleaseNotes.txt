@@ -1,1 +1,1 @@
-We increased the resilience of ActiveSelectEnumerable.
+We increased the speed and reduced the resource cost of Enumerable ActiveSelectMany.
