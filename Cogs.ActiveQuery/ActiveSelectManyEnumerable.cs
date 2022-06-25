@@ -56,7 +56,19 @@ sealed class ActiveSelectManyEnumerable<TSource, TResult> :
                         if (e.NewItems is not null && e.NewStartingIndex >= 0)
                         {
                             reducedNewStartingIndex = GetReducedStartingIndexUnderLock(e.NewStartingIndex);
-                            newItems.AddRange(e.NewItems.Cast<IEnumerable<TResult>>().SelectMany(enumerable => enumerable ?? Enumerable.Empty<TResult>()));
+                            for (int i = 0, ii = e.NewItems.Count; i < ii; ++i)
+                                if (e.NewItems[i] is IEnumerable<TResult> newEnumerable)
+                                {
+                                    newItems.AddRange(newEnumerable);
+                                    if (enumerableInstances!.TryGetValue(newEnumerable, out var instancesOfEnumerable))
+                                        enumerableInstances[newEnumerable] = instancesOfEnumerable + 1;
+                                    else
+                                    {
+                                        enumerableInstances.Add(newEnumerable, 1);
+                                        if (newEnumerable is INotifyCollectionChanged collectionChangedNotifier)
+                                            collectionChangedNotifier.CollectionChanged += EnumerableChanged;
+                                    }
+                                }
                         }
                         var reducedOldStartingIndex = 0;
                         var oldItems = new List<TResult>();
@@ -65,7 +77,20 @@ sealed class ActiveSelectManyEnumerable<TSource, TResult> :
                             reducedOldStartingIndex = GetReducedStartingIndexUnderLock(e.OldStartingIndex);
                             if (e.OldStartingIndex > e.NewStartingIndex)
                                 reducedOldStartingIndex += newItems.Count;
-                            oldItems.AddRange(e.OldItems.Cast<IEnumerable<TResult>>().SelectMany(enumerable => enumerable ?? Enumerable.Empty<TResult>()));
+                            for (int i = 0, ii = e.OldItems.Count; i < ii; ++i)
+                                if (e.OldItems[i] is IEnumerable<TResult> oldEnumerable)
+                                {
+                                    oldItems.AddRange(oldEnumerable);
+                                    var instancesOfEnumerable = enumerableInstances![oldEnumerable];
+                                    if (instancesOfEnumerable == 1)
+                                    {
+                                        enumerableInstances.Remove(oldEnumerable);
+                                        if (oldEnumerable is INotifyCollectionChanged collectionChangedNotifier)
+                                            collectionChangedNotifier.CollectionChanged -= EnumerableChanged;
+                                    }
+                                    else
+                                        enumerableInstances[oldEnumerable] = instancesOfEnumerable - 1;
+                                }
                         }
                         if (oldItems.Count > 0)
                         {
@@ -185,6 +210,45 @@ sealed class ActiveSelectManyEnumerable<TSource, TResult> :
             }
         });
 
+    void EnumerableChanged(object sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (sender is IEnumerable<TResult> enumerable)
+            lock (access!)
+            {
+                if (enumerableInstances!.TryGetValue(enumerable, out var instances))
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Reset)
+                        CollectionChanged?.Invoke(this, e);
+                    else
+                    {
+                        var newCount = count + ((e.NewItems?.Count ?? 0) - (e.OldItems?.Count ?? 0) * instances);
+                        var reducedCount = enumerable.Count();
+                        var reducedIndex = 0;
+                        for (int i = 0, ii = activeSelectQuery!.Count; i < ii && instances > 0; ++i)
+                        {
+                            var activeSelectQueryEnumerable = activeSelectQuery[i];
+                            if (activeSelectQueryEnumerable == enumerable)
+                            {
+                                --instances;
+                                CollectionChanged?.Invoke(this, e.Action switch
+                                {
+                                    NotifyCollectionChangedAction.Add => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, e.NewItems, reducedIndex + e.NewStartingIndex),
+                                    NotifyCollectionChangedAction.Move => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, e.NewItems ?? e.OldItems, reducedIndex + e.NewStartingIndex, reducedIndex + e.OldStartingIndex),
+                                    NotifyCollectionChangedAction.Remove => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, e.OldItems, reducedIndex + e.OldStartingIndex),
+                                    NotifyCollectionChangedAction.Replace => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, e.NewItems, e.OldItems, reducedIndex + e.OldStartingIndex),
+                                    _ => throw new NotSupportedException()
+                                });
+                                reducedIndex += reducedCount;
+                            }
+                            else
+                                reducedIndex += activeSelectQueryEnumerable.Count();
+                        }
+                        Count = newCount;
+                    }
+                }
+            }
+    }
+
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         this.Execute(() =>
         {
@@ -281,45 +345,6 @@ sealed class ActiveSelectManyEnumerable<TSource, TResult> :
             reducedIndex += activeSelectQuery[i]?.Count() ?? 0;
         }
         return -1;
-    }
-
-    void EnumerableChanged(object sender, NotifyCollectionChangedEventArgs e)
-    {
-        if (sender is IEnumerable<TResult> enumerable)
-            lock (access!)
-            {
-                if (enumerableInstances!.TryGetValue(enumerable, out var instances))
-                {
-                    if (e.Action == NotifyCollectionChangedAction.Reset)
-                        CollectionChanged?.Invoke(this, e);
-                    else
-                    {
-                        var newCount = count + ((e.NewItems?.Count ?? 0) - (e.OldItems?.Count ?? 0) * instances);
-                        var reducedCount = enumerable.Count();
-                        var reducedIndex = 0;
-                        for (int i = 0, ii = activeSelectQuery!.Count; i < ii && instances > 0; ++i)
-                        {
-                            var activeSelectQueryEnumerable = activeSelectQuery[i];
-                            if (activeSelectQueryEnumerable == enumerable)
-                            {
-                                --instances;
-                                CollectionChanged?.Invoke(this, e.Action switch
-                                {
-                                    NotifyCollectionChangedAction.Add => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, e.NewItems, reducedIndex + e.NewStartingIndex),
-                                    NotifyCollectionChangedAction.Move => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, e.NewItems ?? e.OldItems, reducedIndex + e.NewStartingIndex, reducedIndex + e.OldStartingIndex),
-                                    NotifyCollectionChangedAction.Remove => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, e.OldItems, reducedIndex + e.OldStartingIndex),
-                                    NotifyCollectionChangedAction.Replace => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, e.NewItems, e.OldItems, reducedIndex + e.OldStartingIndex),
-                                    _ => throw new NotSupportedException()
-                                });
-                                reducedIndex += reducedCount;
-                            }
-                            else
-                                reducedIndex += activeSelectQueryEnumerable.Count();
-                        }
-                        Count = newCount;
-                    }
-                }
-            }
     }
 
     protected override void OnTerminated() =>
