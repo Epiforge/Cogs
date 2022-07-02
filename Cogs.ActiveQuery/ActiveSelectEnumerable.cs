@@ -524,26 +524,41 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
         access = new();
         var (source, selector, selectorOptions, parallel) = Key;
         SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
-        (activeExpressions, activeExpressionCounts, count) = this.Execute(() =>
+        this.Execute(() =>
         {
             lock (access)
             {
-                List<IActiveExpression<TSource, TResult>> activeExpressions;
-                if (parallel)
-                    activeExpressions = source.DataflowSelectAsync(element => (IActiveExpression<TSource, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
-                else if (source is IList<TSource> sourceList)
+                ConcurrentQueue<NotifyCollectionChangedEventArgs>? pendingChanges = null;
+                void enqueuePendingChange(object? sender, NotifyCollectionChangedEventArgs e) =>
+                    pendingChanges?.Enqueue(e);
+
+                ImmutableArray<TSource> sourceCopy;
+                while (true)
                 {
-                    activeExpressions = new List<IActiveExpression<TSource, TResult>>(sourceList.Count);
-                    for (int i = 0, ii = sourceList.Count; i < ii; ++i)
-                        activeExpressions.Add(ActiveExpression.Create(selector, sourceList[i], selectorOptions));
+                    try
+                    {
+                        sourceCopy = source.ToImmutableArray();
+                        break;
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        continue;
+                    }
                 }
+
+                if (source is INotifyCollectionChanged collectionChangeNotifier)
+                    collectionChangeNotifier.CollectionChanged += enqueuePendingChange;
+
+                if (parallel)
+                    activeExpressions = sourceCopy.DataflowSelectAsync(element => (IActiveExpression<TSource, TResult>)ActiveExpression.Create(selector, element, selectorOptions)).Result.ToList();
                 else
                 {
-                    activeExpressions = new List<IActiveExpression<TSource, TResult>>();
-                    foreach (var element in source)
-                        activeExpressions.Add(ActiveExpression.Create(selector, element, selectorOptions));
+                    activeExpressions = new List<IActiveExpression<TSource, TResult>>(sourceCopy.Length);
+                    for (int i = 0, ii = sourceCopy.Length; i < ii; ++i)
+                        activeExpressions.Add(ActiveExpression.Create(selector, sourceCopy[i], selectorOptions));
                 }
-                var activeExpressionCounts = new Dictionary<IActiveExpression<TSource, TResult>, int>();
+
+                activeExpressionCounts = new Dictionary<IActiveExpression<TSource, TResult>, int>();
                 for (int i = 0, ii = activeExpressions.Count; i < ii; ++i)
                 {
                     var activeExpression = activeExpressions[i];
@@ -555,9 +570,16 @@ sealed class ActiveSelectEnumerable<TSource, TResult> :
                         activeExpression.AddActiveExpressionOserver(this);
                     }
                 }
-                if (source is INotifyCollectionChanged collectionChangeNotifier)
-                    collectionChangeNotifier.CollectionChanged += SourceChanged;
-                return (activeExpressions, activeExpressionCounts, activeExpressions.Count);
+                count = activeExpressions.Count;
+
+                while (pendingChanges?.TryDequeue(out var pendingChange) ?? false)
+                    SourceChanged(source, pendingChange);
+
+                if (source is INotifyCollectionChanged collectionChangeNotifier2)
+                {
+                    collectionChangeNotifier2.CollectionChanged -= enqueuePendingChange;
+                    collectionChangeNotifier2.CollectionChanged += SourceChanged;
+                }
             }
         });
     }

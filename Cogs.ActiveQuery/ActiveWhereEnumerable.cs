@@ -167,13 +167,13 @@ sealed class ActiveWhereEnumerable<TElement> :
         access = new object();
         var (source, predicate, predicateOptions) = Key;
         SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
-        (activeExpressions, activeExpressionCounts, count) = this.Execute(() =>
+        this.Execute(() =>
         {
             lock (access)
             {
-                var activeExpressions = new List<IActiveExpression<TElement, bool>>();
-                var activeExpressionCounts = new Dictionary<IActiveExpression<TElement, bool>, int>();
-                var count = 0;
+                activeExpressions = new List<IActiveExpression<TElement, bool>>();
+                activeExpressionCounts = new Dictionary<IActiveExpression<TElement, bool>, int>();
+                count = 0;
 
                 void processElement(TElement element)
                 {
@@ -190,15 +190,38 @@ sealed class ActiveWhereEnumerable<TElement> :
                     }
                 }
 
-                if (source is IList<TElement> sourceList)
-                    for (int i = 0, ii = sourceList.Count; i < ii; ++i)
-                        processElement(sourceList[i]);
-                else
-                    foreach (var element in source)
-                        processElement(element);
+                ImmutableArray<TElement> sourceCopy;
+                while (true)
+                {
+                    try
+                    {
+                        sourceCopy = source.ToImmutableArray();
+                        break;
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        continue;
+                    }
+                }
+
+                ConcurrentQueue<NotifyCollectionChangedEventArgs>? pendingChanges = null;
+                void enqueuePendingChange(object? sender, NotifyCollectionChangedEventArgs e) =>
+                    pendingChanges?.Enqueue(e);
+
                 if (source is INotifyCollectionChanged collectionChangeNotifier)
-                    collectionChangeNotifier.CollectionChanged += SourceChanged;
-                return (activeExpressions, activeExpressionCounts, count);
+                    collectionChangeNotifier.CollectionChanged += enqueuePendingChange;
+
+                for (int i = 0, ii = sourceCopy.Length; i < ii; ++i)
+                    processElement(sourceCopy[i]);
+
+                while (pendingChanges?.TryDequeue(out var pendingChange) ?? false)
+                    SourceChanged(source, pendingChange);
+
+                if (source is INotifyCollectionChanged collectionChangeNotifier2)
+                {
+                    collectionChangeNotifier2.CollectionChanged -= enqueuePendingChange;
+                    collectionChangeNotifier2.CollectionChanged += SourceChanged;
+                }
             }
         });
     }
