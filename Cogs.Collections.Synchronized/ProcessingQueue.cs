@@ -72,6 +72,7 @@ public class ProcessingQueue<T> :
         {
             queueCancellationTokenSource.Cancel();
             queueCancellationTokenSource.Dispose();
+            queue.Complete();
             Interlocked.Exchange(ref count, 0);
             countChanged.Set();
             countChanged.Reset();
@@ -115,7 +116,19 @@ public class ProcessingQueue<T> :
     {
         while (true)
         {
-            var item = await queue.ReceiveAsync().ConfigureAwait(false);
+            T item;
+            try
+            {
+                item = await queue.ReceiveAsync(queueCancellationTokenSource.Token).ConfigureAwait(false);
+            }
+            catch (InvalidOperationException)
+            {
+                return;
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
             try
             {
                 action(item);
