@@ -8,7 +8,7 @@ steps:
 - task: UseDotNet@2
   displayName: 'Use .NET'
   inputs:
-    version: '6.x'
+    version: '7.x'
     #includePreviewVersions: true
 
 - task: DotNetCoreCLI@2
