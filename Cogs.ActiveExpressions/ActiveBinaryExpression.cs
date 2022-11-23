@@ -19,8 +19,10 @@ class ActiveBinaryExpression :
     readonly bool getDelegate;
     protected readonly CachedInstancesKey<BinaryExpression> instancesKey;
     bool isLiftedToNull;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     protected ActiveExpression? left;
     MethodInfo? method;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     protected ActiveExpression? right;
 
     void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>

@@ -9,7 +9,9 @@ class ActiveInvocationExpression :
         base(instancesKey.Expression.Type, ExpressionType.Invoke, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     ActiveExpression? activeExpression;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     ActiveExpression? activeDelegateExpression;
     IReadOnlyList<ActiveExpression>? activeArguments;
     int disposalCount;

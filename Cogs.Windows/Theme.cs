@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Cogs.Windows;
 
 /// <summary>
@@ -12,11 +14,11 @@ public sealed class Theme : SyncDisposable
     {
         synchronizationContext = SynchronizationContext.Current;
 
-        colorKey = colorHive.OpenSubKey(colorKeyName) ?? throw new PlatformNotSupportedException($"The DWM key (\"{colorKeyName}\") could not be found");
+        colorKey = Registry.Users.OpenSubKey(colorKeyName) ?? throw new PlatformNotSupportedException($"The DWM key (\"{colorKeyName}\") could not be found");
         color = FetchColor();
         try
         {
-            colorKeyWatcher = new ManagementEventWatcher(new WqlEventQuery("RegistryValueChangeEvent") { Condition = $"Hive = '{Sanitize(colorHive.Name)}' AND KeyPath = '{Sanitize(colorKeyName)}' AND ValueName = '{Sanitize(colorValueName)}'" });
+            colorKeyWatcher = new ManagementEventWatcher(new WqlEventQuery("RegistryValueChangeEvent") { Condition = $"Hive = '{Sanitize(Registry.Users.Name)}' AND KeyPath = '{Sanitize(colorKeyName)}' AND ValueName = '{Sanitize(colorValueName)}'" });
             colorKeyWatcher.EventArrived += ColorKeyWatcherEventArrived;
             colorKeyWatcher.Start();
         }
@@ -29,11 +31,11 @@ public sealed class Theme : SyncDisposable
             colorKeyPollTimer = new Timer(ColorKeyPollTimerTick, null, pollingInterval, pollingInterval);
         }
 
-        isDarkKey = isDarkHive.OpenSubKey(isDarkKeyName) ?? throw new PlatformNotSupportedException($"The Personalize key (\"{isDarkKeyName}\") could not be found");
+        isDarkKey = Registry.Users.OpenSubKey(isDarkKeyName) ?? throw new PlatformNotSupportedException($"The Personalize key (\"{isDarkKeyName}\") could not be found");
         isDark = FetchIsDark();
         try
         {
-            isDarkKeyWatcher = new ManagementEventWatcher(new WqlEventQuery("RegistryValueChangeEvent") { Condition = $"Hive = '{Sanitize(isDarkHive.Name)}' AND KeyPath = '{Sanitize(isDarkKeyName)}' AND ValueName = '{Sanitize(isDarkValueName)}'" });
+            isDarkKeyWatcher = new ManagementEventWatcher(new WqlEventQuery("RegistryValueChangeEvent") { Condition = $"Hive = '{Sanitize(Registry.Users.Name)}' AND KeyPath = '{Sanitize(isDarkKeyName)}' AND ValueName = '{Sanitize(isDarkValueName)}'" });
             isDarkKeyWatcher.EventArrived += IsDarkKeyWatcherEventArrived;
             isDarkKeyWatcher.Start();
         }
@@ -47,19 +49,21 @@ public sealed class Theme : SyncDisposable
         }
     }
 
-    readonly RegistryKey colorHive = Registry.Users;
     Color color;
     readonly RegistryKey colorKey;
     readonly string colorKeyName = $@"{WindowsIdentity.GetCurrent().User}\Software\Microsoft\Windows\DWM";
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     readonly ManagementEventWatcher? colorKeyWatcher;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     readonly Timer? colorKeyPollTimer;
     readonly string colorValueName = "ColorizationColor";
     readonly int defaultColorValue = unchecked((int)0xc42947cc);
     readonly int defaultIsDarkValue = 1;
-    readonly RegistryKey isDarkHive = Registry.Users;
     bool isDark;
     readonly RegistryKey isDarkKey;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     readonly Timer? isDarkKeyPollTimer;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     readonly ManagementEventWatcher? isDarkKeyWatcher;
     readonly string isDarkKeyName = $@"{WindowsIdentity.GetCurrent().User}\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     readonly string isDarkValueName = "AppsUseLightTheme";

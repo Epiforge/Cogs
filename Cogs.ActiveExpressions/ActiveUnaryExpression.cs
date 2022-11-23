@@ -13,6 +13,7 @@ class ActiveUnaryExpression :
     int disposalCount;
     readonly CachedInstancesKey<UnaryExpression> instancesKey;
     MethodInfo? method;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     ActiveExpression? operand;
 
     void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>

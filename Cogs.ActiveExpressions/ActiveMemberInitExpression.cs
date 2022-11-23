@@ -16,6 +16,7 @@ class ActiveMemberInitExpression :
     readonly CachedInstancesKey<MemberInitExpression> instancesKey;
     IReadOnlyDictionary<ActiveExpression, MemberInfo>? memberAssignmentExpressions;
     readonly MemberInitExpression memberInitExpression;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     ActiveExpression? newExpression;
 
     protected override bool Dispose(bool disposing)

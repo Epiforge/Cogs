@@ -11,6 +11,7 @@ class ActiveMemberExpression :
 
     int disposalCount;
     bool doNotListenForPropertyChanges;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     ActiveExpression? expression;
     object? expressionValue;
     FastMethodInfo? fastGetter;

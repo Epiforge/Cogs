@@ -11,6 +11,7 @@ class ActiveTypeBinaryExpression :
 
     TypeIsDelegate? @delegate;
     int disposalCount;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     ActiveExpression? expression;
     readonly CachedInstancesKey<TypeBinaryExpression> instancesKey;
     Type? typeOperand;

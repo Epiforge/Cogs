@@ -15,6 +15,7 @@ class ActiveIndexExpression :
     MethodInfo? getMethod;
     PropertyInfo? indexer;
     readonly CachedInstancesKey<IndexExpression> instancesKey;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     ActiveExpression? @object;
     object? objectValue;
 
