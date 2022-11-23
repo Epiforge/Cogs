@@ -1,1 +1,1 @@
-We added the Xaml static class, which allows syntactically simplified Xaml parsing. We also improved data virtualization.
+We increased the required .NET version from 5.0 to 6.0 since the former is going out of support from Microsoft.

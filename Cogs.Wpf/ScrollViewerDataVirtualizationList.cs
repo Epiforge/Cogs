@@ -29,6 +29,7 @@ public class ScrollViewerDataVirtualizationList :
     bool belayAdjustments;
     readonly IList list;
     readonly HashSet<IDataVirtualizationItem> loadedItems;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     readonly Timer adjustmentTimer;
     readonly ScrollViewer scrollViewer;
 
