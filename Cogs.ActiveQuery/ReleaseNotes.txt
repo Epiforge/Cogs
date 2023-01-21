@@ -1,1 +1,1 @@
-We increased the concurrency resillience of Enumerable ActiveSelect and ActiveWhere.
+We upgraded a NuGet reference.

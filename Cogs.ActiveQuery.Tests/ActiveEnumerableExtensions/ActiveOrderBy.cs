@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace Cogs.ActiveQuery.Tests.ActiveEnumerableExtensions;
 
 [TestClass]
@@ -93,7 +95,7 @@ public class ActiveOrderBy
         Assert.AreEqual(1, expr.GetElementFaults().Count);
         var (element, fault) = expr.GetElementFaults()[0];
         Assert.AreSame(people[0], element);
-        Assert.IsInstanceOfType(fault, typeof(NullReferenceException));
+        Assert.IsInstanceOfType(fault, typeof(TargetException));
         people[0].Name = "John";
         checkMergedNames("BenErinJohnBryanCliffCraigEmilyJamesSteveGeorgeHunterBridgetCharlesNanette");
         Assert.AreEqual(0, expr.GetElementFaults().Count);
