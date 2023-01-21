@@ -28,6 +28,10 @@
         <Version>1.25.2</Version>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(TargetFramework)'=='net5.0-windows'">
+      <NoWarn>$(NoWarn);NETSDK1138</NoWarn>
+    </PropertyGroup>
+
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
         <ReadLinesFromFile File="ReleaseNotes.txt">
             <Output TaskParameter="Lines" ItemName="ReleaseNoteLines" />
