@@ -22,7 +22,7 @@ public class Condition
         var johnsNameIsSixCharacters = ActiveExpression.ConditionAsync(() => john.Name!.Length == 6);
         Assert.IsTrue(johnsNameIsSixCharacters.IsCompleted);
         Assert.IsInstanceOfType(johnsNameIsSixCharacters.Exception, typeof(AggregateException));
-        Assert.IsInstanceOfType(johnsNameIsSixCharacters.Exception!.InnerExceptions[0], typeof(NullReferenceException));
+        Assert.IsInstanceOfType(johnsNameIsSixCharacters.Exception!.InnerExceptions[0], typeof(TargetException));
     }
 
     [TestMethod]
@@ -54,7 +54,7 @@ public class Condition
         john.Name = null;
         Assert.IsTrue(johnsNameIsSixCharacters.IsCompleted);
         Assert.IsInstanceOfType(johnsNameIsSixCharacters.Exception, typeof(AggregateException));
-        Assert.IsInstanceOfType(johnsNameIsSixCharacters.Exception!.InnerExceptions[0], typeof(NullReferenceException));
+        Assert.IsInstanceOfType(johnsNameIsSixCharacters.Exception!.InnerExceptions[0], typeof(TargetException));
     }
 
     [TestMethod]

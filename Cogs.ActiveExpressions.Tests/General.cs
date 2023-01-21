@@ -89,7 +89,9 @@ public class General
     {
         TestPerson? noOne = null;
         using var expr = ActiveExpression.Create(p1 => p1!.Name, noOne);
-        Assert.AreEqual($"{{C}} /* null */.Name /* [{typeof(NullReferenceException).Name}: {new NullReferenceException().Message}] */", expr.ToString());
+        var fault = expr.Fault!;
+        Assert.IsNotNull(fault);
+        Assert.AreEqual($"{{C}} /* null */.Name /* [{fault.GetType().Name}: {fault.Message}] */", expr.ToString());
     }
 
     [TestMethod]

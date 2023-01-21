@@ -1,1 +1,1 @@
-We added the ConditionAsync static method to ActiveExpression, allowing the caller to easily await a certain condition.
+We updated a NuGet reference.
