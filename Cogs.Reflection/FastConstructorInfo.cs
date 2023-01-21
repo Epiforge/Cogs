@@ -14,31 +14,35 @@ public class FastConstructorInfo
         if (constructorInfo is null)
             throw new ArgumentNullException(nameof(constructorInfo));
         ConstructorInfo = constructorInfo;
-        var argumentsExpression = Expression.Parameter(typeof(object[]), "arguments");
-        var argumentExpressions = new List<Expression>();
-        var parameterInfos = constructorInfo.GetParameters();
-        for (var i = 0; i < parameterInfos.Length; ++i)
+        if (compileExpressionTrees)
         {
-            var parameterInfo = parameterInfos[i];
-            argumentExpressions.Add(Expression.Convert(Expression.ArrayIndex(argumentsExpression, Expression.Constant(i)), parameterInfo.ParameterType));
+            var argumentsExpression = Expression.Parameter(typeof(object[]), "arguments");
+            var argumentExpressions = new List<Expression>();
+            var parameterInfos = constructorInfo.GetParameters();
+            for (var i = 0; i < parameterInfos.Length; ++i)
+            {
+                var parameterInfo = parameterInfos[i];
+                argumentExpressions.Add(Expression.Convert(Expression.ArrayIndex(argumentsExpression, Expression.Constant(i)), parameterInfo.ParameterType));
+            }
+            @delegate = Expression.Lambda<ConstructorDelegate>(Expression.Convert(Expression.New(constructorInfo, argumentExpressions), typeof(object)), argumentsExpression).Compile();
         }
-        @delegate = Expression.Lambda<ConstructorDelegate>(Expression.Convert(Expression.New(constructorInfo, argumentExpressions), typeof(object)), argumentsExpression).Compile();
     }
 
-    readonly ConstructorDelegate @delegate;
+    readonly ConstructorDelegate? @delegate;
 
     /// <summary>
     /// Invokes the constructor reflected by <see cref="ConstructorInfo"/>
     /// </summary>
     /// <param name="arguments">An argument list for the invoked constructor</param>
     /// <returns>The constructed object</returns>
-    public object Invoke(params object?[] arguments) => @delegate(arguments);
+    public object Invoke(params object?[] arguments) => compileExpressionTrees ? @delegate!(arguments) : ConstructorInfo.Invoke(arguments);
 
     /// <summary>
     /// Gets the <see cref="System.Reflection.ConstructorInfo"/> reflecting the method this <see cref="FastConstructorInfo"/> will invoke
     /// </summary>
     public ConstructorInfo ConstructorInfo { get; }
 
+    static readonly bool compileExpressionTrees = Environment.Version.Major <= 6;
     static readonly ConcurrentDictionary<ConstructorInfo, FastConstructorInfo> fastConstructorInfos = new();
 
     static FastConstructorInfo Create(ConstructorInfo constructorInfo) => new(constructorInfo);

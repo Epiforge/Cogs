@@ -1,1 +1,1 @@
-We upgraded some NuGet references. We enabled NuGet symbol packages.
+FastMethodInfo and FastConstructorInfo will now detect .NET 7 or later and defer to its better performing IL Emit implementation instead of compiling expression trees into delegates.

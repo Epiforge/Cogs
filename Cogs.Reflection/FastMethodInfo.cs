@@ -14,30 +14,33 @@ public class FastMethodInfo
         if (methodInfo is null)
             throw new ArgumentNullException(nameof(methodInfo));
         MethodInfo = methodInfo;
-        var instanceExpression = Expression.Parameter(typeof(object), "instance");
-        var argumentsExpression = Expression.Parameter(typeof(object[]), "arguments");
-        var argumentExpressions = new List<Expression>();
-        var parameterInfos = methodInfo.GetParameters();
-        for (var i = 0; i < parameterInfos.Length; ++i)
+        if (compileExpressionTrees)
         {
-            var parameterInfo = parameterInfos[i];
-            argumentExpressions.Add(Expression.Convert(Expression.ArrayIndex(argumentsExpression, Expression.Constant(i)), parameterInfo.ParameterType));
-        }
-        var callExpression = Expression.Call(!methodInfo.IsStatic ? Expression.Convert(instanceExpression, methodInfo.DeclaringType) : null, methodInfo, argumentExpressions);
-        if (callExpression.Type == typeof(void))
-        {
-            var voidDelegate = Expression.Lambda<VoidDelegate>(callExpression, instanceExpression, argumentsExpression).Compile();
-            @delegate = (instance, arguments) =>
+            var instanceExpression = Expression.Parameter(typeof(object), "instance");
+            var argumentsExpression = Expression.Parameter(typeof(object[]), "arguments");
+            var argumentExpressions = new List<Expression>();
+            var parameterInfos = methodInfo.GetParameters();
+            for (var i = 0; i < parameterInfos.Length; ++i)
             {
-                voidDelegate(instance, arguments);
-                return null;
-            };
+                var parameterInfo = parameterInfos[i];
+                argumentExpressions.Add(Expression.Convert(Expression.ArrayIndex(argumentsExpression, Expression.Constant(i)), parameterInfo.ParameterType));
+            }
+            var callExpression = Expression.Call(!methodInfo.IsStatic ? Expression.Convert(instanceExpression, methodInfo.DeclaringType) : null, methodInfo, argumentExpressions);
+            if (callExpression.Type == typeof(void))
+            {
+                var voidDelegate = Expression.Lambda<VoidDelegate>(callExpression, instanceExpression, argumentsExpression).Compile();
+                @delegate = (instance, arguments) =>
+                {
+                    voidDelegate(instance, arguments);
+                    return null;
+                };
+            }
+            else
+                @delegate = Expression.Lambda<ReturnValueDelegate>(Expression.Convert(callExpression, typeof(object)), instanceExpression, argumentsExpression).Compile();
         }
-        else
-            @delegate = Expression.Lambda<ReturnValueDelegate>(Expression.Convert(callExpression, typeof(object)), instanceExpression, argumentsExpression).Compile();
     }
 
-    readonly ReturnValueDelegate @delegate;
+    readonly ReturnValueDelegate? @delegate;
 
     /// <summary>
     /// Invokes the method reflected by <see cref="MethodInfo"/>
@@ -45,13 +48,14 @@ public class FastMethodInfo
     /// <param name="instance">The object on which to invoke the method (if a method is static, this argument is ignored)</param>
     /// <param name="arguments">An argument list for the invoked method</param>
     /// <returns>An object containing the return value of the invoked method</returns>
-    public object? Invoke(object? instance, params object?[] arguments) => @delegate(instance, arguments);
+    public object? Invoke(object? instance, params object?[] arguments) => compileExpressionTrees ? @delegate!(instance, arguments) : MethodInfo.Invoke(instance, arguments);
 
     /// <summary>
     /// Gets the <see cref="System.Reflection.MethodInfo"/> reflecting the method this <see cref="FastMethodInfo"/> will invoke
     /// </summary>
     public MethodInfo MethodInfo { get; }
 
+    static readonly bool compileExpressionTrees = Environment.Version.Major <= 6;
     static readonly ConcurrentDictionary<MethodInfo, FastMethodInfo> fastMethodInfos = new();
 
     static FastMethodInfo Create(MethodInfo methodInfo) => new(methodInfo);
