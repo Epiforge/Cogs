@@ -4,7 +4,7 @@ namespace Cogs.Collections.Synchronized;
 /// A queue that will perform an action on each item enqueued in serial
 /// </summary>
 /// <typeparam name="T">The type of items in the queue</typeparam>
-public class ProcessingQueue<T> :
+public sealed class ProcessingQueue<T> :
     IDisposable,
     IWaitUntilIdle
 {
@@ -66,7 +66,7 @@ public class ProcessingQueue<T> :
     /// Frees, releases, or resets unmanaged resources
     /// </summary>
     /// <param name="disposing"><c>false</c> if invoked by the finalizer because the object is being garbage collected; otherwise, <c>true</c></param>
-    protected virtual void Dispose(bool disposing)
+    void Dispose(bool disposing)
     {
         if (disposing && !IsDisposed)
         {
@@ -101,7 +101,7 @@ public class ProcessingQueue<T> :
     /// Raises the <see cref="UnhandledException"/> event
     /// </summary>
     /// <param name="e">The event data</param>
-    protected virtual void OnUnhandledException(ProcessingQueueUnhandledExceptionEventArgs<T> e) =>
+    void OnUnhandledException(ProcessingQueueUnhandledExceptionEventArgs<T> e) =>
         UnhandledException?.Invoke(this, e);
 
     /// <summary>
@@ -109,7 +109,7 @@ public class ProcessingQueue<T> :
     /// </summary>
     /// <param name="item">The item the processing of which threw the unhandled exception</param>
     /// <param name="exception">The unhandled exception that was thrown by the processing queue action</param>
-    protected void OnUnhandledException(T item, Exception exception) =>
+    void OnUnhandledException(T item, Exception exception) =>
         OnUnhandledException(new ProcessingQueueUnhandledExceptionEventArgs<T>(item, exception));
 
     async Task ProcessQueueAsync()

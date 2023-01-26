@@ -4,7 +4,7 @@ namespace Cogs.Collections.Synchronized;
 /// Represents a dynamic data collection that supports bulk operations and provides notifications when items get added, removed, or when the whole list is refreshed
 /// </summary>
 /// <typeparam name="T">The type of elements in the collection</typeparam>
-public class SynchronizedRangeObservableCollection<T> :
+public sealed class SynchronizedRangeObservableCollection<T> :
     SynchronizedObservableCollection<T>
 {
     /// <summary>

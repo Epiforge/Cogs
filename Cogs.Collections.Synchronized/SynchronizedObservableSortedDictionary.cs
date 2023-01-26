@@ -5,7 +5,7 @@ namespace Cogs.Collections.Synchronized;
 /// </summary>
 /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
 /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
-public class SynchronizedObservableSortedDictionary<TKey, TValue> :
+public sealed class SynchronizedObservableSortedDictionary<TKey, TValue> :
     ObservableSortedDictionary<TKey, TValue>,
     ISynchronizedObservableRangeDictionary<TKey, TValue>
 {
@@ -101,7 +101,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// <summary>
     /// Gets the <see cref="IComparer{T}"/> used to order the elements of the <see cref="SynchronizedObservableSortedDictionary{TKey, TValue}"/>
     /// </summary>
-    public virtual Task<IComparer<TKey>> ComparerAsync =>
+    public Task<IComparer<TKey>> ComparerAsync =>
         this.ExecuteAsync(() => base.Comparer);
 
     /// <summary>
@@ -113,7 +113,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// <summary>
     /// Gets the number of key-value pairs contained in the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/>
     /// </summary>
-    public virtual Task<int> CountAsync =>
+    public Task<int> CountAsync =>
         this.ExecuteAsync(() => base.Count);
 
     /// <summary>
@@ -227,7 +227,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// </summary>
     /// <param name="key">The object to use as the key of the element to add</param>
     /// <param name="value">The object to use as the value of the element to add</param>
-    public virtual Task AddAsync(TKey key, TValue value) =>
+    public Task AddAsync(TKey key, TValue value) =>
         this.ExecuteAsync(() => base.Add(key, value));
 
     /// <summary>
@@ -248,14 +248,14 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// Adds elements with the provided keys and values to the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/>
     /// </summary>
     /// <param name="keyValuePairs">The key-value pairs to add</param>
-    public virtual Task AddRangeAsync(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs) =>
+    public Task AddRangeAsync(IEnumerable<KeyValuePair<TKey, TValue>> keyValuePairs) =>
         this.ExecuteAsync(() => base.AddRange(keyValuePairs));
 
     /// <summary>
     /// Adds elements with the provided keys and values to the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/>
     /// </summary>
     /// <param name="keyValuePairs">The key-value pairs to add</param>
-    public virtual Task AddRangeAsync(IReadOnlyList<KeyValuePair<TKey, TValue>> keyValuePairs) =>
+    public Task AddRangeAsync(IReadOnlyList<KeyValuePair<TKey, TValue>> keyValuePairs) =>
         this.ExecuteAsync(() => base.AddRange(keyValuePairs));
 
     /// <summary>
@@ -267,7 +267,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// <summary>
     /// Removes all keys and values from the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/>
     /// </summary>
-    public virtual Task ClearAsync() =>
+    public Task ClearAsync() =>
         this.ExecuteAsync(() => base.Clear());
 
     /// <summary>
@@ -299,7 +299,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// </summary>
     /// <param name="key">The key to locate in the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/></param>
     /// <returns><c>true</c> if the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/> contains an element with the key; otherwise, <c>false</c></returns>
-    public virtual Task<bool> ContainsKeyAsync(TKey key) =>
+    public Task<bool> ContainsKeyAsync(TKey key) =>
         this.ExecuteAsync(() => base.ContainsKey(key));
 
     /// <summary>
@@ -315,7 +315,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// </summary>
     /// <param name="value">THe value to locate in the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/></param>
     /// <returns><c>true</c> if the <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/> contains an element with the value; otherwise, <c>false</c></returns>
-    public virtual Task<bool> ContainsValueAsync(TValue value) =>
+    public Task<bool> ContainsValueAsync(TValue value) =>
         this.ExecuteAsync(() => base.ContainsValue(value));
 
     /// <summary>
@@ -403,7 +403,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// </summary>
     /// <param name="key">The key of the element to get</param>
     /// <returns>The element with the specified key</returns>
-    public virtual Task<TValue> GetValueAsync(TKey key) =>
+    public Task<TValue> GetValueAsync(TKey key) =>
         this.ExecuteAsync(() => base[key]);
 
     /// <summary>
@@ -450,7 +450,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// </summary>
     /// <param name="asyncPredicate">An asynchronous predicate that returns <c>true</c> when passed the key and value of an element to be removed</param>
     /// <returns>The key-value pairs of the elements that were removed</returns>
-    public virtual Task<IReadOnlyList<KeyValuePair<TKey, TValue>>> RemoveAllAsync(Func<TKey, TValue, Task<bool>> asyncPredicate) =>
+    public Task<IReadOnlyList<KeyValuePair<TKey, TValue>>> RemoveAllAsync(Func<TKey, TValue, Task<bool>> asyncPredicate) =>
         this.ExecuteAsync(async () =>
         {
             var removing = new List<KeyValuePair<TKey, TValue>>();
@@ -466,7 +466,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// </summary>
     /// <param name="key">The key of the element to remove</param>
     /// <returns><c>true</c> if the element is successfully removed; otherwise, <c>false</c></returns>
-    public virtual Task<bool> RemoveAsync(TKey key) =>
+    public Task<bool> RemoveAsync(TKey key) =>
         this.ExecuteAsync(() => base.Remove(key));
 
     /// <summary>
@@ -482,7 +482,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// </summary>
     /// <param name="keys">The keys of the elements to remove</param>
     /// <returns>The keys of the elements that were found and removed</returns>
-    public virtual Task<IReadOnlyList<TKey>> RemoveRangeAsync(IEnumerable<TKey> keys) =>
+    public Task<IReadOnlyList<TKey>> RemoveRangeAsync(IEnumerable<TKey> keys) =>
         this.ExecuteAsync(() => base.RemoveRange(keys));
 
     /// <summary>
@@ -556,7 +556,7 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// </summary>
     /// <param name="key">The key of the element to set</param>
     /// <param name="value">The element with the specified key</param>
-    public virtual Task SetValueAsync(TKey key, TValue value) =>
+    public Task SetValueAsync(TKey key, TValue value) =>
         this.ExecuteAsync(() => base[key] = value);
 
     /// <summary>
@@ -572,6 +572,6 @@ public class SynchronizedObservableSortedDictionary<TKey, TValue> :
     /// </summary>
     /// <param name="key">The key the value of which to get</param>
     /// <returns><c>true</c> if the object that implements <see cref="ISynchronizedObservableRangeDictionary{TKey, TValue}"/> contains an element with the specified key and the value that was retrieved; otherwise, <c>false</c> and the default <typeparamref name="TValue"/></returns>
-    public virtual Task<(bool valueRetrieved, TValue value)> TryGetValueAsync(TKey key) =>
+    public Task<(bool valueRetrieved, TValue value)> TryGetValueAsync(TKey key) =>
         this.ExecuteAsync(() => base.TryGetValue(key));
 }

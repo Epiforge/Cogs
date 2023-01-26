@@ -4,7 +4,7 @@ namespace Cogs.Collections.Synchronized;
 /// Provides data for the <see cref="ProcessingQueue{T}.UnhandledException"/> event
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class ProcessingQueueUnhandledExceptionEventArgs<T> :
+public sealed class ProcessingQueueUnhandledExceptionEventArgs<T> :
     EventArgs
 {
     /// <summary>

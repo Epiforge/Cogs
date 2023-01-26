@@ -1,1 +1,1 @@
-We corrected a defect in ProcessingQueue similarly to how we previously did so in AsyncProcessingQueue.
+Non-abstract classes sealed for performance.
