@@ -1,1 +1,1 @@
-We fixed a defect in which creating instances of disposable cache values manually caused NRE's when the instances were disposed.
+Non-abstract classes sealed for performance.
