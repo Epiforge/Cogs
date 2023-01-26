@@ -1,6 +1,6 @@
 namespace Cogs.ActiveQuery;
 
-class MergedElementFaultChangeNotifier :
+sealed class MergedElementFaultChangeNotifier :
     SyncDisposable,
     INotifyElementFaultChanges
 {

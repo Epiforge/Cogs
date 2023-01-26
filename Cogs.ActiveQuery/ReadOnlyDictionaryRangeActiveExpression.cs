@@ -6,7 +6,7 @@ namespace Cogs.ActiveQuery;
 /// <typeparam name="TKey">The type of the keys</typeparam>
 /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
 /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
-class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> :
+sealed class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> :
     SyncDisposable,
     INotifyDictionaryChanged<TKey, TResult>,
     INotifyElementFaultChanges
@@ -139,31 +139,31 @@ class ReadOnlyDictionaryRangeActiveExpression<TKey, TValue, TResult> :
         }
     }
 
-    protected virtual void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
+    void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TResult> e) =>
         DictionaryChanged?.Invoke(this, e);
 
-    protected virtual void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
+    void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
         ElementFaultChanged?.Invoke(this, e);
 
-    protected void OnElementFaultChanged(TKey key, Exception? fault) =>
+    void OnElementFaultChanged(TKey key, Exception? fault) =>
         OnElementFaultChanged(new ElementFaultChangeEventArgs(key, fault));
 
-    protected virtual void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
+    void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
         ElementFaultChanging?.Invoke(this, e);
 
-    protected void OnElementFaultChanging(TKey key, Exception? fault) =>
+    void OnElementFaultChanging(TKey key, Exception? fault) =>
         OnElementFaultChanging(new ElementFaultChangeEventArgs(key, fault));
 
-    protected virtual void OnValueResultChanged(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
+    void OnValueResultChanged(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
         ValueResultChanged?.Invoke(this, e);
 
-    protected void OnValueResultChanged(TKey key, TResult? result) =>
+    void OnValueResultChanged(TKey key, TResult? result) =>
         OnValueResultChanged(new RangeActiveExpressionResultChangeEventArgs<TKey, TResult>(key, result));
 
-    protected virtual void OnValueResultChanging(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
+    void OnValueResultChanging(RangeActiveExpressionResultChangeEventArgs<TKey, TResult> e) =>
         ValueResultChanging?.Invoke(this, e);
 
-    protected void OnValueResultChanging(TKey key, TResult? result) =>
+    void OnValueResultChanging(TKey key, TResult? result) =>
         OnValueResultChanging(new RangeActiveExpressionResultChangeEventArgs<TKey, TResult>(key, result));
 
     IReadOnlyList<KeyValuePair<TKey, TResult>> RemoveActiveExpressions(IReadOnlyList<TKey> keys)

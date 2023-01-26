@@ -4,7 +4,7 @@ namespace Cogs.ActiveQuery;
 /// Represents a read-only collection of elements that is the result of an active query
 /// </summary>
 /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
-public class ActiveEnumerable<TElement> :
+public sealed class ActiveEnumerable<TElement> :
     SyncDisposable,
     IActiveEnumerable<TElement>
 {
@@ -101,7 +101,6 @@ public class ActiveEnumerable<TElement> :
     void CollectionChangedHandler(object sender, NotifyCollectionChangedEventArgs e) =>
         CollectionChanged?.Invoke(this, e);
 
-    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
     bool IList.Contains(object? value) =>
         this.Execute(() =>
         {
@@ -115,7 +114,6 @@ public class ActiveEnumerable<TElement> :
             return false;
         });
 
-    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
     void ICollection.CopyTo(Array array, int index) =>
         this.Execute(() =>
         {
@@ -170,7 +168,6 @@ public class ActiveEnumerable<TElement> :
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         faultNotifier?.GetElementFaults() ?? Enumerable.Empty<(object? element, Exception? fault)>().ToImmutableArray();
 
-    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
     int IList.IndexOf(object value) =>
         this.Execute(() =>
         {

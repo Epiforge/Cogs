@@ -1,1 +1,1 @@
-We upgraded a NuGet reference.
+Non-abstract classes sealed for performance.

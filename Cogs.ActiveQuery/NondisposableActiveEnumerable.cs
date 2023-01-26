@@ -4,7 +4,7 @@ namespace Cogs.ActiveQuery;
 /// Represents a read-only collection of elements that is the result of an active query and that cannot be disposed by callers
 /// </summary>
 /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
-public class NondisposableActiveEnumerable<TElement> :
+public sealed class NondisposableActiveEnumerable<TElement> :
     INondisposableActiveEnumerable<TElement>
 {
     /// <summary>
@@ -143,7 +143,6 @@ public class NondisposableActiveEnumerable<TElement> :
     void IList.Clear() =>
         throw new NotSupportedException();
 
-    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
     bool IList.Contains(object? value) =>
         this.Execute(() =>
         {
@@ -157,7 +156,6 @@ public class NondisposableActiveEnumerable<TElement> :
             return false;
         });
 
-    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
     void ICollection.CopyTo(Array array, int index) =>
         this.Execute(() =>
         {
@@ -186,7 +184,6 @@ public class NondisposableActiveEnumerable<TElement> :
     public IEnumerator<TElement> GetEnumerator() =>
         activeEnumerable.GetEnumerator();
 
-    [SuppressMessage("Design", "CA1033: Interface methods should be callable by child types")]
     int IList.IndexOf(object value) =>
         this.Execute(() =>
         {

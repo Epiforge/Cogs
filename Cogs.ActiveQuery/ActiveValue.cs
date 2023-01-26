@@ -4,7 +4,7 @@ namespace Cogs.ActiveQuery;
 /// Represents the scalar result of an active query
 /// </summary>
 /// <typeparam name="TValue">The type of the scalar result</typeparam>
-public class ActiveValue<TValue> :
+public sealed class ActiveValue<TValue> :
     SyncDisposable,
     IActiveValue<TValue>
 {
@@ -82,7 +82,7 @@ public class ActiveValue<TValue> :
     public Exception? OperationFault
     {
         get => operationFault;
-        protected internal set => SetBackedProperty(ref operationFault, in value);
+        internal set => SetBackedProperty(ref operationFault, in value);
     }
 
     /// <summary>
@@ -91,6 +91,6 @@ public class ActiveValue<TValue> :
     public TValue Value
     {
         get => value;
-        protected internal set => SetBackedProperty(ref this.value, in value);
+        internal set => SetBackedProperty(ref this.value, in value);
     }
 }

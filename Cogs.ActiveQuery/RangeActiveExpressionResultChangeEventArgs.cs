@@ -1,6 +1,6 @@
 namespace Cogs.ActiveQuery;
 
-class RangeActiveExpressionResultChangeEventArgs<TElement, TResult> :
+sealed class RangeActiveExpressionResultChangeEventArgs<TElement, TResult> :
     EventArgs
 {
     public RangeActiveExpressionResultChangeEventArgs(TElement element, TResult? result)

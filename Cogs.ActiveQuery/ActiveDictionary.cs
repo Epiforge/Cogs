@@ -5,7 +5,7 @@ namespace Cogs.ActiveQuery;
 /// </summary>
 /// <typeparam name="TKey">The type of keys</typeparam>
 /// <typeparam name="TValue">The type of values</typeparam>
-public class ActiveDictionary<TKey, TValue> :
+public sealed class ActiveDictionary<TKey, TValue> :
     SyncDisposable,
     IActiveDictionary<TKey, TValue>
 {
@@ -196,10 +196,8 @@ public class ActiveDictionary<TKey, TValue> :
     /// </summary>
     public Exception? OperationFault
     {
-        get =>
-            operationFault;
-        protected internal set =>
-            SetBackedProperty(ref operationFault, in value);
+        get => operationFault;
+        internal set => SetBackedProperty(ref operationFault, in value);
     }
 
     /// <summary>

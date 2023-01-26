@@ -5,7 +5,7 @@ namespace Cogs.ActiveQuery;
 /// </summary>
 /// <typeparam name="TKey">The type of keys</typeparam>
 /// <typeparam name="TValue">The type of values</typeparam>
-public class NondisposableActiveDictionary<TKey, TValue> :
+public sealed class NondisposableActiveDictionary<TKey, TValue> :
     INondisposableActiveDictionary<TKey, TValue>
 {
     /// <summary>

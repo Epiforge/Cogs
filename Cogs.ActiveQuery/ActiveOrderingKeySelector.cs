@@ -4,7 +4,7 @@ namespace Cogs.ActiveQuery;
 /// Represents a selector used by active ordering
 /// </summary>
 /// <typeparam name="T">The type of elements being ordered</typeparam>
-public class ActiveOrderingKeySelector<T>
+public sealed class ActiveOrderingKeySelector<T>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ActiveOrderingKeySelector{T}"/> class with the specified key extraction expression for sorting in ascending order

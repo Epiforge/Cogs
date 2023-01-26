@@ -5,7 +5,7 @@ namespace Cogs.ActiveQuery;
 /// Represents the sequence of results derived from creating an active expression for each element in a sequence
 /// </summary>
 /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
-class EnumerableRangeActiveExpression<TResult> :
+sealed class EnumerableRangeActiveExpression<TResult> :
     SyncDisposable,
     INotifyElementFaultChanges,
     INotifyCollectionChanged
@@ -137,31 +137,31 @@ class EnumerableRangeActiveExpression<TResult> :
         }
     }
 
-    protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
+    void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
         CollectionChanged?.Invoke(this, e);
 
-    protected virtual void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
+    void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
         ElementFaultChanged?.Invoke(this, e);
 
-    protected void OnElementFaultChanged(object? element, Exception? fault, int count) =>
+    void OnElementFaultChanged(object? element, Exception? fault, int count) =>
         OnElementFaultChanged(new ElementFaultChangeEventArgs(element, fault, count));
 
-    protected virtual void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
+    void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
         ElementFaultChanging?.Invoke(this, e);
 
-    protected void OnElementFaultChanging(object? element, Exception? fault, int count) =>
+    void OnElementFaultChanging(object? element, Exception? fault, int count) =>
         OnElementFaultChanging(new ElementFaultChangeEventArgs(element, fault, count));
 
-    protected virtual void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<object?, TResult?> e) =>
+    void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<object?, TResult?> e) =>
         ElementResultChanged?.Invoke(this, e);
 
-    protected void OnElementResultChanged(object? element, TResult? result, int count) =>
+    void OnElementResultChanged(object? element, TResult? result, int count) =>
         OnElementResultChanged(new RangeActiveExpressionResultChangeEventArgs<object?, TResult?>(element, result, count));
 
-    protected virtual void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<object?, TResult?> e) =>
+    void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<object?, TResult?> e) =>
         ElementResultChanging?.Invoke(this, e);
 
-    protected void OnElementResultChanging(object? element, TResult? result, int count) =>
+    void OnElementResultChanging(object? element, TResult? result, int count) =>
         OnElementResultChanging(new RangeActiveExpressionResultChangeEventArgs<object?, TResult?>(element, result, count));
 
     IReadOnlyList<(object? element, TResult? result)> RemoveActiveExpressions(int index, int count)
@@ -276,7 +276,7 @@ class EnumerableRangeActiveExpression<TResult> :
 /// </summary>
 /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
 /// <typeparam name="TResult">The type of the result of the active expression</typeparam>
-class EnumerableRangeActiveExpression<TElement, TResult> :
+sealed class EnumerableRangeActiveExpression<TElement, TResult> :
     SyncDisposable,
     INotifyElementFaultChanges,
     INotifyCollectionChanged
@@ -417,31 +417,31 @@ class EnumerableRangeActiveExpression<TElement, TResult> :
         }
     }
 
-    protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
+    void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
         CollectionChanged?.Invoke(this, e);
 
-    protected virtual void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
+    void OnElementFaultChanged(ElementFaultChangeEventArgs e) =>
         ElementFaultChanged?.Invoke(this, e);
 
-    protected void OnElementFaultChanged(TElement element, Exception? fault, int count) =>
+    void OnElementFaultChanged(TElement element, Exception? fault, int count) =>
         OnElementFaultChanged(new ElementFaultChangeEventArgs(element, fault, count));
 
-    protected virtual void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
+    void OnElementFaultChanging(ElementFaultChangeEventArgs e) =>
         ElementFaultChanging?.Invoke(this, e);
 
-    protected void OnElementFaultChanging(TElement element, Exception? fault, int count) =>
+    void OnElementFaultChanging(TElement element, Exception? fault, int count) =>
         OnElementFaultChanging(new ElementFaultChangeEventArgs(element, fault, count));
 
-    protected virtual void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<TElement, TResult?> e) =>
+    void OnElementResultChanged(RangeActiveExpressionResultChangeEventArgs<TElement, TResult?> e) =>
         ElementResultChanged?.Invoke(this, e);
 
-    protected void OnElementResultChanged(TElement element, TResult? result, int count) =>
+    void OnElementResultChanged(TElement element, TResult? result, int count) =>
         OnElementResultChanged(new RangeActiveExpressionResultChangeEventArgs<TElement, TResult?>(element, result, count));
 
-    protected virtual void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<TElement, TResult?> e) =>
+    void OnElementResultChanging(RangeActiveExpressionResultChangeEventArgs<TElement, TResult?> e) =>
         ElementResultChanging?.Invoke(this, e);
 
-    protected void OnElementResultChanging(TElement element, TResult? result, int count) =>
+    void OnElementResultChanging(TElement element, TResult? result, int count) =>
         OnElementResultChanging(new RangeActiveExpressionResultChangeEventArgs<TElement, TResult?>(element, result, count));
 
     IReadOnlyList<(TElement element, TResult? result)> RemoveActiveExpressions(int index, int count)

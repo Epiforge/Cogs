@@ -1,6 +1,6 @@
 namespace Cogs.ActiveQuery;
 
-class ActiveOrderingComparer<TElement> :
+sealed class ActiveOrderingComparer<TElement> :
     SyncDisposable,
     IComparer<TElement>
 {
@@ -116,8 +116,8 @@ class ActiveOrderingComparer<TElement> :
     void RangeActiveExpressionElementResultChanged(object sender, RangeActiveExpressionResultChangeEventArgs<TElement, IComparable?> e)
     {
         lock (comparablesAccess)
-            if (comparables!.ContainsKey(e.Element))
-                comparables[e.Element][rangeActiveExpressionIndicies![(EnumerableRangeActiveExpression<TElement, IComparable>)sender]] = e.Result!;
+            if (comparables!.TryGetValue(e.Element, out var comparablesForElement))
+                comparablesForElement[rangeActiveExpressionIndicies![(EnumerableRangeActiveExpression<TElement, IComparable>)sender]] = e.Result!;
     }
 
     void RangeActiveExpressionCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
