@@ -3,7 +3,7 @@ namespace Cogs.Reflection;
 /// <summary>
 /// Provides a method for invoking a constructor that is not known at compile time
 /// </summary>
-public class FastConstructorInfo
+public sealed class FastConstructorInfo
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="FastConstructorInfo"/> class based on the specified <see cref="System.Reflection.ConstructorInfo"/>

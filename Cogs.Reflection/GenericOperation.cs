@@ -14,7 +14,8 @@ public static class GenericOperations
     /// <param name="a">The first value to add</param>
     /// <param name="b">The second value to add</param>
     /// <returns>The sum of <paramref name="a"/> and <paramref name="b"/></returns>
-    public static T? Add<T>(T? a, T? b) => a is not null && b is not null ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Add, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
+    public static T? Add<T>(T? a, T? b) =>
+        a is not null && b is not null ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Add, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
     /// <summary>
     /// Divides a specified <typeparamref name="T"/> value by another specified <typeparamref name="T"/> value
@@ -23,7 +24,8 @@ public static class GenericOperations
     /// <param name="a">The value to be divided</param>
     /// <param name="b">The value to divide by</param>
     /// <returns>The result of the division</returns>
-    public static T? Divide<T>(T? a, T? b) => a is not null && b is not null ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Divide, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
+    public static T? Divide<T>(T? a, T? b) =>
+        a is not null && b is not null ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Divide, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
     /// <summary>
     /// Multiplies two specified <typeparamref name="T"/> values
@@ -32,7 +34,8 @@ public static class GenericOperations
     /// <param name="a">The first value to multiply</param>
     /// <param name="b">The second value to multiply</param>
     /// <returns>The product of <paramref name="a"/> and <paramref name="b"/></returns>
-    public static T? Multiply<T>(T? a, T? b) => a is not null && b is not null ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Multiply, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
+    public static T? Multiply<T>(T? a, T? b) =>
+        a is not null && b is not null ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Multiply, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
     /// <summary>
     /// Subtracts a <typeparamref name="T"/> value from another <typeparamref name="T"/> value
@@ -41,7 +44,8 @@ public static class GenericOperations
     /// <param name="a">The value to subtract from (the minuend)</param>
     /// <param name="b">he value to subtract (the subtrahend)</param>
     /// <returns>The result of subtracting <paramref name="b"/> from <paramref name="a"/></returns>
-    public static T? Subtract<T>(T? a, T? b) => a is not null && b is not null ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Subtract, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
+    public static T? Subtract<T>(T? a, T? b) =>
+        a is not null && b is not null ? ((Func<T?, T?, T?>)CompiledBinaryOperationMethods.GetOrAdd((BinaryOperation.Subtract, typeof(T)), CompiledBinaryOperationMethodsValueFactory))(a, b) : default;
 
     internal static Delegate CompiledBinaryOperationMethodsValueFactory((BinaryOperation operation, Type type) key)
     {

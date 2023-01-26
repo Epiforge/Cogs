@@ -3,7 +3,7 @@ namespace Cogs.Reflection;
 /// <summary>
 /// Provides a method for comparing instances of a type that is not known at compile time
 /// </summary>
-public class FastComparer
+public sealed class FastComparer
 {
     FastComparer(Type type)
     {

@@ -3,7 +3,7 @@ namespace Cogs.Reflection;
 /// <summary>
 /// Provides a method for invoking a method that is not known at compile time
 /// </summary>
-public class FastMethodInfo
+public sealed class FastMethodInfo
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="FastMethodInfo"/> class based on the specified <see cref="System.Reflection.MethodInfo"/>

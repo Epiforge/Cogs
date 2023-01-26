@@ -3,7 +3,7 @@ namespace Cogs.Reflection;
 /// <summary>
 /// Provides methods for testing equality of and getting hash codes for instances of a type that is not known at compile time
 /// </summary>
-public class FastEqualityComparer
+public sealed class FastEqualityComparer
 {
     FastEqualityComparer(Type type)
     {
