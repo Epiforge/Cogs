@@ -3,7 +3,7 @@ namespace Cogs.Collections;
 /// <summary>
 /// Represents when the valueFactory used by <see cref="ObservableConcurrentDictionary{TKey, TValue}.TryUpdate(TKey, TValue, TValue)"/> finds the oldValue and comparisonValue are unequal
 /// </summary>
-public class ValueComparisonUnequalException :
+public sealed class ValueComparisonUnequalException :
     Exception
 {
     /// <summary>

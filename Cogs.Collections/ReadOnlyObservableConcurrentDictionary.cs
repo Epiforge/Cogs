@@ -6,7 +6,7 @@ namespace Cogs.Collections;
 /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
 /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
 [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
-public class ReadOnlyObservableConcurrentDictionary<TKey, TValue> :
+public sealed class ReadOnlyObservableConcurrentDictionary<TKey, TValue> :
     PropertyChangeNotifier,
     ICollection,
     ICollection<KeyValuePair<TKey, TValue>>,
@@ -200,21 +200,21 @@ public class ReadOnlyObservableConcurrentDictionary<TKey, TValue> :
     /// Raises the <see cref="INotifyCollectionChanged.CollectionChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
+    void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
         CollectionChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
+    void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
         DictionaryChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyDictionaryChanged.DictionaryChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected void OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs<object?, object?> e) =>
+    void OnDictionaryChangedBoxed(NotifyDictionaryChangedEventArgs<object?, object?> e) =>
         DictionaryChangedBoxed?.Invoke(this, e);
 
     bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) =>

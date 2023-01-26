@@ -37,7 +37,7 @@
 
     <ItemGroup>
         <PackageReference Include="Cogs.Collections" Version="1.11.0" />
-        <PackageReference Include="Cogs.Threading" Version="1.12.0" />
+        <PackageReference Include="Cogs.Threading" Version="1.12.1" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="all" />
     </ItemGroup>
 

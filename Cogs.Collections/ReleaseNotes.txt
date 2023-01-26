@@ -1,1 +1,1 @@
-We removed the generic collection change notification interface for causing too much trouble with combining multicast delegates in some scenarios. Updating to this will break other Cogs libraries unless you update them also.
+Non-abstract classes sealed for performance.

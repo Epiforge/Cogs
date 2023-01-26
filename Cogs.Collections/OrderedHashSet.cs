@@ -4,7 +4,7 @@ namespace Cogs.Collections;
 /// Represents an ordered set of values
 /// </summary>
 /// <typeparam name="T">The type of elements in the ordered hash set</typeparam>
-public class OrderedHashSet<T> :
+public sealed class OrderedHashSet<T> :
     ICollection<T>,
     IEnumerable,
     IEnumerable<T>,

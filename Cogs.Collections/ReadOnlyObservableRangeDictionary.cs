@@ -5,7 +5,7 @@ namespace Cogs.Collections;
 /// </summary>
 /// <typeparam name="TKey">The type of keys in the read-only dictionary</typeparam>
 /// <typeparam name="TValue">The type of values in the read-only dictionary</typeparam>
-public class ReadOnlyObservableRangeDictionary<TKey, TValue> :
+public sealed class ReadOnlyObservableRangeDictionary<TKey, TValue> :
     ReadOnlyRangeDictionary<TKey, TValue>,
     IObservableRangeDictionary<TKey, TValue>
 {
@@ -36,7 +36,7 @@ public class ReadOnlyObservableRangeDictionary<TKey, TValue> :
     /// <summary>
     /// Occurs when the dictionary changes
     /// </summary>
-    protected event EventHandler<NotifyDictionaryChangedEventArgs<object?, object?>>? NonGenericDictionaryChanged;
+    event EventHandler<NotifyDictionaryChangedEventArgs<object?, object?>>? NonGenericDictionaryChanged;
 
     event EventHandler<NotifyDictionaryChangedEventArgs<object?, object?>>? INotifyDictionaryChanged.DictionaryChanged
     {
@@ -57,20 +57,20 @@ public class ReadOnlyObservableRangeDictionary<TKey, TValue> :
     /// Raises the <see cref="INotifyCollectionChanged.CollectionChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
+    void OnCollectionChanged(NotifyCollectionChangedEventArgs e) =>
         CollectionChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyDictionaryChanged.DictionaryChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<object?, object?> e) =>
+    void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<object?, object?> e) =>
         NonGenericDictionaryChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="INotifyDictionaryChanged{TKey, TValue}.DictionaryChanged"/> event
     /// </summary>
     /// <param name="e">The event arguments</param>
-    protected virtual void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
+    void OnDictionaryChanged(NotifyDictionaryChangedEventArgs<TKey, TValue> e) =>
         DictionaryChanged?.Invoke(this, e);
 }

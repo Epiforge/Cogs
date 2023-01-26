@@ -6,7 +6,7 @@ namespace Cogs.Collections;
 /// <typeparam name="TKey">The type of the keys in the dictionary</typeparam>
 /// <typeparam name="TValue">The type of the values in the dictionary</typeparam>
 [SuppressMessage("Code Analysis", "CA1033: Interface methods should be callable by child types")]
-public class NullableKeySortedDictionary<TKey, TValue> :
+public sealed class NullableKeySortedDictionary<TKey, TValue> :
     IDictionary<TKey, TValue>,
     IReadOnlyDictionary<TKey, TValue>,
     ISortKeys<TKey>
