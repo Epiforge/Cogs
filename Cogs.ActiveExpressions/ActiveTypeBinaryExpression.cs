@@ -5,7 +5,7 @@ sealed class ActiveTypeBinaryExpression :
     IEquatable<ActiveTypeBinaryExpression>,
     IObserveActiveExpressions<object?>
 {
-    protected ActiveTypeBinaryExpression(CachedInstancesKey<TypeBinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
+    ActiveTypeBinaryExpression(CachedInstancesKey<TypeBinaryExpression> instancesKey, ActiveExpressionOptions? options, bool deferEvaluation) :
         base(instancesKey.Expression, options, deferEvaluation) =>
         this.instancesKey = instancesKey;
 
