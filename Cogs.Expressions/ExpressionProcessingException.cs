@@ -3,7 +3,7 @@ namespace Cogs.Expressions;
 /// <summary>
 /// An exception was thrown while processing an exception
 /// </summary>
-public class ExpressionProcessingException :
+public sealed class ExpressionProcessingException :
     Exception
 {
     /// <summary>

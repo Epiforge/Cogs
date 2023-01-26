@@ -1,1 +1,1 @@
-We corrected some defects in method substitution.
+Non-abstract classes sealed for performance.
