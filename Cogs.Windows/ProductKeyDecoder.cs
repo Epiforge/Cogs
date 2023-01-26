@@ -28,7 +28,7 @@ SOFTWARE.
 
 namespace Cogs.Windows;
 
-class ProductKeyDecoder
+sealed class ProductKeyDecoder
 {
     public static string GetWindowsProductKeyFromRegistry()
     {

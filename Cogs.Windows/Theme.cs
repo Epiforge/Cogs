@@ -5,7 +5,8 @@ namespace Cogs.Windows;
 /// <summary>
 /// Represents the current Windows theme
 /// </summary>
-public sealed class Theme : SyncDisposable
+public sealed class Theme :
+    SyncDisposable
 {
     /// <summary>
     /// Instantiates a new instance of the <see cref="Theme"/> class
