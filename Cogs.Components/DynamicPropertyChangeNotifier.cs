@@ -3,7 +3,7 @@ namespace Cogs.Components;
 /// <summary>
 /// Provides a mechanism for notifying about property changes for a <see cref="DynamicObject"/>
 /// </summary>
-public class DynamicPropertyChangeNotifier :
+public abstract class DynamicPropertyChangeNotifier :
     DynamicObject,
     INotifyPropertyChanged,
     INotifyPropertyChanging
