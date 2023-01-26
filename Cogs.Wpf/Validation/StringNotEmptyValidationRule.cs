@@ -3,7 +3,7 @@ namespace Cogs.Wpf.Validation;
 /// <summary>
 /// Provides a way to create a rule in order to check that user input is not an empty string
 /// </summary>
-public class StringNotEmptyValidationRule :
+public sealed class StringNotEmptyValidationRule :
     ValidationRule
 {
     /// <summary>

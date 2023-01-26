@@ -3,7 +3,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// <summary>
 /// Converts the values to <see cref="Visibility.Hidden"/> when all of them are <c>false</c> or not a <see cref="bool"/>; otherwise, to <see cref="Visibility.Visible"/>
 /// </summary>
-public class AllFalseIsHiddenMultiValueConverter :
+public sealed class AllFalseIsHiddenMultiValueConverter :
     IMultiValueConverter
 {
     /// <summary>

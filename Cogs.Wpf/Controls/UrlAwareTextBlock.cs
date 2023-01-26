@@ -3,7 +3,7 @@ namespace Cogs.Wpf.Controls;
 /// <summary>
 /// Provides a lightweight control for displaying small amounts of flow content which finds URLs and makes them clickable hyperlinks
 /// </summary>
-public class UrlAwareTextBlock :
+public sealed class UrlAwareTextBlock :
     TextBlock
 {
     /// <summary>

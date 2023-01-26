@@ -4,7 +4,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the value to <see cref="Visibility.Collapsed"/> when <c>null</c>; otherwise, <see cref="Visibility.Visible"/>
 /// </summary>
 [ValueConversion(typeof(object), typeof(Visibility))]
-public class NullIsCollapsedValueConverter :
+public sealed class NullIsCollapsedValueConverter :
     IValueConverter
 {
     /// <summary>

@@ -4,7 +4,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the value to <c>false</c> when not <c>null</c>; otherwise, <c>true</c>
 /// </summary>
 [ValueConversion(typeof(object), typeof(bool))]
-public class NotNullIsFalseValueConverter :
+public sealed class NotNullIsFalseValueConverter :
     IValueConverter
 {
     /// <summary>

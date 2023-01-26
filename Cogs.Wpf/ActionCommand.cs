@@ -3,7 +3,7 @@ namespace Cogs.Wpf;
 /// <summary>
 /// A command that can be manipulated by its caller
 /// </summary>
-public class ActionCommand :
+public sealed class ActionCommand :
     ICommand,
     INotifyPropertyChanged,
     INotifyPropertyChanging
@@ -72,13 +72,13 @@ public class ActionCommand :
     /// Raises the <see cref="CanExecuteChanged"/> event
     /// </summary>
     /// <param name="e">The event data</param>
-    protected virtual void OnCanExecuteChanged(EventArgs e) =>
+    void OnCanExecuteChanged(EventArgs e) =>
         CanExecuteChanged?.Invoke(this, e);
 
     /// <summary>
     /// Raises the <see cref="CanExecuteChanged"/> event
     /// </summary>
-    protected void OnCanExecuteChanged() =>
+    void OnCanExecuteChanged() =>
         OnCanExecuteChanged(new EventArgs());
 
     /// <summary>
@@ -86,7 +86,7 @@ public class ActionCommand :
     /// </summary>
 	/// <param name="e">The arguments of the event</param>
     /// <exception cref="ArgumentNullException"><paramref name="e"/> is null</exception>
-    protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
+    void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         if (e is null)
             throw new ArgumentNullException(nameof(e));
@@ -98,7 +98,7 @@ public class ActionCommand :
     /// </summary>
     /// <param name="propertyName">The name of the property that changed</param>
 	/// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is null</exception>
-    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         if (propertyName is null)
             throw new ArgumentNullException(nameof(propertyName));
@@ -110,7 +110,7 @@ public class ActionCommand :
     /// </summary>
 	/// <param name="e">The arguments of the event</param>
     /// <exception cref="ArgumentNullException"><paramref name="e"/> is null</exception>
-    protected virtual void OnPropertyChanging(PropertyChangingEventArgs e)
+    void OnPropertyChanging(PropertyChangingEventArgs e)
     {
         if (e is null)
             throw new ArgumentNullException(nameof(e));
@@ -122,7 +122,7 @@ public class ActionCommand :
     /// </summary>
 	/// <param name="propertyName">The name of the property that is changing</param>
     /// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is null</exception>
-    protected void OnPropertyChanging([CallerMemberName] string? propertyName = null)
+    void OnPropertyChanging([CallerMemberName] string? propertyName = null)
     {
         if (propertyName is null)
             throw new ArgumentNullException(nameof(propertyName));

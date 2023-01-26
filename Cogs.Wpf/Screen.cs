@@ -3,7 +3,7 @@ namespace Cogs.Wpf;
 /// <summary>
 /// Represents a display device or multiple display devices on a single system
 /// </summary>
-public class Screen : IEquatable<Screen>
+public sealed class Screen : IEquatable<Screen>
 {
     readonly System.Windows.Forms.Screen formsScreen;
 

@@ -3,7 +3,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// <summary>
 /// Converts the values to to the first in order that is not <c>null</c>; otherwise, to <c>null</c>
 /// </summary>
-public class CoalesceMultiValueConverter :
+public sealed class CoalesceMultiValueConverter :
     IMultiValueConverter
 {
     /// <summary>

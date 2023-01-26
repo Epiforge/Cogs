@@ -1,1 +1,1 @@
-We re-added .NET 5 support and updated a NuGet reference.
+Non-abstract classes sealed for performance.

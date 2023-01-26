@@ -3,7 +3,7 @@ namespace Cogs.Wpf.Input;
 /// <summary>
 /// Defines a mouse wheel up gesture that can be used to invoke a command
 /// </summary>
-public class MouseWheelUpGesture :
+public sealed class MouseWheelUpGesture :
     MouseGesture
 {
     /// <summary>

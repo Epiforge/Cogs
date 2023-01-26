@@ -3,7 +3,7 @@ namespace Cogs.Wpf.Behaviors;
 /// <summary>
 /// Allows binding to <see cref="PasswordBox.Password"/>
 /// </summary>
-public class PasswordBindingTarget :
+public sealed class PasswordBindingTarget :
     Behavior<PasswordBox>
 {
     /// <summary>

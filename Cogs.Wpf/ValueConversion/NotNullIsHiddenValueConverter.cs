@@ -4,7 +4,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the value to <see cref="Visibility.Hidden"/> when not <c>null</c>; otherwise, <see cref="Visibility.Visible"/>
 /// </summary>
 [ValueConversion(typeof(object), typeof(Visibility))]
-public class NotNullIsHiddenValueConverter :
+public sealed class NotNullIsHiddenValueConverter :
     IValueConverter
 {
     /// <summary>

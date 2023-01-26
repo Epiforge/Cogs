@@ -15,7 +15,7 @@ namespace Cogs.Wpf.ValueConversion;
 [ValueConversion(typeof(double), typeof(bool))]
 [ValueConversion(typeof(decimal), typeof(bool))]
 [ValueConversion(typeof(BigInteger), typeof(bool))]
-public class NotZeroIsFalseValueConverter :
+public sealed class NotZeroIsFalseValueConverter :
     IValueConverter
 {
     /// <summary>

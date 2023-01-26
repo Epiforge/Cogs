@@ -4,7 +4,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// Casts the value to a <see cref="int"/>
 /// </summary>
 [ValueConversion(typeof(int), typeof(int))]
-public class ValueIsInt32ValueConverter :
+public sealed class ValueIsInt32ValueConverter :
     IValueConverter
 {
     /// <summary>

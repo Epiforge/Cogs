@@ -4,7 +4,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the boolean value to its negative
 /// </summary>
 [ValueConversion(typeof(bool), typeof(bool))]
-public class NegateBooleanValueConverter :
+public sealed class NegateBooleanValueConverter :
     IValueConverter
 {
     /// <summary>

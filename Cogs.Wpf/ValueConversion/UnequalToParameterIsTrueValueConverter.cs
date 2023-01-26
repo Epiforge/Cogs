@@ -5,7 +5,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// converting to <c>true</c> when <c>false</c> and <c>false</c> when <c>true</c>
 /// </summary>
 [ValueConversion(typeof(object), typeof(bool))]
-public class UnequalToParameterIsTrueValueConverter :
+public sealed class UnequalToParameterIsTrueValueConverter :
     IValueConverter
 {
     /// <summary>

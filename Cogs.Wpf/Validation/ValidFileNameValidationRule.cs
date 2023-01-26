@@ -3,7 +3,7 @@ namespace Cogs.Wpf.Validation;
 /// <summary>
 /// Provides a way to create a rule in order to check that user input does not contain any invalid file name characters
 /// </summary>
-public class ValidFileNameValidationRule :
+public sealed class ValidFileNameValidationRule :
     InvalidCharactersValidationRule
 {
     /// <summary>

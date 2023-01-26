@@ -4,7 +4,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the value to a <see cref="string"/> when it is a <see cref="double"/>, optionally accepting a <see cref="NumberStyles"/> value as a parameter and retaining the results of the last successful call to <see cref="ConvertBack(object, Type, object, CultureInfo)"/> which prevents two-way bindings from overriding decimals when the user is typing
 /// </summary>
 [ValueConversion(typeof(double), typeof(string))]
-public class StatefulDoubleIsStringValueConverter :
+public sealed class StatefulDoubleIsStringValueConverter :
     IValueConverter
 {
     (string str, double dbl)? lastSuccessfulConvertBack;

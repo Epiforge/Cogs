@@ -3,7 +3,7 @@ namespace Cogs.Wpf.Behaviors;
 /// <summary>
 /// Focuses an element after a specified delay
 /// </summary>
-public class DelayedFocus :
+public sealed class DelayedFocus :
     Behavior<UIElement>
 {
     Dispatcher? dispatcher;

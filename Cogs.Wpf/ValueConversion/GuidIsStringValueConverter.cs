@@ -4,7 +4,7 @@ namespace Cogs.Wpf.ValueConversion;
 /// Converts the value to a <see cref="string"/> when it is a <see cref="Guid"/>, optionally accepting a specifier to pass to <see cref="Guid.ToString(string)"/> as an argument
 /// </summary>
 [ValueConversion(typeof(Guid), typeof(string))]
-public class GuidIsStringValueConverter :
+public sealed class GuidIsStringValueConverter :
     IValueConverter
 {
     /// <summary>
