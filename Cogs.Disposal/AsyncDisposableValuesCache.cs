@@ -5,7 +5,7 @@ namespace Cogs.Disposal;
 /// </summary>
 /// <typeparam name="TKey">The type of the keys</typeparam>
 /// <typeparam name="TValue">The type of the values</typeparam>
-public class AsyncDisposableValuesCache<TKey, TValue>
+public sealed class AsyncDisposableValuesCache<TKey, TValue>
     where TKey : notnull
     where TValue : AsyncDisposableValuesCache<TKey, TValue>.Value, new()
 {
