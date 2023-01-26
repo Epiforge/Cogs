@@ -40,9 +40,9 @@
         <PackageReference Include="Cogs.Collections" Version="1.11.0" />
         <PackageReference Include="Cogs.Collections.Synchronized" Version="1.6.3" />
         <PackageReference Include="Cogs.Components" Version="1.2.0" />
-        <PackageReference Include="Cogs.Disposal" Version="1.5.1" />
-        <PackageReference Include="Cogs.Reflection" Version="1.5.0" />
-        <PackageReference Include="Cogs.Threading" Version="1.11.3" />
+        <PackageReference Include="Cogs.Disposal" Version="1.6.0" />
+        <PackageReference Include="Cogs.Reflection" Version="1.6.0" />
+        <PackageReference Include="Cogs.Threading" Version="1.12.0" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="all" />
     </ItemGroup>
 

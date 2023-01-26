@@ -60,7 +60,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="all" />
         <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
-        <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+        <PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
         <PackageReference Include="System.ValueTuple" Version="4.5.0" />
         <PackageReference Include="WpfAnalyzers" Version="4.1.1" PrivateAssets="all" />
     </ItemGroup>
@@ -80,8 +80,8 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' Or '$(TargetFramework)' == 'net5.0-windows' Or '$(TargetFramework)' == 'net6.0-windows'">
         <PackageReference Include="Cogs.Collections" Version="1.11.0" />
-        <PackageReference Include="Cogs.Disposal" Version="1.5.1" />
-        <PackageReference Include="Cogs.Reflection" Version="1.5.0" />
+        <PackageReference Include="Cogs.Disposal" Version="1.6.0" />
+        <PackageReference Include="Cogs.Reflection" Version="1.6.0" />
     </ItemGroup>
 
 </Project>

@@ -23,7 +23,7 @@
         <RepositoryUrl>https://github.com/Epiforge/Cogs</RepositoryUrl>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.12.0</Version>
+        <Version>1.12.1</Version>
     </PropertyGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
@@ -38,7 +38,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="all" />
         <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
-        <PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0" />
+        <PackageReference Include="System.Threading.Tasks.Dataflow" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>
