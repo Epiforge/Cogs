@@ -3,7 +3,7 @@ namespace Cogs.ActiveExpressions;
 /// <summary>
 /// Represents certain options governing the behavior of active expressions
 /// </summary>
-public class ActiveExpressionOptions :
+public sealed class ActiveExpressionOptions :
     IEquatable<ActiveExpressionOptions>
 {
     /// <summary>

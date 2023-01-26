@@ -3,7 +3,7 @@ namespace Cogs.ActiveExpressions;
 /// <summary>
 /// Represents a visitor for expression trees that reduces them to a list of unique combination of elements for comparison and hash code generation
 /// </summary>
-public class ExpressionDiagramVisitor :
+public sealed class ExpressionDiagramVisitor :
     ExpressionVisitor
 {
     /// <summary>

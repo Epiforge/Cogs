@@ -174,5 +174,5 @@ class ActiveBinaryExpression :
     public static bool operator !=(ActiveBinaryExpression a, ActiveBinaryExpression b) =>
         !(a == b);
 
-    record ImplementationsKey(ExpressionType NodeType, Type LeftType, Type RightType, Type ReturnValueType, bool IsLiftedToNull, MethodInfo? Method);
+    sealed record ImplementationsKey(ExpressionType NodeType, Type LeftType, Type RightType, Type ReturnValueType, bool IsLiftedToNull, MethodInfo? Method);
 }

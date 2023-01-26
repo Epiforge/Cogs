@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveNewArrayInitExpression :
+sealed class ActiveNewArrayInitExpression :
     ActiveExpression,
     IEquatable<ActiveNewArrayInitExpression>,
     IObserveActiveExpressions<object?>

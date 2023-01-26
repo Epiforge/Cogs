@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveIndexExpression :
+sealed class ActiveIndexExpression :
     ActiveExpression,
     IEquatable<ActiveIndexExpression>,
     IObserveActiveExpressions<object?>

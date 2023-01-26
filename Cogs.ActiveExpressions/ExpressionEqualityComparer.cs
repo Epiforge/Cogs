@@ -3,7 +3,7 @@ namespace Cogs.ActiveExpressions;
 /// <summary>
 /// Defines methods to support the comparison of <see cref="Expression"/> objects for equality
 /// </summary>
-public class ExpressionEqualityComparer :
+public sealed class ExpressionEqualityComparer :
     IEqualityComparer<Expression>
 {
     static ExpressionEqualityComparer() =>

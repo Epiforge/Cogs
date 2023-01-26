@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveCoalesceExpression :
+sealed class ActiveCoalesceExpression :
     ActiveBinaryExpression,
     IEquatable<ActiveCoalesceExpression>
 {
@@ -81,5 +81,5 @@ class ActiveCoalesceExpression :
     public static bool operator !=(ActiveCoalesceExpression a, ActiveCoalesceExpression b) =>
         !(a == b);
 
-    record ConversionDelegatesKey(Type ConvertFrom, Type ConvertTo);
+    sealed record ConversionDelegatesKey(Type ConvertFrom, Type ConvertTo);
 }

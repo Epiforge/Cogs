@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveMemberInitExpression :
+sealed class ActiveMemberInitExpression :
     ActiveExpression,
     IEquatable<ActiveMemberInitExpression>,
     IObserveActiveExpressions<object?>

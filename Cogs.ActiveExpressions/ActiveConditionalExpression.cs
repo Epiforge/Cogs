@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveConditionalExpression :
+sealed class ActiveConditionalExpression :
     ActiveExpression,
     IEquatable<ActiveConditionalExpression>,
     IObserveActiveExpressions<object?>

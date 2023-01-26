@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveConstantExpression :
+sealed class ActiveConstantExpression :
     ActiveExpression,
     IEquatable<ActiveConstantExpression>
 {
@@ -102,9 +102,10 @@ class ActiveConstantExpression :
     public static bool operator !=(ActiveConstantExpression a, ActiveConstantExpression b) =>
         !(a == b);
 
-    record ExpressionInstancesKey(Expression? Expression, ActiveExpressionOptions? Options);
+    sealed record ExpressionInstancesKey(Expression? Expression, ActiveExpressionOptions? Options);
 
-    class ExpressionInstancesKeyComparer : IEqualityComparer<ExpressionInstancesKey>
+    sealed class ExpressionInstancesKeyComparer :
+        IEqualityComparer<ExpressionInstancesKey>
     {
         public bool Equals(ExpressionInstancesKey x, ExpressionInstancesKey y) =>
             (x.Expression is null && y.Expression is null || x.Expression is not null && y.Expression is not null && ExpressionEqualityComparer.Default.Equals(x.Expression, y.Expression)) && (x.Options is null && y.Options is null || x.Options is not null && y.Options is not null && x.Options.Equals(y.Options));
@@ -113,5 +114,5 @@ class ActiveConstantExpression :
             HashCode.Combine(obj.Expression is null ? 0 : ExpressionEqualityComparer.Default.GetHashCode(obj.Expression), obj.Options);
     }
 
-    record InstancesKey(Type Type, object? Value, ActiveExpressionOptions? Options);
+    sealed record InstancesKey(Type Type, object? Value, ActiveExpressionOptions? Options);
 }

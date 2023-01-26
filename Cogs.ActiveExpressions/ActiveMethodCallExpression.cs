@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveMethodCallExpression :
+sealed class ActiveMethodCallExpression :
     ActiveExpression,
     IEquatable<ActiveMethodCallExpression>,
     IObserveActiveExpressions<object?>

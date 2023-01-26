@@ -4,6 +4,7 @@ namespace Cogs.ActiveExpressions;
 /// Instructs the Active Expressions system not to listen for property change notifications for the decorated property
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public sealed class DoNotListenForPropertyChangesAttribute : Attribute
+public sealed class DoNotListenForPropertyChangesAttribute :
+    Attribute
 {
 }

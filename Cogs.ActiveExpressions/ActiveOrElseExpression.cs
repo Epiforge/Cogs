@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveOrElseExpression :
+sealed class ActiveOrElseExpression :
     ActiveBinaryExpression,
     IEquatable<ActiveOrElseExpression>
 {

@@ -935,7 +935,7 @@ public sealed class ActiveExpression<TResult> :
     public static bool operator !=(ActiveExpression<TResult> a, ActiveExpression<TResult> b) =>
         !(a == b);
 
-    record InstancesKey(ActiveExpression ActiveExpression, EquatableList<object?> Args);
+    sealed record InstancesKey(ActiveExpression ActiveExpression, EquatableList<object?> Args);
 }
 
 /// <summary>
@@ -1130,7 +1130,7 @@ public sealed class ActiveExpression<TArg, TResult> :
     public static bool operator !=(ActiveExpression<TArg, TResult> a, ActiveExpression<TArg, TResult> b) =>
         !(a == b);
 
-    record InstancesKey(ActiveExpression ActiveExpression, TArg Arg);
+    sealed record InstancesKey(ActiveExpression ActiveExpression, TArg Arg);
 }
 
 /// <summary>
@@ -1333,7 +1333,7 @@ public sealed class ActiveExpression<TArg1, TArg2, TResult> :
     public static bool operator !=(ActiveExpression<TArg1, TArg2, TResult> a, ActiveExpression<TArg1, TArg2, TResult> b) =>
         !(a == b);
 
-    record InstancesKey(ActiveExpression ActiveExpression, TArg1 Arg1, TArg2 Arg2);
+    sealed record InstancesKey(ActiveExpression ActiveExpression, TArg1 Arg1, TArg2 Arg2);
 }
 
 /// <summary>
@@ -1543,5 +1543,5 @@ public sealed class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
     public static bool operator !=(ActiveExpression<TArg1, TArg2, TArg3, TResult> a, ActiveExpression<TArg1, TArg2, TArg3, TResult> b) =>
         !(a == b);
 
-    record InstancesKey(ActiveExpression ActiveExpression, TArg1 Arg1, TArg2 Arg2, TArg3 Arg3);
+    sealed record InstancesKey(ActiveExpression ActiveExpression, TArg1 Arg1, TArg2 Arg2, TArg3 Arg3);
 }

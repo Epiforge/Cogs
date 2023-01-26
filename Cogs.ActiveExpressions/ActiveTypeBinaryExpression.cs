@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveTypeBinaryExpression :
+sealed class ActiveTypeBinaryExpression :
     ActiveExpression,
     IEquatable<ActiveTypeBinaryExpression>,
     IObserveActiveExpressions<object?>

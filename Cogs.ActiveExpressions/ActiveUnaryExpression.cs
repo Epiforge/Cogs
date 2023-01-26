@@ -1,6 +1,6 @@
 namespace Cogs.ActiveExpressions;
 
-class ActiveUnaryExpression :
+sealed class ActiveUnaryExpression :
     ActiveExpression,
     IEquatable<ActiveUnaryExpression>,
     IObserveActiveExpressions<object?>
@@ -128,5 +128,5 @@ class ActiveUnaryExpression :
     public static bool operator !=(ActiveUnaryExpression a, ActiveUnaryExpression b) =>
         !(a == b);
 
-    record ImplementationsKey(ExpressionType NodeType, Type OperandType, Type ReturnValueType, MethodInfo? Method);
+    sealed record ImplementationsKey(ExpressionType NodeType, Type OperandType, Type ReturnValueType, MethodInfo? Method);
 }
