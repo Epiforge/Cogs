@@ -3,7 +3,7 @@ namespace Cogs.Threading;
 /// <summary>
 /// Creates a new async-compatible mutual exclusion lock that allows reentrance
 /// </summary>
-public class ReentrantAsyncLock
+public sealed class ReentrantAsyncLock
 {
     /// <summary>
     /// Creates an instance of <see cref="ReentrantAsyncLock"/>

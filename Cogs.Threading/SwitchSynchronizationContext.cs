@@ -3,7 +3,7 @@ namespace Cogs.Threading;
 /// <summary>
 /// Provides a synchronization context that can be switched on and off
 /// </summary>
-public class SwitchSynchronizationContext :
+public sealed class SwitchSynchronizationContext :
     SynchronizationContext
 {
     /// <summary>

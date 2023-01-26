@@ -3,7 +3,7 @@ namespace Cogs.Threading;
 /// <summary>
 /// Represents errors that occur when the application attempts to escalate a lock
 /// </summary>
-public class LockEscalationException :
+public sealed class LockEscalationException :
     Exception
 {
     /// <summary>

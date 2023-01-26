@@ -3,7 +3,7 @@ namespace Cogs.Threading;
 /// <summary>
 /// Creates a new async-compatible reader/writer lock that allows reentrance but not escalation
 /// </summary>
-public class ReentrantAsyncReaderWriterLock
+public sealed class ReentrantAsyncReaderWriterLock
 {
     /// <summary>
     /// Creates an instance of <see cref="ReentrantAsyncReaderWriterLock"/>

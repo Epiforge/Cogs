@@ -3,7 +3,7 @@ namespace Cogs.Threading;
 /// <summary>
 /// Provides a synchronization context for the Task Parallel Library
 /// </summary>
-public class AsyncSynchronizationContext :
+public sealed class AsyncSynchronizationContext :
     SynchronizationContext,
     IDisposable
 {
@@ -50,7 +50,7 @@ public class AsyncSynchronizationContext :
     /// Frees, releases, or resets unmanaged resources
     /// </summary>
     /// <param name="disposing"><c>false</c> if invoked by the finalizer because the object is being garbage collected; otherwise, <c>true</c></param>
-    protected virtual void Dispose(bool disposing)
+    void Dispose(bool disposing)
     {
         if (disposing)
         {

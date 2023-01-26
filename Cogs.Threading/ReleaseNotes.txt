@@ -1,1 +1,1 @@
-We made some performance adjustments to DataFlow extensions.
+Non-abstract classes sealed for performance.
