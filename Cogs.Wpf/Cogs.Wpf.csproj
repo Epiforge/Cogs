@@ -28,6 +28,10 @@
         <Version>1.25.2</Version>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' Or '$(TargetFramework)' == 'net5.0-windows'">
+        <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+    </PropertyGroup>
+
     <PropertyGroup Condition="'$(TargetFramework)'=='net5.0-windows'">
       <NoWarn>$(NoWarn);NETSDK1138</NoWarn>
     </PropertyGroup>
