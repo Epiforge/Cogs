@@ -5,19 +5,88 @@ namespace Cogs.ActiveQuery;
 /// </summary>
 /// <typeparam name="TElement">The type of the elements in the sequence</typeparam>
 sealed class ActiveWhereEnumerable<TElement> :
-    DisposableValuesCache<(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions), ActiveWhereEnumerable<TElement>>.Value,
+    SyncDisposable,
     IActiveEnumerable<TElement>,
     IObserveActiveExpressions<bool>
 {
-    object? access;
+    ActiveWhereEnumerable(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions)
+    {
+        this.source = source;
+        this.predicate = predicate;
+        this.predicateOptions = predicateOptions;
+        access = new object();
+        SynchronizationContext = (this.source as ISynchronized)?.SynchronizationContext;
+        this.Execute(() =>
+        {
+            lock (access)
+            {
+                activeExpressions = new List<IActiveExpression<TElement, bool>>();
+                activeExpressionCounts = new Dictionary<IActiveExpression<TElement, bool>, int>();
+                count = 0;
+
+                void processElement(TElement element)
+                {
+                    var activeExpression = ActiveExpression.Create(this.predicate, element, this.predicateOptions);
+                    activeExpressions!.Add(activeExpression);
+                    if (activeExpression.Value)
+                        ++count;
+                    if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
+                        activeExpressionCounts[activeExpression] = existingCount + 1;
+                    else
+                    {
+                        activeExpressionCounts.Add(activeExpression, 1);
+                        activeExpression.AddActiveExpressionOserver(this);
+                    }
+                }
+
+                ImmutableArray<TElement> sourceCopy;
+                while (true)
+                {
+                    try
+                    {
+                        sourceCopy = this.source.ToImmutableArray();
+                        break;
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        continue;
+                    }
+                }
+
+                ConcurrentQueue<NotifyCollectionChangedEventArgs>? pendingChanges = null;
+                void enqueuePendingChange(object? sender, NotifyCollectionChangedEventArgs e) =>
+                    pendingChanges?.Enqueue(e);
+
+                if (this.source is INotifyCollectionChanged collectionChangeNotifier)
+                    collectionChangeNotifier.CollectionChanged += enqueuePendingChange;
+
+                for (int i = 0, ii = sourceCopy.Length; i < ii; ++i)
+                    processElement(sourceCopy[i]);
+
+                while (pendingChanges?.TryDequeue(out var pendingChange) ?? false)
+                    SourceChanged(this.source, pendingChange);
+
+                if (this.source is INotifyCollectionChanged collectionChangeNotifier2)
+                {
+                    collectionChangeNotifier2.CollectionChanged -= enqueuePendingChange;
+                    collectionChangeNotifier2.CollectionChanged += SourceChanged;
+                }
+            }
+        });
+    }
+
+    readonly object access;
     Dictionary<IActiveExpression<TElement, bool>, int>? activeExpressionCounts;
     List<IActiveExpression<TElement, bool>>? activeExpressions;
     int count;
+    readonly Expression<Func<TElement, bool>> predicate;
+    readonly ActiveExpressionOptions? predicateOptions;
+    readonly IEnumerable<TElement> source;
 
     public TElement this[int index] =>
         this.Execute(() =>
         {
-            lock (access!)
+            lock (access)
             {
                 for (var i = 0; i < activeExpressions!.Count; ++i)
                 {
@@ -64,7 +133,7 @@ sealed class ActiveWhereEnumerable<TElement> :
         if (activeExpression is IActiveExpression<TElement, bool> typedActiveExpression)
             this.Execute(() =>
             {
-                lock (access!)
+                lock (access)
                 {
                     if (!ReferenceEquals(oldFault, newFault))
                         ElementFaultChanged?.Invoke(this, new ElementFaultChangeEventArgs(typedActiveExpression.Arg, newFault, activeExpressionCounts![typedActiveExpression]));
@@ -120,10 +189,30 @@ sealed class ActiveWhereEnumerable<TElement> :
             }
         });
 
+    protected override bool Dispose(bool disposing)
+    {
+        if (disposing)
+            this.Execute(() =>
+            {
+                lock (access)
+                {
+                    foreach (var activeExpression in activeExpressionCounts!.Keys)
+                    {
+                        activeExpression.RemoveActiveExpressionObserver(this);
+                        for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
+                            activeExpression.Dispose();
+                    }
+                    if (source is INotifyCollectionChanged collectionChangeNotifier)
+                        collectionChangeNotifier.CollectionChanged -= SourceChanged;
+                }
+            });
+        return true;
+    }
+
     public IReadOnlyList<(object? element, Exception? fault)> GetElementFaults() =>
         this.Execute(() =>
         {
-            lock (access!)
+            lock (access)
             {
                 var result = new List<(object? element, Exception? fault)>();
                 foreach (var activeExpression in activeExpressionCounts!.Keys)
@@ -141,7 +230,7 @@ sealed class ActiveWhereEnumerable<TElement> :
 
     IEnumerator<TElement> GetEnumeratorInContext()
     {
-        lock (access!)
+        lock (access)
             foreach (var activeExpression in activeExpressions!)
                 if (activeExpression.Value)
                     yield return activeExpression.Arg;
@@ -162,86 +251,6 @@ sealed class ActiveWhereEnumerable<TElement> :
     void IList.Insert(int index, object value) =>
         throw new NotSupportedException();
 
-    protected override void OnInitialized()
-    {
-        access = new object();
-        var (source, predicate, predicateOptions) = Key;
-        SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
-        this.Execute(() =>
-        {
-            lock (access)
-            {
-                activeExpressions = new List<IActiveExpression<TElement, bool>>();
-                activeExpressionCounts = new Dictionary<IActiveExpression<TElement, bool>, int>();
-                count = 0;
-
-                void processElement(TElement element)
-                {
-                    var activeExpression = ActiveExpression.Create(predicate, element, predicateOptions);
-                    activeExpressions!.Add(activeExpression);
-                    if (activeExpression.Value)
-                        ++count;
-                    if (activeExpressionCounts!.TryGetValue(activeExpression, out var existingCount))
-                        activeExpressionCounts[activeExpression] = existingCount + 1;
-                    else
-                    {
-                        activeExpressionCounts.Add(activeExpression, 1);
-                        activeExpression.AddActiveExpressionOserver(this);
-                    }
-                }
-
-                ImmutableArray<TElement> sourceCopy;
-                while (true)
-                {
-                    try
-                    {
-                        sourceCopy = source.ToImmutableArray();
-                        break;
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        continue;
-                    }
-                }
-
-                ConcurrentQueue<NotifyCollectionChangedEventArgs>? pendingChanges = null;
-                void enqueuePendingChange(object? sender, NotifyCollectionChangedEventArgs e) =>
-                    pendingChanges?.Enqueue(e);
-
-                if (source is INotifyCollectionChanged collectionChangeNotifier)
-                    collectionChangeNotifier.CollectionChanged += enqueuePendingChange;
-
-                for (int i = 0, ii = sourceCopy.Length; i < ii; ++i)
-                    processElement(sourceCopy[i]);
-
-                while (pendingChanges?.TryDequeue(out var pendingChange) ?? false)
-                    SourceChanged(source, pendingChange);
-
-                if (source is INotifyCollectionChanged collectionChangeNotifier2)
-                {
-                    collectionChangeNotifier2.CollectionChanged -= enqueuePendingChange;
-                    collectionChangeNotifier2.CollectionChanged += SourceChanged;
-                }
-            }
-        });
-    }
-
-    protected override void OnTerminated() =>
-        this.Execute(() =>
-        {
-            lock (access!)
-            {
-                foreach (var activeExpression in activeExpressionCounts!.Keys)
-                {
-                    activeExpression.RemoveActiveExpressionObserver(this);
-                    for (int i = 0, ii = activeExpressionCounts[activeExpression]; i < ii; ++i)
-                        activeExpression.Dispose();
-                }
-                if (Key.source is INotifyCollectionChanged collectionChangeNotifier)
-                    collectionChangeNotifier.CollectionChanged -= SourceChanged;
-            }
-        });
-
     void IList.Remove(object value) =>
         throw new NotSupportedException();
 
@@ -252,8 +261,7 @@ sealed class ActiveWhereEnumerable<TElement> :
     [SuppressMessage("Reliability", "CA2000: Dispose objects before losing scope", Justification = "They'll get disposed, chill out")]
     void SourceChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
-        var (source, predicate, predicateOptions) = Key;
-        lock (access!)
+        lock (access)
         {
             NotifyCollectionChangedEventArgs? eventArgs = null;
             var newCount = 0;
@@ -373,24 +381,12 @@ sealed class ActiveWhereEnumerable<TElement> :
     int TranslateIndex(int index) =>
         index - activeExpressions.Take(index).Count(ae => !ae.Value);
 
-    static readonly DisposableValuesCache<(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions), ActiveWhereEnumerable<TElement>> cache = new(new EqualityComparer());
-
     internal static IActiveEnumerable<TElement> Get(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions)
     {
         if (source is null)
             throw new ArgumentNullException(nameof(source));
         if (predicate is null)
             throw new ArgumentNullException(nameof(predicate));
-        return cache[(source, predicate, predicateOptions)];
-    }
-
-    class EqualityComparer :
-        IEqualityComparer<(IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions)>
-    {
-        public bool Equals((IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions) x, (IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions) y) =>
-            ReferenceEquals(x.source, y.source) && ExpressionEqualityComparer.Default.Equals(x.predicate, y.predicate) && (x.predicateOptions is null && y.predicateOptions is null || x.predicateOptions is not null && y.predicateOptions is not null && x.predicateOptions.Equals(y.predicateOptions));
-
-        public int GetHashCode((IEnumerable<TElement> source, Expression<Func<TElement, bool>> predicate, ActiveExpressionOptions? predicateOptions) obj) =>
-            HashCode.Combine(obj.source, ExpressionEqualityComparer.Default.GetHashCode(obj.predicate), obj.predicateOptions);
+        return new ActiveWhereEnumerable<TElement>(source, predicate, predicateOptions);
     }
 }

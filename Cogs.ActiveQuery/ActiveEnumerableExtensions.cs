@@ -895,7 +895,7 @@ public static class ActiveEnumerableExtensions
     /// <param name="source">An <see cref="IEnumerable{T}"/> whose elements to group</param>
     /// <param name="keySelector">A function to extract the key for each element</param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> where each element is an <see cref="ActiveGrouping{TKey, TElement}"/> object contains a sequence of objects and a key</returns>
-    public static IActiveEnumerable<ActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector) =>
+    public static IActiveEnumerable<IActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector) =>
         ActiveGroupBy(source, keySelector, IndexingStrategy.HashTable);
 
     /// <summary>
@@ -907,7 +907,7 @@ public static class ActiveEnumerableExtensions
     /// <param name="keySelector">A function to extract the key for each element</param>
     /// <param name="indexingStrategy">The indexing strategy to use when grouping</param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> where each element is an <see cref="ActiveGrouping{TKey, TElement}"/> object contains a sequence of objects and a key</returns>
-    public static IActiveEnumerable<ActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, IndexingStrategy indexingStrategy) =>
+    public static IActiveEnumerable<IActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, IndexingStrategy indexingStrategy) =>
         ActiveGroupBy(source, keySelector, null, indexingStrategy, null, null);
 
     /// <summary>
@@ -919,7 +919,7 @@ public static class ActiveEnumerableExtensions
     /// <param name="keySelector">A function to extract the key for each element</param>
     /// <param name="equalityComparer">An <see cref="IEqualityComparer{T}"/> to compare keys</param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> where each element is an <see cref="ActiveGrouping{TKey, TElement}"/> object contains a sequence of objects and a key</returns>
-    public static IActiveEnumerable<ActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, IEqualityComparer<TKey> equalityComparer) =>
+    public static IActiveEnumerable<IActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, IEqualityComparer<TKey> equalityComparer) =>
         ActiveGroupBy(source, keySelector, null, IndexingStrategy.HashTable, equalityComparer, null);
 
     /// <summary>
@@ -931,7 +931,7 @@ public static class ActiveEnumerableExtensions
     /// <param name="keySelector">A function to extract the key for each element</param>
     /// <param name="comparer">An <see cref="IComparer{T}"/> to compare keys</param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> where each element is an <see cref="ActiveGrouping{TKey, TElement}"/> object contains a sequence of objects and a key</returns>
-    public static IActiveEnumerable<ActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, IComparer<TKey> comparer) =>
+    public static IActiveEnumerable<IActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, IComparer<TKey> comparer) =>
         ActiveGroupBy(source, keySelector, null, IndexingStrategy.SelfBalancingBinarySearchTree, null, comparer);
 
     /// <summary>
@@ -943,7 +943,7 @@ public static class ActiveEnumerableExtensions
     /// <param name="keySelector">A function to extract the key for each element</param>
     /// <param name="keySelectorOptions">Options governing the behavior of active expressions created using <paramref name="keySelector"/></param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> where each element is an <see cref="ActiveGrouping{TKey, TElement}"/> object contains a sequence of objects and a key</returns>
-    public static IActiveEnumerable<ActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions keySelectorOptions) =>
+    public static IActiveEnumerable<IActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions keySelectorOptions) =>
         ActiveGroupBy(source, keySelector, keySelectorOptions, IndexingStrategy.HashTable, null, null);
 
     /// <summary>
@@ -956,7 +956,7 @@ public static class ActiveEnumerableExtensions
     /// <param name="keySelectorOptions">Options governing the behavior of active expressions created using <paramref name="keySelector"/></param>
     /// <param name="indexingStrategy">The indexing strategy to use when grouping</param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> where each element is an <see cref="ActiveGrouping{TKey, TElement}"/> object contains a sequence of objects and a key</returns>
-    public static IActiveEnumerable<ActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions keySelectorOptions, IndexingStrategy indexingStrategy) =>
+    public static IActiveEnumerable<IActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions keySelectorOptions, IndexingStrategy indexingStrategy) =>
         ActiveGroupBy(source, keySelector, keySelectorOptions, indexingStrategy, null, null);
 
     /// <summary>
@@ -969,7 +969,7 @@ public static class ActiveEnumerableExtensions
     /// <param name="keySelectorOptions">Options governing the behavior of active expressions created using <paramref name="keySelector"/></param>
     /// <param name="equalityComparer">An <see cref="IEqualityComparer{T}"/> to compare keys</param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> where each element is an <see cref="ActiveGrouping{TKey, TElement}"/> object contains a sequence of objects and a key</returns>
-    public static IActiveEnumerable<ActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions keySelectorOptions, IEqualityComparer<TKey> equalityComparer) =>
+    public static IActiveEnumerable<IActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions keySelectorOptions, IEqualityComparer<TKey> equalityComparer) =>
         ActiveGroupBy(source, keySelector, keySelectorOptions, IndexingStrategy.HashTable, equalityComparer, null);
 
     /// <summary>
@@ -982,21 +982,20 @@ public static class ActiveEnumerableExtensions
     /// <param name="keySelectorOptions">Options governing the behavior of active expressions created using <paramref name="keySelector"/></param>
     /// <param name="comparer">An <see cref="IComparer{T}"/> to compare keys</param>
     /// <returns>An <see cref="IActiveEnumerable{TElement}"/> where each element is an <see cref="ActiveGrouping{TKey, TElement}"/> object contains a sequence of objects and a key</returns>
-    public static IActiveEnumerable<ActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions keySelectorOptions, IComparer<TKey> comparer) =>
+    public static IActiveEnumerable<IActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(this IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions keySelectorOptions, IComparer<TKey> comparer) =>
         ActiveGroupBy(source, keySelector, keySelectorOptions, IndexingStrategy.SelfBalancingBinarySearchTree, null, comparer);
 
-    static IActiveEnumerable<ActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions? keySelectorOptions, IndexingStrategy indexingStrategy, IEqualityComparer<TKey>? equalityComparer, IComparer<TKey>? comparer)
+    static IActiveEnumerable<IActiveGrouping<TKey?, TSource>> ActiveGroupBy<TSource, TKey>(IReadOnlyList<TSource> source, Expression<Func<TSource, TKey>> keySelector, ActiveExpressionOptions? keySelectorOptions, IndexingStrategy indexingStrategy, IEqualityComparer<TKey>? equalityComparer, IComparer<TKey>? comparer)
     {
         ActiveQueryOptions.Optimize(ref keySelector);
-
         var synchronizedSource = source as ISynchronized;
         EnumerableRangeActiveExpression<TSource, TKey> rangeActiveExpression;
-        SynchronizedRangeObservableCollection<ActiveGrouping<TKey?, TSource>>? rangeObservableCollection = null;
+        SynchronizedRangeObservableCollection<IActiveGrouping<TKey?, TSource>>? rangeObservableCollection = null;
 
-        var collectionAndGroupingDictionary = (IDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>)(indexingStrategy switch
+        var collectionAndGroupingDictionary = (IDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, IActiveGrouping<TKey?, TSource> grouping)>)(indexingStrategy switch
         {
-            IndexingStrategy.HashTable => equalityComparer is null ? new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>(equalityComparer),
-            IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>(comparer),
+            IndexingStrategy.HashTable => equalityComparer is null ? new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, IActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, IActiveGrouping<TKey?, TSource> grouping)>(equalityComparer),
+            IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, IActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, IActiveGrouping<TKey?, TSource> grouping)>(comparer),
             _ => throw new ArgumentOutOfRangeException(nameof(indexingStrategy), $"{nameof(indexingStrategy)} must be {IndexingStrategy.HashTable} or {IndexingStrategy.SelfBalancingBinarySearchTree}"),
         });
         var collectionAndGroupingDictionaryAccess = new object();
@@ -1025,8 +1024,8 @@ public static class ActiveEnumerableExtensions
                     {
                         collectionAndGroupingDictionary = indexingStrategy switch
                         {
-                            IndexingStrategy.HashTable => equalityComparer is null ? new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>(equalityComparer),
-                            IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, ActiveGrouping<TKey?, TSource> grouping)>(comparer),
+                            IndexingStrategy.HashTable => equalityComparer is null ? new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, IActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeyDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, IActiveGrouping<TKey?, TSource> grouping)>(equalityComparer),
+                            IndexingStrategy.SelfBalancingBinarySearchTree => comparer is null ? new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, IActiveGrouping<TKey?, TSource> grouping)>() : new NullableKeySortedDictionary<TKey, (SynchronizedRangeObservableCollection<TSource> groupingObservableCollection, IActiveGrouping<TKey?, TSource> grouping)>(comparer),
                             _ => throw new ArgumentOutOfRangeException(nameof(indexingStrategy), $"{nameof(indexingStrategy)} must be {IndexingStrategy.HashTable} or {IndexingStrategy.SelfBalancingBinarySearchTree}"),
                         };
                         rangeObservableCollection!.Clear();
@@ -1067,7 +1066,7 @@ public static class ActiveEnumerableExtensions
             if (groupingObservableCollection.Count == 0)
             {
                 rangeObservableCollection!.Remove(grouping);
-                grouping.Dispose();
+                grouping.DisposeInternal();
                 collectionAndGroupingDictionary.Remove(key! /* This is okay, it's always a nullable key dictionary */);
             }
         }
@@ -1077,19 +1076,24 @@ public static class ActiveEnumerableExtensions
             lock (collectionAndGroupingDictionaryAccess)
             {
                 rangeActiveExpression = RangeActiveExpression.Create(source, keySelector, keySelectorOptions);
-                rangeObservableCollection = new SynchronizedRangeObservableCollection<ActiveGrouping<TKey?, TSource>>(synchronizedSource?.SynchronizationContext);
+                rangeObservableCollection = new SynchronizedRangeObservableCollection<IActiveGrouping<TKey?, TSource>>(synchronizedSource?.SynchronizationContext);
                 rangeActiveExpression.CollectionChanged += collectionChanged;
                 rangeActiveExpression.ElementResultChanged += elementResultChanged;
                 rangeActiveExpression.ElementResultChanging += elementResultChanging;
                 foreach (var (element, key) in rangeActiveExpression.GetResults())
                     addElement(element, key);
 
-                return new ActiveEnumerable<ActiveGrouping<TKey?, TSource>>(rangeObservableCollection, rangeActiveExpression, () =>
+                return new ActiveEnumerable<IActiveGrouping<TKey?, TSource>>(rangeObservableCollection, rangeActiveExpression, () =>
                 {
                     rangeActiveExpression.CollectionChanged -= collectionChanged;
                     rangeActiveExpression.ElementResultChanged -= elementResultChanged;
                     rangeActiveExpression.ElementResultChanging -= elementResultChanging;
                     rangeActiveExpression.Dispose();
+
+                    lock (collectionAndGroupingDictionaryAccess)
+                        foreach (var key in collectionAndGroupingDictionary.Keys.ToImmutableArray())
+                            if (collectionAndGroupingDictionary.TryRemove(key, out var collectionAndGrouping))
+                                collectionAndGrouping.grouping.DisposeInternal();
                 });
             }
         });
@@ -1191,14 +1195,14 @@ public static class ActiveEnumerableExtensions
                 activeValue!.OperationFault = ExceptionHelper.SequenceContainsNoElements;
                 none = true;
             }
-            activeValue!.Value = where.Count > 0 ? where[where.Count - 1] : default;
+            activeValue!.Value = where.Count > 0 ? where[^1] : default;
         }
 
         return (source as ISynchronized).Execute(() =>
         {
             where = ActiveWhere(source, predicate, predicateOptions);
             none = where.Count == 0;
-            activeValue = new ActiveValue<TSource?>(!none ? where[where.Count - 1] : default, none ? ExceptionHelper.SequenceContainsNoElements : null, where, () =>
+            activeValue = new ActiveValue<TSource?>(!none ? where[^1] : default, none ? ExceptionHelper.SequenceContainsNoElements : null, where, () =>
             {
                 where.CollectionChanged -= collectionChanged;
                 where.Dispose();
@@ -1263,12 +1267,12 @@ public static class ActiveEnumerableExtensions
         ActiveValue<TSource?>? activeValue = null;
 
         void collectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-            activeValue!.Value = where.Count > 0 ? where[where.Count - 1] : default;
+            activeValue!.Value = where.Count > 0 ? where[^1] : default;
 
         return (source as ISynchronized).Execute(() =>
         {
             where = ActiveWhere(source, predicate, predicateOptions);
-            activeValue = new ActiveValue<TSource?>(where.Count > 0 ? where[where.Count - 1] : default, elementFaultChangeNotifier: where, onDispose: () =>
+            activeValue = new ActiveValue<TSource?>(where.Count > 0 ? where[^1] : default, elementFaultChangeNotifier: where, onDispose: () =>
             {
                 where.CollectionChanged -= collectionChanged;
                 where.Dispose();

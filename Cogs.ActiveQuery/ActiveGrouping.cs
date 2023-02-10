@@ -5,9 +5,9 @@ namespace Cogs.ActiveQuery;
 /// </summary>
 /// <typeparam name="TKey">The type of the values by which the source elements are being grouped</typeparam>
 /// <typeparam name="TElement">The type of the source elements</typeparam>
-public sealed class ActiveGrouping<TKey, TElement> :
+sealed class ActiveGrouping<TKey, TElement> :
     SyncDisposable,
-    IActiveEnumerable<TElement>
+    IActiveGrouping<TKey, TElement>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ActiveGrouping{TKey, TElement}"/> class
@@ -124,6 +124,9 @@ public sealed class ActiveGrouping<TKey, TElement> :
             }
         });
 
+    public override void Dispose() =>
+        throw new InvalidOperationException("Active groupings cannot be disposed by callers; dispose the parent ActiveGroupBy query instead");
+
     /// <summary>
     /// Frees, releases, or resets unmanaged resources
     /// </summary>
@@ -143,6 +146,9 @@ public sealed class ActiveGrouping<TKey, TElement> :
         }
         return true;
     }
+
+    void IActiveGrouping<TKey, TElement>.DisposeInternal() =>
+        base.Dispose();
 
     void FaultNotifierElementFaultChanged(object sender, ElementFaultChangeEventArgs e) =>
         ElementFaultChanged?.Invoke(this, e);

@@ -1,1 +1,1 @@
-Non-abstract classes sealed for performance.
+ActiveGroupBy now returns an IActiveEnumerable of IActiveGrouping instances. ActiveSelect, ActiveSelectMany, and ActiveWhere have been reverted not to use disposable values caches. We may implement a caching alternative later.

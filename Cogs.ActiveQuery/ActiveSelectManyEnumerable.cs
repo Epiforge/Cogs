@@ -1,13 +1,57 @@
 namespace Cogs.ActiveQuery;
 
 sealed class ActiveSelectManyEnumerable<TSource, TResult> :
-    DisposableValuesCache<(IEnumerable<TSource> source, Expression<Func<TSource, IEnumerable<TResult>>> selector, ActiveExpressionOptions? selectorOptions, bool parallel), ActiveSelectManyEnumerable<TSource, TResult>>.Value,
+    SyncDisposable,
     IActiveEnumerable<TResult>
 {
-    object? access;
+    ActiveSelectManyEnumerable(IEnumerable<TSource> source, Expression<Func<TSource, IEnumerable<TResult>>> selector, ActiveExpressionOptions? selectorOptions, bool parallel)
+    {
+        this.source = source;
+        this.selector = selector;
+        this.selectorOptions = selectorOptions;
+        this.parallel = parallel;
+        access = new();
+        SynchronizationContext = (this.source as ISynchronized)?.SynchronizationContext;
+        (activeSelectQuery, count, enumerableInstances) = this.Execute(() =>
+        {
+            lock (access)
+            {
+                var activeSelectQuery = this.source.ActiveSelect(this.selector, this.selectorOptions, this.parallel);
+                var count = 0;
+                var enumerableInstances = new Dictionary<IEnumerable<TResult>, int>();
+                for (int i = 0, ii = activeSelectQuery.Count; i < ii; ++i)
+                {
+                    var enumerable = activeSelectQuery[i];
+                    if (enumerable is not null)
+                    {
+                        count += enumerable.Count();
+                        if (enumerableInstances.TryGetValue(enumerable, out var instancesOfEnumerable))
+                            enumerableInstances[enumerable] = instancesOfEnumerable + 1;
+                        else
+                        {
+                            enumerableInstances.Add(enumerable, 1);
+                            if (enumerable is INotifyCollectionChanged collectionChangedNotifier)
+                                collectionChangedNotifier.CollectionChanged += EnumerableChanged;
+                        }
+                    }
+                }
+                activeSelectQuery.CollectionChanged += ActiveSelectQueryCollectionChanged;
+                activeSelectQuery.ElementFaultChanged += ActiveSelectQueryElementFaultChanged;
+                activeSelectQuery.ElementFaultChanging += ActiveSelectQueryElementFaultChanging;
+                return (activeSelectQuery, count, enumerableInstances);
+            }
+        });
+    }
+
+    readonly object access;
+    [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     IActiveEnumerable<IEnumerable<TResult>?>? activeSelectQuery;
     int count;
     Dictionary<IEnumerable<TResult>, int>? enumerableInstances;
+    readonly bool parallel;
+    readonly Expression<Func<TSource, IEnumerable<TResult>>> selector;
+    readonly ActiveExpressionOptions? selectorOptions;
+    readonly IEnumerable<TSource> source;
 
     public TResult this[int index] => throw new NotImplementedException();
 
@@ -40,7 +84,6 @@ sealed class ActiveSelectManyEnumerable<TSource, TResult> :
     [SuppressMessage("Code Analysis", "CA1502: Avoid excessive complexity")]
     void ActiveSelectQueryCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
-        var (source, selector, selectorOptions, parallel) = Key;
         lock (access!)
         {
             NotifyCollectionChangedEventArgs? eventArgs = null;
@@ -210,6 +253,27 @@ sealed class ActiveSelectManyEnumerable<TSource, TResult> :
             }
         });
 
+    protected override bool Dispose(bool disposing)
+    {
+        if (disposing)
+            this.Execute(() =>
+            {
+                lock (access!)
+                {
+                    foreach (var enumerable in enumerableInstances!.Keys)
+                    {
+                        if (enumerable is INotifyCollectionChanged collectionChangedNotifier)
+                            collectionChangedNotifier.CollectionChanged -= EnumerableChanged;
+                    }
+                    activeSelectQuery!.CollectionChanged -= ActiveSelectQueryCollectionChanged;
+                    activeSelectQuery.ElementFaultChanged -= ActiveSelectQueryElementFaultChanged;
+                    activeSelectQuery.ElementFaultChanging -= ActiveSelectQueryElementFaultChanging;
+                    activeSelectQuery.Dispose();
+                }
+            });
+        return true;
+    }
+
     void EnumerableChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         if (sender is IEnumerable<TResult> enumerable)
@@ -296,43 +360,6 @@ sealed class ActiveSelectManyEnumerable<TSource, TResult> :
     void IList.Insert(int index, object value) =>
         throw new NotSupportedException();
 
-    protected override void OnInitialized()
-    {
-        access = new();
-        var (source, selector, selectorOptions, parallel) = Key;
-        SynchronizationContext = (source as ISynchronized)?.SynchronizationContext;
-        var sourceParameter = Expression.Parameter(typeof(IEnumerable<TSource>));
-        (activeSelectQuery, count, enumerableInstances) = this.Execute(() =>
-        {
-            lock (access)
-            {
-                var activeSelectQuery = source.ActiveSelect(selector, selectorOptions, parallel);
-                var count = 0;
-                var enumerableInstances = new Dictionary<IEnumerable<TResult>, int>();
-                for (int i = 0, ii = activeSelectQuery.Count; i < ii; ++i)
-                {
-                    var enumerable = activeSelectQuery[i];
-                    if (enumerable is not null)
-                    {
-                        count += enumerable.Count();
-                        if (enumerableInstances.TryGetValue(enumerable, out var instancesOfEnumerable))
-                            enumerableInstances[enumerable] = instancesOfEnumerable + 1;
-                        else
-                        {
-                            enumerableInstances.Add(enumerable, 1);
-                            if (enumerable is INotifyCollectionChanged collectionChangedNotifier)
-                                collectionChangedNotifier.CollectionChanged += EnumerableChanged;
-                        }
-                    }
-                }
-                activeSelectQuery.CollectionChanged += ActiveSelectQueryCollectionChanged;
-                activeSelectQuery.ElementFaultChanged += ActiveSelectQueryElementFaultChanged;
-                activeSelectQuery.ElementFaultChanging += ActiveSelectQueryElementFaultChanging;
-                return (activeSelectQuery, count, enumerableInstances);
-            }
-        });
-    }
-
     int GetReducedStartingIndexUnderLock(int mapIndex)
     {
         if (mapIndex < 0 || mapIndex >= activeSelectQuery!.Count)
@@ -347,30 +374,11 @@ sealed class ActiveSelectManyEnumerable<TSource, TResult> :
         return -1;
     }
 
-    protected override void OnTerminated() =>
-        this.Execute(() =>
-        {
-            lock (access!)
-            {
-                foreach (var enumerable in enumerableInstances!.Keys)
-                {
-                    if (enumerable is INotifyCollectionChanged collectionChangedNotifier)
-                        collectionChangedNotifier.CollectionChanged -= EnumerableChanged;
-                }
-                activeSelectQuery!.CollectionChanged -= ActiveSelectQueryCollectionChanged;
-                activeSelectQuery.ElementFaultChanged -= ActiveSelectQueryElementFaultChanged;
-                activeSelectQuery.ElementFaultChanging -= ActiveSelectQueryElementFaultChanging;
-                activeSelectQuery.Dispose();
-            }
-        });
-
     void IList.Remove(object value) =>
         throw new NotSupportedException();
 
     void IList.RemoveAt(int index) =>
         throw new NotSupportedException();
-
-    static readonly DisposableValuesCache<(IEnumerable<TSource> source, Expression<Func<TSource, IEnumerable<TResult>>> selector, ActiveExpressionOptions? selectorOptions, bool parallel), ActiveSelectManyEnumerable<TSource, TResult>> cache = new(new EqualityComparer());
 
     internal static IActiveEnumerable<TResult> Get(IEnumerable<TSource> source, Expression<Func<TSource, IEnumerable<TResult>>> selector, ActiveExpressionOptions? selectorOptions, bool parallel)
     {
@@ -378,16 +386,6 @@ sealed class ActiveSelectManyEnumerable<TSource, TResult> :
             throw new ArgumentNullException(nameof(source));
         if (selector is null)
             throw new ArgumentNullException(nameof(selector));
-        return cache[(source, selector, selectorOptions, parallel)];
-    }
-
-    class EqualityComparer :
-        IEqualityComparer<(IEnumerable<TSource> source, Expression<Func<TSource, IEnumerable<TResult>>> selector, ActiveExpressionOptions? selectorOptions, bool parallel)>
-    {
-        public bool Equals((IEnumerable<TSource> source, Expression<Func<TSource, IEnumerable<TResult>>> selector, ActiveExpressionOptions? selectorOptions, bool parallel) x, (IEnumerable<TSource> source, Expression<Func<TSource, IEnumerable<TResult>>> selector, ActiveExpressionOptions? selectorOptions, bool parallel) y) =>
-            ReferenceEquals(x.source, y.source) && ExpressionEqualityComparer.Default.Equals(x.selector, y.selector) && (x.selectorOptions is null && y.selectorOptions is null || x.selectorOptions is not null && y.selectorOptions is not null && x.selectorOptions.Equals(y.selectorOptions));
-
-        public int GetHashCode((IEnumerable<TSource> source, Expression<Func<TSource, IEnumerable<TResult>>> selector, ActiveExpressionOptions? selectorOptions, bool parallel) obj) =>
-            HashCode.Combine(obj.source, ExpressionEqualityComparer.Default.GetHashCode(obj.selector), obj.selectorOptions);
+        return new ActiveSelectManyEnumerable<TSource, TResult>(source, selector, selectorOptions, parallel);
     }
 }
