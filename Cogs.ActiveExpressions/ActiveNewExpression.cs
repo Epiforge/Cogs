@@ -13,6 +13,7 @@ sealed class ActiveNewExpression :
     EquatableList<Type> constructorParameterTypes;
     int disposalCount;
     FastConstructorInfo? fastConstructor;
+    int? hashCode;
     readonly CachedInstancesKey<NewExpression> instancesKey;
 
     void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault) =>
@@ -63,7 +64,7 @@ sealed class ActiveNewExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveNewExpression), Type, arguments, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveNewExpression), Type, arguments, options);
 
     protected override bool GetShouldValueBeDisposed() =>
         ApplicableOptions.IsConstructedTypeDisposed(Type, constructorParameterTypes);

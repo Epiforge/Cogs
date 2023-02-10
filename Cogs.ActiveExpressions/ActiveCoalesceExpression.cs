@@ -9,27 +9,8 @@ sealed class ActiveCoalesceExpression :
     {
     }
 
-    protected override void Initialize()
-    {
-        base.Initialize();
-        if (instancesKey.Expression.Conversion is { } conversion)
-        {
-            var key = new ConversionDelegatesKey(conversion.Parameters[0].Type, conversion.Body.Type);
-            lock (conversionDelegateManagementLock)
-            {
-                if (!conversionDelegates.TryGetValue(key, out var conversionDelegate))
-                {
-                    var parameter = Expression.Parameter(typeof(object));
-                    conversionDelegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(Expression.Invoke(conversion, Expression.Convert(parameter, key.ConvertFrom)), typeof(object)), parameter).Compile();
-                    conversionDelegates.Add(key, conversionDelegate);
-                }
-                this.conversionDelegate = conversionDelegate;
-            }
-        }
-        EvaluateIfNotDeferred();
-    }
-
     UnaryOperationDelegate? conversionDelegate;
+    int? hashCode;
 
     public override bool Equals(object? obj) =>
         obj is ActiveCoalesceExpression other && Equals(other);
@@ -66,7 +47,27 @@ sealed class ActiveCoalesceExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveCoalesceExpression), left, right, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveCoalesceExpression), left, right, options);
+
+    protected override void Initialize()
+    {
+        base.Initialize();
+        if (instancesKey.Expression.Conversion is { } conversion)
+        {
+            var key = new ConversionDelegatesKey(conversion.Parameters[0].Type, conversion.Body.Type);
+            lock (conversionDelegateManagementLock)
+            {
+                if (!conversionDelegates.TryGetValue(key, out var conversionDelegate))
+                {
+                    var parameter = Expression.Parameter(typeof(object));
+                    conversionDelegate = Expression.Lambda<UnaryOperationDelegate>(Expression.Convert(Expression.Invoke(conversion, Expression.Convert(parameter, key.ConvertFrom)), typeof(object)), parameter).Compile();
+                    conversionDelegates.Add(key, conversionDelegate);
+                }
+                this.conversionDelegate = conversionDelegate;
+            }
+        }
+        EvaluateIfNotDeferred();
+    }
 
     public override string ToString() =>
         $"({left} ?? {right}) {ToStringSuffix}";

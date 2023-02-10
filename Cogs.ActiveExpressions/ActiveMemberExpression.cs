@@ -17,6 +17,7 @@ sealed class ActiveMemberExpression :
     FastMethodInfo? fastGetter;
     FieldInfo? field;
     MethodInfo? getMethod;
+    int? hashCode;
     readonly CachedInstancesKey<MemberExpression> instancesKey;
     bool isFieldOfCompilerGeneratedType;
     MemberInfo? member;
@@ -96,7 +97,7 @@ sealed class ActiveMemberExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveMemberExpression), expression, member, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveMemberExpression), expression, member, options);
 
     protected override bool GetShouldValueBeDisposed() =>
         getMethod is not null && ApplicableOptions.IsMethodReturnValueDisposed(getMethod);

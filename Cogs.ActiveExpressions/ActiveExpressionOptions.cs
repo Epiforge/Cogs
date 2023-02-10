@@ -27,6 +27,7 @@ public sealed class ActiveExpressionOptions :
     readonly ConcurrentDictionary<(Type type, EquatableList<Type> constuctorParameterTypes), bool> disposeConstructedTypes = new();
     readonly ConcurrentDictionary<MethodInfo, bool> disposeMethodReturnValues = new();
     bool disposeStaticMethodReturnValues;
+    int? hashCode;
     bool isFrozen;
     bool memberExpressionsListenToGeneratedTypesFieldValuesForCollectionChanged;
     bool memberExpressionsListenToGeneratedTypesFieldValuesForDictionaryChanged;
@@ -277,11 +278,7 @@ public sealed class ActiveExpressionOptions :
     internal void Freeze() =>
         isFrozen = true;
 
-    /// <summary>
-    /// Gets the hash code for this <see cref="ActiveExpressionOptions"/> instance
-    /// </summary>
-    /// <returns>The hash code for this active expression</returns>
-    public override int GetHashCode()
+    int GenerateHashCode()
     {
         if (ReferenceEquals(this, Default))
             return base.GetHashCode();
@@ -302,6 +299,13 @@ public sealed class ActiveExpressionOptions :
         objects.AddRange(disposeMethodReturnValues.OrderBy(kv => $"{kv.Key.DeclaringType.FullName}.{kv.Key.Name}({string.Join(", ", kv.Key.GetParameters().Select(p => p.ParameterType))})").Select(kv => kv.Key).Cast<object>());
         return new EquatableList<object>(objects).GetHashCode();
     }
+
+    /// <summary>
+    /// Gets the hash code for this <see cref="ActiveExpressionOptions"/> instance
+    /// </summary>
+    /// <returns>The hash code for this active expression</returns>
+    public override int GetHashCode() =>
+        hashCode ??= GenerateHashCode();
 
     internal bool IsConstructedTypeDisposed(Type type, EquatableList<Type> constructorParameterTypes) =>
         DisposeConstructedObjects || disposeConstructedTypes.ContainsKey((type, constructorParameterTypes));

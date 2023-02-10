@@ -9,6 +9,8 @@ sealed class ActiveAndAlsoExpression :
     {
     }
 
+    int? hashCode;
+
     public override bool Equals(object? obj) =>
         obj is ActiveAndAlsoExpression other && Equals(other);
 
@@ -33,7 +35,7 @@ sealed class ActiveAndAlsoExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveAndAlsoExpression), left, right, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveAndAlsoExpression), left, right, options);
 
     public override string ToString() =>
         $"({left} && {right}) {ToStringSuffix}";

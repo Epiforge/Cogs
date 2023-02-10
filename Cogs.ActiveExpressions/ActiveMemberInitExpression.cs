@@ -13,6 +13,7 @@ sealed class ActiveMemberInitExpression :
     }
 
     int disposalCount;
+    int? hashCode;
     readonly CachedInstancesKey<MemberInitExpression> instancesKey;
     IReadOnlyDictionary<ActiveExpression, MemberInfo>? memberAssignmentExpressions;
     readonly MemberInitExpression memberInitExpression;
@@ -84,7 +85,7 @@ sealed class ActiveMemberInitExpression :
         }
     }
 
-    public override int GetHashCode()
+    int GenerateHashCode()
     {
         var hashCode = HashCode.Combine(typeof(ActiveMemberInitExpression), newExpression, options);
         if (memberAssignmentExpressions is not null)
@@ -92,6 +93,9 @@ sealed class ActiveMemberInitExpression :
                 hashCode = HashCode.Combine(hashCode, memberAssignmentExpression.Key, memberAssignmentExpression.Value);
         return hashCode;
     }
+
+    public override int GetHashCode() =>
+        hashCode ??= GenerateHashCode();
 
     protected override bool GetShouldValueBeDisposed() =>
         ApplicableOptions.IsConstructedTypeDisposed(memberInitExpression.NewExpression.Constructor);

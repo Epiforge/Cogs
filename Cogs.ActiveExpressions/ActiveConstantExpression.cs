@@ -17,6 +17,7 @@ sealed class ActiveConstantExpression :
 
     int disposalCount;
     readonly ExpressionInstancesKey? expressionInstancesKey;
+    int? hashCode;
     readonly InstancesKey? instancesKey;
 
     protected override bool Dispose(bool disposing)
@@ -44,7 +45,7 @@ sealed class ActiveConstantExpression :
         Type == other.Type && FastEqualityComparer.Get(Type).Equals(Value, other.Value) && Equals(options, other.options);
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveConstantExpression), Value);
+        hashCode ??= HashCode.Combine(typeof(ActiveConstantExpression), Value);
 
     protected override void Initialize()
     {

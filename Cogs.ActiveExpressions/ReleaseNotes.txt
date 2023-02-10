@@ -1,1 +1,1 @@
-This includes a private change to correct a warning.
+Active expressions now cache their hash codes to improve performance in certain scenarios, such as when they are used in keys in dictionaries.

@@ -11,6 +11,7 @@ sealed class ActiveNewArrayInitExpression :
 
     int disposalCount;
     Type? elementType;
+    int? hashCode;
     EquatableList<ActiveExpression>? initializers;
     readonly CachedInstancesKey<NewArrayExpression> instancesKey;
 
@@ -57,7 +58,7 @@ sealed class ActiveNewArrayInitExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveNewArrayInitExpression), elementType, initializers, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveNewArrayInitExpression), elementType, initializers, options);
 
     protected override void Initialize()
     {

@@ -17,6 +17,7 @@ class ActiveBinaryExpression :
     int disposalCount;
     readonly bool evaluateIfNotDeferred;
     readonly bool getDelegate;
+    int? hashCode;
     protected readonly CachedInstancesKey<BinaryExpression> instancesKey;
     bool isLiftedToNull;
     [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
@@ -82,7 +83,7 @@ class ActiveBinaryExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveBinaryExpression), left, method, NodeType, right, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveBinaryExpression), left, method, NodeType, right, options);
 
     protected override bool GetShouldValueBeDisposed() =>
         method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);

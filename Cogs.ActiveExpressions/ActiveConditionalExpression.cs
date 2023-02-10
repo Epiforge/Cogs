@@ -10,6 +10,7 @@ sealed class ActiveConditionalExpression :
         this.instancesKey = instancesKey;
 
     int disposalCount;
+    int? hashCode;
     [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     ActiveExpression? ifFalse;
     [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
@@ -111,7 +112,7 @@ sealed class ActiveConditionalExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveConditionalExpression), ifFalse, ifTrue, test, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveConditionalExpression), ifFalse, ifTrue, test, options);
 
     protected override void Initialize()
     {

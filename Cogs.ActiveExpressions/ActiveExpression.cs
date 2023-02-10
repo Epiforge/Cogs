@@ -773,6 +773,7 @@ public sealed class ActiveExpression<TResult> :
     readonly EquatableList<object?> arguments;
     int disposalCount;
     Exception? fault;
+    int? hashCode;
     readonly List<IObserveActiveExpressions<TResult>> observers = new();
     readonly object observersAccess = new();
     IReadOnlyList<IObserveActiveExpressions<TResult>> observersCopy = Array.Empty<IObserveActiveExpressions<TResult>>();
@@ -878,7 +879,7 @@ public sealed class ActiveExpression<TResult> :
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveExpression<TResult>), activeExpression);
+        hashCode ??= HashCode.Combine(typeof(ActiveExpression<TResult>), activeExpression);
 
     /// <inheritdoc/>
     public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
@@ -964,6 +965,7 @@ public sealed class ActiveExpression<TArg, TResult> :
     readonly EquatableList<object?> arguments;
     int disposalCount;
     Exception? fault;
+    int? hashCode;
     readonly List<IObserveActiveExpressions<TResult>> observers = new();
     readonly object observersAccess = new();
     IReadOnlyList<IObserveActiveExpressions<TResult>> observersCopy = Array.Empty<IObserveActiveExpressions<TResult>>();
@@ -1074,7 +1076,7 @@ public sealed class ActiveExpression<TArg, TResult> :
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveExpression<TArg, TResult>), activeExpression);
+        hashCode ??= HashCode.Combine(typeof(ActiveExpression<TArg, TResult>), activeExpression);
 
     /// <inheritdoc/>
     public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
@@ -1162,6 +1164,7 @@ public sealed class ActiveExpression<TArg1, TArg2, TResult> :
     readonly EquatableList<object?> arguments;
     int disposalCount;
     Exception? fault;
+    int? hashCode;
     readonly List<IObserveActiveExpressions<TResult>> observers = new();
     readonly object observersAccess = new();
     IReadOnlyList<IObserveActiveExpressions<TResult>> observersCopy = Array.Empty<IObserveActiveExpressions<TResult>>();
@@ -1277,7 +1280,7 @@ public sealed class ActiveExpression<TArg1, TArg2, TResult> :
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TResult>), activeExpression);
+        hashCode ??= HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TResult>), activeExpression);
 
     /// <inheritdoc/>
     public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)
@@ -1367,6 +1370,7 @@ public sealed class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
     readonly EquatableList<object?> arguments;
     int disposalCount;
     Exception? fault;
+    int? hashCode;
     readonly List<IObserveActiveExpressions<TResult>> observers = new();
     readonly object observersAccess = new();
     IReadOnlyList<IObserveActiveExpressions<TResult>> observersCopy = Array.Empty<IObserveActiveExpressions<TResult>>();
@@ -1487,7 +1491,7 @@ public sealed class ActiveExpression<TArg1, TArg2, TArg3, TResult> :
     /// </summary>
     /// <returns>The hash code for this active expression</returns>
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TArg3, TResult>), activeExpression);
+        hashCode ??= HashCode.Combine(typeof(ActiveExpression<TArg1, TArg2, TArg3, TResult>), activeExpression);
 
     /// <inheritdoc/>
     public void RemoveActiveExpressionObserver(IObserveActiveExpressions<TResult> observer)

@@ -13,6 +13,7 @@ sealed class ActiveTypeBinaryExpression :
     int disposalCount;
     [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
     ActiveExpression? expression;
+    int? hashCode;
     readonly CachedInstancesKey<TypeBinaryExpression> instancesKey;
     Type? typeOperand;
 
@@ -51,7 +52,7 @@ sealed class ActiveTypeBinaryExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveTypeBinaryExpression), expression, typeOperand, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveTypeBinaryExpression), expression, typeOperand, options);
 
     protected override void Initialize()
     {

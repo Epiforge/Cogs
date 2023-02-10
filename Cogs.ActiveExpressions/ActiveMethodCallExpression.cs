@@ -12,6 +12,7 @@ sealed class ActiveMethodCallExpression :
     EquatableList<ActiveExpression>? arguments;
     int disposalCount;
     FastMethodInfo? fastMethod;
+    int? hashCode;
     readonly CachedInstancesKey<MethodCallExpression> instancesKey;
     MethodInfo? method;
     [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
@@ -74,7 +75,7 @@ sealed class ActiveMethodCallExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveMethodCallExpression), arguments, method, @object, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveMethodCallExpression), arguments, method, @object, options);
 
     protected override bool GetShouldValueBeDisposed() =>
         method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);

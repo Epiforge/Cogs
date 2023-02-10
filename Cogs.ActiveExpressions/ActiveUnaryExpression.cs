@@ -11,6 +11,7 @@ sealed class ActiveUnaryExpression :
 
     UnaryOperationDelegate? @delegate;
     int disposalCount;
+    int? hashCode;
     readonly CachedInstancesKey<UnaryExpression> instancesKey;
     MethodInfo? method;
     [SuppressMessage("Usage", "CA2213: Disposable fields should be disposed", Justification = "This field will be disposed by the base class, the analyzer just doesn't see that.")]
@@ -63,7 +64,7 @@ sealed class ActiveUnaryExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveUnaryExpression), method, NodeType, operand, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveUnaryExpression), method, NodeType, operand, options);
 
     protected override bool GetShouldValueBeDisposed() =>
         method is not null && ApplicableOptions.IsMethodReturnValueDisposed(method);

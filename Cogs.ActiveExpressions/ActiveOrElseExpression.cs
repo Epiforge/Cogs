@@ -8,6 +8,8 @@ sealed class ActiveOrElseExpression :
     {
     }
 
+    int? hashCode;
+
     public override bool Equals(object? obj) =>
         obj is ActiveOrElseExpression other && Equals(other);
 
@@ -32,7 +34,7 @@ sealed class ActiveOrElseExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveOrElseExpression), left, right, options);
+        hashCode ??= HashCode.Combine(typeof(ActiveOrElseExpression), left, right, options);
 
     public override string ToString() =>
         $"({left} || {right}) {ToStringSuffix}";

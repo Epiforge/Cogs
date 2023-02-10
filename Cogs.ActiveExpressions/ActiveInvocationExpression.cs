@@ -15,6 +15,7 @@ class ActiveInvocationExpression :
     ActiveExpression? activeDelegateExpression;
     IReadOnlyList<ActiveExpression>? activeArguments;
     int disposalCount;
+    int? hashCode;
     readonly CachedInstancesKey<InvocationExpression> instancesKey;
 
     void IObserveActiveExpressions<object?>.ActiveExpressionChanged(IObservableActiveExpression<object?> activeExpression, object? oldValue, object? newValue, Exception? oldFault, Exception? newFault)
@@ -68,8 +69,7 @@ class ActiveInvocationExpression :
             default:
                 throw new NotSupportedException();
         }
-        if (activeExpression is not null)
-            activeExpression.AddActiveExpressionOserver(this);
+        activeExpression?.AddActiveExpressionOserver(this);
         EvaluateIfNotDeferred();
     }
 
@@ -122,7 +122,7 @@ class ActiveInvocationExpression :
     }
 
     public override int GetHashCode() =>
-        HashCode.Combine(typeof(ActiveInvocationExpression), ExpressionEqualityComparer.Default.GetHashCode(instancesKey.Expression), options);
+        hashCode ??= HashCode.Combine(typeof(ActiveInvocationExpression), ExpressionEqualityComparer.Default.GetHashCode(instancesKey.Expression), options);
 
     protected override void Initialize()
     {
