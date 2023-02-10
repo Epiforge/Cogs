@@ -408,4 +408,4 @@ Also includes a wide array of value converters. Please see a package explorer fo
 
 # Acknowledgements
 
-Makes use of the glorious [AsyncEx](https://github.com/StephenCleary/AsyncEx) library by Stephen Cleary.
+Makes use of the glorious [AsyncEx](https://github.com/StephenCleary/AsyncEx) library by Stephen Cleary and the [Poly#](https://github.com/Sergio0694/PolySharp/) NuGet package by Sergio Pedri because it's just great.
