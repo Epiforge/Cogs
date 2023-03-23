@@ -10,6 +10,14 @@ static class NativeMethods
     public static extern bool GetCursorPos(out Types.Point lpPoint);
 
     [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool FlashWindowEx(ref FlashWInfo pwfi);
+
+    [DllImport("user32.dll")]
     public static extern IntPtr GetDesktopWindow();
 
     [DllImport("user32.dll")]

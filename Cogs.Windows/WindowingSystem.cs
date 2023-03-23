@@ -38,6 +38,156 @@ public static class WindowingSystem
     }
 
     /// <summary>
+    /// Flashes the specified window one time
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <param name="invert">Whether to provide the visual invert clue to the user</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindow(IntPtr windowHandle, bool invert) =>
+        NativeMethods.FlashWindow(windowHandle, invert);
+
+    /// <summary>
+    /// Flashes the specified window continuously
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindowCaptionAndTaskbarIcon(IntPtr windowHandle)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_ALL | FlashWindowExFlags.FLASHW_TIMER
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
+
+    /// <summary>
+    /// Flashes the specified window continuously a specified number of times
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <param name="times">The number of times to flash the window</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindowCaptionAndTaskbarIcon(IntPtr windowHandle, int times)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_ALL,
+            Count = (uint)times
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
+
+    /// <summary>
+    /// Flashes the specified window continuously until the window comes to the foreground
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindowCaptionAndTaskbarIconUntilActivated(IntPtr windowHandle)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_ALL | FlashWindowExFlags.FLASHW_TIMERNOFG
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
+
+    /// <summary>
+    /// Flashes the specified window's caption continuously
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindowCaption(IntPtr windowHandle)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_CAPTION | FlashWindowExFlags.FLASHW_TIMER
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
+
+    /// <summary>
+    /// Flashes the specified window's caption continuously until the window comes to the foreground
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <param name="times">The number of times to flash the window</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindowCaption(IntPtr windowHandle, int times)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_CAPTION,
+            Count = (uint)times
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
+
+    /// <summary>
+    /// Flashes the specified window's caption continuously until the window comes to the foreground
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindowCaptionUntilActivated(IntPtr windowHandle)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_CAPTION | FlashWindowExFlags.FLASHW_TIMERNOFG
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
+
+    /// <summary>
+    /// Flashes the specified window's task bar icon continuously
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindowTaskbarIcon(IntPtr windowHandle)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_TRAY | FlashWindowExFlags.FLASHW_TIMER
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
+
+    /// <summary>
+    /// Flashes the specified window's task bar icon continuously until the window comes to the foreground
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <param name="times">The number of times to flash the window</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindowTaskbarIcon(IntPtr windowHandle, int times)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_TRAY,
+            Count = (uint)times
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
+
+    /// <summary>
+    /// Flashes the specified window's task bar icon continuously until the window comes to the foreground
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window to be flashed</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool FlashWindowTaskbarIconUntilActivated(IntPtr windowHandle)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_TRAY | FlashWindowExFlags.FLASHW_TIMERNOFG
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
+
+    /// <summary>
     /// Gets a handle (or pointer) to the foreground window
     /// </summary>
     [Obsolete("Use the ForegroundWindow property")]
@@ -52,4 +202,19 @@ public static class WindowingSystem
     [Obsolete("Use the ForegroundWindow property")]
     public static bool SetForegroundWindow(IntPtr windowHandle) =>
         NativeMethods.SetForegroundWindow(windowHandle);
+
+    /// <summary>
+    /// Stops the specified window from flashing continuously
+    /// </summary>
+    /// <param name="windowHandle">A handle to the window that is flashing</param>
+    /// <returns><c>true</c> if the window caption was drawn as active before the call</returns>
+    public static bool StopFlashingWindow(IntPtr windowHandle)
+    {
+        var info = new FlashWInfo
+        {
+            WindowHandle = windowHandle,
+            Flags = FlashWindowExFlags.FLASHW_STOP
+        };
+        return NativeMethods.FlashWindowEx(ref info);
+    }
 }
